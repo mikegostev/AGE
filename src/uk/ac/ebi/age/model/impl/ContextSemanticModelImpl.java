@@ -204,11 +204,4 @@ public class ContextSemanticModelImpl implements ContextSemanticModel
   return masterModel.getDefinedAgeAttributeClass( attrClass );
  }
 
- @Override
- public AgeAttributeClass getAgeAttributeClass(String attrClsName)
- {
-  return getDefinedAgeAttributeClass(attrClsName);
- }
-
-
 }

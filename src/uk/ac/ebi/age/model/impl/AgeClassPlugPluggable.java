@@ -2,20 +2,22 @@ package uk.ac.ebi.age.model.impl;
 
 import java.io.Serializable;
 
-import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.util.Plug;
 
-public class AgeClassPlug implements Serializable, Plug
+public class AgeClassPlugPluggable implements Serializable, Plug, uk.ac.ebi.age.model.AgeClassPlug
 {
  private String className;
  private transient AgeClass ageClass;
+ private SemanticModel model;
  
- public AgeClassPlug(AgeClass cls)
+ public AgeClassPlugPluggable(AgeClass cls, SemanticModel mdl)
  {
   className = cls.getName();
   ageClass = cls;
+  
+  model = mdl;
  }
 
  public void unplug()
@@ -25,9 +27,7 @@ public class AgeClassPlug implements Serializable, Plug
  
  public boolean plug()
  {
-  SemanticModel sm = SemanticManager.getInstance().getMasterModel();
-  
-  ageClass = sm.getAgeClass(className);
+  ageClass = model.getDefinedAgeClass(className);
   
   if( ageClass != null )
    return true;

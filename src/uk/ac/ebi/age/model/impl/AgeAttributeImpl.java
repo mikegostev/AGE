@@ -9,14 +9,14 @@ import uk.ac.ebi.age.model.SemanticModel;
 
 public abstract class AgeAttributeImpl extends AgeSemanticElementImpl implements Serializable, AgeAttribute
 {
- private AgeAttributeClassPlug attrClassPlug;
+ private AgeAttributeClassPlugPluggable attrClassPlug;
  private int order; 
 
  public AgeAttributeImpl(AgeObject obj, AgeAttributeClass attrClass, SemanticModel sm)
  {
   super(sm);
   
-  attrClassPlug= new AgeAttributeClassPlug(attrClass);
+  attrClassPlug= new AgeAttributeClassPlugPluggable(attrClass,sm);
  }
 
  public AgeAttributeClass getAgeAttributeClass()

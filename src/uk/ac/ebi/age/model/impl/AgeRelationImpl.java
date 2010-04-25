@@ -7,7 +7,7 @@ import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
 class AgeRelationImpl extends AgeSemanticElementImpl implements AgeRelationWritable
 {
- private AgeRelationClassPlug relClassPlug;
+ private AgeRelationClassPlugPluggable relClassPlug;
  private AgeObjectWritable target;
  private int order;
  private boolean inferred=false;
@@ -15,7 +15,7 @@ class AgeRelationImpl extends AgeSemanticElementImpl implements AgeRelationWrita
  public AgeRelationImpl(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel)
  {
   super(semanticModel);
-  relClassPlug= new AgeRelationClassPlug(relClass);
+  relClassPlug= new AgeRelationClassPlugPluggable(relClass, semanticModel);
   target=targetObj;
  }
 

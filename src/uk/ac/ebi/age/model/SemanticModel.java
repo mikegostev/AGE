@@ -39,11 +39,11 @@ public interface SemanticModel
  
  ModelFactory getModelFactory();
 
- AgeClass getAgeClass(String clsName);
-
- AgeRelationClass getAgeRelationClass(String relClsClass);
-
- AgeAttributeClass getAgeAttributeClass(String attrClsName);
+// AgeClass getAgeClass(String clsName);
+//
+// AgeRelationClass getAgeRelationClass(String relClsClass);
+//
+// AgeAttributeClass getAgeAttributeClass(String attrClsName);
 
 
 }

@@ -24,7 +24,7 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
  private Map<AgeAttributeClass,AgeAttributeWritable> attributes = new HashMap<AgeAttributeClass,AgeAttributeWritable>();
  private Map<AgeRelationClass, Collection<AgeRelationWritable>> relations = new HashMap<AgeRelationClass, Collection<AgeRelationWritable>>();
 
- private AgeClassPlug ageClassPlug;
+ private AgeClassPlugPluggable ageClassPlug;
  private String id;
 
  private Submission subm;
@@ -35,7 +35,7 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
  {
   super(sm);
   this.id=id;
-  ageClassPlug= new AgeClassPlug(cls);
+  ageClassPlug= new AgeClassPlugPluggable(cls, sm);
  }
 
  public String getId()

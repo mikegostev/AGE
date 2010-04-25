@@ -4,18 +4,21 @@ import java.io.Serializable;
 
 import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.util.Plug;
 
-public class AgeRelationClassPlug implements Serializable, Plug
+public class AgeRelationClassPlugPluggable implements Serializable, Plug, AgeRelationClassPlug
 {
  private String className;
  private transient AgeRelationClass ageRelationClass;
+ private SemanticModel model;
  
- public AgeRelationClassPlug(AgeRelationClass relClass)
+ public AgeRelationClassPlugPluggable(AgeRelationClass relClass, SemanticModel mod)
  {
   ageRelationClass=relClass;
   className = relClass.getName();
+  model=mod;
  }
 
  public void unplug()
@@ -27,7 +30,7 @@ public class AgeRelationClassPlug implements Serializable, Plug
  {
   SemanticModel sm = SemanticManager.getInstance().getMasterModel();
   
-  ageRelationClass = sm.getAgeRelationClass(className);
+  ageRelationClass = model.getDefinedAgeRelationClass(className);
   
   if( ageRelationClass != null )
    return true;
