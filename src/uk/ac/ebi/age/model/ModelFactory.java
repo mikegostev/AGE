@@ -10,7 +10,7 @@ import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
 public abstract class ModelFactory
 {
- public abstract SubmissionWritable createSubmission( SemanticModel sm );
+ public abstract SubmissionWritable createSubmission( ContextSemanticModel sm );
 
  public abstract AgeClass createAgeClass(String name, String pfx, SemanticModel sm);
 

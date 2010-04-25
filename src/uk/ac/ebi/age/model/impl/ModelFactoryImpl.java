@@ -8,6 +8,7 @@ import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRestriction;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.SemanticModel;
@@ -31,7 +32,7 @@ public class ModelFactoryImpl extends ModelFactory
 
  
  @Override
- public SubmissionWritable createSubmission( SemanticModel sm )
+ public SubmissionWritable createSubmission( ContextSemanticModel sm )
  {
   return new SubmissionImpl( sm );
  }

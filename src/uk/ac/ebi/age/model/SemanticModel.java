@@ -4,7 +4,6 @@ import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
 public interface SemanticModel
 {
@@ -15,8 +14,6 @@ public interface SemanticModel
  AgeAttributeClass createAgeAttributeClass(String name, DataType type);
 
  
- SubmissionWritable createSubmission();
-
  AgeAttributeWritable createAgeAttribute(AgeObject ageObject, AgeAttributeClass attr);
 
  AgeExternalRelationWritable createExternalRelation(String val, AgeRelationClass relClass);

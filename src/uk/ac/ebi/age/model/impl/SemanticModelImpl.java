@@ -48,7 +48,6 @@ import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
 public class SemanticModelImpl implements SemanticModel
 {
@@ -920,10 +919,10 @@ public class SemanticModelImpl implements SemanticModel
   return getModelFactory().createAgeRelationClass(name, this);
  }
 
- public SubmissionWritable createSubmission()
- {
-  return getModelFactory().createSubmission(this);
- }
+// public SubmissionWritable createSubmission()
+// {
+//  return getModelFactory().createSubmission(this);
+// }
 
 
  public AgeAttributeWritable createAgeAttribute(AgeObject obj, AgeAttributeClass attrClass)

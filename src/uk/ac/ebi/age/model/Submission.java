@@ -8,7 +8,10 @@ public interface Submission
  String getId();
  
  Collection<? extends AgeObject> getObjects();
- Collection<AgeClass> getClasses();
  
  String getDescription();
+ 
+ ContextSemanticModel getContextSemanticModel();
+ 
+ Collection<AgeExternalRelation> getExternalRelations();
 }

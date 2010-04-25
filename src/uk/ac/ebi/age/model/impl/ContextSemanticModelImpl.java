@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model.impl;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -19,9 +20,10 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
-public class ContextSemanticModelImpl implements ContextSemanticModel
+public class ContextSemanticModelImpl implements ContextSemanticModel, Serializable
 {
- private SemanticModel masterModel;
+ private transient SemanticModel masterModel;
+ 
  private SubmissionContext context;
  
  private Map<String,AgeClass> customClassMap = new TreeMap<String, AgeClass>();
@@ -151,7 +153,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel
 
  public SubmissionWritable createSubmission()
  {
-  return masterModel.createSubmission();
+  return masterModel.getModelFactory().createSubmission(this);
  }
 
  public AgeAttributeClass createAgeAttributeClass(String name, DataType type)

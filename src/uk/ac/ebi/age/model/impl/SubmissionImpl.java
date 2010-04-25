@@ -5,19 +5,22 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
-import uk.ac.ebi.age.model.AgeClass;
-import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.AgeExternalRelation;
+import uk.ac.ebi.age.model.AgeRelation;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
-public class SubmissionImpl extends AgeSemanticElementImpl implements SubmissionWritable
+public class SubmissionImpl  implements SubmissionWritable
 {
 // private AgeClass submissionClass = getModelFactoy.createAgeClass("$submission", "SBM", null);
 // private AgeRelationClass submissionRelationClass ;
 // private AgeRelationClass submissionInvRelationClass;
   
- private Collection<AgeClass> classes = new ArrayList<AgeClass>(10);
+// private Collection<AgeClass> classes = new ArrayList<AgeClass>(10);
  private Collection<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
+ private ContextSemanticModel model;
+ private Collection<AgeExternalRelation> extRels = new ArrayList<AgeExternalRelation>(10);
 
 // private Map<AgeRelationClass, Collection<AgeRelationWritable>> rels ;
 // private Collection<AgeRelationWritable> relLst;
@@ -28,10 +31,9 @@ public class SubmissionImpl extends AgeSemanticElementImpl implements Submission
  private String id;
  private String descr;
 
- public SubmissionImpl(SemanticModel sm)
+ public SubmissionImpl(ContextSemanticModel sm)
  {
-  super(sm);
-  
+  model = sm;
 //  submissionClass = sm.createAgeClass("$submission", "SBM", sm);
 //  
 //  submissionRelationClass = ModelFactoryImpl.getInstance().createAgeRelationClass("$insubmission", sm);
@@ -57,10 +59,10 @@ public class SubmissionImpl extends AgeSemanticElementImpl implements Submission
   descr=dsc;
  }
 
- public void addClass(AgeClass cls)
- {
-  classes.add(cls);
- }
+// public void addClass(AgeClass cls)
+// {
+//  classes.add(cls);
+// }
 
  public void addObject(AgeObjectWritable obj)
  {
@@ -68,16 +70,17 @@ public class SubmissionImpl extends AgeSemanticElementImpl implements Submission
 //  relLst.add(getSemanticModel().createAgeRelation(obj, submissionRelationClass));
 
   objects.add(obj);
+  
+  for( AgeRelation rel : obj.getRelations())
+  {
+   if( rel instanceof AgeExternalRelation )
+    extRels.add((AgeExternalRelation)rel);
+  }
  }
 
  public void setId(String id)
  {
   this.id=id;
- }
-
- public Collection<AgeClass> getClasses()
- {
-  return classes;
  }
 
  public String getId()
@@ -108,6 +111,20 @@ public class SubmissionImpl extends AgeSemanticElementImpl implements Submission
  public int getOrder()
  {
   return 0;
+ }
+
+
+ @Override
+ public ContextSemanticModel getContextSemanticModel()
+ {
+  return model;
+ }
+
+
+ @Override
+ public Collection<AgeExternalRelation> getExternalRelations()
+ {
+  return extRels;
  }
 
 // public Collection<AgeRelationAlt> getRelations()

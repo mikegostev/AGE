@@ -2,7 +2,6 @@ package uk.ac.ebi.age.model.writable;
 
 import java.util.Collection;
 
-import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.Submission;
 
 public interface SubmissionWritable extends Submission
@@ -11,7 +10,7 @@ public interface SubmissionWritable extends Submission
  void setDescription( String des );
  
  
- void addClass(AgeClass cls);
+// void addClass(AgeClass cls);
  void addObject( AgeObjectWritable obj );
 
  Collection<AgeObjectWritable> getObjects();

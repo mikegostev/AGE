@@ -105,8 +105,8 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
 //   SubmissionBlock sBlock = new SubmissionBlock(me.getKey(), me.getValue());
 //   res.addSubmissionBlock(sBlock);
    
-   if( me.getValue().isCustom() )
-    res.addClass( me.getValue() );
+//   if( me.getValue().isCustom() )
+//    res.addClass( me.getValue() );
    
    createConvertors( me.getKey(), me.getValue(), convs, sm, classMap);
    

@@ -1,5 +1,7 @@
 package uk.ac.ebi.age.model;
 
+import uk.ac.ebi.age.model.writable.SubmissionWritable;
+
 public interface ContextSemanticModel extends SemanticModel
 {
 
@@ -14,5 +16,7 @@ public interface ContextSemanticModel extends SemanticModel
  AgeAttributeClass createCustomAgeAttributeClass(String name, DataType type, AgeClass blkCls);
 
  AgeClassProperty getDefinedAgeClassProperty( String name );
+
+ SubmissionWritable createSubmission();
 
 }
