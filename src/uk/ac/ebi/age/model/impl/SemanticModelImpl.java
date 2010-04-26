@@ -940,9 +940,9 @@ public class SemanticModelImpl implements SemanticModel
   return modelFactory.createAgeClass(name, pfx, this);
  }
 
- public AgeExternalRelationWritable createExternalRelation(String id, AgeRelationClass targetClass)
+ public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass)
  {
-  return modelFactory.createExternalRelation(id, targetClass,  this);
+  return modelFactory.createExternalRelation(sourceObj, id, targetClass,  this);
  }
 
  public AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass)

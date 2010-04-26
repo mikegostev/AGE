@@ -97,7 +97,7 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
 
  public AgeExternalRelationWritable createExternalRelation(String val, AgeRelationClass relClass)
  {
-  AgeExternalRelationWritable rel = getSemanticModel().createExternalRelation(val, relClass);
+  AgeExternalRelationWritable rel = getSemanticModel().createExternalRelation(this, val, relClass);
   
   addRelation(rel);
   

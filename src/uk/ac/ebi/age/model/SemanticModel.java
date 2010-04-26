@@ -16,7 +16,7 @@ public interface SemanticModel
  
  AgeAttributeWritable createAgeAttribute(AgeObject ageObject, AgeAttributeClass attr);
 
- AgeExternalRelationWritable createExternalRelation(String val, AgeRelationClass relClass);
+ AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String val, AgeRelationClass relClass);
 
  AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass);
 

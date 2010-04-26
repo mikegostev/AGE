@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.storage.exeption;
 
+
 public class SubmissionStoreException extends Exception
 {
 

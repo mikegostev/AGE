@@ -17,7 +17,8 @@ import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.ConvertionException;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.SemanticException;
-import uk.ac.ebi.age.storage.StoreException;
+import uk.ac.ebi.age.storage.RelationResolveException;
+import uk.ac.ebi.age.storage.exeption.SubmissionStoreException;
 import uk.ac.ebi.age.storage.impl.ser.SerializedStorage;
 
 import com.pri.util.stream.StreamPump;
@@ -91,12 +92,17 @@ public class Test
    // TODO Auto-generated catch block
    e.printStackTrace();
   }
-  catch(StoreException e)
+  catch(RelationResolveException e)
   {
    // TODO Auto-generated catch block
    e.printStackTrace();
   }
   catch(ParserException e)
+  {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+  }
+  catch(SubmissionStoreException e)
   {
    // TODO Auto-generated catch block
    e.printStackTrace();

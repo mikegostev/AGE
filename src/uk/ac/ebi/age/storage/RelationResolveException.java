@@ -1,11 +1,11 @@
 package uk.ac.ebi.age.storage;
 
-public class StoreException extends Exception
+public class RelationResolveException extends Exception
 {
  private int lineNumber;
  private int columnNumber;
  
- public StoreException( int ln, int cl, String msg )
+ public RelationResolveException( int ln, int cl, String msg )
  {
   super( msg );
   lineNumber=ln;

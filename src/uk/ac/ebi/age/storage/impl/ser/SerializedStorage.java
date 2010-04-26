@@ -8,7 +8,6 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -19,19 +18,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import uk.ac.ebi.age.mng.SemanticManager;
-import uk.ac.ebi.age.model.AgeExternalRelation;
 import uk.ac.ebi.age.model.AgeObject;
-import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
-import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.service.IdGenerator;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.storage.IndexFactory;
-import uk.ac.ebi.age.storage.StoreException;
+import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.TextIndex;
 import uk.ac.ebi.age.storage.exeption.ModelStoreException;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
@@ -39,7 +35,6 @@ import uk.ac.ebi.age.storage.exeption.SubmissionStoreException;
 import uk.ac.ebi.age.storage.impl.AgeStorageIndex;
 import uk.ac.ebi.age.storage.index.AgeIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
-import uk.ac.ebi.age.storage.index.TextValueExtractor;
 
 public class SerializedStorage implements AgeStorageAdm
 {
@@ -75,28 +70,28 @@ public class SerializedStorage implements AgeStorageAdm
   return model;
  }
  
- public AgeIndex createTextIndex(AgeQuery qury, TextValueExtractor cb)
- {
-  AgeIndex idx = new AgeIndex();
-
-  TextIndex ti = IndexFactory.getInstance().createFullTextIndex();
-
-  try
-  {
-   dbLock.readLock().lock();
-   
-   ti.index(executeQuery(qury), cb);
-
-   indexMap.put(idx, ti);
-
-   return idx;
-
-  }
-  finally
-  {
-   dbLock.readLock().unlock();
-  }
- }
+// public AgeIndex createTextIndex(AgeQuery qury, TextValueExtractor cb)
+// {
+//  AgeIndex idx = new AgeIndex();
+//
+//  TextIndex ti = IndexFactory.getInstance().createFullTextIndex();
+//
+//  try
+//  {
+//   dbLock.readLock().lock();
+//   
+//   ti.index(executeQuery(qury), cb);
+//
+//   indexMap.put(idx, ti);
+//
+//   return idx;
+//
+//  }
+//  finally
+//  {
+//   dbLock.readLock().unlock();
+//  }
+// }
 
  public AgeIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts)
  {
@@ -128,7 +123,7 @@ public class SerializedStorage implements AgeStorageAdm
   {
    dbLock.readLock().lock();
 
-   Iterable<AgeObject> trv = traverse(qury);
+   Iterable<AgeObject> trv = traverse(qury, submissionMap.values());
 
    ArrayList<AgeObject> res = new ArrayList<AgeObject>();
 
@@ -144,9 +139,9 @@ public class SerializedStorage implements AgeStorageAdm
 
  }
 
- private Iterable<AgeObject>  traverse(AgeQuery query)
+ private Iterable<AgeObject>  traverse(AgeQuery query, Collection<SubmissionWritable> sbms)
  {
-  return new InMemoryQueryProcessor(query,submissionMap.values());
+  return new InMemoryQueryProcessor(query,sbms);
  }
 
  public List<AgeObject> queryTextIndex(AgeIndex idx, String query)
@@ -156,69 +151,38 @@ public class SerializedStorage implements AgeStorageAdm
   return ti.select(query);
  }
 
- public String storeSubmission(SubmissionWritable sbm) throws StoreException
+ public String storeSubmission(SubmissionWritable sbm) throws RelationResolveException, SubmissionStoreException
  {
   try
   {
    dbLock.writeLock().lock();
 
-   Map<AgeObjectWritable, AgeRelationClass> extNodeHash = new HashMap<AgeObjectWritable, AgeRelationClass>();
-
-   for(AgeObjectWritable obj : sbm.getObjects())
-   {
-    Iterator<? extends AgeRelationWritable> iter = obj.getRelations().iterator();
-
-    while(iter.hasNext())
-    {
-     AgeRelationWritable rel = iter.next();
-
-     if(rel instanceof AgeExternalRelation)
-     {
-      String id = ((AgeExternalRelation) rel).getTargetObjectId();
-
-      AgeObjectWritable nd = getObjectById(id);
-
-      if(nd == null)
-       throw new StoreException(obj.getOrder(), rel.getOrder(), "Invalid external reference: '" + id + "'");
-
-      extNodeHash.put(nd, rel.getRelationClass());
-
-      iter.remove();
-     }
-     else
-     {
-      AgeRelationClass invcls = rel.getRelationClass().getInverseClass();
-
-      boolean found = false;
-
-      for(AgeRelationWritable irel : rel.getTargetObject().getRelations())
-      {
-       if(irel.getRelationClass().equals(invcls) && irel.getTargetObject().equals(obj))
-       {
-        found = true;
-        break;
-       }
-      }
-
-      if(!found)
-       rel.getTargetObject().createRelation(obj, invcls);
-     }
-
-    }
-
-    for(Map.Entry<AgeObjectWritable, AgeRelationClass> me : extNodeHash.entrySet())
-    {
-     obj.createRelation(me.getKey(), me.getValue());
-     me.getKey().createRelation(obj, me.getValue().getInverseClass());
-    }
-
-    extNodeHash.clear();
-   }
 
    String newSubmissionId = "SBM" + IdGenerator.getInstance().getStringId();
 
+   sbm.setId(newSubmissionId);
+   
+   saveSubmission(sbm);
+   
    submissionMap.put(newSubmissionId, sbm);
 
+   
+   for( AgeObjectWritable obj : sbm.getObjects() )
+    mainIndexMap.put(obj.getId(), obj);
+   
+   if( sbm.getExternalRelations() != null )
+   {
+    for( AgeExternalRelationWritable exr : sbm.getExternalRelations() )
+    {
+     AgeObjectWritable tgObj = mainIndexMap.get(exr.getTargetObjectId());
+     
+     if( tgObj == null )
+      throw new RelationResolveException(exr.getOrder(),exr.getSourceObject().getOrder(),"Can't resolve external relation: "+exr.getTargetObjectId());
+     
+     exr.setTargetObject(tgObj);
+    }
+   }
+   
    return newSubmissionId;
   }
   finally
@@ -226,11 +190,6 @@ public class SerializedStorage implements AgeStorageAdm
    dbLock.writeLock().unlock();
   }
 
- }
-
- private AgeObjectWritable getObjectById(String targetObjectId)
- {
-  return mainIndexMap.get(targetObjectId);
  }
 
  public void init(String initStr) throws StorageInstantiationException
@@ -371,11 +330,11 @@ public class SerializedStorage implements AgeStorageAdm
    oos.writeObject(sm);
    
    oos.close();
-
-   
   }
   catch(Exception e)
   {
+   sbmFile.delete();
+   
    throw new SubmissionStoreException("Can't store model: "+e.getMessage(), e);
   }
  }

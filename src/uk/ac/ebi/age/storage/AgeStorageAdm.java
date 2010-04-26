@@ -4,10 +4,11 @@ import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 import uk.ac.ebi.age.storage.exeption.ModelStoreException;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
+import uk.ac.ebi.age.storage.exeption.SubmissionStoreException;
 
 public interface AgeStorageAdm extends AgeStorage
 {
- String storeSubmission(SubmissionWritable sbm) throws StoreException;
+ String storeSubmission(SubmissionWritable sbm) throws RelationResolveException, SubmissionStoreException;
  
  void updateSemanticModel( SemanticModel sm ) throws ModelStoreException;
 

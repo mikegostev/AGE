@@ -18,21 +18,18 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.storage.TextIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
-import uk.ac.ebi.age.storage.index.TextValueExtractor;
 
 public class LuceneFullTextIndex implements TextIndex
 {
 // private static final String AGEOBJECTFIELD="AgeObject";
- private static final String TEXTFIELD="Text";
+ private String defaultFieldName;
  
- private IndexWriter iWriter;
  private Directory index = new RAMDirectory();
  private StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_30);
  
@@ -40,60 +37,46 @@ public class LuceneFullTextIndex implements TextIndex
  
  public LuceneFullTextIndex()
  {
-  try
-  {
-   iWriter = new IndexWriter(index, analyzer, true,
-     IndexWriter.MaxFieldLength.UNLIMITED);
-  }
-  catch(CorruptIndexException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
-  catch(LockObtainFailedException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
-  catch(IOException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
 
  }
 
- public void index(List<AgeObject> aol, TextValueExtractor extr)
- {
-  try
-  {
-   objectList=aol;
-   for(AgeObject ao : objectList )
-   {
-    Document doc = new Document();
-    doc.add(new Field(TEXTFIELD, extr.getValue(ao), Field.Store.NO, Field.Index.ANALYZED));
-    
-    iWriter.addDocument(doc);
-   }
-
-   iWriter.close();
-  }
-  catch(CorruptIndexException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
-  catch(IOException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
- }
+// public void index(List<AgeObject> aol, TextValueExtractor extr)
+// {
+//  try
+//  {
+//   IndexWriter iWriter = new IndexWriter(index, analyzer, true,
+//     IndexWriter.MaxFieldLength.UNLIMITED);
+//
+//   objectList=aol;
+//   for(AgeObject ao : objectList )
+//   {
+//    Document doc = new Document();
+//    doc.add(new Field(TEXTFIELD, extr.getValue(ao), Field.Store.NO, Field.Index.ANALYZED));
+//    
+//    iWriter.addDocument(doc);
+//   }
+//
+//   iWriter.close();
+//  }
+//  catch(CorruptIndexException e)
+//  {
+//   // TODO Auto-generated catch block
+//   e.printStackTrace();
+//  }
+//  catch(IOException e)
+//  {
+//   // TODO Auto-generated catch block
+//   e.printStackTrace();
+//  }
+// }
  
  public void index(List<AgeObject> aol, Collection<TextFieldExtractor> extf)
  {
   try
   {
+   IndexWriter iWriter = new IndexWriter(index, analyzer, true,
+     IndexWriter.MaxFieldLength.UNLIMITED);
+
    objectList=aol;
    for(AgeObject ao : objectList )
    {
@@ -106,6 +89,8 @@ public class LuceneFullTextIndex implements TextIndex
    }
 
    iWriter.close();
+   
+   defaultFieldName = extf.iterator().next().getName();
   }
   catch(CorruptIndexException e)
   {
@@ -126,7 +111,7 @@ public class LuceneFullTextIndex implements TextIndex
   Query q;
   try
   {
-   q = new QueryParser( Version.LUCENE_30, TEXTFIELD, analyzer).parse(query);
+   q = new QueryParser( Version.LUCENE_30, defaultFieldName, analyzer).parse(query);
 
    final IndexSearcher searcher = new IndexSearcher(index, true);
    

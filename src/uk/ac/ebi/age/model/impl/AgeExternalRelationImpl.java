@@ -13,14 +13,16 @@ public class AgeExternalRelationImpl extends AgeSemanticElementImpl implements A
  private AgeRelationClassPlug relClassPlug; 
  private String objId;
  private int order;
+ private AgeObjectWritable sourceObject;
  private transient AgeObjectWritable target;
  
- public AgeExternalRelationImpl(AgeRelationClass relClass, String id, SemanticModel sm)
+ public AgeExternalRelationImpl(AgeRelationClass relClass, AgeObjectWritable srcOb, String id, SemanticModel sm)
  {
   super(sm);
   
   relClassPlug = new AgeRelationClassPlugPluggable(relClass, sm);
   objId=id;
+  sourceObject=srcOb;
  }
 
  public AgeRelationClass getRelationClass()
@@ -31,6 +33,11 @@ public class AgeExternalRelationImpl extends AgeSemanticElementImpl implements A
  public AgeObjectWritable getTargetObject()
  {
   return target;
+ }
+ 
+ public AgeObjectWritable getSourceObject()
+ {
+  return sourceObject;
  }
 
  public String getTargetObjectId()

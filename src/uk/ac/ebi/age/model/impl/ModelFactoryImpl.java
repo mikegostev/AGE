@@ -88,9 +88,9 @@ public class ModelFactoryImpl extends ModelFactory
  }
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(String id, AgeRelationClass targetClass, SemanticModel sm)
+ public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, SemanticModel sm)
  {
-  return new AgeExternalRelationImpl(targetClass,id, sm);
+  return new AgeExternalRelationImpl(targetClass, sourceObj, id, sm);
  }
 
  @Override
