@@ -18,9 +18,9 @@ public class AgeSemanticElementImpl implements AgeSemanticElement
   return model;
  }
  
-// public SemanticModel setSemanticModel()
-// {
-//  return model;
-// }
+ public void setSemanticModel( SemanticModel m )
+ {
+  model=m;
+ }
 
 }

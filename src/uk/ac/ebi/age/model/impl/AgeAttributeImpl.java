@@ -2,12 +2,12 @@ package uk.ac.ebi.age.model.impl;
 
 import java.io.Serializable;
 
-import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 
-public abstract class AgeAttributeImpl extends AgeSemanticElementImpl implements Serializable, AgeAttribute
+public abstract class AgeAttributeImpl extends AgeSemanticElementImpl implements AgeAttributeWritable, Serializable
 {
  private AgeAttributeClassPlugPluggable attrClassPlug;
  private int order; 
@@ -43,5 +43,10 @@ public abstract class AgeAttributeImpl extends AgeSemanticElementImpl implements
  public int getOrder()
  {
   return order;
+ }
+ 
+ public void resetModel()
+ {
+  attrClassPlug.unplug();
  }
 }

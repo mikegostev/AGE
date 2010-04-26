@@ -50,4 +50,10 @@ class AgeRelationImpl extends AgeSemanticElementImpl implements AgeRelationWrita
   return inferred;
  }
 
+ @Override
+ public void resetModel()
+ {
+  relClassPlug.unplug();
+ }
+
 }

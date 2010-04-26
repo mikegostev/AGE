@@ -206,4 +206,10 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.getDefinedAgeAttributeClass( attrClass );
  }
 
+ @Override
+ public void setMasterModel(SemanticModel newModel)
+ {
+  masterModel = newModel;
+ }
+
 }

@@ -2,6 +2,8 @@ package uk.ac.ebi.age.model;
 
 import java.util.Collection;
 
+import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
+
 
 public interface Submission
 {
@@ -13,5 +15,5 @@ public interface Submission
  
  ContextSemanticModel getContextSemanticModel();
  
- Collection<AgeExternalRelation> getExternalRelations();
+ Collection<AgeExternalRelationWritable> getExternalRelations();
 }

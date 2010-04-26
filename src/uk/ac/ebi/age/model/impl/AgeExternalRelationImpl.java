@@ -48,5 +48,17 @@ public class AgeExternalRelationImpl extends AgeSemanticElementImpl implements A
   order=ord;
  }
 
+ @Override
+ public void setTargetObject(AgeObjectWritable obj)
+ {
+  target = obj;
+ }
+
+ @Override
+ public void resetModel()
+ {
+  relClassPlug.unplug();
+ }
+
 }
 

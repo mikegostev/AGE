@@ -11,4 +11,6 @@ public interface AgeAttributeWritable extends AgeAttribute
  void finalizeValue();
 
  void setOrder(int col);
+
+ void resetModel();
 }

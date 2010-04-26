@@ -133,4 +133,27 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
   this.subm = subm;
  }
 
+ public void changeModel( SemanticModel newModel )
+ {
+  
+ }
+
+ @Override
+ public void resetModel()
+ {
+  ageClassPlug.unplug();
+
+  for( AgeAttributeWritable attr : attributes.values() )
+  {
+   attr.resetModel();
+  }
+  
+  for( Collection<AgeRelationWritable> relColl : relations.values() )
+  {
+   for( AgeRelationWritable rel : relColl )
+    rel.resetModel();
+  }
+
+ }
+
 }

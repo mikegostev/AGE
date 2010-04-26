@@ -1,6 +1,8 @@
 package uk.ac.ebi.age.model;
 
-public interface AgeRelationClassPlug
+import uk.ac.ebi.age.util.Plug;
+
+public interface AgeRelationClassPlug extends Plug
 {
  AgeRelationClass getAgeRelationClass();
 }

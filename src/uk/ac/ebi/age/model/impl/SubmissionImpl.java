@@ -5,9 +5,10 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
-import uk.ac.ebi.age.model.AgeExternalRelation;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.ContextSemanticModel;
+import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
@@ -20,7 +21,7 @@ public class SubmissionImpl  implements SubmissionWritable
 // private Collection<AgeClass> classes = new ArrayList<AgeClass>(10);
  private Collection<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
  private ContextSemanticModel model;
- private Collection<AgeExternalRelation> extRels = new ArrayList<AgeExternalRelation>(10);
+ private Collection<AgeExternalRelationWritable> extRels ;
 
 // private Map<AgeRelationClass, Collection<AgeRelationWritable>> rels ;
 // private Collection<AgeRelationWritable> relLst;
@@ -73,8 +74,13 @@ public class SubmissionImpl  implements SubmissionWritable
   
   for( AgeRelation rel : obj.getRelations())
   {
-   if( rel instanceof AgeExternalRelation )
-    extRels.add((AgeExternalRelation)rel);
+   if( rel instanceof AgeExternalRelationWritable )
+   {
+    if( extRels == null )
+     extRels = new ArrayList<AgeExternalRelationWritable>(10);
+    
+    extRels.add((AgeExternalRelationWritable)rel);
+   }
   }
  }
 
@@ -122,11 +128,20 @@ public class SubmissionImpl  implements SubmissionWritable
 
 
  @Override
- public Collection<AgeExternalRelation> getExternalRelations()
+ public Collection<AgeExternalRelationWritable> getExternalRelations()
  {
   return extRels;
  }
 
+ @Override
+ public void setMasterModel( SemanticModel newModel )
+ {
+  model.setMasterModel( newModel );
+  
+  for( AgeObjectWritable o : objects )
+   o.resetModel();
+ }
+ 
 // public Collection<AgeRelationAlt> getRelations()
 // {
 //  return relLst;

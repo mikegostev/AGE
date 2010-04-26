@@ -4,9 +4,8 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.SemanticModel;
-import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 
-public class AgeBooleanAttributeImpl extends AgeAttributeImpl implements AgeAttributeWritable
+public class AgeBooleanAttributeImpl extends AgeAttributeImpl 
 {
  private boolean value; 
 
