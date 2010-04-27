@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model.impl;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -7,10 +8,11 @@ import java.util.LinkedList;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeClassWritable;
 
 import com.pri.util.collection.CollectionsUnion;
 
-class AgeClassImpl extends AgeAbstractClassImpl implements AgeClass 
+class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Serializable 
 {
  private interface Collector<T>
  {
@@ -18,7 +20,6 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClass
  }
  
  private String name;
- private boolean custom=false;
  private Collection<AgeClass> subClasses = new LinkedList<AgeClass>();
  private Collection<AgeClass> superClasses = new LinkedList<AgeClass>();
  private Collection<AgeRestriction> restrictions = new LinkedList<AgeRestriction>();
@@ -105,7 +106,7 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClass
 
  public boolean isCustom()
  {
-  return custom;
+  return false;
  }
 
  public Collection<AgeRestriction> getObjectRestrictions()

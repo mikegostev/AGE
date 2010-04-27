@@ -1,11 +1,13 @@
 package uk.ac.ebi.age.model.impl;
 
+import java.io.Serializable;
+
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
-class AgeRelationImpl extends AgeSemanticElementImpl implements AgeRelationWritable
+class AgeRelationImpl extends AgeSemanticElementImpl implements AgeRelationWritable, Serializable
 {
  private AgeRelationClassPlugPluggable relClassPlug;
  private AgeObjectWritable target;

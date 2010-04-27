@@ -6,12 +6,8 @@ public interface AgeAttributeClass extends AgeClassProperty, AgeSemanticElement,
 
  String getName();
 
- void addSubClass(AgeAttributeClass sbcls);
-
  boolean isCustom();
- void setCustom(boolean b);
 
  AgeClass getOwningClass();
- void setOwningClass(AgeClass cls);
 
 }

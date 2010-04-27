@@ -261,9 +261,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
      AgeRelationClass relCls = sm.getCustomAgeRelationClass(attHd.getName());
      
      if( relCls == null )
-      relCls = sm.createAgeRelationClass(attHd.getName());
-     
-     relCls.addRangeClass(rangeClass);
+      relCls = sm.createCustomAgeRelationClass(attHd.getName(), rangeClass, blkCls);
      
      convs.add( new RelationConvertor(attHd,relCls,classMap.get(rangeClass)) );
     }

@@ -13,7 +13,9 @@ public interface ContextSemanticModel extends SemanticModel
  AgeRelationClass getCustomAgeRelationClass(String name);
  AgeAttributeClass getCustomAgeAttributeClass(String name, AgeClass blkCls);
 
+ AgeClass createCustomAgeClass(String name, String pfx);
  AgeAttributeClass createCustomAgeAttributeClass(String name, DataType type, AgeClass blkCls);
+ AgeRelationClass createCustomAgeRelationClass(String name, AgeClass range, AgeClass owner);
 
  AgeClassProperty getDefinedAgeClassProperty( String name );
 

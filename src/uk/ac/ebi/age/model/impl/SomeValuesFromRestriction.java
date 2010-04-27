@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model.impl;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAbstractObject;
@@ -10,7 +11,7 @@ import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.RestrictionException;
 
-public class SomeValuesFromRestriction implements AgeRestriction
+public class SomeValuesFromRestriction implements AgeRestriction, Serializable
 {
  private AgeClass sourceClass;
  private AgeRelationClass relationClass;

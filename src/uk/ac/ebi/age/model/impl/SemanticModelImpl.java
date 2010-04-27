@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model.impl;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -44,14 +45,17 @@ import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelException;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
+import uk.ac.ebi.age.model.writable.AgeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
+import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
-public class SemanticModelImpl implements SemanticModel
+public class SemanticModelImpl implements SemanticModel, Serializable
 {
- private static Log log;
+ private static transient Log log;
  
 // {
 //  assert (log=log!=null?log:LogFactory.getLog(this.getClass())) != null;
@@ -92,48 +96,32 @@ public class SemanticModelImpl implements SemanticModel
   void addSuperClass(T cl, T spcls);
  }
  
-// private static class ClassLink
-// {
-//  AgeClass ageClass;
-//  OWLClass owlClass;
-// 
-//  ClassLink(AgeClass a, OWLClass o)
-//  {
-//   ageClass = a;
-//   owlClass = o;
-//  }
-// }
-//
-// private static class RelationLink
-// {
-//  AgeRelationClass ageRelation;
-//  OWLObjectProperty owlProperty;
-// 
-//  RelationLink(AgeRelationClass a, OWLObjectProperty o)
-//  {
-//   ageRelation = a;
-//   owlProperty = o;
-//  }
-// }
+ private class OWLParserHelper
+ {
+  Map<String,Link<AgeClassWritable,OWLClass>> classSourceMap = new TreeMap<String, Link<AgeClassWritable,OWLClass>>();
+  Map<String,Link<AgeAttributeClassWritable,OWLClass>> attributeSourceMap = new TreeMap<String, Link<AgeAttributeClassWritable,OWLClass>>();
+  Map<String,Link<AgeRelationClassWritable,OWLObjectProperty>> relationSourceMap = new TreeMap<String, Link<AgeRelationClassWritable,OWLObjectProperty>>();
 
- private Map<String,Link<AgeClass,OWLClass>> classSourceMap = new TreeMap<String, Link<AgeClass,OWLClass>>();
- private Map<String,Link<AgeAttributeClass,OWLClass>> attributeSourceMap = new TreeMap<String, Link<AgeAttributeClass,OWLClass>>();
- private Map<String,Link<AgeRelationClass,OWLObjectProperty>> relationSourceMap = new TreeMap<String, Link<AgeRelationClass,OWLObjectProperty>>();
+  OWLOntology ontology;
+  OWLClass thing;
+
+ }
+
+ 
+ 
  
  private Map<String,AgeClass> classMap = new TreeMap<String, AgeClass>();
  private Map<String,AgeAttributeClass> attributeMap = new TreeMap<String, AgeAttributeClass>();
  private Map<String,AgeRelationClass> relationMap = new TreeMap<String, AgeRelationClass>();
 
  
- private AgeClass ageClassRoot ;
+ private AgeClassWritable ageClassRoot ;
  private AgeAttributeClass ageAttrRoot;
  
  private AgeRelationClass attributeAttachmentRelation;
  
  private ModelFactory modelFactory;
 
- private OWLOntology ontology;
- private OWLClass thing;
  
  
  public SemanticModelImpl(ModelFactory modelFactory)
@@ -149,21 +137,22 @@ public class SemanticModelImpl implements SemanticModel
 
   this.modelFactory=modelFactory;
   
+  final OWLParserHelper owlHlp = new OWLParserHelper();
   
   try
   {
-   ontology = manager.loadOntologyFromOntologyDocument(documentIRI);
+   owlHlp.ontology = manager.loadOntologyFromOntologyDocument(documentIRI);
 
 //   Set<OWLClass> classRootSet, attrRootSet;
    Set<OWLObjectProperty> relationRootSet;
    
-   thing = df.getOWLThing();
+   owlHlp.thing = df.getOWLThing();
    
    OWLClass classRoot=null, attributeRoot=null;
    OWLObjectProperty attrProperty=null;
    String relationRoot=null;
    
-   for( OWLAnnotation ant : ontology.getAnnotations() )
+   for( OWLAnnotation ant : owlHlp.ontology.getAnnotations() )
    {
     System.out.println( ant.getProperty().getIRI()+"="+((OWLTypedLiteral)ant.getValue()).getLiteral() );
    
@@ -189,26 +178,26 @@ public class SemanticModelImpl implements SemanticModel
 
    }
  
-   ageClassRoot = reproduceClassStructure(classRoot, defaultClassRootName, classSourceMap, new HierHlp<AgeClass>(){
+   ageClassRoot = reproduceClassStructure(classRoot, defaultClassRootName, owlHlp.classSourceMap, new HierHlp<AgeClassWritable>(){
 
-    public void addSubClass(AgeClass cl, AgeClass sbcls)
+    public void addSubClass(AgeClassWritable cl, AgeClassWritable sbcls)
     {
      cl.addSubClass(sbcls);
     }
 
-    public void addSuperClass(AgeClass cl, AgeClass spcls)
+    public void addSuperClass(AgeClassWritable cl, AgeClassWritable spcls)
     {
      cl.addSubClass(spcls);
     }
 
-    public AgeClass create(String name, OWLClass oCls)
+    public AgeClassWritable create(String name, OWLClass oCls)
     {
      String pfx=null;
      
      if( oCls != null )
      {
 
-      for(OWLAnnotation annot : oCls.getAnnotations(ontology))
+      for(OWLAnnotation annot : oCls.getAnnotations(owlHlp.ontology))
       {
        if(PREFIX_ANNOTATION.equals(annot.getProperty().getIRI().toString()))
        {
@@ -218,9 +207,10 @@ public class SemanticModelImpl implements SemanticModel
       }
      }
      return createAgeClass(name, pfx);
-    }});
+    }
+   }, owlHlp );
 
-   String attrAtRelName = getLabel(attrProperty);
+   String attrAtRelName = getLabel(attrProperty, owlHlp );
    if( attrAtRelName == null )
     attrAtRelName = attrProperty.getIRI().getFragment();
    if( attrAtRelName == null )
@@ -228,59 +218,59 @@ public class SemanticModelImpl implements SemanticModel
    
    attributeAttachmentRelation = createAgeRelationClass(attrAtRelName);
    
-   ageAttrRoot = reproduceClassStructure(attributeRoot, defaultAttributeRootName, attributeSourceMap, new HierHlp<AgeAttributeClass>(){
+   ageAttrRoot = reproduceClassStructure(attributeRoot, defaultAttributeRootName, owlHlp.attributeSourceMap, new HierHlp<AgeAttributeClassWritable>(){
 
-    public void addSubClass(AgeAttributeClass cl, AgeAttributeClass sbcls)
+    public void addSubClass(AgeAttributeClassWritable cl, AgeAttributeClassWritable sbcls)
     {
      cl.addSubClass(sbcls);
     }
 
-    public void addSuperClass(AgeAttributeClass cl, AgeAttributeClass spcls)
+    public void addSuperClass(AgeAttributeClassWritable cl, AgeAttributeClassWritable spcls)
     {
      cl.addSubClass(spcls);
     }
 
-    public AgeAttributeClass create(String name, OWLClass oCls)
+    public AgeAttributeClassWritable create(String name, OWLClass oCls)
     {
-     return createAgeAttributeClass(name, getDatatype(oCls) );
+     return createAgeAttributeClass(name, getDatatype(oCls, owlHlp ) );
     }
-   });
+   }, owlHlp );
 
-   AgeRelationClass ageAttrRelationClass = createAgeRelationClass(attrProperty.getIRI().toString());
+   AgeRelationClassWritable ageAttrRelationClass = createAgeRelationClass(attrProperty.getIRI().toString());
    
    
    String rootRelName=defaultRelationRootName;
    relationRootSet = new HashSet<OWLObjectProperty>();
 
-   AgeRelationClass ageRelRoot = null;
+   AgeRelationClassWritable ageRelRoot = null;
    
-   for( OWLObjectProperty op : ontology.getObjectPropertiesInSignature() )
+   for( OWLObjectProperty op : owlHlp.ontology.getObjectPropertiesInSignature() )
    {
     if( op.getIRI().equals(attrProperty.getIRI() ) )
      continue;
     
     if( op.getIRI().toString().equals(relationRoot) )
     {
-     rootRelName = getLabel(op);
+     rootRelName = getLabel(op, owlHlp );
      if( rootRelName == null )
       rootRelName = op.getIRI().getFragment();
      if( rootRelName == null )
       rootRelName = op.getIRI().toString();
      
      relationRootSet.clear();
-     for( OWLObjectPropertyExpression pexp : op.getSubProperties(ontology) )
+     for( OWLObjectPropertyExpression pexp : op.getSubProperties(owlHlp.ontology) )
      {
       if( pexp instanceof OWLObjectProperty )
        relationRootSet.add((OWLObjectProperty)pexp);
      }
      
      ageRelRoot=createAgeRelationClass(rootRelName);
-     relationSourceMap.put(relationRoot, new Link<AgeRelationClass,OWLObjectProperty>( ageRelRoot, op ));
+     owlHlp.relationSourceMap.put(relationRoot, new Link<AgeRelationClassWritable,OWLObjectProperty>( ageRelRoot, op ));
      
      break;
     }
     
-    if( op.getSuperProperties(ontology).size() == 0 )
+    if( op.getSuperProperties(owlHlp.ontology).size() == 0 )
      relationRootSet.add(op);
    }
 
@@ -290,42 +280,42 @@ public class SemanticModelImpl implements SemanticModel
    
    for( OWLObjectProperty opr : relationRootSet )
    {
-    AgeRelationClass sbClass = makeRelationsBranch(opr) ;
+    AgeRelationClass sbClass = makeRelationsBranch(opr, owlHlp ) ;
     
     if( sbClass != null )
      ageRelRoot.addSubClass( sbClass );
    }
    
-   createInverseRelations();
+   createInverseRelations( owlHlp );
    
-   Map<String, Link<AgeRelationClass,OWLObjectProperty>> attrPropMap = 
+   Map<String, Link<AgeRelationClassWritable,OWLObjectProperty>> attrPropMap = 
     Collections.singletonMap(
       attrProperty.getIRI().toString(),
-      new Link<AgeRelationClass,OWLObjectProperty>(ageAttrRelationClass, attrProperty));
+      new Link<AgeRelationClassWritable,OWLObjectProperty>(ageAttrRelationClass, attrProperty));
    
-   for( Link<AgeClass,OWLClass> lnk : classSourceMap.values() )
+   for( Link<AgeClassWritable,OWLClass> lnk : owlHlp.classSourceMap.values() )
    {
-    for( OWLClassExpression clexpr : lnk.owlEl.getEquivalentClasses( ontology ) )
+    for( OWLClassExpression clexpr : lnk.owlEl.getEquivalentClasses( owlHlp.ontology ) )
     {
-     AgeRestriction rest = convertToRestriction( lnk.ageEl, clexpr, relationSourceMap, classSourceMap, 0 );
+     AgeRestriction rest = convertToRestriction( lnk.ageEl, clexpr, owlHlp.relationSourceMap, owlHlp.classSourceMap, 0 );
      
      if( rest != null )
       lnk.ageEl.addObjectRestriction(rest);
      
-     rest = convertToRestriction( lnk.ageEl, clexpr, attrPropMap, attributeSourceMap, 0);
+     rest = convertToRestriction( lnk.ageEl, clexpr, attrPropMap, owlHlp.attributeSourceMap, 0);
 
      if( rest != null )
       lnk.ageEl.addAttributeRestriction( rest );
     }
 
-    for( OWLClassExpression clexpr : lnk.owlEl.getSuperClasses( ontology ) )
+    for( OWLClassExpression clexpr : lnk.owlEl.getSuperClasses( owlHlp.ontology ) )
     {
-     AgeRestriction rest = convertToRestriction( lnk.ageEl, clexpr, relationSourceMap, classSourceMap, 0 );
+     AgeRestriction rest = convertToRestriction( lnk.ageEl, clexpr, owlHlp.relationSourceMap, owlHlp.classSourceMap, 0 );
      
      if( rest != null )
       lnk.ageEl.addObjectRestriction(rest);
 
-     rest = convertToRestriction( lnk.ageEl, clexpr, attrPropMap, attributeSourceMap, 0);
+     rest = convertToRestriction( lnk.ageEl, clexpr, attrPropMap, owlHlp.attributeSourceMap, 0);
 
      if( rest != null )
       lnk.ageEl.addAttributeRestriction( rest );
@@ -340,13 +330,13 @@ public class SemanticModelImpl implements SemanticModel
    throw new ModelException(e.getMessage(),e);
   }
 
-  for( Link<AgeClass,OWLClass> l : classSourceMap.values() )
+  for( Link<AgeClassWritable,OWLClass> l : owlHlp.classSourceMap.values() )
    classMap.put(l.ageEl.getName(), l.ageEl);
 
-  for( Link<AgeAttributeClass,OWLClass> l : attributeSourceMap.values() )
+  for( Link<AgeAttributeClassWritable,OWLClass> l : owlHlp.attributeSourceMap.values() )
    attributeMap.put(l.ageEl.getName(), l.ageEl);
 
-  for( Link<AgeRelationClass,OWLObjectProperty> l : relationSourceMap.values() )
+  for( Link<AgeRelationClassWritable,OWLObjectProperty> l : owlHlp.relationSourceMap.values() )
    relationMap.put(l.ageEl.getName(), l.ageEl);
 
   
@@ -355,14 +345,14 @@ public class SemanticModelImpl implements SemanticModel
  
  
 
- private void createInverseRelations()
+ private void createInverseRelations( OWLParserHelper owlHlp )
  {
-  for(Link<AgeRelationClass, OWLObjectProperty> l : relationSourceMap.values())
+  for(Link<AgeRelationClassWritable, OWLObjectProperty> l : owlHlp.relationSourceMap.values())
   {
    if(l.ageEl.getInverseClass() != null)
     continue;
 
-   Set<OWLObjectPropertyExpression> invset = l.owlEl.getInverses(ontology);
+   Set<OWLObjectPropertyExpression> invset = l.owlEl.getInverses(owlHlp.ontology);
    
    if( invset == null || invset.size() == 0 )
     continue;
@@ -371,7 +361,7 @@ public class SemanticModelImpl implements SemanticModel
    
    OWLObjectProperty invProp = invset.iterator().next().asOWLObjectProperty();
 
-   Link<AgeRelationClass, OWLObjectProperty> invp = relationSourceMap.get(invProp.getIRI().toString());
+   Link<AgeRelationClassWritable, OWLObjectProperty> invp = owlHlp.relationSourceMap.get(invProp.getIRI().toString());
 
    if(invp != null)
    {
@@ -380,8 +370,8 @@ public class SemanticModelImpl implements SemanticModel
    }
    else
    {
-    AgeRelationClass irc = createAgeRelationClass("!" + l.ageEl.getName());
-    irc.setDefined(false);
+    AgeRelationClassWritable irc = createAgeRelationClass("!" + l.ageEl.getName());
+    irc.setImplicit(true);
 
     l.ageEl.setInverseClass(irc);
     irc.setInverseClass(l.ageEl);
@@ -391,13 +381,13 @@ public class SemanticModelImpl implements SemanticModel
 
 
 
- private <T> T reproduceClassStructure(OWLClass classRoot, String defRootName, Map<String, Link<T,OWLClass>> sourceMap, HierHlp<T> hhlp) throws ModelException
+ private <T> T reproduceClassStructure(OWLClass classRoot, String defRootName, Map<String, Link<T,OWLClass>> sourceMap, HierHlp<T> hhlp, OWLParserHelper owlHlp) throws ModelException
  {
   Set<OWLClass> classRootSet = new HashSet<OWLClass>();
   
   if( classRoot != null )
   {
-   for( OWLClassExpression supexp :  classRoot.getSubClasses(ontology) )
+   for( OWLClassExpression supexp :  classRoot.getSubClasses(owlHlp.ontology) )
    {
     if( supexp instanceof OWLClass )
      classRootSet.add((OWLClass)supexp);
@@ -405,18 +395,18 @@ public class SemanticModelImpl implements SemanticModel
   }
   else
   {
-   for( OWLClass cls : ontology.getClassesInSignature() )
+   for( OWLClass cls : owlHlp.ontology.getClassesInSignature() )
    {
-    Set<OWLClassExpression> supers = cls.getSuperClasses(ontology);
+    Set<OWLClassExpression> supers = cls.getSuperClasses(owlHlp.ontology);
     
-    if( cls.equals(thing) )
+    if( cls.equals(owlHlp.thing) )
      continue;
     
     if( supers.size() == 0 )
      classRootSet.add(cls);
     else if( supers.size() == 1 )
     {
-     if( supers.iterator().next().equals(thing) )
+     if( supers.iterator().next().equals(owlHlp.thing) )
       classRootSet.add(cls);
     }
      
@@ -427,7 +417,7 @@ public class SemanticModelImpl implements SemanticModel
   
   if( classRoot != null )
   {
-   rootClassName=getLabel(classRoot);
+   rootClassName=getLabel(classRoot, owlHlp );
    
    if( rootClassName == null )
     rootClassName=classRoot.getIRI().getFragment();
@@ -443,7 +433,7 @@ public class SemanticModelImpl implements SemanticModel
   
   for( OWLClass cls :  classRootSet )
   {
-   T sbCls = makeClassesBranchT(cls, sourceMap, hhlp );
+   T sbCls = makeClassesBranchT(cls, sourceMap, hhlp, owlHlp  );
    
    hhlp.addSubClass(ageClassRoot,sbCls);
   }
@@ -518,8 +508,8 @@ public class SemanticModelImpl implements SemanticModel
  
  */ 
  
- private <T extends AgeAbstractClass> AgeRestriction convertToRestriction(AgeClass srcClas, OWLClassExpression clexpr, 
-   Map<String, Link<AgeRelationClass,OWLObjectProperty>> relMap, Map<String, Link<T,OWLClass>> domainMap, int level)
+ private <T extends AgeAbstractClass> AgeRestriction convertToRestriction(AgeClassWritable srcClas, OWLClassExpression clexpr, 
+   Map<String, Link<AgeRelationClassWritable,OWLObjectProperty>> relMap, Map<String, Link<T,OWLClass>> domainMap, int level)
  {
   
   log.debug("Converting (class: '"+srcClas+"') ("+clexpr+") to a restriction");
@@ -548,7 +538,7 @@ public class SemanticModelImpl implements SemanticModel
   {
    OWLObjectProperty prop = null;
    
-   Link<AgeRelationClass,OWLObjectProperty> rlnk = null;
+   Link<AgeRelationClassWritable,OWLObjectProperty> rlnk = null;
 
    OWLQuantifiedRestriction<?,?> restr = (OWLQuantifiedRestriction<?,?>)clexpr;
    
@@ -686,9 +676,9 @@ public class SemanticModelImpl implements SemanticModel
  }
 
  
- private <T> T makeClassesBranchT(OWLClass oobj, Map<String, Link<T,OWLClass>> sourceMap, HierHlp<T> hhlp) throws ModelException
+ private <T> T makeClassesBranchT(OWLClass oobj, Map<String, Link<T,OWLClass>> sourceMap, HierHlp<T> hhlp, OWLParserHelper owlHlp) throws ModelException
  {
-  String className = getLabel(oobj);
+  String className = getLabel( oobj, owlHlp );
   
   if( className == null )
    className = oobj.getIRI().getFragment();
@@ -700,7 +690,7 @@ public class SemanticModelImpl implements SemanticModel
   T cls = hhlp.create(className, oobj);
   
  
-  for( OWLClassExpression opexpr : oobj.getSubClasses( ontology ) )
+  for( OWLClassExpression opexpr : oobj.getSubClasses( owlHlp.ontology ) )
   {
    if( opexpr instanceof OWLClass )
    {
@@ -709,7 +699,7 @@ public class SemanticModelImpl implements SemanticModel
     T subcl=null;
     
     if( subLnk == null )
-     subcl = makeClassesBranchT( (OWLClass) opexpr,sourceMap, hhlp );
+     subcl = makeClassesBranchT( (OWLClass) opexpr,sourceMap, hhlp, owlHlp );
     else
      subcl=subLnk.ageEl;
     
@@ -765,9 +755,9 @@ public class SemanticModelImpl implements SemanticModel
  }
 */
  
- private String getLabel( OWLEntity ent )
+ private String getLabel( OWLEntity ent, OWLParserHelper owlHlp )
  {
-  for( OWLAnnotation annt : ent.getAnnotations(ontology) )
+  for( OWLAnnotation annt : ent.getAnnotations(owlHlp.ontology) )
   {
    if( annt.getProperty().isLabel() )
     return ((OWLTypedLiteral)annt.getValue()).getLiteral();
@@ -776,9 +766,9 @@ public class SemanticModelImpl implements SemanticModel
   return null;
  }
  
- private AgeRelationClass makeRelationsBranch(OWLObjectProperty opr) throws ModelException
+ private AgeRelationClassWritable makeRelationsBranch(OWLObjectProperty opr, OWLParserHelper owlHlp ) throws ModelException
  {
-  String relName = getLabel(opr);
+  String relName = getLabel(opr, owlHlp);
   
   if( relName == null )
    relName = opr.getIRI().getFragment();
@@ -790,18 +780,18 @@ public class SemanticModelImpl implements SemanticModel
   
   boolean suitable=true;
   
-  AgeRelationClass ageRelCls = createAgeRelationClass(relName);
+  AgeRelationClassWritable ageRelCls = createAgeRelationClass(relName);
   
   boolean hasClassInSet=false;
   
-  for( OWLClassExpression clexpr : opr.getDomains(ontology) )
+  for( OWLClassExpression clexpr : opr.getDomains(owlHlp.ontology) )
   {
    if( clexpr instanceof OWLClass )
    {
     hasClassInSet = true;
     OWLClass dmainCls = (OWLClass)clexpr;
     
-    for(Link<AgeClass, OWLClass> link : classSourceMap.values() )
+    for(Link<AgeClassWritable, OWLClass> link : owlHlp.classSourceMap.values() )
     {
      if( link.owlEl.equals(dmainCls) ) 
      {
@@ -825,14 +815,14 @@ public class SemanticModelImpl implements SemanticModel
   {
    hasClassInSet = false;
 
-   for(OWLClassExpression clexpr : opr.getRanges(ontology))
+   for(OWLClassExpression clexpr : opr.getRanges(owlHlp.ontology))
    {
     if(clexpr instanceof OWLClass)
     {
      hasClassInSet = true;
      OWLClass rngCls = (OWLClass) clexpr;
 
-     for(Link<AgeClass, OWLClass> link : classSourceMap.values())
+     for(Link<AgeClassWritable, OWLClass> link : owlHlp.classSourceMap.values())
      {
       if( link.owlEl.equals(rngCls) )
       {
@@ -849,11 +839,11 @@ public class SemanticModelImpl implements SemanticModel
     suitable = false;
   }
   
-  for(OWLObjectPropertyExpression opexpr : opr.getSubProperties(ontology))
+  for(OWLObjectPropertyExpression opexpr : opr.getSubProperties(owlHlp.ontology))
   {
    if(opexpr instanceof OWLObjectProperty)
    {
-    AgeRelationClass subCl = makeRelationsBranch((OWLObjectProperty) opexpr);
+    AgeRelationClassWritable subCl = makeRelationsBranch((OWLObjectProperty) opexpr, owlHlp );
     
     if( subCl != null )
     {
@@ -866,23 +856,23 @@ public class SemanticModelImpl implements SemanticModel
   if( !suitable &&( ageRelCls.getSubClasses() == null || ageRelCls.getSubClasses().size() == 0 ) )
    return null;
    
-  relationSourceMap.put(opr.getIRI().toString(), new Link<AgeRelationClass,OWLObjectProperty>( ageRelCls, opr) );
+  owlHlp.relationSourceMap.put(opr.getIRI().toString(), new Link<AgeRelationClassWritable,OWLObjectProperty>( ageRelCls, opr) );
   
   return ageRelCls;
  }
 
- private boolean isTheFirstSubclassOrClassOfTheSecond(OWLClass subClass, OWLClass superCls)
+ private boolean isTheFirstSubclassOrClassOfTheSecond(OWLClass subClass, OWLClass superCls, OWLParserHelper owlHlp )
  {
   if( subClass.equals(superCls) )
    return true;
 
-  if( superCls.equals(thing) )
+  if( superCls.equals(owlHlp.thing) )
    return true;
   
-  for( OWLClassExpression expr : subClass.getSuperClasses(ontology) )
+  for( OWLClassExpression expr : subClass.getSuperClasses(owlHlp.ontology) )
   {
    if( expr instanceof OWLClass )
-    if( isTheFirstSubclassOrClassOfTheSecond((OWLClass)expr, superCls) )
+    if( isTheFirstSubclassOrClassOfTheSecond((OWLClass)expr, superCls,owlHlp) )
      return true;
   }
   
@@ -914,7 +904,7 @@ public class SemanticModelImpl implements SemanticModel
   return getModelFactory().createAgeObject(id, cls, this);
  }
 
- public AgeRelationClass createAgeRelationClass(String name)
+ public AgeRelationClassWritable createAgeRelationClass(String name)
  {
   return getModelFactory().createAgeRelationClass(name, this);
  }
@@ -930,12 +920,12 @@ public class SemanticModelImpl implements SemanticModel
   return modelFactory.createAgeAttribute(obj, attrClass, this);
  }
 
- public AgeAttributeClass createAgeAttributeClass(String name, DataType type)
+ public AgeAttributeClassWritable createAgeAttributeClass(String name, DataType type)
  {
   return modelFactory.createAgeAttributeClass(name, type, this);
  }
 
- public AgeClass createAgeClass(String name, String pfx)
+ public AgeClassWritable createAgeClass(String name, String pfx)
  {
   return modelFactory.createAgeClass(name, pfx, this);
  }
@@ -951,14 +941,14 @@ public class SemanticModelImpl implements SemanticModel
  }
 
 
- private DataType getDatatype(OWLClass oCls)
+ private DataType getDatatype(OWLClass oCls, OWLParserHelper owlHlp )
  {
   if( oCls == null )
    return null;
   
   try
   {
-   for(OWLAnnotation annot : oCls.getAnnotations(ontology))
+   for(OWLAnnotation annot : oCls.getAnnotations(owlHlp.ontology))
    {
     if(DATATYPE_ANNOTATION.equals(annot.getProperty().getIRI().toString()))
      return DataType.valueOf(((OWLTypedLiteral) annot.getValue()).getLiteral());

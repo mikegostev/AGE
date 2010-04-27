@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model.impl;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -12,7 +13,7 @@ import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
-public class SubmissionImpl  implements SubmissionWritable
+public class SubmissionImpl  implements SubmissionWritable, Serializable
 {
 // private AgeClass submissionClass = getModelFactoy.createAgeClass("$submission", "SBM", null);
 // private AgeRelationClass submissionRelationClass ;

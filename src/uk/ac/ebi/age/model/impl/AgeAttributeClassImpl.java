@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model.impl;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -7,16 +8,15 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 
-public class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttributeClass
+public class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttributeClassWritable, Serializable
 {
  private DataType dataType;
  private String name;
 
  private Collection<AgeAttributeClass> subClasses = new LinkedList<AgeAttributeClass>();
  private Collection<AgeAttributeClass> superClasses = new LinkedList<AgeAttributeClass>();
- private boolean custom;
- private AgeClass owner;
 
  
  public AgeAttributeClassImpl(String name, DataType type, SemanticModel sm)
@@ -77,22 +77,12 @@ public class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAt
 
  public AgeClass getOwningClass()
  {
-  return owner;
+  return null;
  }
 
  public boolean isCustom()
  {
-  return custom;
- }
-
- public void setCustom(boolean b)
- {
-  custom=b;
- }
-
- public void setOwningClass(AgeClass cls)
- {
-  owner=cls;
+  return false;
  }
 
 }

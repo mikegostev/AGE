@@ -1,13 +1,15 @@
 package uk.ac.ebi.age.model.impl;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedList;
 
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 
-class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationClass
+class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationClassWritable, Serializable
 {
  private String name;
  private Collection<AgeClass> domain = new LinkedList<AgeClass>();
@@ -15,8 +17,7 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  private Collection<AgeRelationClass> subclasses = new LinkedList<AgeRelationClass>();
  private Collection<AgeRelationClass> superclasses = new LinkedList<AgeRelationClass>();
 
- private boolean custom=false;
- private boolean defined=false;
+ private boolean implicit=false;
  private AgeRelationClass inverse;
 
  public String getName()
@@ -93,13 +94,9 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
 
  public boolean isCustom()
  {
-  return custom;
+  return false;
  }
 
- public void setCustom(boolean b)
- {
-  custom=b;
- }
 
  @Override
  public AgeRelationClass getInverseClass()
@@ -107,11 +104,6 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
   return inverse;
  }
 
- @Override
- public boolean isDefined()
- {
-  return defined;
- }
 
  @Override
  public boolean isWithinDomain(AgeClass key)
@@ -127,9 +119,15 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  }
 
  @Override
- public void setDefined(boolean b)
+ public boolean isImplicit()
  {
-  defined = b;
+  return implicit;
+ }
+
+ @Override
+ public void setImplicit(boolean b)
+ {
+  implicit = b;
  }
 
  @Override

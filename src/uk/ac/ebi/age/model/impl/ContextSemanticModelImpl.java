@@ -41,11 +41,8 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 
  public AgeAttributeClass createCustomAgeAttributeClass(String name, DataType type, AgeClass cls)
  {
-  AgeAttributeClass acls = createAgeAttributeClass(name,type);
-  
-  acls.setCustom( true );
-  acls.setOwningClass( cls );
-  
+  AgeAttributeClass acls = masterModel.getModelFactory().createCustomAgeAttributeClass(name, type, this, cls);
+
   Map<String,AgeAttributeClass> clsattr = class2AttrMap.get(cls);
   
   if( clsattr == null )
@@ -58,10 +55,24 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   
   return acls;
  }
+ 
+ @Override
+ public AgeRelationClass createCustomAgeRelationClass(String name, AgeClass range, AgeClass owner)
+ {
+  AgeRelationClass rCls = masterModel.getModelFactory().createCustomAgeRelationClass(name, this, range, owner);
+  customRelationClassMap.put(name, rCls);
+  
+  return rCls;
+ }
 
  public AgeClass createAgeClass(String name, String pfx)
  {
-  AgeClass cls = masterModel.createAgeClass(name, pfx);
+  return masterModel.createAgeClass(name, pfx);
+ }
+ 
+ public AgeClass createCustomAgeClass(String name, String pfx)
+ {
+  AgeClass cls = masterModel.getModelFactory().createCustomAgeClass(name, pfx, this);
   customClassMap.put(name, cls);
   
   return cls;
@@ -72,17 +83,17 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.createExternalRelation(sourceObj, val, targetClass);
  }
 
- public AgeRelationClass createRelationClass(String name, AgeClass cls, AgeClass rangeCls)
- {
-  AgeRelationClass rcls = masterModel.createAgeRelationClass(name);
-  
-  rcls.addDomainClass(cls);
-  rcls.addRangeClass(rangeCls);
-  
-  rcls.setCustom( true );
- 
-  return rcls;
- }
+// public AgeRelationClass createRelationClass(String name, AgeClass cls, AgeClass rangeCls)
+// {
+//  AgeRelationClass rcls = masterModel.createAgeRelationClass(name);
+//  
+//  rcls.addDomainClass(cls);
+//  rcls.addRangeClass(rangeCls);
+//  
+//  rcls.setCustom( true );
+// 
+//  return rcls;
+// }
 
  public SubmissionContext getContext()
  {
@@ -211,5 +222,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  {
   masterModel = newModel;
  }
+
+
 
 }

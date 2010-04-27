@@ -12,9 +12,12 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
+import uk.ac.ebi.age.model.writable.AgeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
+import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
@@ -44,19 +47,19 @@ public class ModelFactoryImpl extends ModelFactory
  }
 
  @Override
- public AgeClass createAgeClass(String name, String pfx, SemanticModel sm)
+ public AgeClassWritable createAgeClass(String name, String pfx, SemanticModel sm)
  {
   return new AgeClassImpl(name, pfx, sm);
  }
 
  @Override
- public AgeRelationClass createAgeRelationClass(String name, SemanticModel sm)
+ public AgeRelationClassWritable createAgeRelationClass(String name, SemanticModel sm)
  {
   return new AgeRelationClassImpl(name, sm);
  }
 
  @Override
- public AgeAttributeClass createAgeAttributeClass(String name, DataType type, SemanticModel sm)
+ public AgeAttributeClassWritable createAgeAttributeClass(String name, DataType type, SemanticModel sm)
  {
   return new AgeAttributeClassImpl(name,type, sm);
  }
@@ -145,6 +148,24 @@ public class ModelFactoryImpl extends ModelFactory
  public AgeRestriction createIsClassRestriction(AgeClass srcClas, AgeAbstractClass tgtClass)
  {
   return new IsInstanceOfRestriction(srcClas, tgtClass);
+ }
+
+ @Override
+ public AgeAttributeClass createCustomAgeAttributeClass(String name, DataType type, SemanticModel sm, AgeClass owner)
+ {
+  return new CustomAgeAttributeClassImpl(name, type, sm, owner);
+ }
+
+ @Override
+ public AgeClass createCustomAgeClass(String name, String pfx, SemanticModel sm)
+ {
+  return new CustomAgeClassImpl(name, pfx, sm);
+ }
+
+ @Override
+ public AgeRelationClass createCustomAgeRelationClass(String name, SemanticModel sm, AgeClass range, AgeClass owner)
+ {
+  return new CustomAgeRelationClassImpl(name, sm, range, owner);
  }
 
 }
