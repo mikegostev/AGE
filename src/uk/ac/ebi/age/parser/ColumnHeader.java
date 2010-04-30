@@ -9,6 +9,7 @@ public class ColumnHeader extends AgeTabElement
  private boolean custom;
  private String name;
  private Map<String,String> flags;
+ private String variant;
 
  public ColumnHeader()
  {
@@ -41,6 +42,16 @@ public class ColumnHeader extends AgeTabElement
   return name;
  }
 
+ public String getParameter()
+ {
+  return variant;
+ }
+ 
+ public void setParameter(String s)
+ {
+  variant = s;
+ }
+
  public void addFlag(String nm, String vl)
  {
   if( flags == null )
@@ -69,6 +80,8 @@ public class ColumnHeader extends AgeTabElement
  {
   return flags;
  }
+
+
 
 
 }

@@ -15,20 +15,22 @@ public abstract class ModelFactory
 {
  public abstract SubmissionWritable createSubmission( ContextSemanticModel sm );
 
- public abstract AgeClassWritable createAgeClass(String name, String pfx, SemanticModel sm);
+ public abstract AgeClassWritable createAgeClass(String name, String id, String pfx, SemanticModel sm);
  public abstract AgeClass createCustomAgeClass(String name, String pfx, SemanticModel sm);
 
  public abstract AgeObjectWritable createAgeObject(String id, AgeClass ageClass, SemanticModel sm);
 
- public abstract AgeRelationClassWritable  createAgeRelationClass(String name, SemanticModel sm);
+ public abstract AgeRelationClassWritable  createAgeRelationClass(String name, String id, SemanticModel sm);
  public abstract AgeRelationClass createCustomAgeRelationClass(String name, SemanticModel sm, AgeClass range, AgeClass owner);
 
- public abstract AgeAttributeClassWritable  createAgeAttributeClass( String name, DataType type, SemanticModel sm );
+ public abstract AgeAttributeClassWritable  createAgeAttributeClass( String name, String id, DataType type, SemanticModel sm );
  public abstract AgeAttributeClass createCustomAgeAttributeClass( String name, DataType type, SemanticModel sm, AgeClass owner );
 
  public abstract AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass,  SemanticModel sm);
 
  public abstract AgeAttributeWritable createAgeAttribute(AgeObject obj, AgeAttributeClass attrClass, SemanticModel sm);
+ public abstract AgeAttributeWritable createAgeAttribute(AgeObject obj, AgeAttributeClass attrClass, String prm, SemanticModel contextSemanticModelImpl);
+
 
  public abstract AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel);
 
@@ -47,4 +49,5 @@ public abstract class ModelFactory
  public abstract AgeRestriction createOrLogicRestriction(Collection<AgeRestriction> operands);
 
  public abstract AgeRestriction createIsClassRestriction(AgeClass srcClas, AgeAbstractClass ageClass);
+
 }

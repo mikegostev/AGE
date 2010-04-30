@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassProperty;
@@ -63,7 +62,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
      cls = sm.getCustomAgeClass(colHdr.getName());
 
      if(cls == null)
-      cls = sm.createAgeClass(colHdr.getName(),null);
+      cls = sm.createCustomAgeClass(colHdr.getName(),null);
     }
     else 
      throw new SemanticException(colHdr.getRow(),colHdr.getCol(),"Custom classes are not allowed within this context");
@@ -493,19 +492,25 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   @Override
   public void convert(AgeObjectWritable obj, List<AgeTabValue> vals) throws ConvertionException
   {
+   if( vals == null || vals.size() == 0 )
+    return;
    
-   AgeAttribute attr = obj.getAttribute(attrClass);
-   AgeAttributeWritable attrAlt = null;
+   ColumnHeader hdr = vals.get(0).getColumnHeader();
    
-   if( attr == null )
-    attrAlt = obj.createAgeAttribute(attrClass);
-   else if( attr instanceof AgeAttributeWritable )
-    attrAlt= (AgeAttributeWritable) attr;
-   else
-    throw new ConvertionException(getColumnHeader().getRow(), getColumnHeader().getRow(), "Attribute '"+attrClass+"' already exists in the object '"+obj.getId()+"' and isn't alterable" );
+   AgeAttributeWritable attrAlt = hdr.getParameter()==null?obj.createAgeAttribute(attrClass):obj.createAgeAttribute(attrClass,hdr.getParameter());
+  
+//   AgeAttribute attr = obj.getAttribute(attrClass);
+//   AgeAttributeWritable attrAlt = obj.createAgeAttribute(attrClass);
+//   
+//   if( attr == null )
+//    attrAlt = obj.createAgeAttribute(attrClass);
+//   else if( attr instanceof AgeAttributeWritable )
+//    attrAlt= (AgeAttributeWritable) attr;
+//   else
+//    throw new ConvertionException(getColumnHeader().getRow(), getColumnHeader().getRow(), "Attribute '"+attrClass+"' already exists in the object '"+obj.getId()+"' and isn't alterable" );
    
    for( AgeTabValue vl : vals )
-   {
+   { 
     try
     {
      attrAlt.updateValue(vl.getValue());

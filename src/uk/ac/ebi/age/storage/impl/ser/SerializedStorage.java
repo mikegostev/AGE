@@ -28,11 +28,13 @@ import uk.ac.ebi.age.service.IdGenerator;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.storage.IndexFactory;
 import uk.ac.ebi.age.storage.RelationResolveException;
+import uk.ac.ebi.age.storage.SubmissionReaderWriter;
 import uk.ac.ebi.age.storage.TextIndex;
 import uk.ac.ebi.age.storage.exeption.ModelStoreException;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
 import uk.ac.ebi.age.storage.exeption.SubmissionStoreException;
 import uk.ac.ebi.age.storage.impl.AgeStorageIndex;
+import uk.ac.ebi.age.storage.impl.SerializedSubmissionReaderWriter;
 import uk.ac.ebi.age.storage.index.AgeIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
 
@@ -56,10 +58,8 @@ public class SerializedStorage implements AgeStorageAdm
  
  private ReadWriteLock dbLock = new ReentrantReadWriteLock();
  
-// public void updateModel( SemanticModel sm )
-// {
-//  model=sm;
-// }
+ private SubmissionReaderWriter submRW = new SerializedSubmissionReaderWriter();
+
  
  public SerializedStorage()
  {
@@ -230,11 +230,7 @@ public class SerializedStorage implements AgeStorageAdm
    
    for( File f : dataDir.listFiles() )
    {
-    ObjectInputStream ois = new ObjectInputStream( new FileInputStream(f) );
-    
-    SubmissionWritable submission = (SubmissionWritable)ois.readObject();
-    
-    ois.close();
+    SubmissionWritable submission = submRW.read(f);
     
     submissionMap.put(submission.getId(), submission);
     
@@ -319,17 +315,11 @@ public class SerializedStorage implements AgeStorageAdm
 
  private void saveSubmission(SubmissionWritable sm) throws SubmissionStoreException
  {
-  File sbmFile = new File( dataDir, sm.getId()+".ser" );
+  File sbmFile = new File( dataDir, sm.getId()+submRW.getExtension() );
   
   try
   {
-   FileOutputStream fileOut = new FileOutputStream(sbmFile);
-   
-   ObjectOutputStream oos = new ObjectOutputStream( fileOut );
-   
-   oos.writeObject(sm);
-   
-   oos.close();
+   submRW.write(sm, sbmFile);
   }
   catch(Exception e)
   {
@@ -338,7 +328,6 @@ public class SerializedStorage implements AgeStorageAdm
    throw new SubmissionStoreException("Can't store model: "+e.getMessage(), e);
   }
  }
-
  
  public void shutdown()
  {

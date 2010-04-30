@@ -6,5 +6,4 @@ public interface AgeAttributeClassWritable extends AgeAttributeClass
 {
  void addSubClass(AgeAttributeClass sbcls);
  void addSuperClass(AgeAttributeClass sbcls);
-
 }

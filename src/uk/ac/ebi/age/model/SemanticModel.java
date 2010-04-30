@@ -1,20 +1,24 @@
 package uk.ac.ebi.age.model;
 
+import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
+import uk.ac.ebi.age.model.writable.AgeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
+import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
 public interface SemanticModel
 {
- AgeClass createAgeClass(String name, String pfx);
+ AgeClassWritable createAgeClass(String name, String id, String pfx);
 
- AgeRelationClass createAgeRelationClass(String name);
+ AgeRelationClassWritable createAgeRelationClass(String name, String id);
 
- AgeAttributeClass createAgeAttributeClass(String name, DataType type);
+ AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type);
 
  
  AgeAttributeWritable createAgeAttribute(AgeObject ageObject, AgeAttributeClass attr);
+ AgeAttributeWritable createAgeAttribute(AgeObject ageObjectImpl, AgeAttributeClass attrClass, String param);
 
  AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String val, AgeRelationClass relClass);
 
@@ -29,12 +33,13 @@ public interface SemanticModel
 
  AgeClassProperty getDefinedAgeClassProperty(String name);
 
- AgeRelationClass getAttributeAttachmentClass();
+// AgeRelationClass getAttributeAttachmentClass();
  
  AgeAttributeClass getDefinedAgeAttributeClass(String attrClass);
 
  
  ModelFactory getModelFactory();
+
 
 // AgeClass getAgeClass(String clsName);
 //

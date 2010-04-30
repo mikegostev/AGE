@@ -5,7 +5,6 @@ import uk.ac.ebi.age.model.FormatException;
 
 public interface AgeAttributeWritable extends AgeAttribute
 {
-
  void updateValue(String value) throws FormatException;
 
  void finalizeValue();

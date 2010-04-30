@@ -1,31 +1,16 @@
 package uk.ac.ebi.age.model.impl;
 
+import java.io.Serializable;
+
 import uk.ac.ebi.age.model.AgeAbstractClass;
 import uk.ac.ebi.age.model.AgeAbstractObject;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.RestrictionException;
 
-public class IsInstanceOfRestriction implements AgeRestriction
+abstract public class IsInstanceOfRestriction implements AgeRestriction, Serializable
 {
- private AgeClass sourceClass;
- private AgeAbstractClass targerClass;
-
- public IsInstanceOfRestriction(AgeClass srcClas, AgeAbstractClass tgtClass)
- {
-  sourceClass=srcClas;
-  targerClass=tgtClass;
- }
-
- public String toString()
- {
-  return "IsInstanceOf restriction. Target class: '"+targerClass.getName()+"'";
- }
- 
- public void validate(AgeAbstractObject obj) throws RestrictionException
- {
-  isInstanceOf(obj, targerClass);
- }
+ private static final long serialVersionUID = 1L;
 
  public static void isInstanceOf( AgeAbstractObject obj, AgeAbstractClass cls ) throws RestrictionException
  {

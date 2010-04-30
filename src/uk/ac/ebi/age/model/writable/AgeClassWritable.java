@@ -15,5 +15,7 @@ public interface AgeClassWritable extends AgeClass
 
  void addSubClass(AgeClass cls);
  void addSuperClass(AgeClass cls);
+
+ void setId(String string);
 }
 

@@ -8,6 +8,7 @@ public interface AgeRelationClass extends AgeClassProperty, AgeAbstractClass
  boolean isWithinRange(AgeClass key);
  boolean isWithinDomain(AgeClass key);
 
+ String getId();
  String getName();
 
  Collection<AgeClass> getRange();
@@ -19,4 +20,7 @@ public interface AgeRelationClass extends AgeClassProperty, AgeAbstractClass
  AgeRelationClass getInverseClass();
  
  boolean isImplicit();
+ 
+ public void resetModel();
+
 }

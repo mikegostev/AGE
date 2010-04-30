@@ -7,12 +7,18 @@ import uk.ac.ebi.age.util.StringUtil;
 
 public abstract class AgeTabSyntaxParser
 {
- public static final String validatedTokenBrackets="[]";
+ public static final String validatedTokenBrackets="{}";
  public static final String flagsTokenBrackets="()";
+ public static final String variantTokenBrackets="[]";
  public static final String flagsSeparatorSign=";";
  public static final String flagsEqualSign="=";
  public static final String anonymousObjectId="?";
  
+ private static interface StrProc
+ {
+  String getBrackets();
+  void process(String s);
+ }
  
  public static AgeTabSyntaxParser getInstance()
  {
@@ -24,7 +30,7 @@ public abstract class AgeTabSyntaxParser
  
  public static ColumnHeader string2ColumnHeader( String str ) throws ParserException
  {
-  ColumnHeader nm = new ColumnHeader();
+  final ColumnHeader nm = new ColumnHeader();
   
   String brckts = null;
   
@@ -33,32 +39,67 @@ public abstract class AgeTabSyntaxParser
    nm.setCustom(false);
    brckts  = validatedTokenBrackets;
   }
-
   else
    nm.setCustom(true);
 
-  
-  if( str.charAt(str.length()-1) == flagsTokenBrackets.charAt(1) )
-  {
-   int pos = str.lastIndexOf(flagsTokenBrackets.charAt(0));
-   
-   if( pos == -1 )
-    throw new ParserException(0,0, "No opening bracket for flags section: '"+flagsTokenBrackets.charAt(0)+"'");
-   
-   List<String> flags = StringUtil.splitString(str.substring(pos+1,str.length()-1), flagsSeparatorSign);
-   
-   for( String flagstr : flags )
-   {
-    int eqpos = flagstr.indexOf(flagsEqualSign);
+  StrProc[] prc = new StrProc[]{
+    new StrProc()
+    {
+     public String getBrackets(){ return flagsTokenBrackets; }
+     public void process(String s)
+     {
+      List<String> flags = StringUtil.splitString(s, flagsSeparatorSign);
+      
+      for( String flagstr : flags )
+      {
+       int eqpos = flagstr.indexOf(flagsEqualSign);
+       
+       if( eqpos == -1 )
+        nm.addFlag(flagstr,null);
+       else
+        nm.addFlag(flagstr.substring(0,eqpos),flagstr.substring(eqpos+1));
+      }
+     }
+    },
     
-    if( eqpos == -1 )
-     nm.addFlag(flagstr,null);
-    else
-     nm.addFlag(flagstr.substring(0,eqpos),flagstr.substring(eqpos+1));
+    new StrProc()
+    {
+     public String getBrackets(){ return variantTokenBrackets; }
+     public void process(String s)
+     {
+      nm.setParameter(s);
+     }
+    }
+    
+  };
+  
+  while( str.length() > 0 )
+  {
+   String ps = null;
+   
+   for(int i=0; i < 2; i++ )
+   {
+    if( str.charAt(str.length()-1) == prc[i].getBrackets().charAt(1) )
+    {
+     int pos = str.lastIndexOf(prc[i].getBrackets().charAt(0));
+     
+     if( pos == -1 )
+      throw new ParserException(0,0, "No opening bracket for section: '"+prc[i].getBrackets().charAt(0)+"'");
+     
+     ps = str.substring(pos+1,str.length()-1);
+     prc[i].process(ps);
+
+     str=str.substring(0,pos);
+     
+     break;
+    }
+     
    }
    
-   str = str.substring(0,pos);
+   if( ps == null )
+    break;
   }
+  
 
   if( brckts != null)
   {
@@ -74,14 +115,6 @@ public abstract class AgeTabSyntaxParser
   }
   else
    nm.setName(str);
-  
-//  if( nm.isFlagSet(rangeFlag))
-//  {
-//   if( nm.getFlagValue(rangeFlag) == null )
-//    throw new ParserException(0,0, "A '"+rangeFlag+"' flag mast have a value");
-//   
-//   nm.setType(Type.RELATION);
-//  }
   
   return nm;
  }

@@ -4,9 +4,9 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.ModelException;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.SubmissionContext;
-import uk.ac.ebi.age.model.impl.ContextSemanticModelImpl;
-import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
-import uk.ac.ebi.age.model.impl.SemanticModelImpl;
+import uk.ac.ebi.age.model.impl.v1.ContextSemanticModelImpl;
+import uk.ac.ebi.age.model.impl.v1.ModelFactoryImpl;
+import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
 
 public class SemanticManager
 {

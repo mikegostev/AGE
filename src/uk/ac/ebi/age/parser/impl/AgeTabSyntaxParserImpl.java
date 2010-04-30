@@ -26,20 +26,33 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   int ln = 0;
   char colSep='\t';
   
-  String eol = "\r\n";
+//  String eol = "\r\n";
+//  
+//  if( txt.indexOf(eol) == -1)
+//   eol="\n";
+//
+//  if( txt.indexOf(eol) == -1)
+//   throw new ParserException(1,1,"File must contains at least 2 lines separated by either \\n or \\r\\n "); 
+// 
+//  int eolLength = eol.length();
   
-  if( txt.indexOf(eol) == -1)
-   eol="\n";
-
-  if( txt.indexOf(eol) == -1)
-   throw new ParserException(1,1,"File must contains at least 2 lines separated by either \\n or \\r\\n "); 
- 
-  int eolLength = eol.length();
+//  while( txt.startsWith(eol, cpos) )
+//  {
+//   cpos+=eolLength;
+//   ln++;
+//  }
   
-  while( txt.startsWith(eol, cpos) )
+  while( cpos < len )
   {
-   cpos+=eolLength;
-   ln++;
+   if( txt.charAt(cpos) == '\r' )
+    cpos++;
+   else if( txt.charAt(cpos) == '\n' )
+   {
+    ln++;
+    cpos++;
+   }
+   else
+    break;
   }
   
   {  // looking for column separator
@@ -72,7 +85,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   {
    ln++;
 
-   int pos = txt.indexOf(eol, cpos);
+   int pos = txt.indexOf('\n', cpos);
 
    String line = null;
    
@@ -83,8 +96,13 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    }
    else
    {
-    line=txt.substring(cpos,pos);
-    cpos = pos + eolLength;
+    int tpos = cpos;   
+    cpos = pos + 1;
+
+    if( txt.charAt( pos-1 ) == '\r')
+     pos--;
+    
+    line=txt.substring(tpos,pos);
    }
 
    parts.clear();
