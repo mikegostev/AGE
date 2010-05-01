@@ -28,17 +28,28 @@ public interface SemanticModel
 
  
  AgeClass getDefinedAgeClass(String name);
+ AgeClass getDefinedAgeClassById(String name);
 
  AgeRelationClass getDefinedAgeRelationClass(String name);
+ AgeRelationClass getDefinedAgeRelationClassById(String name);
 
  AgeClassProperty getDefinedAgeClassProperty(String name);
 
 // AgeRelationClass getAttributeAttachmentClass();
  
  AgeAttributeClass getDefinedAgeAttributeClass(String attrClass);
+ AgeAttributeClass getDefinedAgeAttributeClassById(String classId);
 
  
  ModelFactory getModelFactory();
+
+ 
+ AgeAttributeClassPlug getAgeAttributeClassPlug(AgeAttributeClass attrClass);
+
+ AgeClassPlug getAgeClassPlug(AgeClass cls);
+
+ AgeRelationClassPlug getAgeRelationClassPlug(AgeRelationClass relClass);
+
 
 
 // AgeClass getAgeClass(String clsName);

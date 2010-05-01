@@ -50,4 +50,12 @@ public abstract class ModelFactory
 
  public abstract AgeRestriction createIsClassRestriction(AgeClass srcClas, AgeAbstractClass ageClass);
 
+ 
+ 
+ public abstract AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, SemanticModel sm);
+
+ public abstract AgeClassPlug createAgeClassPlug(AgeClass attrClass, SemanticModel sm);
+ 
+ public abstract AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass attrClass, SemanticModel sm);
+
 }

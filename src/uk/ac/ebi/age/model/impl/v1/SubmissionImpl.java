@@ -140,9 +140,6 @@ class SubmissionImpl  implements SubmissionWritable, Serializable
  public void setMasterModel( SemanticModel newModel )
  {
   model.setMasterModel( newModel );
-  
-  for( AgeObjectWritable o : objects )
-   o.resetModel();
  }
  
 // public Collection<AgeRelationAlt> getRelations()

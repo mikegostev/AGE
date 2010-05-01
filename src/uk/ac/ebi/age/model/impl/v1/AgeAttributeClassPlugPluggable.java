@@ -11,14 +11,14 @@ class AgeAttributeClassPlugPluggable implements Plug, Serializable, AgeAttribute
 {
  private static final long serialVersionUID = 1L;
 
- private String className;
+ private String classId;
  private transient AgeAttributeClass ageAttributeClass;
  private SemanticModel model;
  
  public AgeAttributeClassPlugPluggable(AgeAttributeClass attrClass, SemanticModel mdl)
  {
   ageAttributeClass=attrClass;
-  className = attrClass.getName();
+  classId = attrClass.getId();
   model=mdl;
  }
 
@@ -29,7 +29,7 @@ class AgeAttributeClassPlugPluggable implements Plug, Serializable, AgeAttribute
  
  public boolean plug()
  {
-  ageAttributeClass = model.getDefinedAgeAttributeClass(className);
+  ageAttributeClass = model.getDefinedAgeAttributeClassById(classId);
   
   if( ageAttributeClass != null )
    return true;

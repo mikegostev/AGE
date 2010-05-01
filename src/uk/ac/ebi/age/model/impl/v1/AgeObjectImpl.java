@@ -11,6 +11,7 @@ import java.util.Map;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
+import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.Submission;
@@ -31,7 +32,7 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
 // private Collection<AgeAttributeWritable> attributes = new ArrayList<AgeAttributeWritable>( 10 );
 // private Collection<Collection<AgeRelationWritable>> relations = new ArrayList<Collection<AgeRelationWritable>>(5);
 
- private AgeClassPlugPluggable ageClassPlug;
+ private AgeClassPlug ageClassPlug;
  private String id;
 
  private Submission subm;
@@ -42,7 +43,7 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
  {
   super(sm);
   this.id=id;
-  ageClassPlug= new AgeClassPlugPluggable(cls, sm);
+  ageClassPlug= sm.getAgeClassPlug(cls);
  }
 
  public String getId()
@@ -161,24 +162,24 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
 
 
 
- @Override
- public void resetModel()
- {
-  ageClassPlug.unplug();
-
-  for( Collection<AgeAttributeWritable> attrc : attributes.values() )
-  {
-   for( AgeAttributeWritable at : attrc )
-    at.resetModel();
-  }
-  
-  for( Collection<AgeRelationWritable> relColl : relations.values() )
-  {
-   for( AgeRelationWritable rel : relColl )
-    rel.resetModel();
-  }
-
- }
+// @Override
+// public void resetModel()
+// {
+//  ageClassPlug.unplug();
+//
+//  for( Collection<AgeAttributeWritable> attrc : attributes.values() )
+//  {
+//   for( AgeAttributeWritable at : attrc )
+//    at.resetModel();
+//  }
+//  
+//  for( Collection<AgeRelationWritable> relColl : relations.values() )
+//  {
+//   for( AgeRelationWritable rel : relColl )
+//    rel.resetModel();
+//  }
+//
+// }
 
  @Override
  public Collection< ? extends AgeAttributeWritable> getAttributes(AgeAttributeClass cls)

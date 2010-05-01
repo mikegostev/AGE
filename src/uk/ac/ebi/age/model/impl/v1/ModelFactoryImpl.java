@@ -5,9 +5,12 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAbstractClass;
 import uk.ac.ebi.age.model.AgeAttributeClass;
+import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
+import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
@@ -195,6 +198,24 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  public AgeRelationClass createCustomAgeRelationClass(String name, SemanticModel sm, AgeClass range, AgeClass owner)
  {
   return new CustomAgeRelationClassImpl(name, sm, range, owner);
+ }
+
+ @Override
+ public AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, SemanticModel sm)
+ {
+  return new AgeAttributeClassPlugPluggable(attrClass, sm);
+ }
+
+ @Override
+ public AgeClassPlug createAgeClassPlug(AgeClass cls, SemanticModel mdl)
+ {
+  return new AgeClassPlugPluggable(cls, mdl);
+ }
+
+ @Override
+ public AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass relClass, SemanticModel mod)
+ {
+  return new AgeRelationClassPlugPluggable(relClass, mod);
  }
 
 }

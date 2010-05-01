@@ -8,6 +8,4 @@ public interface AgeRelationWritable extends AgeRelation
  
  void setOrder(int col);
 
- void resetModel();
-
 }

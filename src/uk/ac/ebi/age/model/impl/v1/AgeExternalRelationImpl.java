@@ -22,7 +22,8 @@ class AgeExternalRelationImpl extends AgeSemanticElementImpl implements AgeExter
  {
   super(sm);
   
-  relClassPlug = new AgeRelationClassPlugPluggable(relClass, sm);
+  relClassPlug = sm.getAgeRelationClassPlug(relClass);
+
   objId=id;
   sourceObject=srcOb;
  }
@@ -61,12 +62,6 @@ class AgeExternalRelationImpl extends AgeSemanticElementImpl implements AgeExter
  public void setTargetObject(AgeObjectWritable obj)
  {
   target = obj;
- }
-
- @Override
- public void resetModel()
- {
-  relClassPlug.unplug();
  }
 
  @Override

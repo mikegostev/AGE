@@ -3,6 +3,7 @@ package uk.ac.ebi.age.model.impl.v1;
 import java.io.Serializable;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
+import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
@@ -12,7 +13,7 @@ abstract class AgeAttributeImpl extends AgeSemanticElementImpl implements AgeAtt
  private static final long serialVersionUID = 1L;
 
  
- private AgeAttributeClassPlugPluggable attrClassPlug;
+ private AgeAttributeClassPlug attrClassPlug;
  private int order;
 
  protected AgeAttributeImpl()
@@ -24,7 +25,7 @@ abstract class AgeAttributeImpl extends AgeSemanticElementImpl implements AgeAtt
  {
   super(sm);
   
-  attrClassPlug= new AgeAttributeClassPlugPluggable(attrClass,sm);
+  attrClassPlug= sm.getAgeAttributeClassPlug(attrClass);
  }
 
  public AgeAttributeClass getAgeAttributeClass()
@@ -53,8 +54,8 @@ abstract class AgeAttributeImpl extends AgeSemanticElementImpl implements AgeAtt
   return order;
  }
  
- public void resetModel()
- {
-  attrClassPlug.unplug();
- }
+// public void resetModel()
+// {
+//  attrClassPlug.unplug();
+// }
 }

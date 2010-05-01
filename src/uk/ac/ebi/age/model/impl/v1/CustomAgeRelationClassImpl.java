@@ -30,16 +30,10 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
   
   this.name=name;
   
-  if( range.isCustom() )
-   rangeClass = new AgeClassPlugFixed(range);
-  else
-   rangeClass = new AgeClassPlugPluggable(range, sm);
+  rangeClass = sm.getAgeClassPlug(range);
 
-  if( owner.isCustom() )
-   ownerClass = new AgeClassPlugFixed(owner);
-  else
-   ownerClass = new AgeClassPlugPluggable(owner, sm);
-
+  ownerClass = sm.getAgeClassPlug(owner);
+  
   inverse = new CustomAgeRelationClassImpl( "!"+name, sm, range, owner );
   inverse.setInverseClass(this);
   inverse.setImplicit(true);

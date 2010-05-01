@@ -3,6 +3,7 @@ package uk.ac.ebi.age.model.impl.v1;
 import java.io.Serializable;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
@@ -11,7 +12,7 @@ class AgeRelationImpl extends AgeSemanticElementImpl implements AgeRelationWrita
 {
  private static final long serialVersionUID = 1L;
  
- private AgeRelationClassPlugPluggable relClassPlug;
+ private AgeRelationClassPlug relClassPlug;
  private AgeObjectWritable target;
  private int order;
  private boolean inferred=false;
@@ -19,7 +20,7 @@ class AgeRelationImpl extends AgeSemanticElementImpl implements AgeRelationWrita
  public AgeRelationImpl(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel)
  {
   super(semanticModel);
-  relClassPlug= new AgeRelationClassPlugPluggable(relClass, semanticModel);
+  relClassPlug= semanticModel.getAgeRelationClassPlug(relClass);
   target=targetObj;
  }
 
@@ -54,14 +55,6 @@ class AgeRelationImpl extends AgeSemanticElementImpl implements AgeRelationWrita
   return inferred;
  }
 
- @Override
- public void resetModel()
- {
-  if( relClassPlug.isPlugged() )
-   relClassPlug.getAgeRelationClass().resetModel();
-  
-  relClassPlug.unplug();
- }
 
  @Override
  public String getId()

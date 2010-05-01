@@ -5,10 +5,13 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
+import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
+import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
@@ -30,6 +33,11 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  private transient SemanticModel masterModel;
  
  private transient SubmissionContext context;
+ 
+ private Map<String,AgeClassPlug> classPlugs = new TreeMap<String, AgeClassPlug>();
+ private Map<String,AgeAttributeClassPlug> attrClassPlugs = new TreeMap<String, AgeAttributeClassPlug>();
+ private Map<String,AgeRelationClassPlug> relClassPlugs = new TreeMap<String, AgeRelationClassPlug>();
+
  
  private Map<String,AgeClass> customClassMap = new TreeMap<String, AgeClass>();
  private Map<String,AgeRelationClass> customRelationClassMap = new TreeMap<String, AgeRelationClass>();
@@ -208,20 +216,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.getModelFactory().createRelation(targetObj, relClass, this);
  }
 
-// public AgeRelationClass getAttributeAttachmentClass()
-// {
-//  return masterModel.getAttributeAttachmentClass();
-// }
 
-// public AgeAttributeClass getAgeAttributeClass(String name)
-// {
-//  AgeAttributeClass cls = getCustomAgeAttributeClass(name);
-//  
-//  if( cls != null )
-//   return cls;
-//  
-//  return getDefinedAgeAttributeClass(name); 
-// }
 
  public AgeAttributeClass getDefinedAgeAttributeClass(String attrClass)
  {
@@ -232,6 +227,89 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  public void setMasterModel(SemanticModel newModel)
  {
   masterModel = newModel;
+  
+  for( AgeClassPlug plg: classPlugs.values() )
+   plg.unplug();
+
+  for( AgeAttributeClassPlug plg: attrClassPlugs.values() )
+   plg.unplug();
+  
+  for( AgeRelationClassPlug plg: relClassPlugs.values() )
+   plg.unplug();
+ }
+
+ @Override
+ public AgeClassPlug getAgeClassPlug(AgeClass cls)
+ {
+  AgeClassPlug plug = classPlugs.get(cls.getId());
+  
+  if( plug != null )
+   return plug;
+  
+  if( cls.isCustom() )
+   plug = new AgeClassPlugFixed(cls);
+  else
+   plug = masterModel.getModelFactory().createAgeClassPlug(cls,this);
+  
+  classPlugs.put(cls.getId(), plug);
+  
+  return plug;
+ }
+
+ @Override
+ public AgeClass getDefinedAgeClassById(String classId)
+ {
+  return masterModel.getDefinedAgeClassById(classId);
+ }
+
+ @Override
+ public AgeRelationClassPlug getAgeRelationClassPlug(AgeRelationClass cls)
+ {
+  AgeRelationClassPlug plug = relClassPlugs.get(cls.getId());
+  
+  if( plug != null )
+   return plug;
+  
+  if( cls.isCustom() )
+   plug = new AgeRelationClassPlugFixed(cls);
+  else
+   plug = masterModel.getModelFactory().createAgeRelationClassPlug(cls,this);
+  
+  relClassPlugs.put(cls.getId(), plug);
+  
+  return plug;
+
+ }
+
+ @Override
+ public AgeRelationClass getDefinedAgeRelationClassById(String classId)
+ {
+  return masterModel.getDefinedAgeRelationClassById(classId);
+ }
+
+ 
+ @Override
+ public AgeAttributeClassPlug getAgeAttributeClassPlug(AgeAttributeClass cls)
+ {
+  AgeAttributeClassPlug plug = attrClassPlugs.get(cls.getId());
+  
+  if( plug != null )
+   return plug;
+  
+  if( cls.isCustom() )
+   plug = new AgeAttributeClassPlugFixed(cls);
+  else
+   plug = masterModel.getModelFactory().createAgeAttributeClassPlug(cls,this);
+  
+  attrClassPlugs.put(cls.getId(), plug);
+  
+  return plug;
+ }
+
+ @Override
+ public AgeAttributeClass getDefinedAgeAttributeClassById(String classId)
+ {
+  return masterModel.getDefinedAgeAttributeClassById(classId);
  }
 
 }

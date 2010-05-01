@@ -5,10 +5,13 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
+import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
+import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelException;
 import uk.ac.ebi.age.model.ModelFactory;
@@ -29,6 +32,10 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  private Map<String,AgeClass> classMap = new TreeMap<String,AgeClass>();
  private Map<String,AgeAttributeClass> attributeMap = new TreeMap<String, AgeAttributeClass>();
  private Map<String,AgeRelationClass> relationMap = new TreeMap<String, AgeRelationClass>();
+
+ private Map<String,AgeClass> classIdMap = new TreeMap<String,AgeClass>();
+ private Map<String,AgeAttributeClass> attributeIdMap = new TreeMap<String, AgeAttributeClass>();
+ private Map<String,AgeRelationClass> relationIdMap = new TreeMap<String, AgeRelationClass>();
 
  private AgeRelationClass attributeAttachmentRelation;
  
@@ -156,18 +163,21 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  protected void addAttributeClass(AgeAttributeClassWritable cls)
  {
   attributeMap.put(cls.getName(), cls);
+  attributeIdMap.put(cls.getId(), cls);
  }
 
  @Override
  protected void addClass(AgeClassWritable cls)
  {
   classMap.put(cls.getName(), cls);
+  classIdMap.put(cls.getId(), cls);
  }
 
  @Override
  protected void addRelationClass(AgeRelationClassWritable cls)
  {
   relationMap.put(cls.getName(), cls);
+  relationIdMap.put(cls.getId(), cls);
  }
 
  @Override
@@ -180,6 +190,42 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  protected void setClassRoot(AgeClassWritable root)
  {
   classRoot = root;
+ }
+
+ @Override
+ public AgeClassPlug getAgeClassPlug(AgeClass attrClass)
+ {
+  return modelFactory.createAgeClassPlug(attrClass, this);
+ }
+
+ @Override
+ public AgeClass getDefinedAgeClassById(String classId)
+ {
+  return classIdMap.get(classId);
+ }
+
+ @Override
+ public AgeRelationClassPlug getAgeRelationClassPlug(AgeRelationClass attrClass)
+ {
+  return modelFactory.createAgeRelationClassPlug(attrClass, this);
+ }
+
+ @Override
+ public AgeRelationClass getDefinedAgeRelationClassById(String classId)
+ {
+  return relationIdMap.get(classId);
+ }
+
+ @Override
+ public AgeAttributeClassPlug getAgeAttributeClassPlug(AgeAttributeClass attrClass)
+ {
+  return modelFactory.createAgeAttributeClassPlug(attrClass, this);
+ }
+
+ @Override
+ public AgeAttributeClass getDefinedAgeAttributeClassById(String classId)
+ {
+  return attributeIdMap.get(classId);
  }
 
 }
