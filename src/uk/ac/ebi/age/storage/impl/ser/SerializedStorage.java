@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,13 +98,13 @@ public class SerializedStorage implements AgeStorageAdm
  {
   AgeIndex idx = new AgeIndex();
 
-  TextIndex ti = IndexFactory.getInstance().createFullTextIndex();
+  TextIndex ti = IndexFactory.getInstance().createFullTextIndex(qury,exts);
 
   try
   {
    dbLock.readLock().lock();
 
-   ti.index(executeQuery(qury), exts);
+   ti.index(executeQuery(qury) );
 
    indexMap.put(idx, ti);
 
@@ -116,6 +117,25 @@ public class SerializedStorage implements AgeStorageAdm
 
  }
 
+ private void updateIndices( SubmissionWritable s )
+ {
+  ArrayList<AgeObject> res = new ArrayList<AgeObject>();
+
+  for( AgeStorageIndex idx : indexMap.values() )
+  {
+  
+  Iterable<AgeObject> trv = traverse(idx.getQuery(), Collections.singleton(s) );
+
+  res.clear();
+  
+  for(AgeObject nd : trv)
+   res.add(nd);
+  
+   if( res.size() > 0 )
+    idx.index(res);
+  }
+ }
+ 
  
  public List<AgeObject> executeQuery(AgeQuery qury)
  {
@@ -182,6 +202,8 @@ public class SerializedStorage implements AgeStorageAdm
      exr.setTargetObject(tgObj);
     }
    }
+   
+   updateIndices( sbm );
    
    return newSubmissionId;
   }
@@ -348,9 +370,9 @@ public class SerializedStorage implements AgeStorageAdm
    for(SubmissionWritable sbm : submissionMap.values())
     sbm.setMasterModel(sm);
 
-   SemanticManager.getInstance().setMasterModel(model);
-
    model = sm;
+
+   SemanticManager.getInstance().setMasterModel(model);
   }
   finally
   {

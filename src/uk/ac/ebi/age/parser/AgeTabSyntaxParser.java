@@ -101,6 +101,8 @@ public abstract class AgeTabSyntaxParser
   }
   
 
+  String name = null;
+  
   if( brckts != null)
   {
    int pos = str.indexOf(brckts.charAt(1));
@@ -111,10 +113,15 @@ public abstract class AgeTabSyntaxParser
    if( pos != (str.length()-1) )
     throw new ParserException(0,0, "Invalid character at: "+(pos+1)+". The closing bracket must be the last symbol.");
    
-   nm.setName(str.substring(1, pos));
+   name = str.substring(1, pos);
   }
   else
-   nm.setName(str);
+   name = str;
+  
+  if( name.length() == 0 )
+   throw new ParserException(0,0, "Name in the header column can't be empty");
+  
+  nm.setName(name);
   
   return nm;
  }

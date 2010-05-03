@@ -19,4 +19,6 @@ public interface AgeStorage
  AgeIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> cb );
 
  SemanticModel getSemanticModel();
+ 
+ void shutdown();
 }

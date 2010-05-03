@@ -194,6 +194,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   }
   catch(ParserException e)
   {
+   e.setLineNumber(row);
    e.setColumn(1);
    throw e;
   }
@@ -214,6 +215,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    }
    catch(ParserException e)
    {
+    e.setLineNumber(row);
     e.setColumn(col);
     throw e;
    }

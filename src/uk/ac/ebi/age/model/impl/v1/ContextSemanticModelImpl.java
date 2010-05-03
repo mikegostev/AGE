@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -43,7 +44,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  private Map<String,AgeRelationClass> customRelationClassMap = new TreeMap<String, AgeRelationClass>();
 // private Map<String,AgeAttributeClass> customAttributeClassMap = new TreeMap<String, AgeAttributeClass>();
  
- private Map<AgeClass,Map<String,AgeAttributeClass>> class2CustomAttrMap = new TreeMap<AgeClass,Map<String,AgeAttributeClass>>();
+ private Map<AgeClass,Map<String,AgeAttributeClass>> class2CustomAttrMap = new HashMap<AgeClass,Map<String,AgeAttributeClass>>();
 // private Map<AgeClass,Map<String,AgeRelationClass>> class2CustomRelationMap = new TreeMap<AgeClass,Map<String,AgeRelationClass>>();
 
  

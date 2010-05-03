@@ -1,6 +1,10 @@
 package uk.ac.ebi.age.storage;
 
+import java.util.Collection;
+
+import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.storage.impl.LuceneFullTextIndex;
+import uk.ac.ebi.age.storage.index.TextFieldExtractor;
 
 public class IndexFactory
 {
@@ -11,9 +15,9 @@ public class IndexFactory
   return instance;
  }
 
- public TextIndex createFullTextIndex()
+ public TextIndex createFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts)
  {
-  return new LuceneFullTextIndex();
+  return new LuceneFullTextIndex( qury, exts );
  }
 
 }

@@ -238,7 +238,10 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
 
     public AgeAttributeClassWritable create(String name, OWLClass oCls)
     {
-     return createAgeAttributeClass(name, oCls.getIRI().toString(), getDatatype(oCls, owlHlp ) );
+     if( oCls != null)
+      return createAgeAttributeClass(name, oCls.getIRI().toString(), getDatatype(oCls, owlHlp ) );
+     
+     return createAgeAttributeClass(name, "AgeAttributeClass"+IdGenerator.getInstance().getStringId(), null );
     }
    }, owlHlp ) );
 

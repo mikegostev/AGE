@@ -17,6 +17,11 @@ public class ParserException extends Exception
   return lineNumber;
  }
 
+ public void setLineNumber( int ln )
+ {
+  lineNumber = ln;
+ }
+ 
  public int getColumnNumber()
  {
   return columnNumber;
