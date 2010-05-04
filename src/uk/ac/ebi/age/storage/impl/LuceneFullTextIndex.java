@@ -46,39 +46,43 @@ public class LuceneFullTextIndex implements TextIndex
  }
 
  
- public void index(List<AgeObject> aol, Collection<TextFieldExtractor> extf)
- {
-  try
-  {
-   IndexWriter iWriter = new IndexWriter(index, analyzer, false,
-     IndexWriter.MaxFieldLength.UNLIMITED);
-
-   objectList=aol;
-   for(AgeObject ao : objectList )
-   {
-    Document doc = new Document();
-    
-    for(TextFieldExtractor tfe : extf )
-     doc.add(new Field(tfe.getName(), tfe.getExtractor().getValue(ao), Field.Store.NO, Field.Index.ANALYZED));
-    
-    iWriter.addDocument(doc);
-   }
-
-   iWriter.close();
-   
-   defaultFieldName = extf.iterator().next().getName();
-  }
-  catch(CorruptIndexException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
-  catch(IOException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
- }
+// public void index(List<AgeObject> aol, Collection<TextFieldExtractor> extf)
+// {
+//  try
+//  {
+//   IndexWriter iWriter = new IndexWriter(index, analyzer, false,
+//     IndexWriter.MaxFieldLength.UNLIMITED);
+//
+//   if( objectList == null )
+//    objectList=aol;
+//   else
+//    objectList.addAll(aol);
+//   
+//   for(AgeObject ao : objectList )
+//   {
+//    Document doc = new Document();
+//    
+//    for(TextFieldExtractor tfe : extf )
+//     doc.add(new Field(tfe.getName(), tfe.getExtractor().getValue(ao), Field.Store.NO, Field.Index.ANALYZED));
+//    
+//    iWriter.addDocument(doc);
+//   }
+//
+//   iWriter.close();
+//   
+//   defaultFieldName = extf.iterator().next().getName();
+//  }
+//  catch(CorruptIndexException e)
+//  {
+//   // TODO Auto-generated catch block
+//   e.printStackTrace();
+//  }
+//  catch(IOException e)
+//  {
+//   // TODO Auto-generated catch block
+//   e.printStackTrace();
+//  }
+// }
  
  public List<AgeObject> select(String query)
  {
@@ -94,6 +98,7 @@ public class LuceneFullTextIndex implements TextIndex
    //TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
    searcher.search(q, new Collector()
    {
+    int base;
     
     @Override
     public void setScorer(Scorer arg0) throws IOException
@@ -103,20 +108,24 @@ public class LuceneFullTextIndex implements TextIndex
     @Override
     public void setNextReader(IndexReader arg0, int arg1) throws IOException
     {
+     System.out.println("Next Reader: "+arg1);
+     base=arg1;
     }
     
     @Override
     public void collect(int docId) throws IOException
     {
-     System.out.println("Found: "+docId+". Object: "+objectList.get(docId).getId()+". Class: "+objectList.get(docId).getAgeElClass().getName() );
+     int ind = docId+base;
      
-     res.add( objectList.get(docId) );
+     System.out.println("Found doc: "+ind+". Object: "+objectList.get(ind).getId()+". Class: "+objectList.get(ind).getAgeElClass().getName() );
+     
+     res.add( objectList.get(ind) );
     }
     
     @Override
     public boolean acceptsDocsOutOfOrder()
     {
-     return true;
+     return false;
     }
    });
   }
@@ -148,7 +157,7 @@ public class LuceneFullTextIndex implements TextIndex
  {
   try
   {
-   IndexWriter iWriter = new IndexWriter(index, analyzer, true,
+   IndexWriter iWriter = new IndexWriter(index, analyzer, objectList == null,
      IndexWriter.MaxFieldLength.UNLIMITED);
 
    if( objectList == null )
