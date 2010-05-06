@@ -21,4 +21,6 @@ public interface AgeStorage
  SemanticModel getSemanticModel();
  
  void shutdown();
+
+ AgeObject getObjectById(String grpID);
 }

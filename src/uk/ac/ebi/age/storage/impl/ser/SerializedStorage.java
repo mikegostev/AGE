@@ -384,5 +384,11 @@ public class SerializedStorage implements AgeStorageAdm
  private void checkModelUpgradable()
  {
  }
+
+ @Override
+ public AgeObject getObjectById(String objID)
+ {
+  return mainIndexMap.get( objID );
+ }
  
 }
