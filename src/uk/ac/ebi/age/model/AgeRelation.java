@@ -6,4 +6,6 @@ public interface AgeRelation
  AgeRelationClass getAgeElClass();
  
  int getOrder();
+ 
+ boolean isInferred();
 }

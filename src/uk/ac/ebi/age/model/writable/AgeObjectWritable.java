@@ -36,5 +36,8 @@ public interface AgeObjectWritable extends AgeObject
  void setOrder(int row);
 
  void setSubmission( Submission s );
+ 
+ void setId( String id );
+ 
 // void resetModel();
 }

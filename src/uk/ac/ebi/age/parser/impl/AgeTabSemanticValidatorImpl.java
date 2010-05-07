@@ -11,6 +11,7 @@ import java.util.Map;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassProperty;
+import uk.ac.ebi.age.model.AgeExternalRelation;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
@@ -132,7 +133,40 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   
   validateData(res);
   
+  imputeReverseRelations( res );
+  
   return res;
+ }
+
+ private void imputeReverseRelations( SubmissionWritable data )
+ {
+  for( AgeObjectWritable obj : data.getObjects() )
+  {
+   
+   for( AgeRelationWritable rl : obj.getRelations() )
+   {
+    if( rl instanceof AgeExternalRelation )
+     continue;
+    
+    AgeRelationClass invClass = rl.getAgeElClass().getInverseClass();
+    
+    if( invClass == null )
+     continue;
+    
+    boolean found=false;
+    for( AgeRelationWritable irl : rl.getTargetObject().getRelations() )
+    {
+     if( irl.getAgeElClass().equals(invClass) && irl.getTargetObject() == obj )
+     {
+      found=true;
+      break;
+     }
+    }
+    
+    if( ! found )
+     rl.getTargetObject().createRelation(obj, invClass).setInferred(true);
+   }
+  }
  }
 
  private void validateData( Submission data ) throws RestrictionException

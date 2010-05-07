@@ -181,6 +181,9 @@ public class SerializedStorage implements AgeStorageAdm
    String newSubmissionId = "SBM" + IdGenerator.getInstance().getStringId();
 
    sbm.setId(newSubmissionId);
+ 
+   for( AgeObjectWritable obj : sbm.getObjects() )
+    obj.setId( obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId()+"-"+obj.getOriginalId() );
    
    saveSubmission(sbm);
    

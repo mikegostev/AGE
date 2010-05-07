@@ -10,7 +10,8 @@ public interface AgeObject extends AgeAbstractObject
 {
  /** @model */
  String getId();
- 
+ String getOriginalId();
+
  AgeClass getAgeElClass();
  
  Collection<? extends AgeAttribute> getAttributes();

@@ -7,4 +7,6 @@ public interface AgeAttribute
  Object getValue();
  
  public String getParameter();
+ 
+ public int getOrder();
 }

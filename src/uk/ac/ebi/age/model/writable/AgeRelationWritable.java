@@ -8,4 +8,6 @@ public interface AgeRelationWritable extends AgeRelation
  
  void setOrder(int col);
 
+ public void setInferred( boolean inf );
+
 }

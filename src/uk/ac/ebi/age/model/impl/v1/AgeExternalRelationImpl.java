@@ -17,6 +17,7 @@ class AgeExternalRelationImpl extends AgeSemanticElementImpl implements AgeExter
  private int order;
  private AgeObjectWritable sourceObject;
  private transient AgeObjectWritable target;
+ private boolean infered;
  
  public AgeExternalRelationImpl(AgeRelationClass relClass, AgeObjectWritable srcOb, String id, SemanticModel sm)
  {
@@ -68,6 +69,18 @@ class AgeExternalRelationImpl extends AgeSemanticElementImpl implements AgeExter
  public String getId()
  {
   return null;
+ }
+
+ @Override
+ public void setInferred(boolean inf)
+ {
+  infered=inf;
+ }
+
+ @Override
+ public boolean isInferred()
+ {
+  return infered;
  }
 
 }

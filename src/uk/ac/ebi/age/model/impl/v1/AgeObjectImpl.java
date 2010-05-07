@@ -33,7 +33,9 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
 // private Collection<Collection<AgeRelationWritable>> relations = new ArrayList<Collection<AgeRelationWritable>>(5);
 
  private AgeClassPlug ageClassPlug;
+
  private String id;
+ private String origId;
 
  private Submission subm;
  
@@ -42,13 +44,26 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
  public AgeObjectImpl(String id, AgeClass cls, SemanticModel sm)
  {
   super(sm);
+
   this.id=id;
+  this.origId=id;
+
   ageClassPlug= sm.getAgeClassPlug(cls);
  }
 
  public String getId()
  {
   return id;
+ }
+ 
+ public String getOriginalId()
+ {
+  return origId;
+ }
+
+ public void setId(String nId)
+ {
+  id=nId;
  }
  
  public void addAttribute(AgeAttributeWritable attr)
