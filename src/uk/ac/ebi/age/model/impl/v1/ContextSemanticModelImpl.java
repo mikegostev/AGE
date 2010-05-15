@@ -10,7 +10,6 @@ import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeClassProperty;
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.ContextSemanticModel;
@@ -202,16 +201,11 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.getModelFactory();
  }
 
- public AgeAttributeWritable createAgeAttribute(AgeObject obj, AgeAttributeClass attrClass)
+ public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass)
  {
-  return masterModel.getModelFactory().createAgeAttribute(obj,attrClass,this);
+  return masterModel.getModelFactory().createAgeAttribute(attrClass,this);
  }
  
- public AgeAttributeWritable createAgeAttribute(AgeObject obj, AgeAttributeClass attrClass, String prm)
- {
-  return masterModel.getModelFactory().createAgeAttribute(obj,attrClass,prm,this);
- }
-
  public AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass)
  {
   return masterModel.getModelFactory().createRelation(targetObj, relClass, this);

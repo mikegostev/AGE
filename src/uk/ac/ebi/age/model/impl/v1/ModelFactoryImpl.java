@@ -8,7 +8,6 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AgeRestriction;
@@ -72,30 +71,37 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
 
  @Override
- public AgeAttributeWritable createAgeAttribute(AgeObject obj, AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass, SemanticModel sm)
  {
   AgeAttributeWritable attr=null;
   
   switch( attrClass.getDataType() )
   {
    case INTEGER:
-    attr = new AgeIntegerAttributeImpl(obj, attrClass, sm);
+    attr = new AgeIntegerAttributeImpl(attrClass, sm);
     break;
+   
    case REAL:
-    attr = new AgeRealAttributeImpl(obj, attrClass, sm);
+    attr = new AgeRealAttributeImpl(attrClass, sm);
     break;
+   
    case BOOLEAN:
-    attr = new AgeBooleanAttributeImpl(obj, attrClass, sm);
+    attr = new AgeBooleanAttributeImpl(attrClass, sm);
     break;
+   
+   case URI:
+   case TEXT: 
    case STRING:
-    attr = new AgeStringAttributeImpl(obj, attrClass, sm);
+   case GUESS:
+    attr = new AgeStringAttributeImpl(attrClass, sm);
     break;
   }
   
   
   return attr;
  }
- 
+
+/* 
  @Override
  public AgeAttributeWritable createAgeAttribute(AgeObject obj, AgeAttributeClass attrClass, String prm, SemanticModel sm)
  {
@@ -120,7 +126,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
   
   return attr;
  }
-
+*/
 
  @Override
  public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, SemanticModel sm)

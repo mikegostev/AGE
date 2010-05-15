@@ -3,9 +3,9 @@ package uk.ac.ebi.age.parser;
 public class AgeTabValue extends AgeTabElement
 {
  private String value;
- private ColumnHeader colHeader;
+ private ClassReference colHeader;
 
- public AgeTabValue(int row, int col, String value, ColumnHeader prop)
+ public AgeTabValue(int row, int col, String value, ClassReference prop)
  {
   super(row, col);
   this.value=value;
@@ -17,7 +17,7 @@ public class AgeTabValue extends AgeTabElement
   return value;
  }
 
- public ColumnHeader getColumnHeader()
+ public ClassReference getColumnHeader()
  {
   return colHeader;
  }

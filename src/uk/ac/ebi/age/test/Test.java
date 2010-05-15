@@ -126,6 +126,12 @@ public class Test
   {
    return true;
   }
+
+  @Override
+  public boolean isCustomQualifierAllowed()
+  {
+   return true;
+  }
   
  }
  

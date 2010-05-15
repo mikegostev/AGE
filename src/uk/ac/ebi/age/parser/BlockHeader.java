@@ -5,12 +5,12 @@ import java.util.List;
 public interface BlockHeader
 {
 
- public abstract void setClassColumnHeader(ColumnHeader cc);
+ public abstract void setClassColumnHeader(ClassReference cc);
 
- public abstract void addColumnHeader(ColumnHeader chd);
+ public abstract void addColumnHeader(ClassReference chd);
 
- public abstract ColumnHeader getClassColumnHeader();
+ public abstract ClassReference getClassColumnHeader();
 
- public abstract List<ColumnHeader> getColumnHeaders();
+ public abstract List<ClassReference> getColumnHeaders();
 
 }

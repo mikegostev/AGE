@@ -20,7 +20,9 @@ import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.RestrictionException;
 import uk.ac.ebi.age.model.Submission;
 import uk.ac.ebi.age.model.impl.IsInstanceOfRestriction;
+import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
+import uk.ac.ebi.age.model.writable.AgeObjectPropertyWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
@@ -30,7 +32,7 @@ import uk.ac.ebi.age.parser.AgeTabSubmission;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.AgeTabValue;
 import uk.ac.ebi.age.parser.BlockHeader;
-import uk.ac.ebi.age.parser.ColumnHeader;
+import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ConvertionException;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.SemanticException;
@@ -52,7 +54,10 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   
   for( BlockHeader hdr : data.getBlocks() )
   {
-   ColumnHeader colHdr = hdr.getClassColumnHeader();
+   ClassReference colHdr = hdr.getClassColumnHeader();
+   
+   if( colHdr.getQualifier() != null )
+    throw new SemanticException(colHdr.getRow(),colHdr.getCol(),"Class reference must not be qualified");
    
    AgeClass cls = null;
 
@@ -90,7 +95,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
     
     if( obj == null )
     {
-     obj = sm.createAgeObject(atObj.getId(), cls);
+     obj = sm.createAgeObject(atObj.isIdDefined()?atObj.getId():null, cls);
      obj.setOrder( atObj.getRow() );
      
      objectMap.put(atObj.getId(), obj);
@@ -102,12 +107,6 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   
   for( Map.Entry<BlockHeader, AgeClass> me : blk2classMap.entrySet() )
   {
-//   SubmissionBlock sBlock = new SubmissionBlock(me.getKey(), me.getValue());
-//   res.addSubmissionBlock(sBlock);
-   
-//   if( me.getValue().isCustom() )
-//    res.addClass( me.getValue() );
-   
    createConvertors( me.getKey(), me.getValue(), convs, sm, classMap);
    
    objectMap = classMap.get( me.getValue() );
@@ -116,20 +115,46 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
    {
     AgeObjectWritable obj = objectMap.get(atObj.getId());
     
-    for( ValueConverter cnv : convs )
+//    for( ValueConverter cnv : convs )
+//    {
+//     List<AgeTabValue> vals = atObj.getValues(cnv.getClassReference());
+//     
+//     cnv.convert(obj,vals);
+//    }
+
+    boolean hasValue=true;
+    int ln=0;
+    while( hasValue )
     {
-     List<AgeTabValue> vals = atObj.getValues(cnv.getColumnHeader());
+     hasValue=false;
      
-     cnv.convert(obj,vals);
+     for( ValueConverter cnv : convs )
+     {
+      List<AgeTabValue> vals = atObj.getValues(cnv.getClassReference());
+      
+      if( vals.size() <= ln )
+       cnv.convert(obj,null);
+      else
+      {
+       hasValue=true;
+       cnv.convert(obj,vals.get(ln));
+      }
+      
+     }
+     
+     ln++;
     }
     
     res.addObject(obj);
     obj.setSubmission(res);
    }
+   
 
   }
 
 //  attributeAttachmentClass = new AttrAttchRel(sm.getAttributeAttachmentClass());
+  
+  finalizeValues( res );
   
   validateData(res);
   
@@ -137,6 +162,166 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   
   return res;
  }
+ 
+ 
+ private void finalizeValues( SubmissionWritable data )
+ {
+  class AttrInfo
+  {
+   AgeAttributeWritable attr;
+   AgeObjectWritable obj;
+   
+   boolean isBool=false;
+   boolean isInt=false;
+   boolean isReal=false;
+   
+   int     intValue;
+   boolean boolValue;
+   double  realValue;
+  }
+  
+  class AttrClassInfo
+  {
+   AgeAttributeClassWritable atClass;
+
+   boolean isBool=true;
+   boolean isInt=true;
+   boolean isReal=true;
+   
+   List<AttrInfo> attributes = new ArrayList<AttrInfo>();
+  }
+
+  Map<AgeClass, Map<AgeAttributeClass,AttrClassInfo > > wMap = new HashMap<AgeClass, Map<AgeAttributeClass,AttrClassInfo >>();
+  
+  Map<AgeAttributeClass, AttrClassInfo > cClassMap = null;
+  AgeClass cClass = null;
+  
+  for( AgeObjectWritable obj : data.getObjects() )
+  {
+   
+   if( obj.getAgeElClass() != cClass )
+   {
+    cClass=obj.getAgeElClass();
+    
+    cClassMap = wMap.get(cClass);
+    
+    if( cClassMap == null )
+    {
+     cClassMap = new HashMap<AgeAttributeClass, AttrClassInfo>();
+     wMap.put(cClass, cClassMap);
+    }
+   }
+   
+   for( AgeAttributeWritable attr : obj.getAttributes() )
+   {
+    attr.finalizeValue();
+    
+    if( attr.getAgeElClass().getDataType() == DataType.GUESS )
+    {
+     AttrClassInfo atcInfo = cClassMap.get(attr.getAgeElClass());
+     
+     if(atcInfo == null)
+     {
+      atcInfo = new AttrClassInfo();
+      atcInfo.atClass = (AgeAttributeClassWritable)attr.getAgeElClass();
+      
+      cClassMap.put(atcInfo.atClass, atcInfo);
+     }
+     
+     AttrInfo aInf = new AttrInfo();
+     aInf.attr=attr;
+     aInf.obj=obj;
+     
+     atcInfo.attributes.add(aInf);
+     
+     String value = attr.getValue().toString().trim();
+     
+     if( atcInfo.isBool )
+     {
+      if( value.equalsIgnoreCase("true") )
+      {
+       aInf.isBool = true;
+       aInf.boolValue=true;
+      }
+      else if( value.equalsIgnoreCase("false") )
+      {
+       aInf.isBool = true;
+       aInf.boolValue=false;
+      }
+      else
+       atcInfo.isBool=false;
+     }
+     
+     if( ! aInf.isBool )
+     {
+      if( atcInfo.isInt )
+      {
+       try
+       {
+        aInf.intValue = Integer.parseInt( value );
+        aInf.isInt=true;
+       }
+       catch(Exception e)
+       {
+        atcInfo.isInt=false;
+       }
+      }
+      
+      if( atcInfo.isReal )
+      {
+       try
+       {
+        aInf.realValue = Double.parseDouble( value );
+        aInf.isReal=true;
+       }
+       catch(Exception e)
+       {
+        atcInfo.isReal=false;
+       }
+      }
+     }
+    }
+   }
+  }
+  
+  for( Map<AgeAttributeClass,AttrClassInfo > actMap : wMap.values() )
+  {
+   for( AttrClassInfo acInfo : actMap.values() )
+   {
+    DataType typ;
+    
+    if( acInfo.isBool )
+     acInfo.atClass.setDataType( typ = DataType.BOOLEAN );
+    else if( acInfo.isInt )
+     acInfo.atClass.setDataType( typ = DataType.INTEGER );
+    else if( acInfo.isReal )
+     acInfo.atClass.setDataType( typ = DataType.REAL );
+    else
+     acInfo.atClass.setDataType( typ = DataType.STRING );
+    
+    if( typ != DataType.STRING)
+    {
+     for( AttrInfo ai : acInfo.attributes )
+     {
+      ai.obj.removeAttribute(ai.attr);
+      AgeAttributeWritable nAttr = ai.obj.createAgeAttribute(acInfo.atClass);
+      
+      nAttr.setOrder(ai.attr.getOrder());
+      
+      if( typ == DataType.BOOLEAN )
+       nAttr.setBooleanValue(ai.boolValue);
+      else if( typ == DataType.INTEGER )
+       nAttr.setIntValue(ai.intValue);
+      else if( typ == DataType.REAL )
+       nAttr.setDoubleValue(ai.realValue);
+     }
+    }
+   }
+  }
+  
+ }
+ 
+ 
 
  private void imputeReverseRelations( SubmissionWritable data )
  {
@@ -255,16 +440,117 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
  }
 */
  
+ private AgeAttributeClass getCustomAttributeClass( ClassReference cr , AgeClass aCls, ContextSemanticModel sm) throws SemanticException
+ {
+   if(!sm.getContext().isCustomAttributeClassAllowed())
+    throw new SemanticException(cr.getRow(), cr.getCol(), "Custom attribure class (" + cr.getName() + ") is not allowed within this context.");
+
+   AgeAttributeClass attrClass = sm.getCustomAgeAttributeClass(cr.getName(), aCls);
+
+   String typeName = cr.getFlagValue(typeFlag);
+
+   DataType type = DataType.GUESS;
+
+   if(typeName != null)
+   {
+    try
+    {
+     type = DataType.valueOf(typeName);
+    }
+    catch(Exception e)
+    {
+     throw new SemanticException(cr.getRow(), cr.getCol(), "Invalid type name: " + typeName);
+    }
+   }
+   else
+   {
+    if(attrClass != null)
+     type = attrClass.getDataType();
+   }
+
+   if(attrClass != null)
+   {
+    if(attrClass.getDataType() != type)
+     throw new SemanticException(cr.getRow(), cr.getCol(), "Data type ('" + type + "') mismatches with the previous definition: " + attrClass.getDataType());
+   }
+   else
+    attrClass = sm.createCustomAgeAttributeClass(cr.getName(), type, aCls);
+
+   return attrClass;
+ }
+ 
+ private void addConverter( List<ValueConverter> convs, ValueConverter cnv ) throws SemanticException
+ {
+  for( ValueConverter exstC : convs )
+  {
+   if( exstC.getProperty() == cnv.getProperty() && exstC.getQualifiedProperty() == cnv.getQualifiedProperty() && cnv.getProperty() != null )
+    throw new SemanticException(cnv.getClassReference().getRow(), cnv.getClassReference().getCol(),
+      "Column header duplicates header at column "+exstC.getClassReference().getCol());
+  }
+  
+  convs.add(cnv);
+ }
+ 
  private void createConvertors( BlockHeader blck, AgeClass blkCls, List<ValueConverter> convs, ContextSemanticModel sm, Map<AgeClass, Map<String,AgeObjectWritable>> classMap ) throws SemanticException
  {
   convs.clear();
   
-  for( ColumnHeader attHd : blck.getColumnHeaders() )
+  for( ClassReference attHd : blck.getColumnHeaders() )
   {
+   if( attHd == null )
+    addConverter(convs, new EmptyColumnConvertor() );
+   
+   if( attHd.getQualifier() != null )
+   {
+    ClassReference qualif = attHd.getQualifier();
+    
+    if( qualif.getQualifier() != null )
+     throw new SemanticException(attHd.getRow(), attHd.getCol(), "A qualifier must not be qualified ifself.");
+    
+    ValueConverter hostConverter = null;
+    for( int i=convs.size()-1; i >= 0; i-- )
+    {
+     ValueConverter vc = convs.get(i);
+     
+     ClassReference cr = vc.getClassReference();
+     
+     if( cr == null || cr.getQualifier() != null )
+      continue;
+     
+     if( cr.getName().equals(attHd.getName()) && cr.isCustom() == attHd.isCustom() )
+     {
+      hostConverter=vc;
+      break;
+     }
+    }
+    
+    if( hostConverter == null )
+     throw new SemanticException(attHd.getRow(), attHd.getCol(), "A qualifier must follow to a qualified property.");
+    
+    if( qualif.isCustom() && ! sm.getContext().isCustomQualifierAllowed() )
+     throw new SemanticException(attHd.getRow(), attHd.getCol(), "Custom qualifier ("+qualif.getName()+") is not allowed within this context.");
+    
+    AgeAttributeClass qClass = null;
+    
+    if( qualif.isCustom() )
+     qClass = getCustomAttributeClass(qualif, blkCls, sm);
+    else
+    {
+     qClass=sm.getDefinedAgeAttributeClass(qualif.getName());
+     
+     if( qClass == null )
+      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Unknown attribute class (qualifier): '"+qualif.getName()+"'");
+    }
+    
+    addConverter(convs, new QualifierConvertor( attHd, qClass, hostConverter ) );
+    continue;
+    
+   }
    
    if( attHd.isCustom() )
    {
     String rangeClassName = attHd.getFlagValue(rangeFlag);
+    
     
     if( rangeClassName != null )
     {
@@ -273,10 +559,10 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
       
      AgeClass rangeClass=null;
      
-     ColumnHeader rgHdr=null;
+     ClassReference rgHdr=null;
      try
      {
-      rgHdr = AgeTabSyntaxParser.string2ColumnHeader(rangeClassName);
+      rgHdr = AgeTabSyntaxParser.string2ClassReference(rangeClassName);
      }
      catch(ParserException e)
      {
@@ -296,45 +582,13 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
      if( relCls == null )
       relCls = sm.createCustomAgeRelationClass(attHd.getName(), rangeClass, blkCls);
      
-     convs.add( new RelationConvertor(attHd,relCls,classMap.get(rangeClass)) );
+     addConverter(convs, new RelationConvertor(attHd,relCls,classMap.get(rangeClass)) );
     }
     else
     {
-     if( ! sm.getContext().isCustomAttributeClassAllowed() )
-      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Custom attribure class ("+attHd.getName()+") is not allowed within this context.");
+     AgeAttributeClass attrClass = getCustomAttributeClass(attHd, blkCls, sm);
      
-     AgeAttributeClass attrClass = sm.getCustomAgeAttributeClass(attHd.getName(), blkCls);
-     
-     String typeName = attHd.getFlagValue(typeFlag);
-     
-     DataType type = DataType.STRING;
-     
-     if( typeName != null )
-     {
-      try
-      {
-       type = DataType.valueOf(typeName);
-      }
-      catch(Exception e)
-      {
-       throw new SemanticException(attHd.getRow(), attHd.getCol(), "Invalid type name: "+typeName);
-      }
-     }
-     else
-     {
-      if( attrClass != null )
-       type = attrClass.getDataType();
-     }
-     
-     if( attrClass != null )
-     {
-      if( attrClass.getDataType() != type )
-       throw new SemanticException(attHd.getRow(), attHd.getCol(), "Data type ('"+type+"') mismatches with the previous definition: "+attrClass.getDataType());
-     }
-     else
-      attrClass = sm.createCustomAgeAttributeClass(attHd.getName(),type, blkCls);
-
-     convs.add( new AttributeConvertor(attHd,attrClass) );
+     addConverter(convs, new AttributeConvertor(attHd,attrClass) );
     }
    }
    else
@@ -351,7 +605,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
     {
      AgeAttributeClass attClass = (AgeAttributeClass)prop;
      
-     convs.add( new AttributeConvertor(attHd,attClass) );
+     addConverter(convs, new AttributeConvertor(attHd,attClass) );
     }
     else
     {
@@ -374,7 +628,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
        throw new SemanticException(attHd.getRow(),attHd.getCol(),"Class '"+blkCls.getName()+"' is not in the domain of relation class '"+rCls.getName()+"'");
      }
      
-     convs.add( new DefinedRelationConvertor( attHd,rCls, classMap) );
+     addConverter(convs, new DefinedRelationConvertor( attHd, rCls, classMap) );
     }
    }
   }
@@ -383,20 +637,32 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
  
  private abstract class ValueConverter
  {
-  protected ColumnHeader colHdr;
-//  protected SemanticModel semantic;
+  protected ClassReference colHdr;
+  protected AgeObjectPropertyWritable lastProp;
   
-  protected ValueConverter( ColumnHeader hd )
+  protected ValueConverter( ClassReference hd )
   {
    colHdr=hd;
-//   semantic=sm;
   }
-  
-  public abstract void convert(AgeObjectWritable obj, List<AgeTabValue> vls) throws ConvertionException;
 
-  public ColumnHeader getColumnHeader()
+  abstract public AgeClassProperty getProperty();
+  abstract public AgeClassProperty getQualifiedProperty();
+
+  public abstract void convert(AgeObjectWritable obj, AgeTabValue vls) throws ConvertionException;
+
+  public ClassReference getClassReference()
   {
    return colHdr;
+  }
+  
+  protected void setLastConvertedProperty( AgeObjectPropertyWritable p )
+  {
+   lastProp=p;
+  }
+  
+  public AgeObjectPropertyWritable getLastConvertedProperty()
+  {
+   return lastProp;
   }
  }
  
@@ -405,7 +671,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   private Collection<Map<String, AgeObjectWritable>> rangeObjects;
   private AgeRelationClass relClass;
   
-  public DefinedRelationConvertor(ColumnHeader hd, AgeRelationClass rlClass, Map<AgeClass, Map<String, AgeObjectWritable>> classMap)
+  public DefinedRelationConvertor(ClassReference hd, AgeRelationClass rlClass, Map<AgeClass, Map<String, AgeObjectWritable>> classMap)
   {
    super(hd);
    
@@ -425,46 +691,59 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
    }
   }
 
-  @Override
-  public void convert( AgeObjectWritable obj, List<AgeTabValue> vals ) throws ConvertionException
+  
+  public AgeClassProperty getProperty()
   {
-   
-   for( AgeTabValue atVal : vals )
-   {
-    int found=0;
+   return relClass;
+  }
+ 
+  public AgeClassProperty getQualifiedProperty()
+  {
+   return null;
+  }
 
-    String val = atVal.getValue().trim();
-    
-    if( val.length() == 0 )
-     continue;
-    
-    AgeObjectWritable targetObj = null;
-    
-    for( Map<String, AgeObjectWritable> omap : rangeObjects )
+  
+  @Override
+  public void convert( AgeObjectWritable obj, AgeTabValue atVal ) throws ConvertionException
+  {
+   setLastConvertedProperty(null);
+
+   if(atVal == null)
+    return;
+
+   int found = 0;
+
+   String val = atVal.getValue().trim();
+
+   if(val.length() == 0)
+    return;
+
+   AgeObjectWritable targetObj = null;
+
+   for(Map<String, AgeObjectWritable> omap : rangeObjects)
+   {
+    AgeObjectWritable candObj = omap.get(val);
+
+    if(candObj != null)
     {
-     AgeObjectWritable candObj = omap.get(val);
-     
-     if( candObj != null )
-     {
-      targetObj=candObj;
-      found++;
-     }
+     targetObj = candObj;
+     found++;
     }
-    
-    if( found > 1 )
-     throw new ConvertionException(atVal.getRow(), atVal.getCol(), "Ambiguous reference");
-    
-    
-    AgeRelationWritable rel=null;
-    if( targetObj == null )
-     rel = obj.createExternalRelation(val,relClass);
-    else
-     rel = obj.createRelation(targetObj,relClass);
-    
-    rel.setOrder(getColumnHeader().getCol());
    }
-   
-    
+
+   if(found > 1)
+    throw new ConvertionException(atVal.getRow(), atVal.getCol(), "Ambiguous reference");
+
+   AgeRelationWritable rel = null;
+   if(targetObj == null)
+    rel = obj.createExternalRelation(val, relClass);
+   else
+    rel = obj.createRelation(targetObj, relClass);
+
+   rel.setOrder(getClassReference().getCol());
+  
+   setLastConvertedProperty(rel);
+
   }
  }
 
@@ -474,7 +753,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   private Map<String, AgeObjectWritable> rangeObjects;
   private AgeRelationClass       relClass;
 
-  public RelationConvertor(ColumnHeader hd, AgeRelationClass relCls, Map<String, AgeObjectWritable> map)
+  public RelationConvertor(ClassReference hd, AgeRelationClass relCls, Map<String, AgeObjectWritable> map)
   {
    super(hd);
    rangeObjects = map;
@@ -482,39 +761,86 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   }
 
   @Override
-  public void convert(AgeObjectWritable obj, List<AgeTabValue> vals)
+  public void convert(AgeObjectWritable obj, AgeTabValue atVal)
   {
-   for(AgeTabValue atVal : vals)
-   {
-    String val = atVal.getValue().trim();
+   setLastConvertedProperty(null);
 
-    if(val.length() == 0)
-     continue;
+   if(atVal == null )
+    return;
+   
+   String val = atVal.getValue().trim();
 
-    AgeObjectWritable targetObj = null;
-     
-    if( rangeObjects != null )
-     targetObj = rangeObjects.get(val);
+   if(val.length() == 0)
+    return;
 
-    AgeRelationWritable rel=null;
-    if(targetObj == null)
-     rel = obj.createExternalRelation(val, relClass);
-    else
-     rel = obj.createRelation(targetObj, relClass);
-    
-    rel.setOrder(getColumnHeader().getCol());
-   }
+   AgeObjectWritable targetObj = null;
+
+   if(rangeObjects != null)
+    targetObj = rangeObjects.get(val);
+
+   AgeRelationWritable rel = null;
+   if(targetObj == null)
+    rel = obj.createExternalRelation(val, relClass);
+   else
+    rel = obj.createRelation(targetObj, relClass);
+
+   rel.setOrder(getClassReference().getCol());
+   setLastConvertedProperty(rel);
 
   }
+  
+  @Override
+  public AgeClassProperty getProperty()
+  {
+   return relClass;
+  }
+  
+  public AgeClassProperty getQualifiedProperty()
+  {
+   return null;
+  }
+
+ }
+ 
+ 
+ private class EmptyColumnConvertor  extends ValueConverter
+ {
+
+  protected EmptyColumnConvertor()
+  {
+   super(null);
+  }
+
+  @Override
+  public void convert(AgeObjectWritable obj, AgeTabValue vls) throws ConvertionException
+  {
+   if(vls == null)
+    return;
+
+   if(vls.getValue().length() > 0)
+    throw new ConvertionException(vls.getRow(), vls.getCol(), "Cells in the column with no header must be empty");
+  }
+
+  @Override
+  public AgeClassProperty getProperty()
+  {
+   return null;
+  }
+  
+  public AgeClassProperty getQualifiedProperty()
+  {
+   return null;
+  }
+
  }
  
  private class AttributeConvertor extends ValueConverter
  {
   private AgeAttributeClass attrClass;
 
-  public AttributeConvertor(ColumnHeader hd, AgeAttributeClass attCls) throws SemanticException
+  public AttributeConvertor(ClassReference hd, AgeAttributeClass attCls) throws SemanticException
   {
-   super(hd);
+   super( hd );
    attrClass = attCls;
    
    DataType dt = attrClass.getDataType();
@@ -524,15 +850,32 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   }
 
   @Override
-  public void convert(AgeObjectWritable obj, List<AgeTabValue> vals) throws ConvertionException
+  public void convert(AgeObjectWritable obj, AgeTabValue vl) throws ConvertionException
   {
-   if( vals == null || vals.size() == 0 )
+   setLastConvertedProperty(null);
+   
+   if( vl == null || vl.getValue().length() == 0 )
     return;
    
-   ColumnHeader hdr = vals.get(0).getColumnHeader();
+   AgeAttributeWritable attr = null;
+   boolean exstAttr=false;
    
-   AgeAttributeWritable attrAlt = hdr.getParameter()==null?obj.createAgeAttribute(attrClass):obj.createAgeAttribute(attrClass,hdr.getParameter());
-  
+   if( attrClass.getDataType().isMultiline())
+   {
+    Collection<? extends AgeAttributeWritable> atcoll = obj.getAttributes(attrClass);
+    
+    if( atcoll == null || atcoll.size() == 0 )
+     attr = obj.createAgeAttribute(attrClass);
+    else
+    {
+     attr = atcoll.iterator().next();
+     exstAttr=true;
+    }
+   }
+   else
+    attr = obj.createAgeAttribute(attrClass);
+   
+ 
 //   AgeAttribute attr = obj.getAttribute(attrClass);
 //   AgeAttributeWritable attrAlt = obj.createAgeAttribute(attrClass);
 //   
@@ -543,20 +886,131 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
 //   else
 //    throw new ConvertionException(getColumnHeader().getRow(), getColumnHeader().getRow(), "Attribute '"+attrClass+"' already exists in the object '"+obj.getId()+"' and isn't alterable" );
    
-   for( AgeTabValue vl : vals )
-   { 
     try
     {
-     attrAlt.updateValue(vl.getValue());
+     attr.updateValue(vl.getValue());
     }
     catch(FormatException e)
     {
      throw new ConvertionException(vl.getRow(), vl.getCol(), "Invalid value ("+vl.getValue()+") for attribute: "+attrClass.getName() );
     }
-   }
    
-   attrAlt.finalizeValue();
-   attrAlt.setOrder( getColumnHeader().getCol() );
+    if( ! exstAttr )
+     attr.setOrder( getClassReference().getCol() );
+    
+    setLastConvertedProperty(attr);
+  }
+  
+  public AgeClassProperty getProperty()
+  {
+   return attrClass;
+  }
+  
+  public AgeClassProperty getQualifiedProperty()
+  {
+   return null;
+  }
+
+ }
+ 
+ private class QualifierConvertor extends ValueConverter
+ {
+  private AgeAttributeClass attrClass;
+  private ValueConverter hostConverter;
+
+
+  public QualifierConvertor(ClassReference attHd, AgeAttributeClass qClass, ValueConverter hc) throws SemanticException
+  {
+   super(attHd);
+   attrClass = qClass;
+
+   DataType dt = attrClass.getDataType();
+   
+   if( dt == null )
+    throw new SemanticException(attHd.getRow(), attHd.getCol(), "Attribute class: '"+attrClass.getName()+"' has no data type and can't be instantiated");
+   
+   hostConverter = hc;
+  }
+
+  @Override
+  public void convert(AgeObjectWritable obj, AgeTabValue val) throws ConvertionException
+  {
+   setLastConvertedProperty(null);
+
+   if(val == null)
+   {
+    setLastConvertedProperty(null);
+    return;
+   }
+
+   AgeObjectPropertyWritable prop = hostConverter.getLastConvertedProperty();
+
+
+   if(prop == null && (getLastConvertedProperty() == null || !attrClass.getDataType().isMultiline()))
+    throw new ConvertionException(val.getRow(), val.getCol(), "There is no main value for qualification");
+
+   boolean exstProp = false;
+
+   AgeAttributeWritable attrAlt = null;
+
+   if(prop == null)
+   {
+    attrAlt = (AgeAttributeWritable) getLastConvertedProperty();
+    exstProp = true;
+   }
+   else
+   {
+    if(attrClass.getDataType().isMultiline())
+    {
+     Collection<AgeAttributeWritable> qs = prop.getQualifiers();
+
+     if(qs == null)
+      attrAlt = obj.getAgeElClass().getSemanticModel().createAgeAttribute(attrClass);
+     else
+     {
+      for(AgeAttributeWritable q : qs)
+      {
+       if(q.getAgeElClass() == attrClass)
+       {
+        exstProp = true;
+        attrAlt = q;
+        break;
+       }
+      }
+
+      if(attrAlt == null)
+       attrAlt = obj.getAgeElClass().getSemanticModel().createAgeAttribute(attrClass);
+
+     }
+    }
+   }
+
+   try
+   {
+    attrAlt.updateValue(val.getValue());
+   }
+   catch(FormatException e)
+   {
+    throw new ConvertionException(val.getRow(), val.getCol(), "Invalid value (" + val.getValue() + ") for attribute: "
+      + attrClass.getName());
+   }
+
+   if( !exstProp )
+   attrAlt.setOrder(getClassReference().getCol());
+
+   setLastConvertedProperty(attrAlt);
+  }
+
+  @Override
+  public AgeClassProperty getProperty()
+  {
+   return attrClass;
+  }
+
+  @Override
+  public AgeClassProperty getQualifiedProperty()
+  {
+   return hostConverter.getProperty();
   }
  }
 }

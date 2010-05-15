@@ -1,7 +1,6 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.SemanticModel;
 
@@ -14,9 +13,9 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
  protected AgeBooleanAttributeImpl()
  {}
  
- public AgeBooleanAttributeImpl(AgeObject obj, AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeBooleanAttributeImpl(AgeAttributeClass attrClass, SemanticModel sm)
  {
-  super(obj, attrClass, sm);
+  super(attrClass, sm);
  }
 
  public Object getValue()
@@ -42,15 +41,62 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
  }
 
  @Override
- public String getParameter()
+ public String getId()
  {
   return null;
  }
 
  @Override
- public String getId()
+ public boolean getValueAsBoolean()
  {
-  return null;
+  return value;
+ }
+
+ @Override
+ public double getValueAsDouble()
+ {
+  return value?1:0;
+ }
+
+ @Override
+ public int getValueAsInteger()
+ {
+  return value?1:0;
+ }
+
+ @Override
+ public void setBooleanValue(boolean boolValue)
+ {
+  value=boolValue;
+ }
+
+ @Override
+ public void setDoubleValue(double doubleValue)
+ {
+  value = doubleValue != 0;
+ }
+
+ @Override
+ public void setIntValue(int intValue)
+ {
+  value = intValue != 0;
+ }
+
+ @Override
+ public void setValue(Object val)
+ {
+  if( val instanceof Boolean )
+   value=((Boolean)val).booleanValue();
+  else if( val instanceof Number )
+   value=((Number)val).intValue() != 0;
+  else
+   try
+   {
+    value=Boolean.parseBoolean(val.toString());
+   }
+   catch(Exception e)
+   {
+   }
  }
 
 

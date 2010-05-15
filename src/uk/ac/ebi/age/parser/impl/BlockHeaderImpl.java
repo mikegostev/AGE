@@ -4,17 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.ac.ebi.age.parser.BlockHeader;
-import uk.ac.ebi.age.parser.ColumnHeader;
+import uk.ac.ebi.age.parser.ClassReference;
 
 public class BlockHeaderImpl implements BlockHeader
 {
- private ColumnHeader classCol;
- private List<ColumnHeader> props=new ArrayList<ColumnHeader>(30);
+ private ClassReference classCol;
+ private List<ClassReference> props=new ArrayList<ClassReference>(30);
  
  /* (non-Javadoc)
   * @see uk.ac.ebi.age.parser.impl.BlockHeader#setClassColumnHeader(uk.ac.ebi.age.parser.ColumnHeader)
   */
- public void setClassColumnHeader(ColumnHeader cc)
+ public void setClassColumnHeader(ClassReference cc)
  {
   classCol=cc;
  }
@@ -22,7 +22,7 @@ public class BlockHeaderImpl implements BlockHeader
  /* (non-Javadoc)
   * @see uk.ac.ebi.age.parser.impl.BlockHeader#addColumnHeader(uk.ac.ebi.age.parser.ColumnHeader)
   */
- public void addColumnHeader(ColumnHeader chd)
+ public void addColumnHeader(ClassReference chd)
  {
   props.add(chd);
  }
@@ -30,7 +30,7 @@ public class BlockHeaderImpl implements BlockHeader
  /* (non-Javadoc)
   * @see uk.ac.ebi.age.parser.impl.BlockHeader#getClassColumnHeader()
   */
- public ColumnHeader getClassColumnHeader()
+ public ClassReference getClassColumnHeader()
  {
   return classCol;
  }
@@ -38,7 +38,7 @@ public class BlockHeaderImpl implements BlockHeader
  /* (non-Javadoc)
   * @see uk.ac.ebi.age.parser.impl.BlockHeader#getColumnHeaders()
   */
- public List<ColumnHeader> getColumnHeaders()
+ public List<ClassReference> getColumnHeaders()
  {
   return props;
  }

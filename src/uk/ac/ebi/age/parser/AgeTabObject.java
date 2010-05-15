@@ -9,14 +9,15 @@ public class AgeTabObject
 {
  private int row;
  private String id;
- private Map<ColumnHeader, List<AgeTabValue>> values = new HashMap<ColumnHeader, List<AgeTabValue>>();
+ private Map<ClassReference, List<AgeTabValue>> values = new HashMap<ClassReference, List<AgeTabValue>>();
+ private boolean idIsDefined;
 
  public AgeTabObject( int rw )
  {
   row=rw;
  }
  
- public void addValue(int row, int col, String val, ColumnHeader prop)
+ public void addValue(int row, int col, String val, ClassReference prop)
  {
   List<AgeTabValue> vl = values.get(prop);
   
@@ -36,7 +37,7 @@ public class AgeTabObject
   return id;
  }
 
- public List<AgeTabValue> getValues( ColumnHeader col )
+ public List<AgeTabValue> getValues( ClassReference col )
  {
   return values.get(col);
  }
@@ -44,5 +45,15 @@ public class AgeTabObject
  public int getRow()
  {
   return row;
+ }
+
+ public void setIdDefined(boolean b)
+ {
+  idIsDefined=b;
+ }
+ 
+ public boolean isIdDefined()
+ {
+  return idIsDefined;
  }
 }

@@ -1,10 +1,11 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 
@@ -15,13 +16,14 @@ abstract class AgeAttributeImpl extends AgeSemanticElementImpl implements AgeAtt
  
  private AgeAttributeClassPlug attrClassPlug;
  private int order;
+ private Collection<AgeAttributeWritable> qualifiers;
 
  protected AgeAttributeImpl()
  {
   super(null);
  }
  
- public AgeAttributeImpl(AgeObject obj, AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeAttributeImpl(AgeAttributeClass attrClass, SemanticModel sm)
  {
   super(sm);
   
@@ -54,8 +56,18 @@ abstract class AgeAttributeImpl extends AgeSemanticElementImpl implements AgeAtt
   return order;
  }
  
-// public void resetModel()
-// {
-//  attrClassPlug.unplug();
-// }
+ @Override
+ public Collection<AgeAttributeWritable> getQualifiers()
+ {
+  return qualifiers;
+ }
+ 
+ public void addQualifier(AgeAttributeWritable q )
+ {
+  if(qualifiers == null )
+   qualifiers = new ArrayList<AgeAttributeWritable>(5);
+
+  
+  qualifiers.add(q);
+ }
 }

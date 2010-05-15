@@ -1,7 +1,6 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
@@ -13,9 +12,9 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
 
  private int value; 
 
- public AgeIntegerAttributeImpl(AgeObject obj, AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeIntegerAttributeImpl(AgeAttributeClass attrClass, SemanticModel sm)
  {
-  super(obj, attrClass, sm);
+  super(attrClass, sm);
  }
 
  public Object getValue()
@@ -40,16 +39,61 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
   }
  }
 
- @Override
- public String getParameter()
- {
-  return null;
- }
 
  @Override
  public String getId()
  {
   return null;
+ }
+
+ @Override
+ public boolean getValueAsBoolean()
+ {
+  return value!=0;
+ }
+
+ @Override
+ public double getValueAsDouble()
+ {
+  return value;
+ }
+
+ @Override
+ public int getValueAsInteger()
+ {
+  return value;
+ }
+
+ @Override
+ public void setBooleanValue(boolean boolValue)
+ {
+  value=boolValue?1:0;
+ }
+
+ @Override
+ public void setDoubleValue(double doubleValue)
+ {
+  value=(int)Math.round(doubleValue);
+ }
+
+ @Override
+ public void setIntValue(int intValue)
+ {
+  value=intValue;
+ }
+
+ @Override
+ public void setValue(Object val)
+ {
+  if( val instanceof Number )
+   value=((Number)val).intValue();
+  else try
+  {
+   value = Integer.parseInt(val.toString());
+  }
+  catch (Exception e)
+  {
+  }
  }
 
 }

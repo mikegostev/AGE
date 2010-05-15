@@ -9,5 +9,7 @@ public interface SubmissionContext
 
  boolean isCustomRelationClassAllowed();
 
+ boolean isCustomQualifierAllowed();
+
 }
 

@@ -1,12 +1,14 @@
 package uk.ac.ebi.age.model;
 
-public interface AgeAttribute
+public interface AgeAttribute extends AgeObjectProperty
 {
  AgeAttributeClass getAgeElClass();
  
  Object getValue();
  
- public String getParameter();
+ boolean getValueAsBoolean();
+ int getValueAsInteger();
+ double getValueAsDouble();
  
  public int getOrder();
 }

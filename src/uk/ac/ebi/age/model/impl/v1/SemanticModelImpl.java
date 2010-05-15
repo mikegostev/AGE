@@ -9,7 +9,6 @@ import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeClassProperty;
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.DataType;
@@ -93,16 +92,10 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  }
 
 
- public AgeAttributeWritable createAgeAttribute(AgeObject obj, AgeAttributeClass attrClass)
+ public AgeAttributeWritable createAgeAttribute( AgeAttributeClass attrClass)
  {
-  return modelFactory.createAgeAttribute(obj, attrClass, this);
+  return modelFactory.createAgeAttribute(attrClass, this);
  }
-
- public AgeAttributeWritable createAgeAttribute(AgeObject obj, AgeAttributeClass attrClass, String prm)
- {
-  return modelFactory.createAgeAttribute(obj, attrClass, prm, this);
- }
-
  
  public AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type)
  {

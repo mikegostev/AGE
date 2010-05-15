@@ -3,20 +3,20 @@ package uk.ac.ebi.age.parser;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class ColumnHeader extends AgeTabElement
+public class ClassReference extends AgeTabElement
 {
 
  private boolean custom;
  private String name;
  private Map<String,String> flags;
- private String variant;
+ private ClassReference qualifier;
 
- public ColumnHeader()
+ public ClassReference()
  {
   super(0,0);
  }
  
- public ColumnHeader(int row, int col)
+ public ClassReference(int row, int col)
  {
   super(row, col);
  }
@@ -42,14 +42,14 @@ public class ColumnHeader extends AgeTabElement
   return name;
  }
 
- public String getParameter()
+ public ClassReference getQualifier()
  {
-  return variant;
+  return qualifier;
  }
  
- public void setParameter(String s)
+ public void setQualifier(ClassReference s)
  {
-  variant = s;
+  qualifier = s;
  }
 
  public void addFlag(String nm, String vl)

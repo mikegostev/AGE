@@ -17,8 +17,7 @@ public interface SemanticModel
  AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type);
 
  
- AgeAttributeWritable createAgeAttribute(AgeObject ageObject, AgeAttributeClass attr);
- AgeAttributeWritable createAgeAttribute(AgeObject ageObjectImpl, AgeAttributeClass attrClass, String param);
+ AgeAttributeWritable createAgeAttribute(AgeAttributeClass attr);
 
  AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String val, AgeRelationClass relClass);
 

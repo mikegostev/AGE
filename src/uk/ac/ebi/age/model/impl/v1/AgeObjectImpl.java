@@ -84,6 +84,16 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
   }
  }
 
+ @Override
+ public void removeAttribute(AgeAttributeWritable attr)
+ {
+  Collection<AgeAttributeWritable> coll = attributes.get(attr.getAgeElClass().getId());
+  
+  if( coll != null )
+   coll.remove(attr);
+ }
+
+ 
  public void addRelation(AgeRelationWritable rl)
  {
   Collection<AgeRelationWritable> coll = relations.get(rl.getAgeElClass().getId());
@@ -121,22 +131,13 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
 
  public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass)
  {
-  AgeAttributeWritable attr = getSemanticModel().createAgeAttribute(this, attrClass);
+  AgeAttributeWritable attr = getSemanticModel().createAgeAttribute( attrClass);
 
   addAttribute(attr);
   
   return attr;
  }
  
- public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass, String param)
- {
-  AgeAttributeWritable attr = getSemanticModel().createAgeAttribute(this, attrClass, param);
-
-  addAttribute(attr);
-  
-  return attr;
- }
-
  public AgeExternalRelationWritable createExternalRelation(String val, AgeRelationClass relClass)
  {
   AgeExternalRelationWritable rel = getSemanticModel().createExternalRelation(this, val, relClass);
@@ -222,5 +223,6 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
 
   return null;
  }
+
 
 }

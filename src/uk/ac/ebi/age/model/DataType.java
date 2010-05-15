@@ -1,20 +1,26 @@
 package uk.ac.ebi.age.model;
 
+
 public enum DataType
 {
- INTEGER(false,true),
- REAL   (false,true),
- STRING (true,false),
- BOOLEAN(false,false);
+ INTEGER(false,true,false),
+ REAL   (false,true,false),
+ STRING (true,false,false),
+ TEXT   (true,false,true),
+ URI    (true,false,false),
+ BOOLEAN(false,false,false),
+ GUESS  (false,false,false);
  
  
  boolean isTextual;
  boolean isNumeric;
+ boolean isMultiline;
  
- private DataType(boolean txt, boolean num)
+ private DataType(boolean txt, boolean num, boolean ml)
  {
   isTextual = txt;
   isNumeric = num;
+  isMultiline = ml;
  }
  
  public boolean isTextual()
@@ -25,5 +31,10 @@ public enum DataType
  public boolean isNumeric()
  {
   return isNumeric;
+ }
+
+ public boolean isMultiline()
+ {
+  return isMultiline;
  }
 }

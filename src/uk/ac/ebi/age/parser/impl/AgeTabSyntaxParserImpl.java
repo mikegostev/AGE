@@ -8,7 +8,7 @@ import uk.ac.ebi.age.parser.AgeTabObject;
 import uk.ac.ebi.age.parser.AgeTabSubmission;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.BlockHeader;
-import uk.ac.ebi.age.parser.ColumnHeader;
+import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.service.IdGenerator;
 import uk.ac.ebi.age.util.StringUtil;
@@ -117,27 +117,27 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    
    if( newContext )
    {
-    int endSz=-1;
-    int i=-1;
-    for( String pt : parts )
-    {
-     i++;
-     
-     if( pt.length() == 0 )
-     {
-      if( endSz == -1 )
-       endSz=i;
-     }
-     else if( endSz != -1 )
-      throw new ParserException(ln,i,"Invalid cell contetns. Must be empty");
-    }
-    
-    
-    List<String> hdrParts = endSz != -1?parts=parts.subList(0, endSz):parts;
+//    int endSz=-1;
+//    int i=-1;
+//    for( String pt : parts )
+//    {
+//     i++;
+//     
+//     if( pt.length() == 0 )
+//     {
+//      if( endSz == -1 )
+//       endSz=i;
+//     }
+//     else if( endSz != -1 )
+//      throw new ParserException(ln,i,"Invalid cell contetns. Must be empty");
+//    }
+//    
+//    
+//    List<String> hdrParts = endSz != -1?parts=parts.subList(0, endSz):parts;
 
     newContext = false;
 
-    header = analyzeHeader(hdrParts,ln);
+    header = analyzeHeader(parts,ln);
     
     cObj = null;
     
@@ -154,15 +154,20 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     { 
      String id = IdGenerator.getInstance().getStringId();
      cObj = data.createObject(id,header,ln);
+     cObj.setIdDefined(false);
     }
     else
+    {
      cObj = data.getOrCreateObject(part,header,ln);
+     
+     cObj.setIdDefined( ! part.startsWith(anonymousObjectId) );
+    }
    }
    else if( cObj == null )
     throw new ParserException(ln, 1, "Object identifier is expected");
    
    int col=1; 
-   for( ColumnHeader prop : header.getColumnHeaders() )
+   for( ClassReference prop : header.getColumnHeaders() )
    {
     col++;
     
@@ -185,10 +190,10 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   
   Iterator<String> itr = parts.iterator();
   
-  ColumnHeader partName;
+  ClassReference partName;
   try
   {
-   partName = string2ColumnHeader(itr.next());
+   partName = string2ClassReference(itr.next());
    partName.setRow(row);
    partName.setCol(1);
   }
@@ -207,9 +212,17 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   {
    col++;
    
+   String hdrStr = itr.next();
+   
+   if( hdrStr.trim().length() == 0 )
+   {
+    hdr.addColumnHeader(null);
+    continue;
+   }
+   
    try
    {
-    partName = string2ColumnHeader(itr.next());
+    partName = string2ClassReference(hdrStr);
     partName.setRow(row);
     partName.setCol(col);
    }

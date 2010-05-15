@@ -1,7 +1,6 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
@@ -12,9 +11,9 @@ class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttributeWri
  
  private String value; 
 
- public AgeStringAttributeImpl(AgeObject obj, AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeStringAttributeImpl(AgeAttributeClass attrClass, SemanticModel sm)
  {
-  super(obj, attrClass, sm);
+  super(attrClass, sm);
  }
 
  public Object getValue()
@@ -38,15 +37,52 @@ class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttributeWri
    value = value.trim();
  }
  
- @Override
- public String getParameter()
- {
-  return null;
- }
 
  @Override
  public String getId()
  {
   return null;
+ }
+
+ @Override
+ public boolean getValueAsBoolean()
+ {
+  return false;
+ }
+
+ @Override
+ public double getValueAsDouble()
+ {
+  return 0;
+ }
+
+ @Override
+ public int getValueAsInteger()
+ {
+  return 0;
+ }
+
+ @Override
+ public void setBooleanValue(boolean boolValue)
+ {
+  value = String.valueOf(boolValue);
+ }
+
+ @Override
+ public void setDoubleValue(double doubleValue)
+ {
+  value = String.valueOf(doubleValue);
+ }
+
+ @Override
+ public void setIntValue(int intValue)
+ {
+  value = String.valueOf(intValue);
+ }
+
+ @Override
+ public void setValue(Object val)
+ {
+  value=val.toString();
  }
 }

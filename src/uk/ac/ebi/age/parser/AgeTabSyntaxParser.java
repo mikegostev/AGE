@@ -7,7 +7,7 @@ import uk.ac.ebi.age.util.StringUtil;
 
 public abstract class AgeTabSyntaxParser
 {
- public static final String validatedTokenBrackets="{}";
+ public static final String customTokenBrackets="{}";
  public static final String flagsTokenBrackets="()";
  public static final String variantTokenBrackets="[]";
  public static final String flagsSeparatorSign=";";
@@ -17,8 +17,43 @@ public abstract class AgeTabSyntaxParser
  private static interface StrProc
  {
   String getBrackets();
-  void process(String s);
+  void process(ClassReference nm, String s) throws ParserException;
  }
+ 
+ 
+ private static StrProc[] prc = new StrProc[]{
+   new StrProc()
+   {
+    public String getBrackets(){ return flagsTokenBrackets; }
+    public void process(ClassReference nm, String s)
+    {
+     List<String> flags = StringUtil.splitString(s, flagsSeparatorSign);
+     
+     for( String flagstr : flags )
+     {
+      int eqpos = flagstr.indexOf(flagsEqualSign);
+      
+      if( eqpos == -1 )
+       nm.addFlag(flagstr,null);
+      else
+       nm.addFlag(flagstr.substring(0,eqpos),flagstr.substring(eqpos+1));
+     }
+    }
+   },
+   
+   new StrProc()
+   {
+    public String getBrackets(){ return variantTokenBrackets; }
+    public void process(ClassReference nm,String s) throws ParserException
+    {
+     ClassReference cr = string2ClassReference(s);
+     
+     nm.setQualifier(cr);
+    }
+   }
+   
+ };
+ 
  
  public static AgeTabSyntaxParser getInstance()
  {
@@ -28,51 +63,20 @@ public abstract class AgeTabSyntaxParser
  public abstract AgeTabSubmission parse( String txt ) throws ParserException;
 
  
- public static ColumnHeader string2ColumnHeader( String str ) throws ParserException
+ public static ClassReference string2ClassReference( String str ) throws ParserException
  {
-  final ColumnHeader nm = new ColumnHeader();
+  final ClassReference nm = new ClassReference();
   
   String brckts = null;
   
-  if( str.charAt(0) == validatedTokenBrackets.charAt(0) )
+  if( str.charAt(0) == customTokenBrackets.charAt(0) )
   {
-   nm.setCustom(false);
-   brckts  = validatedTokenBrackets;
+   nm.setCustom(true);
+   brckts  = customTokenBrackets;
   }
   else
-   nm.setCustom(true);
+   nm.setCustom(false);
 
-  StrProc[] prc = new StrProc[]{
-    new StrProc()
-    {
-     public String getBrackets(){ return flagsTokenBrackets; }
-     public void process(String s)
-     {
-      List<String> flags = StringUtil.splitString(s, flagsSeparatorSign);
-      
-      for( String flagstr : flags )
-      {
-       int eqpos = flagstr.indexOf(flagsEqualSign);
-       
-       if( eqpos == -1 )
-        nm.addFlag(flagstr,null);
-       else
-        nm.addFlag(flagstr.substring(0,eqpos),flagstr.substring(eqpos+1));
-      }
-     }
-    },
-    
-    new StrProc()
-    {
-     public String getBrackets(){ return variantTokenBrackets; }
-     public void process(String s)
-     {
-      nm.setParameter(s);
-     }
-    }
-    
-  };
-  
   while( str.length() > 0 )
   {
    String ps = null;
@@ -81,17 +85,32 @@ public abstract class AgeTabSyntaxParser
    {
     if( str.charAt(str.length()-1) == prc[i].getBrackets().charAt(1) )
     {
-     int pos = str.lastIndexOf(prc[i].getBrackets().charAt(0));
+     int level = 0;
      
-     if( pos == -1 )
+     int j;
+     for( j= str.length()-2; j>=0; j--)
+     {
+      if( str.charAt(j) == prc[i].getBrackets().charAt(1) )
+       level++;
+      else if( str.charAt(j) == prc[i].getBrackets().charAt(0) )
+      {
+       if( level > 0 )
+        level--;
+       else
+       {
+        ps = str.substring(j+1,str.length()-1);
+        prc[i].process(nm, ps);
+
+        str=str.substring(0,j);
+
+        break;
+       }
+      }
+     }
+     
+     if( j < 0 )
       throw new ParserException(0,0, "No opening bracket for section: '"+prc[i].getBrackets().charAt(0)+"'");
      
-     ps = str.substring(pos+1,str.length()-1);
-     prc[i].process(ps);
-
-     str=str.substring(0,pos);
-     
-     break;
     }
      
    }

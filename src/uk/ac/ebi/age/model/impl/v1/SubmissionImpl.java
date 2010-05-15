@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import uk.ac.ebi.age.model.AgeAttribute;
-import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.SemanticModel;
@@ -102,26 +100,6 @@ class SubmissionImpl  implements SubmissionWritable, Serializable
   return objects;
  }
 
-// public AgeClass getAgeElClass()
-// {
-//  return submissionClass;
-// }
-
- public AgeAttribute getAttribute(AgeAttributeClass attrCls)
- {
-  return null;
- }
-
- public Collection<AgeAttribute> getAttributes()
- {
-  return null;
- }
-
- public int getOrder()
- {
-  return 0;
- }
-
 
  @Override
  public ContextSemanticModel getContextSemanticModel()
@@ -142,50 +120,5 @@ class SubmissionImpl  implements SubmissionWritable, Serializable
   model.setMasterModel( newModel );
  }
  
-// public Collection<AgeRelationAlt> getRelations()
-// {
-//  return relLst;
-// }
-//
-// public Submission getSubmission()
-// {
-//  return this;
-// }
-//
-// public void addAttribute(AgeAttribute attr)
-// {
-// }
-//
-// public void addRelation(AgeRelationAlt createExternalRelation)
-// {
-// }
-//
-// public AgeAttributeAlt createAgeAttribute(AgeAttributeClass attrClass)
-// {
-//  return null;
-// }
-//
-// public AgeRelationAlt createExternalRelation(String val, AgeRelationClass relClass)
-// {
-//  return null;
-// }
-//
-// public AgeRelationAlt createRelation(AgeObjectAlt targetObj, AgeRelationClass relClass)
-// {
-//  return null;
-// }
-//
-// public void setOrder(int row)
-// {
-// }
-//
-// public void setSubmission(Submission s)
-// {
-// }
-//
-// public Map<AgeRelationClass, Collection<AgeRelationAlt>> getRelationsMap()
-// {
-//  return rels;
-// }
 
 }
