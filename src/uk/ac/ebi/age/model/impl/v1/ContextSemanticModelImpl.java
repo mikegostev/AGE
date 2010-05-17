@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -305,6 +306,18 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  public AgeAttributeClass getDefinedAgeAttributeClassById(String classId)
  {
   return masterModel.getDefinedAgeAttributeClassById(classId);
+ }
+
+ @Override
+ public Collection<AgeClass> getAgeClasses()
+ {
+  return customClassMap.values();
+ }
+
+ @Override
+ public AgeClass getRootAgeClass()
+ {
+  return null;
  }
 
 }

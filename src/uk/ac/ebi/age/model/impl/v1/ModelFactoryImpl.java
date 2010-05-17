@@ -149,7 +149,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AgeRestriction createAllValuesFromRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls)
  {
-  return new AllValuesFromRestriction(scls, fillerRestr, relcls);
+  return new AllValuesFromRestrictionImpl(scls, fillerRestr, relcls);
  }
 
  @Override
@@ -173,13 +173,13 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AgeRestriction createAndLogicRestriction(Collection<AgeRestriction> operands)
  {
-  return new AndLogicRestriction(operands);
+  return new AndLogicRestrictionImpl(operands);
  }
 
  @Override
  public AgeRestriction createOrLogicRestriction(Collection<AgeRestriction> operands)
  {
-  return new OrLogicRestriction(operands);
+  return new OrLogicRestrictionImpl(operands);
  }
 
  @Override

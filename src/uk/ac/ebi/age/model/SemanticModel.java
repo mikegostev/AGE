@@ -1,5 +1,7 @@
 package uk.ac.ebi.age.model;
 
+import java.util.Collection;
+
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -49,6 +51,8 @@ public interface SemanticModel
 
  AgeRelationClassPlug getAgeRelationClassPlug(AgeRelationClass relClass);
 
+ Collection<AgeClass> getAgeClasses();
+ AgeClass getRootAgeClass();
 
 
 // AgeClass getAgeClass(String clsName);

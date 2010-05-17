@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -219,6 +220,18 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  public AgeAttributeClass getDefinedAgeAttributeClassById(String classId)
  {
   return attributeIdMap.get(classId);
+ }
+
+ @Override
+ public Collection<AgeClass> getAgeClasses()
+ {
+  return classMap.values();
+ }
+
+ @Override
+ public AgeClass getRootAgeClass()
+ {
+  return classRoot;
  }
 
 }
