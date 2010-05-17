@@ -10,8 +10,9 @@ import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.RestrictionException;
+import uk.ac.ebi.age.model.SomeValuesFromRestriction;
 
-class SomeValuesFromRestriction implements AgeRestriction, Serializable
+class SomeValuesFromRestrictionImpl implements SomeValuesFromRestriction, Serializable
 {
  private static final long serialVersionUID = 1L;
  
@@ -19,7 +20,7 @@ class SomeValuesFromRestriction implements AgeRestriction, Serializable
  private AgeRelationClass relationClass;
  private AgeRestriction filler;
  
- public SomeValuesFromRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls)
+ public SomeValuesFromRestrictionImpl(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls)
  {
   sourceClass=scls;
   relationClass=relcls;
@@ -63,6 +64,18 @@ class SomeValuesFromRestriction implements AgeRestriction, Serializable
  public String toString()
  {
   return "SomeValuesFrom restriction. Source: '"+sourceClass.getName()+"' Relation: '"+relationClass.getName()+"' Filler: ( "+filler+" )";
+ }
+
+ @Override
+ public AgeRelationClass getAgeRelationClass()
+ {
+  return relationClass;
+ }
+
+ @Override
+ public AgeRestriction getFiller()
+ {
+  return filler;
  }
 
 // public RestrictionValidator getValidator()

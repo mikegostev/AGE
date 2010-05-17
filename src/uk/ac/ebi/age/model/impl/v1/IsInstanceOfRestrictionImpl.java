@@ -44,4 +44,10 @@ class IsInstanceOfRestrictionImpl extends IsInstanceOfRestriction implements Age
   }
  }
 
+ @Override
+ public AgeAbstractClass getTargetClass()
+ {
+  return targerClass;
+ }
+
 }

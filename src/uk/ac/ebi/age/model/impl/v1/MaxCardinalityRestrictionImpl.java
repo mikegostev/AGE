@@ -9,9 +9,10 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRestriction;
+import uk.ac.ebi.age.model.MaxCardinalityRestriction;
 import uk.ac.ebi.age.model.RestrictionException;
 
-class MaxCardinalityRestriction implements AgeRestriction, Serializable
+class MaxCardinalityRestrictionImpl implements MaxCardinalityRestriction, Serializable
 {
  private static final long serialVersionUID = 1L;
  
@@ -20,7 +21,7 @@ class MaxCardinalityRestriction implements AgeRestriction, Serializable
  private AgeRestriction filler;
  private int cardinality;
 
- public MaxCardinalityRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls, int card)
+ public MaxCardinalityRestrictionImpl(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls, int card)
  {
   sourceClass=scls;
   relationClass=relcls;
@@ -58,6 +59,24 @@ class MaxCardinalityRestriction implements AgeRestriction, Serializable
    throw new RestrictionException("Object: '"+obj.getId()+"' of class: '"
      +obj.getAgeElClass().getName()+"' doesn't satisfy restriction (relations: "+count+", cardinality: "+cardinality+"): "+toString());
 
+ }
+
+ @Override
+ public AgeRelationClass getAgeRelationClass()
+ {
+  return relationClass;
+ }
+
+ @Override
+ public int getCardinality()
+ {
+  return cardinality;
+ }
+
+ @Override
+ public AgeRestriction getFiller()
+ {
+  return filler;
  }
 
 }

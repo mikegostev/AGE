@@ -43,6 +43,7 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
 
  private AgeAttributeClass attrClassRoot;
  private AgeClass classRoot;
+ private AgeRelationClass relationRoot;
  
  public SemanticModelImpl(ModelFactory modelFactory)
  {
@@ -233,5 +234,24 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  {
   return classRoot;
  }
+
+ @Override
+ public AgeAttributeClass getRootAgeAttributeClass()
+ {
+  return attrClassRoot;
+ }
+
+ @Override
+ protected void setRelationClassRoot(AgeRelationClassWritable rr)
+ {
+  relationRoot=rr;
+ }
+ 
+ @Override
+ public AgeRelationClass getRootAgeRelationClass()
+ {
+  return relationRoot;
+ }
+
 
 }

@@ -320,4 +320,16 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return null;
  }
 
+ @Override
+ public AgeAttributeClass getRootAgeAttributeClass()
+ {
+  return null;
+ }
+ 
+ @Override
+ public AgeRelationClass getRootAgeRelationClass()
+ {
+  return null;
+ }
+
 }

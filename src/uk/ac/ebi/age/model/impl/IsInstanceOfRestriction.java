@@ -8,7 +8,7 @@ import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.RestrictionException;
 
-abstract public class IsInstanceOfRestriction implements AgeRestriction, Serializable
+abstract public class IsInstanceOfRestriction implements uk.ac.ebi.age.model.IsInstanceOfRestriction, Serializable
 {
  private static final long serialVersionUID = 1L;
 

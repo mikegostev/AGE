@@ -101,13 +101,13 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  }
 
  @Override
- public Collection< ? extends AgeAbstractClass> getSubClasses()
+ public Collection<AgeRelationClass> getSubClasses()
  {
   return null;
  }
 
  @Override
- public Collection< ? extends AgeAbstractClass> getSuperClasses()
+ public Collection<AgeRelationClass> getSuperClasses()
  {
   return null;
  }

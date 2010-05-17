@@ -126,6 +126,7 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
 
  protected abstract void setClassRoot(AgeClassWritable reproduceClassStructure);
  protected abstract void setAttributeClassRoot(AgeAttributeClassWritable reproduceClassStructure);
+ protected abstract void setRelationClassRoot(AgeRelationClassWritable reproduceClassStructure);
  protected abstract void addClass(AgeClassWritable cls);
  protected abstract void addAttributeClass(AgeAttributeClassWritable cls);
  protected abstract void addRelationClass(AgeRelationClassWritable cls);

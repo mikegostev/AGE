@@ -52,7 +52,13 @@ public interface SemanticModel
  AgeRelationClassPlug getAgeRelationClassPlug(AgeRelationClass relClass);
 
  Collection<AgeClass> getAgeClasses();
+ 
+ 
  AgeClass getRootAgeClass();
+
+ AgeAttributeClass getRootAgeAttributeClass();
+
+ AgeRelationClass getRootAgeRelationClass();
 
 
 // AgeClass getAgeClass(String clsName);

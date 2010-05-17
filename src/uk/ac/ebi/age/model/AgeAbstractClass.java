@@ -10,4 +10,5 @@ public interface AgeAbstractClass
  boolean isClassOrSubclass( AgeAbstractClass cl );
  
  String getName();
+ String getId();
 }

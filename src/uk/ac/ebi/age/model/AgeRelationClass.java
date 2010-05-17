@@ -4,6 +4,9 @@ import java.util.Collection;
 
 public interface AgeRelationClass extends AgeClassProperty, AgeAbstractClass
 {
+ Collection<AgeRelationClass> getSuperClasses();
+ Collection<AgeRelationClass> getSubClasses();
+
 
  boolean isWithinRange(AgeClass key);
  boolean isWithinDomain(AgeClass key);

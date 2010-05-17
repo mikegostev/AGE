@@ -9,9 +9,10 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRestriction;
+import uk.ac.ebi.age.model.ExactCardinalityRestriction;
 import uk.ac.ebi.age.model.RestrictionException;
 
-class MinCardinalityRestriction implements AgeRestriction, Serializable
+class ExactCardinalityRestrictionImpl implements ExactCardinalityRestriction, Serializable
 {
  private static final long serialVersionUID = 1L;
  
@@ -20,7 +21,7 @@ class MinCardinalityRestriction implements AgeRestriction, Serializable
  private AgeRestriction filler;
  private int cardinality;
 
- public MinCardinalityRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls, int card)
+ public ExactCardinalityRestrictionImpl(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls, int card)
  {
   sourceClass=scls;
   relationClass=relcls;
@@ -31,7 +32,7 @@ class MinCardinalityRestriction implements AgeRestriction, Serializable
  public void validate(AgeAbstractObject aobj) throws RestrictionException
  {
   if( ! ( aobj instanceof AgeObject ) )
-   throw new RestrictionException("MinCardinality restriction can only validate AgeObject-s");    
+   throw new RestrictionException("ExactCardinality restriction can only validate AgeObject-s");    
   
   AgeObject obj = (AgeObject)aobj;
   
@@ -45,7 +46,7 @@ class MinCardinalityRestriction implements AgeRestriction, Serializable
    else
     return;
   }
-   
+  
   int count=0;
   
   for( AgeRelation rel : rels )
@@ -60,9 +61,33 @@ class MinCardinalityRestriction implements AgeRestriction, Serializable
    }
   }
   
-  if( count < cardinality )
+  if( count != cardinality )
    throw new RestrictionException("Object: '"+obj.getId()+"' of class: '"
      +obj.getAgeElClass().getName()+"' doesn't satisfy restriction (relations: "+count+", cardinality: "+cardinality+"): "+toString());
 
  }
+
+ public AgeClass getSourceClass()
+ {
+  return sourceClass;
+ }
+
+ @Override
+ public AgeRelationClass getAgeRelationClass()
+ {
+  return relationClass;
+ }
+
+ @Override
+ public int getCardinality()
+ {
+  return cardinality;
+ }
+
+ @Override
+ public AgeRestriction getFiller()
+ {
+  return filler;
+ }
 }
+

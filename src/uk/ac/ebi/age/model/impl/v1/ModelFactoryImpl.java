@@ -143,7 +143,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AgeRestriction createSomeValuesFromRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls)
  {
-  return new SomeValuesFromRestriction(scls, fillerRestr, relcls);
+  return new SomeValuesFromRestrictionImpl(scls, fillerRestr, relcls);
  }
 
  @Override
@@ -155,19 +155,19 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AgeRestriction createExactCardinalityRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls, int cardinatily)
  {
-  return new ExactCardinalityRestriction(scls, fillerRestr, relcls, cardinatily);
+  return new ExactCardinalityRestrictionImpl(scls, fillerRestr, relcls, cardinatily);
  }
 
  @Override
  public AgeRestriction createMaxCardinalityRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls, int cardinatily)
  {
-  return new MaxCardinalityRestriction(scls, fillerRestr, relcls, cardinatily);
+  return new MaxCardinalityRestrictionImpl(scls, fillerRestr, relcls, cardinatily);
  }
 
  @Override
  public AgeRestriction createMinCardinalityRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls, int cardinatily)
  {
-  return new MinCardinalityRestriction(scls, fillerRestr, relcls, cardinatily);
+  return new MinCardinalityRestrictionImpl(scls, fillerRestr, relcls, cardinatily);
  }
 
  @Override

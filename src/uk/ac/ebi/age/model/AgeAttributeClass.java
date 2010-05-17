@@ -1,5 +1,7 @@
 package uk.ac.ebi.age.model;
 
+import java.util.Collection;
+
 public interface AgeAttributeClass extends AgeClassProperty, AgeSemanticElement, AgeAbstractClass
 {
  DataType getDataType();
@@ -10,4 +12,7 @@ public interface AgeAttributeClass extends AgeClassProperty, AgeSemanticElement,
 
  AgeClass getOwningClass();
 
+ 
+ Collection<AgeAttributeClass> getSuperClasses();
+ Collection<AgeAttributeClass> getSubClasses();
 }
