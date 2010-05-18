@@ -935,7 +935,6 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   @Override
   public void convert(AgeObjectWritable obj, AgeTabValue val) throws ConvertionException
   {
-   setLastConvertedProperty(null);
 
    if(val == null)
    {
@@ -977,12 +976,12 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
         break;
        }
       }
-
-      if(attrAlt == null)
-       attrAlt = obj.getAgeElClass().getSemanticModel().createAgeAttribute(attrClass);
-
      }
+
     }
+
+    if(attrAlt == null)
+     attrAlt = obj.getAgeElClass().getSemanticModel().createAgeAttribute(attrClass);
    }
 
    try
@@ -996,8 +995,12 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
    }
 
    if( !exstProp )
-   attrAlt.setOrder(getClassReference().getCol());
-
+   {
+    attrAlt.setOrder(getClassReference().getCol());
+   
+    prop.addQualifier(attrAlt);
+   }
+   
    setLastConvertedProperty(attrAlt);
   }
 

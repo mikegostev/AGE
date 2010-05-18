@@ -35,6 +35,8 @@ class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttributeWri
  {
   if( value != null )
    value = value.trim();
+  
+  value = value.intern();
  }
  
 
