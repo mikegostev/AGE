@@ -7,10 +7,10 @@ import java.util.List;
 
 import uk.ac.ebi.age.model.AgeAbstractObject;
 import uk.ac.ebi.age.model.AgeRestriction;
-import uk.ac.ebi.age.model.OrLogicRestriction;
+import uk.ac.ebi.age.model.AgeOrLogicRestriction;
 import uk.ac.ebi.age.model.RestrictionException;
 
-class OrLogicRestrictionImpl implements OrLogicRestriction, Serializable
+class OrLogicRestrictionImpl implements AgeOrLogicRestriction, Serializable
 {
  private static final long serialVersionUID = 1L;
  

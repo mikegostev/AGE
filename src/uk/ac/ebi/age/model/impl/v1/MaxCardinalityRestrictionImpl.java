@@ -9,10 +9,10 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRestriction;
-import uk.ac.ebi.age.model.MaxCardinalityRestriction;
+import uk.ac.ebi.age.model.AgeMaxCardinalityRestriction;
 import uk.ac.ebi.age.model.RestrictionException;
 
-class MaxCardinalityRestrictionImpl implements MaxCardinalityRestriction, Serializable
+class MaxCardinalityRestrictionImpl implements AgeMaxCardinalityRestriction, Serializable
 {
  private static final long serialVersionUID = 1L;
  

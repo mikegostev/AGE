@@ -11,4 +11,8 @@ public interface AgeAbstractClass
  
  String getName();
  String getId();
+
+ Collection<AgeRestriction> getAttributeRestrictions();
+ Collection<AgeRestriction> getAttributeAllRestrictions();
+
 }

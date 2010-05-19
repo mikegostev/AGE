@@ -1,13 +1,19 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import uk.ac.ebi.age.model.AgeAbstractClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
+import uk.ac.ebi.age.util.Collector;
+
+import com.pri.util.collection.CollectionsUnion;
 
 class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationClassWritable, Serializable
 {
@@ -22,6 +28,8 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  private Collection<AgeRelationClass> subclasses = new LinkedList<AgeRelationClass>();
  private Collection<AgeRelationClass> superclasses = new LinkedList<AgeRelationClass>();
 
+ private Collection<AgeRestriction> attributeRestrictions = new LinkedList<AgeRestriction>();
+ 
  private boolean implicit=false;
  private AgeRelationClass inverse;
 
@@ -153,4 +161,31 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  {
  }
 
+ public void addAttributeRestriction(AgeRestriction rest)
+ {
+  attributeRestrictions.add(rest);
+ }
+
+ public Collection<AgeRestriction> getAttributeRestrictions()
+ {
+  return attributeRestrictions;
+ }
+
+ public Collection<AgeRestriction> getAttributeAllRestrictions()
+ {
+  Collection<Collection<AgeRestriction>> allRest = new ArrayList<Collection<AgeRestriction>>(10);
+  
+  Collector.collectFromHierarchy(this, allRest, new Collector<Collection<AgeRestriction>>()
+  {
+   public Collection<AgeRestriction> get(AgeAbstractClass cls)
+   {
+    Collection<AgeRestriction> restr = cls.getAttributeRestrictions();
+    return restr==null||restr.size()==0?null:restr;
+   }
+  });
+  
+  return new CollectionsUnion<AgeRestriction>(allRest);
+ }
+
+ 
 }

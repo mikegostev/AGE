@@ -10,9 +10,9 @@ import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.RestrictionException;
-import uk.ac.ebi.age.model.SomeValuesFromRestriction;
+import uk.ac.ebi.age.model.AgeSomeValuesFromRestriction;
 
-class SomeValuesFromRestrictionImpl implements SomeValuesFromRestriction, Serializable
+class SomeValuesFromRestrictionImpl implements AgeSomeValuesFromRestriction, Serializable
 {
  private static final long serialVersionUID = 1L;
  

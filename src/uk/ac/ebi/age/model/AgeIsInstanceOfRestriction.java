@@ -1,6 +1,6 @@
 package uk.ac.ebi.age.model;
 
-public interface IsInstanceOfRestriction extends AgeRestriction
+public interface AgeIsInstanceOfRestriction extends AgeRestriction
 {
  AgeAbstractClass getTargetClass();
 }

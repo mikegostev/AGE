@@ -5,10 +5,10 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAbstractObject;
 import uk.ac.ebi.age.model.AgeRestriction;
-import uk.ac.ebi.age.model.AndLogicRestriction;
+import uk.ac.ebi.age.model.AgeAndLogicRestriction;
 import uk.ac.ebi.age.model.RestrictionException;
 
-class AndLogicRestrictionImpl implements AndLogicRestriction,Serializable
+class AndLogicRestrictionImpl implements AgeAndLogicRestriction,Serializable
 {
  private static final long serialVersionUID = 1L;
  

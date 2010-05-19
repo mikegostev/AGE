@@ -7,6 +7,7 @@ import uk.ac.ebi.age.model.AgeAbstractClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.service.IdGenerator;
 
@@ -134,5 +135,17 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
   ownerClass.unplug();
   rangeClass.unplug();
   inverse.resetModel();
+ }
+
+ @Override
+ public Collection<AgeRestriction> getAttributeAllRestrictions()
+ {
+  return null;
+ }
+
+ @Override
+ public Collection<AgeRestriction> getAttributeRestrictions()
+ {
+  return null;
  }
 }

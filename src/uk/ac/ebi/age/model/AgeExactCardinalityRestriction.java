@@ -1,7 +1,9 @@
 package uk.ac.ebi.age.model;
 
-public interface SomeValuesFromRestriction extends AgeRestriction
+public interface AgeExactCardinalityRestriction extends AgeRestriction
 {
  AgeRelationClass getAgeRelationClass();
  AgeRestriction getFiller();
+ 
+ int getCardinality();
 }

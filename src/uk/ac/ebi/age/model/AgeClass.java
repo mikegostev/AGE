@@ -17,8 +17,6 @@ public interface AgeClass extends AgeSemanticElement, AgeAbstractClass
  Collection<AgeRestriction> getAllObjectRestrictions();
 
 
- Collection<AgeRestriction> getAttributeRestrictions();
- Collection<AgeRestriction> getAttributeAllRestrictions();
 
  Collection<AgeRestriction> getRestrictions();
  Collection<AgeRestriction> getAllRestrictions();
