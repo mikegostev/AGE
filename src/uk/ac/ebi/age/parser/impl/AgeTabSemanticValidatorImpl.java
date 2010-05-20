@@ -936,7 +936,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   public void convert(AgeObjectWritable obj, AgeTabValue val) throws ConvertionException
   {
 
-   if(val == null)
+   if(val == null || val.getValue().length() == 0)
    {
     setLastConvertedProperty(null);
     return;
