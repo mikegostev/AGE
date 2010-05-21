@@ -161,6 +161,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      cObj = data.getOrCreateObject(part,header,ln);
      
      cObj.setIdDefined( ! part.startsWith(anonymousObjectId) );
+     cObj.setPrototype( part.equals(commonObjectId) );
     }
    }
    else if( cObj == null )

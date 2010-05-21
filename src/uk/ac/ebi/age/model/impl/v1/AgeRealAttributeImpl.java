@@ -94,4 +94,13 @@ class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttributeWrita
   {
   }
  }
+ 
+ @Override
+ public AgeAttributeWritable createClone()
+ {
+  AgeRealAttributeImpl clone  = new AgeRealAttributeImpl(getAgeAttributeClass(), getSemanticModel());
+  clone.value=this.value;
+  
+  return clone;
+ }
 }

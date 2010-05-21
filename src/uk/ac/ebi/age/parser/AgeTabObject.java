@@ -11,6 +11,7 @@ public class AgeTabObject
  private String id;
  private Map<ClassReference, List<AgeTabValue>> values = new HashMap<ClassReference, List<AgeTabValue>>();
  private boolean idIsDefined;
+ private boolean isPrototype;
 
  public AgeTabObject( int rw )
  {
@@ -55,5 +56,15 @@ public class AgeTabObject
  public boolean isIdDefined()
  {
   return idIsDefined;
+ }
+
+ public void setPrototype(boolean equals)
+ {
+  isPrototype = equals;
+ }
+
+ public boolean isPrototype()
+ {
+  return isPrototype;
  }
 }

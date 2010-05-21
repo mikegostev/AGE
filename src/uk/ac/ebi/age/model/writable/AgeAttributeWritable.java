@@ -17,4 +17,6 @@ public interface AgeAttributeWritable extends AgeAttribute, AgeObjectPropertyWri
  void setIntValue(int intValue);
  void setDoubleValue(double doubleValue);
 
+ AgeAttributeWritable createClone();
+
 }

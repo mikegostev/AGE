@@ -13,6 +13,7 @@ public abstract class AgeTabSyntaxParser
  public static final String flagsSeparatorSign=";";
  public static final String flagsEqualSign="=";
  public static final String anonymousObjectId="?";
+ public static final String commonObjectId="*";
  
  private static interface StrProc
  {

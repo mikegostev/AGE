@@ -95,5 +95,14 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
   {
   }
  }
+ 
+ @Override
+ public AgeAttributeWritable createClone()
+ {
+  AgeIntegerAttributeImpl clone  = new AgeIntegerAttributeImpl(getAgeAttributeClass(), getSemanticModel());
+  clone.value=this.value;
+  
+  return clone;
+ }
 
 }

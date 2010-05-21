@@ -47,6 +47,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   SubmissionWritable res = sm.createSubmission();
   
   Map<AgeClass, Map<String,AgeObjectWritable>> classMap = new HashMap<AgeClass, Map<String,AgeObjectWritable>>();
+  Map<AgeClass, Collection<AgeObjectWritable>> prototypeMap = new HashMap<AgeClass, Collection<AgeObjectWritable>>();
   
   Map<String,AgeObjectWritable> objectMap = null;
   
@@ -91,6 +92,9 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
    
    for( AgeTabObject atObj : data.getObjects(hdr) )
    {
+    if( atObj.isPrototype() )
+     continue;
+    
     AgeObjectWritable obj = objectMap.get(atObj.getId());
     
     if( obj == null )
@@ -114,6 +118,12 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
    for( AgeTabObject atObj : data.getObjects(me.getKey()) )
    {
     AgeObjectWritable obj = objectMap.get(atObj.getId());
+    
+    if( obj == null )
+    {
+     obj = sm.createAgeObject(null, me.getValue());
+     obj.setOrder( atObj.getRow() );
+    }
     
 //    for( ValueConverter cnv : convs )
 //    {
@@ -145,8 +155,20 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
      ln++;
     }
     
-    res.addObject(obj);
-    obj.setSubmission(res);
+    if( atObj.isPrototype() )
+    {
+     Collection<AgeObjectWritable> protoList = prototypeMap.get(me.getValue());
+     
+     if( protoList == null )
+      protoList = new ArrayList<AgeObjectWritable>(3);
+
+     protoList.add(obj);
+    }
+    else
+    {
+     res.addObject(obj);
+     obj.setSubmission(res);
+    }
    }
    
 
@@ -154,7 +176,31 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
 
 //  attributeAttachmentClass = new AttrAttchRel(sm.getAttributeAttachmentClass());
   
-  finalizeValues( res );
+  finalizeValues( res.getObjects() );
+  
+  for( Collection<AgeObjectWritable> pObjs : prototypeMap.values() )
+   finalizeValues( pObjs );
+  
+
+  AgeClass lastClass=null;
+  Collection<AgeObjectWritable> protos=null;
+  for( AgeObjectWritable obj : res.getObjects() )
+  {
+   if( lastClass != obj.getAgeElClass() )
+   {
+    lastClass=obj.getAgeElClass();
+    protos = prototypeMap.get(lastClass);
+   }
+   
+   if( protos != null )
+   {
+    for( AgeObjectWritable po : protos )
+    {
+     for( AgeAttributeWritable prat : po.getAttributes() )
+      obj.addAttribute(prat.createClone());
+    }
+   }
+  }
   
   validateData(res);
   
@@ -164,7 +210,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
  }
  
  
- private void finalizeValues( SubmissionWritable data )
+ private void finalizeValues( Collection<AgeObjectWritable> data )
  {
   class AttrInfo
   {
@@ -196,7 +242,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   Map<AgeAttributeClass, AttrClassInfo > cClassMap = null;
   AgeClass cClass = null;
   
-  for( AgeObjectWritable obj : data.getObjects() )
+  for( AgeObjectWritable obj : data )
   {
    
    if( obj.getAgeElClass() != cClass )

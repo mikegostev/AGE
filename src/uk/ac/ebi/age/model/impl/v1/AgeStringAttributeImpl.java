@@ -87,4 +87,13 @@ class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttributeWri
  {
   value=val.toString();
  }
+ 
+ @Override
+ public AgeAttributeWritable createClone()
+ {
+  AgeStringAttributeImpl clone  = new AgeStringAttributeImpl(getAgeAttributeClass(), getSemanticModel());
+  clone.value=this.value;
+  
+  return clone;
+ }
 }

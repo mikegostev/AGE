@@ -3,6 +3,7 @@ package uk.ac.ebi.age.model.impl.v1;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 
 class AgeBooleanAttributeImpl extends AgeAttributeImpl 
 {
@@ -99,6 +100,13 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
    }
  }
 
-
+ @Override
+ public AgeAttributeWritable createClone()
+ {
+  AgeBooleanAttributeImpl clone  = new AgeBooleanAttributeImpl(getAgeAttributeClass(), getSemanticModel());
+  clone.value=this.value;
+  
+  return clone;
+ }
 
 }
