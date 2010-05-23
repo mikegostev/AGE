@@ -187,6 +187,7 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
   classRoot = root;
  }
 
+
  @Override
  public AgeClassPlug getAgeClassPlug(AgeClass attrClass)
  {

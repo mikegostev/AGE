@@ -4,12 +4,12 @@ import java.io.Serializable;
 import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAbstractObject;
+import uk.ac.ebi.age.model.AgeAllValuesFromRestriction;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRestriction;
-import uk.ac.ebi.age.model.AgeAllValuesFromRestriction;
 import uk.ac.ebi.age.model.RestrictionException;
 
 class AllValuesFromRestrictionImpl implements AgeAllValuesFromRestriction, Serializable
@@ -72,7 +72,7 @@ class AllValuesFromRestrictionImpl implements AgeAllValuesFromRestriction, Seria
  }
 
  @Override
- public AgeRelationClass getRelationClass()
+ public AgeRelationClass getAgeRelationClass()
  {
   return relationClass;
  }

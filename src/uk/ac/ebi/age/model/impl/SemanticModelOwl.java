@@ -299,6 +299,9 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
    
    createInverseRelations( owlHlp );
    
+   setRelationClassRoot(ageRelRoot);
+   
+   
    Map<String, Link<AgeRelationClassWritable,OWLObjectProperty>> attrPropMap = 
     Collections.singletonMap(
       attrProperty.getIRI().toString(),
