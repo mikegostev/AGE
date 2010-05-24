@@ -21,6 +21,7 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
  private String name;
  private String id;
 
+ private boolean isAbstract;
 
  private Collection<AgeClass> subClasses = new LinkedList<AgeClass>();
  private Collection<AgeClass> superClasses = new LinkedList<AgeClass>();
@@ -166,6 +167,16 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
  public String getIdPrefix()
  {
   return idPrefix;
+ }
+
+ public boolean isAbstract()
+ {
+  return isAbstract;
+ }
+
+ public void setAbstract(boolean isAbstract)
+ {
+  this.isAbstract = isAbstract;
  }
 
 }

@@ -24,6 +24,9 @@ class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttribute
  private String name;
  private String id;
 
+ private boolean isAbstract;
+
+
 
  private Collection<AgeAttributeClass> subClasses = new LinkedList<AgeAttributeClass>();
  private Collection<AgeAttributeClass> superClasses = new LinkedList<AgeAttributeClass>();
@@ -132,5 +135,14 @@ class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttribute
   return new CollectionsUnion<AgeRestriction>(allRest);
  }
 
+ public boolean isAbstract()
+ {
+  return isAbstract;
+ }
+
+ public void setAbstract(boolean isAbstract)
+ {
+  this.isAbstract = isAbstract;
+ }
 }
 

@@ -85,5 +85,11 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
   return null;
  }
 
+ @Override
+ public boolean isAbstract()
+ {
+  return false;
+ }
+
 }
 

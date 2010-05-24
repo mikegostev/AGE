@@ -101,4 +101,10 @@ class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClass, Seria
   return idPrefix;
  }
 
+ @Override
+ public boolean isAbstract()
+ {
+  return false;
+ }
+
 }

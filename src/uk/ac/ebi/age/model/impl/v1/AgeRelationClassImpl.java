@@ -22,6 +22,7 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  private String name;
  private String id;
 
+ private boolean isAbstract;
 
  private Collection<AgeClass> domain = new LinkedList<AgeClass>();
  private Collection<AgeClass> range = new LinkedList<AgeClass>();
@@ -185,6 +186,16 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
   });
   
   return new CollectionsUnion<AgeRestriction>(allRest);
+ }
+
+ public boolean isAbstract()
+ {
+  return isAbstract;
+ }
+
+ public void setAbstract(boolean isAbstract)
+ {
+  this.isAbstract = isAbstract;
  }
 
  

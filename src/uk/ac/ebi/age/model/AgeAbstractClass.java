@@ -15,4 +15,5 @@ public interface AgeAbstractClass
  Collection<AgeRestriction> getAttributeRestrictions();
  Collection<AgeRestriction> getAttributeAllRestrictions();
 
+ boolean isAbstract(); 
 }

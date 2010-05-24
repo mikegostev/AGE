@@ -148,4 +148,10 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  {
   return null;
  }
+
+ @Override
+ public boolean isAbstract()
+ {
+  return false;
+ }
 }
