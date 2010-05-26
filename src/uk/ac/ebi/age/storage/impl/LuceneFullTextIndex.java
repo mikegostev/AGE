@@ -108,7 +108,7 @@ public class LuceneFullTextIndex implements TextIndex
     @Override
     public void setNextReader(IndexReader arg0, int arg1) throws IOException
     {
-     System.out.println("Next Reader: "+arg1);
+//     System.out.println("Next Reader: "+arg1);
      base=arg1;
     }
     
@@ -117,7 +117,7 @@ public class LuceneFullTextIndex implements TextIndex
     {
      int ind = docId+base;
      
-     System.out.println("Found doc: "+ind+". Object: "+objectList.get(ind).getId()+". Class: "+objectList.get(ind).getAgeElClass().getName() );
+//     System.out.println("Found doc: "+ind+". Object: "+objectList.get(ind).getId()+". Class: "+objectList.get(ind).getAgeElClass().getName() );
      
      res.add( objectList.get(ind) );
     }
