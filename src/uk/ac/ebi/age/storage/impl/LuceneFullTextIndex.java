@@ -84,6 +84,11 @@ public class LuceneFullTextIndex implements TextIndex
 //  }
 // }
  
+ public List<AgeObject> getIndexedObjects()
+ {
+  return objectList;
+ }
+ 
  public List<AgeObject> select(String query)
  {
   final List<AgeObject> res = new ArrayList<AgeObject>();
