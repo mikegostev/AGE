@@ -8,9 +8,10 @@ import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.service.IdGenerator;
 
-class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttributeClass, Serializable
+class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttributeClassWritable, Serializable
 {
  private static final long serialVersionUID = 1L;
  
@@ -89,6 +90,24 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
  public boolean isAbstract()
  {
   return false;
+ }
+
+ @Override
+ public void addSubClass(AgeAttributeClass sbcls)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void addSuperClass(AgeAttributeClass sbcls)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void setDataType(DataType typ)
+ {
+  dataType=typ;
  }
 
 }

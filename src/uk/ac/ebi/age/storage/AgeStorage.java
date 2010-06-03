@@ -23,4 +23,6 @@ public interface AgeStorage
  void shutdown();
 
  AgeObject getObjectById(String grpID);
+
+ void addDataChangeListener(DataChangeListener dataChangeListener);
 }

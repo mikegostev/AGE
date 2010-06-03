@@ -27,6 +27,7 @@ import uk.ac.ebi.age.model.writable.SubmissionWritable;
 import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.service.IdGenerator;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
+import uk.ac.ebi.age.storage.DataChangeListener;
 import uk.ac.ebi.age.storage.IndexFactory;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.SubmissionReaderWriter;
@@ -61,6 +62,7 @@ public class SerializedStorage implements AgeStorageAdm
  
  private SubmissionReaderWriter submRW = new SerializedSubmissionReaderWriter();
 
+ private Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
  
  public SerializedStorage()
  {
@@ -207,6 +209,9 @@ public class SerializedStorage implements AgeStorageAdm
    }
    
    updateIndices( sbm );
+   
+   for(DataChangeListener chls : chgListeners )
+    chls.dataChanged();
    
    return newSubmissionId;
   }
@@ -392,6 +397,12 @@ public class SerializedStorage implements AgeStorageAdm
  public AgeObject getObjectById(String objID)
  {
   return mainIndexMap.get( objID );
+ }
+
+ @Override
+ public void addDataChangeListener(DataChangeListener dataChangeListener)
+ {
+  chgListeners.add(dataChangeListener);
  }
  
 }
