@@ -8,7 +8,7 @@ import uk.ac.ebi.age.util.StringUtil;
 public abstract class AgeTabSyntaxParser
 {
  public static final String customTokenBrackets="{}";
- public static final String flagsTokenBrackets="()";
+ public static final String flagsTokenBrackets="<>";
  public static final String variantTokenBrackets="[]";
  public static final String flagsSeparatorSign=";";
  public static final String flagsEqualSign="=";
