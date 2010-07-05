@@ -177,7 +177,17 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     
     String val = partIter.next();
 
-    cObj.addValue(ln,col,val,prop);
+    if( prop != null )
+    {
+     if( val.length() > 0 )
+      cObj.addValue(ln,col,val,prop);
+    }
+    else if( val.length() > 0 )
+    {
+     throw new ParserException(ln,col,"Not empty value in the empty-headed column");
+    }
+    
+    
    }
    
   }
@@ -214,6 +224,8 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    col++;
    
    String hdrStr = itr.next();
+
+   
    
    if( hdrStr.trim().length() == 0 )
    {

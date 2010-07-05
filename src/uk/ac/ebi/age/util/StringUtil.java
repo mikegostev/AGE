@@ -31,7 +31,7 @@ public class StringUtil
     int qpos;
     int beg = 1;
     
-    while( true )
+    while( true ) //looking for closing "
     {
      qpos = line.indexOf('"',beg);
      
@@ -60,7 +60,7 @@ public class StringUtil
       return;
      }
      
-     if( line.charAt(qpos+1) == '"' )
+     if( line.charAt(qpos+1) == '"' ) //this is a double quote
      {
       if( sb == null )
        sb = new StringBuilder(200);
@@ -70,17 +70,19 @@ public class StringUtil
      }
      else
      {
-      if( line.startsWith(sep, qpos+1) )
+      if( line.startsWith(sep, qpos+1) ) // Ok, we've found the end of the token
       {
        if( sb != null && sb.length() > 0 )
        {
         sb.append(line.substring(beg, qpos) );
         accum.add(sb.toString());
         sb.setLength(0);
-        
-        line=line.substring(qpos+sep.length()+1);
-        break;
        }
+       else
+        accum.add(line.substring(beg, qpos));
+
+       line=line.substring(qpos+sep.length()+1);
+       break;
       }
       else // actually this is the erroneous situation - quotation symbol have to be followed by separator or to be doubled . 
       {
