@@ -142,7 +142,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
      {
       List<AgeTabValue> vals = atObj.getValues(cnv.getClassReference());
       
-      if( vals.size() <= ln )
+      if( vals== null || vals.size() <= ln )
        cnv.convert(obj,null);
       else
       {
@@ -544,7 +544,10 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
   for( ClassReference attHd : blck.getColumnHeaders() )
   {
    if( attHd == null )
+   {
     addConverter(convs, new EmptyColumnConvertor() );
+    continue;
+   }
    
    if( attHd.getQualifier() != null )
    {
