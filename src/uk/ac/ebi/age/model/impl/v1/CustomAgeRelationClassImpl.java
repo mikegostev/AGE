@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import uk.ac.ebi.age.model.AgeAbstractClass;
+import uk.ac.ebi.age.model.AgeAnnotation;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -153,5 +154,11 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  public boolean isAbstract()
  {
   return false;
+ }
+
+ @Override
+ public Collection<AgeAnnotation> getAnnotations()
+ {
+  return Collections.emptyList();
  }
 }

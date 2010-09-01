@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model.writable;
 
+import uk.ac.ebi.age.model.AgeAnnotation;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRestriction;
 
@@ -17,5 +18,7 @@ public interface AgeClassWritable extends AgeClass
  void addSuperClass(AgeClass cls);
 
  void setId(String string);
+ 
+ void addAnnotation( AgeAnnotation annt );
 }
 

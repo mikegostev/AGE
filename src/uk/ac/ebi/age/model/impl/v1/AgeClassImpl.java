@@ -179,4 +179,5 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   this.isAbstract = isAbstract;
  }
 
+
 }
