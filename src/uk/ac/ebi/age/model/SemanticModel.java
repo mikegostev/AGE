@@ -60,6 +60,8 @@ public interface SemanticModel
 
  AgeRelationClass getRootAgeRelationClass();
 
+ AgeAnnotationClass getRootAgeAnnotationClass();
+
 
 // AgeClass getAgeClass(String clsName);
 //

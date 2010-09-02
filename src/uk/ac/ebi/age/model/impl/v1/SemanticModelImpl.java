@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import uk.ac.ebi.age.model.AgeAnnotationClass;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
@@ -44,6 +45,7 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  private AgeAttributeClass attrClassRoot;
  private AgeClass classRoot;
  private AgeRelationClass relationRoot;
+ private AgeAnnotationClass annotationRoot;
  
  public SemanticModelImpl(ModelFactory modelFactory)
  {
@@ -252,6 +254,12 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  public AgeRelationClass getRootAgeRelationClass()
  {
   return relationRoot;
+ }
+
+ @Override
+ public AgeAnnotationClass getRootAgeAnnotationClass()
+ {
+  return annotationRoot;
  }
 
 
