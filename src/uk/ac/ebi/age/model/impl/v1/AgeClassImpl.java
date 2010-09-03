@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import uk.ac.ebi.age.model.AgeAbstractClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRestriction;
+import uk.ac.ebi.age.model.AttributeAttachmentRule;
+import uk.ac.ebi.age.model.RelationRule;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
 import uk.ac.ebi.age.util.Collector;
@@ -20,16 +22,20 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
 
  private String name;
  private String id;
+ private String idPrefix;
 
  private boolean isAbstract;
 
  private Collection<AgeClass> subClasses = new LinkedList<AgeClass>();
  private Collection<AgeClass> superClasses = new LinkedList<AgeClass>();
- private Collection<AgeRestriction> restrictions = new LinkedList<AgeRestriction>();
- private Collection<AgeRestriction> attributeRestrictions = new LinkedList<AgeRestriction>();
- private String idPrefix;
 
- private Collection<AgeRestriction> unionRestrictions;
+ @Deprecated private Collection<AgeRestriction> restrictions = new LinkedList<AgeRestriction>();
+ @Deprecated private Collection<AgeRestriction> attributeRestrictions = new LinkedList<AgeRestriction>();
+
+ @Deprecated private Collection<AgeRestriction> unionRestrictions;
+
+ private Collection<RelationRule> relationRules;
+ private Collection<AttributeAttachmentRule> atatRules;
  
  public AgeClassImpl(String name, String id, String pfx, SemanticModel sm)
  {
@@ -177,6 +183,50 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
  public void setAbstract(boolean isAbstract)
  {
   this.isAbstract = isAbstract;
+ }
+
+ @Override
+ public Collection<RelationRule> getRelationRules()
+ {
+  return relationRules;
+ }
+
+ @Override
+ public Collection<AttributeAttachmentRule> getAttributeAttachmentRules()
+ {
+  return atatRules;
+ }
+
+ @Override
+ public Collection<RelationRule> getAllRelationRules()
+ {
+  Collection<Collection<RelationRule>> allRest = new ArrayList<Collection<RelationRule>>(10);
+  
+  Collector.collectFromHierarchy(this,allRest, new Collector<Collection<RelationRule>>(){
+
+   public Collection<RelationRule> get(AgeAbstractClass cls)
+   {
+    Collection<RelationRule> restr = ((AgeClass)cls).getRelationRules();
+    return restr==null||restr.size()==0?null:restr;
+   }} );
+  
+  return new CollectionsUnion<RelationRule>(allRest);
+ }
+
+ @Override
+ public Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules()
+ {
+  Collection<Collection<AttributeAttachmentRule>> allRest = new ArrayList<Collection<AttributeAttachmentRule>>(10);
+  
+  Collector.collectFromHierarchy(this,allRest, new Collector<Collection<AttributeAttachmentRule>>(){
+
+   public Collection<AttributeAttachmentRule> get(AgeAbstractClass cls)
+   {
+    Collection<AttributeAttachmentRule> restr = ((AgeClass)cls).getAttributeAttachmentRules();
+    return restr==null||restr.size()==0?null:restr;
+   }} );
+  
+  return new CollectionsUnion<AttributeAttachmentRule>(allRest);
  }
 
 

@@ -5,6 +5,8 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRestriction;
+import uk.ac.ebi.age.model.AttributeAttachmentRule;
+import uk.ac.ebi.age.model.RelationRule;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.service.IdGenerator;
 
@@ -105,6 +107,30 @@ class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClass, Seria
  public boolean isAbstract()
  {
   return false;
+ }
+
+ @Override
+ public Collection<RelationRule> getRelationRules()
+ {
+  return null;
+ }
+
+ @Override
+ public Collection<RelationRule> getAllRelationRules()
+ {
+  return null;
+ }
+
+ @Override
+ public Collection<AttributeAttachmentRule> getAttributeAttachmentRules()
+ {
+  return null;
+ }
+
+ @Override
+ public Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules()
+ {
+  return null;
  }
 
 }

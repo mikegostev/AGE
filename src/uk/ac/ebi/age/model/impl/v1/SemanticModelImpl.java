@@ -1,10 +1,12 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import uk.ac.ebi.age.model.AgeAnnotation;
 import uk.ac.ebi.age.model.AgeAnnotationClass;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
@@ -39,6 +41,8 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  private Map<String,AgeRelationClass> relationIdMap = new TreeMap<String, AgeRelationClass>();
 
  private AgeRelationClass attributeAttachmentRelation;
+
+ private Collection<AgeAnnotation> annotation = new ArrayList<AgeAnnotation>();
  
  private ModelFactory modelFactory;
 
@@ -260,6 +264,12 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  public AgeAnnotationClass getRootAgeAnnotationClass()
  {
   return annotationRoot;
+ }
+
+ @Override
+ public Collection<AgeAnnotation> getAnnotations()
+ {
+  return annotation;
  }
 
 

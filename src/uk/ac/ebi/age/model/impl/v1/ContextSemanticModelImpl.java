@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import uk.ac.ebi.age.model.AgeAnnotation;
 import uk.ac.ebi.age.model.AgeAnnotationClass;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
@@ -339,4 +340,8 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return null;
  }
 
+ public Collection<AgeAnnotation> getAnnotations()
+ {
+  return null;
+ }
 }

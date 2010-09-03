@@ -13,12 +13,16 @@ public interface AgeClass extends AgeSemanticElement, AgeAbstractClass
 
  String getName();
 
+ @Deprecated
  Collection<AgeRestriction> getObjectRestrictions();
+ @Deprecated
  Collection<AgeRestriction> getAllObjectRestrictions();
 
 
 
+ @Deprecated
  Collection<AgeRestriction> getRestrictions();
+ @Deprecated
  Collection<AgeRestriction> getAllRestrictions();
 
 
@@ -26,6 +30,12 @@ public interface AgeClass extends AgeSemanticElement, AgeAbstractClass
  Collection<AgeClass> getSubClasses();
 
  String getIdPrefix();
+
+ Collection<RelationRule> getRelationRules();
+ Collection<RelationRule> getAllRelationRules();
+ 
+ Collection<AttributeAttachmentRule> getAttributeAttachmentRules();
+ Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules();
 
 }
 
