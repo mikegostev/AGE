@@ -25,5 +25,10 @@ public interface AgeRelationClass extends AgeClassProperty, AgeAbstractClass
  boolean isImplicit();
  
  public void resetModel();
+ 
+ boolean isFunctional();
+ boolean isInverseFunctional();
+ boolean isSymmetric();
+ boolean isTransitive();
 
 }

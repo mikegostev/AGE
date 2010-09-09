@@ -5,7 +5,6 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
-import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
@@ -74,17 +73,6 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
   return true;
  }
 
- @Override
- public Collection<AgeRestriction> getAttributeAllRestrictions()
- {
-  return null;
- }
-
- @Override
- public Collection<AgeRestriction> getAttributeRestrictions()
- {
-  return null;
- }
 
  @Override
  public boolean isAbstract()

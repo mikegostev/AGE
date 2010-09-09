@@ -1,5 +1,7 @@
 package uk.ac.ebi.age.model;
 
+import java.util.Collection;
+
 public interface RelationRule
 {
  RestrictionType getRestrictionType();
@@ -21,4 +23,6 @@ public interface RelationRule
  AgeRelationClass getRelationClass();
 
  AgeClass getTargetClass();
+
+ Collection<QualifierRule> getQualifiers();
 }

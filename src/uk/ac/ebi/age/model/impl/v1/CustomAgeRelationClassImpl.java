@@ -8,7 +8,6 @@ import uk.ac.ebi.age.model.AgeAnnotation;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
-import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.service.IdGenerator;
 
@@ -138,17 +137,6 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
   inverse.resetModel();
  }
 
- @Override
- public Collection<AgeRestriction> getAttributeAllRestrictions()
- {
-  return null;
- }
-
- @Override
- public Collection<AgeRestriction> getAttributeRestrictions()
- {
-  return null;
- }
 
  @Override
  public boolean isAbstract()
@@ -160,5 +148,29 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  public Collection<AgeAnnotation> getAnnotations()
  {
   return Collections.emptyList();
+ }
+
+ @Override
+ public boolean isFunctional()
+ {
+  return false;
+ }
+
+ @Override
+ public boolean isInverseFunctional()
+ {
+  return false;
+ }
+
+ @Override
+ public boolean isSymmetric()
+ {
+  return false;
+ }
+
+ @Override
+ public boolean isTransitive()
+ {
+  return false;
  }
 }

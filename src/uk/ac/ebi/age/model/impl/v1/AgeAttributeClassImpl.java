@@ -72,6 +72,7 @@ class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttribute
   return name;
  }
  
+ @Override
  public void addSuperClass( AgeAttributeClass cl )
  {
   superClasses.add(cl);
@@ -127,7 +128,7 @@ class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttribute
   {
    public Collection<AgeRestriction> get(AgeAbstractClass cls)
    {
-    Collection<AgeRestriction> restr = cls.getAttributeRestrictions();
+    Collection<AgeRestriction> restr = ((AgeAttributeClassImpl)cls).getAttributeRestrictions();
     return restr==null||restr.size()==0?null:restr;
    }
   });
@@ -144,5 +145,6 @@ class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttribute
  {
   this.isAbstract = isAbstract;
  }
+
 }
 

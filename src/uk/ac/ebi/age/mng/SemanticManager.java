@@ -39,12 +39,17 @@ public class SemanticManager
 
  public SemanticModel createMasterModel()
  {
-  return model = new SemanticModelImpl(ModelFactoryImpl.getInstance());
+  return model = createModelInstance();
  }
 
  public void setMasterModel(SemanticModel mod)
  {
   model = mod;
+ }
+
+ public static SemanticModel createModelInstance()
+ {
+  return new SemanticModelImpl(ModelFactoryImpl.getInstance());
  }
 
 }

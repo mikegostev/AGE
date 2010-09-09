@@ -2,6 +2,7 @@ package uk.ac.ebi.age.model;
 
 import java.util.Collection;
 
+import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -17,6 +18,7 @@ public interface SemanticModel
  AgeRelationClassWritable createAgeRelationClass(String name, String id);
 
  AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type);
+ AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id);
 
  
  AgeAttributeWritable createAgeAttribute(AgeAttributeClass attr);

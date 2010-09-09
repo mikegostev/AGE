@@ -162,7 +162,7 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   {
    public Collection<AgeRestriction> get(AgeAbstractClass cls)
    {
-    Collection<AgeRestriction> restr = cls.getAttributeRestrictions();
+    Collection<AgeRestriction> restr = ((AgeClassImpl)cls).getAttributeRestrictions();
     return restr==null||restr.size()==0?null:restr;
    }
   });

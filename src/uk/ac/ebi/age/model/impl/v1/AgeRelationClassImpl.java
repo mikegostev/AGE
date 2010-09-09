@@ -34,6 +34,11 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  private boolean implicit=false;
  private AgeRelationClass inverse;
 
+ private boolean functional;
+ private boolean inverseFunctional;
+ private boolean symmetric;
+ private boolean transitive;
+
  public AgeRelationClassImpl(String name, String id, SemanticModel sm)
  {
   super(sm);
@@ -180,7 +185,7 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
   {
    public Collection<AgeRestriction> get(AgeAbstractClass cls)
    {
-    Collection<AgeRestriction> restr = cls.getAttributeRestrictions();
+    Collection<AgeRestriction> restr = ((AgeRelationClassImpl)cls).getAttributeRestrictions();
     return restr==null||restr.size()==0?null:restr;
    }
   });
@@ -196,6 +201,30 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  public void setAbstract(boolean isAbstract)
  {
   this.isAbstract = isAbstract;
+ }
+
+ @Override
+ public boolean isFunctional()
+ {
+  return functional;
+ }
+
+ @Override
+ public boolean isInverseFunctional()
+ {
+  return inverseFunctional;
+ }
+
+ @Override
+ public boolean isSymmetric()
+ {
+  return symmetric;
+ }
+
+ @Override
+ public boolean isTransitive()
+ {
+  return transitive;
  }
 
  

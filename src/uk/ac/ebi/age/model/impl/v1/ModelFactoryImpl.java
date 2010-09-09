@@ -15,6 +15,7 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -63,6 +64,13 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
   return new AgeRelationClassImpl(name, id, sm);
  }
 
+ @Override
+ public AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id, SemanticModel sm)
+ {
+  return new AgeAnnotationClassImpl(name, id, sm);
+ }
+
+ 
  @Override
  public AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type, SemanticModel sm)
  {

@@ -20,6 +20,7 @@ import uk.ac.ebi.age.model.ModelException;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.impl.SemanticModelOwl;
+import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -110,6 +111,12 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
   return modelFactory.createAgeAttributeClass(name, id, type, this);
  }
 
+ public AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id)
+ {
+  return modelFactory.createAgeAnnotationClass(name, id, this);
+ }
+
+ 
  public AgeClassWritable createAgeClass(String name, String id, String pfx)
  {
   return modelFactory.createAgeClass(name, id, pfx, this);
