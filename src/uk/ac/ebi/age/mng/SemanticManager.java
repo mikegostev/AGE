@@ -10,6 +10,7 @@ import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
 
 public class SemanticManager
 {
+ 
  private static SemanticManager instance = new SemanticManager();
  
  private SemanticModel model;

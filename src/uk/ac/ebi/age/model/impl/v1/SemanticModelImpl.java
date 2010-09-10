@@ -21,6 +21,7 @@ import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.impl.SemanticModelOwl;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
+import uk.ac.ebi.age.model.writable.AgeAnnotationWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -98,6 +99,11 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  public AgeRelationClassWritable createAgeRelationClass(String name, String id)
  {
   return getModelFactory().createAgeRelationClass(name, id, this);
+ }
+
+ public AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls)
+ {
+  return getModelFactory().createAgeAnnotation(cls, this);
  }
 
 
@@ -277,6 +283,12 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  public Collection<AgeAnnotation> getAnnotations()
  {
   return annotation;
+ }
+
+ @Override
+ public void addAnnotation(AgeAnnotation ant)
+ {
+  annotation.add(ant);
  }
 
 

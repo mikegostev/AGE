@@ -25,6 +25,8 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
  private String idPrefix;
 
  private boolean isAbstract;
+ 
+ private Collection<String> aliases;
 
  private Collection<AgeClass> subClasses = new LinkedList<AgeClass>();
  private Collection<AgeClass> superClasses = new LinkedList<AgeClass>();
@@ -227,6 +229,21 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
    }} );
   
   return new CollectionsUnion<AttributeAttachmentRule>(allRest);
+ }
+
+
+ @Override
+ public void addAlias(String ali)
+ {
+  if( aliases == null )
+   aliases = new ArrayList<String>( 5 );
+  
+  aliases.add(ali);
+ }
+
+ public Collection<String> getAliases()
+ {
+  return aliases;
  }
 
 

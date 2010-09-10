@@ -26,7 +26,7 @@ class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttribute
 
  private boolean isAbstract;
 
-
+ private Collection<String> aliases;
 
  private Collection<AgeAttributeClass> subClasses = new LinkedList<AgeAttributeClass>();
  private Collection<AgeAttributeClass> superClasses = new LinkedList<AgeAttributeClass>();
@@ -146,5 +146,18 @@ class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttribute
   this.isAbstract = isAbstract;
  }
 
+ @Override
+ public void addAlias(String ali)
+ {
+  if( aliases == null )
+   aliases = new ArrayList<String>( 5 );
+  
+  aliases.add(ali);
+ }
+
+ public Collection<String> getAliases()
+ {
+  return aliases;
+ }
 }
 

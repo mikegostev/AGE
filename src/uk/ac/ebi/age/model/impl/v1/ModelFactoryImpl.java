@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAbstractClass;
+import uk.ac.ebi.age.model.AgeAnnotationClass;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
@@ -16,6 +17,7 @@ import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
+import uk.ac.ebi.age.model.writable.AgeAnnotationWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -230,6 +232,12 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  public AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass relClass, SemanticModel mod)
  {
   return new AgeRelationClassPlugPluggable(relClass, mod);
+ }
+
+ @Override
+ public AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls, SemanticModel sm)
+ {
+  return new AgeAnnotationImpl(cls, sm);
  }
 
 }

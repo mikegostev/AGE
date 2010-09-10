@@ -3,6 +3,7 @@ package uk.ac.ebi.age.model;
 import java.util.Collection;
 
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
+import uk.ac.ebi.age.model.writable.AgeAnnotationWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -19,6 +20,7 @@ public interface SemanticModel
 
  AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type);
  AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id);
+ AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls);
 
  
  AgeAttributeWritable createAgeAttribute(AgeAttributeClass attr);
@@ -64,7 +66,9 @@ public interface SemanticModel
 
  AgeAnnotationClass getRootAgeAnnotationClass();
 
+ void addAnnotation(AgeAnnotation ant);
  Collection<AgeAnnotation> getAnnotations();
+
 
 
 // AgeClass getAgeClass(String clsName);

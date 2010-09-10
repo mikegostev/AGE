@@ -31,6 +31,8 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
 
  private Collection<AgeRestriction> attributeRestrictions = new LinkedList<AgeRestriction>();
  
+ private Collection<String> aliases;
+ 
  private boolean implicit=false;
  private AgeRelationClass inverse;
 
@@ -227,5 +229,18 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
   return transitive;
  }
 
+ @Override
+ public void addAlias(String ali)
+ {
+  if( aliases == null )
+   aliases = new ArrayList<String>( 5 );
+  
+  aliases.add(ali);
+ }
+
+ public Collection<String> getAliases()
+ {
+  return aliases;
+ }
  
 }

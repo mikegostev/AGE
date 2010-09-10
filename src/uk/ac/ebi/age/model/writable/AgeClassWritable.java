@@ -20,5 +20,9 @@ public interface AgeClassWritable extends AgeClass
  void setId(String string);
  
  void addAnnotation( AgeAnnotation annt );
+
+ void setAbstract(boolean b);
+
+ void addAlias(String ali);
 }
 

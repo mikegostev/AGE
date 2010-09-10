@@ -98,5 +98,15 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
   dataType=typ;
  }
 
+ @Override
+ public void setAbstract(boolean b)
+ {
+ }
+
+ @Override
+ public void addAlias(String ali)
+ {
+ }
+
 }
 

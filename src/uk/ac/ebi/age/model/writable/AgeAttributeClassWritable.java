@@ -9,4 +9,7 @@ public interface AgeAttributeClassWritable extends AgeAttributeClass
  void addSuperClass(AgeAttributeClass sbcls);
 
  void setDataType( DataType typ );
+ void setAbstract(boolean b);
+
+ void addAlias(String ali);
 }

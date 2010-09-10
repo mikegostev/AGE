@@ -16,4 +16,8 @@ public interface AgeRelationClassWritable extends AgeRelationClass
  
  void setImplicit(boolean b);
  
+ void setAbstract(boolean b);
+ 
+ void addAlias(String ali);
+ 
 }

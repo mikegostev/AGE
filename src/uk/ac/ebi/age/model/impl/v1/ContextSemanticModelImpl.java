@@ -21,6 +21,7 @@ import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
+import uk.ac.ebi.age.model.writable.AgeAnnotationWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -350,5 +351,16 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  public Collection<AgeAnnotation> getAnnotations()
  {
   return null;
+ }
+
+ @Override
+ public AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls)
+ {
+  return masterModel.createAgeAnnotation(cls);
+ }
+
+ @Override
+ public void addAnnotation(AgeAnnotation ant)
+ {
  }
 }
