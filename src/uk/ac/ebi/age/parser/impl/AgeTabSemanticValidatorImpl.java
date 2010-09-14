@@ -379,7 +379,7 @@ public class AgeTabSemanticValidatorImpl extends AgeTabSemanticValidator
     if( rl instanceof AgeExternalRelation )
      continue;
     
-    AgeRelationClass invClass = rl.getAgeElClass().getInverseClass();
+    AgeRelationClass invClass = rl.getAgeElClass().getInverseRelationClass();
     
     if( invClass == null )
      continue;

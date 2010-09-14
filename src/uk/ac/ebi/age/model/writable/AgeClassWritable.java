@@ -8,7 +8,7 @@ import uk.ac.ebi.age.model.AgeRestriction;
 @model
 */
 
-public interface AgeClassWritable extends AgeClass
+public interface AgeClassWritable extends AgeClass, AgeAbstractClassWritable
 {
  void addObjectRestriction(AgeRestriction rest);
 

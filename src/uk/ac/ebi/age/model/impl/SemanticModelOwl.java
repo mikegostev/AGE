@@ -363,7 +363,7 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
  {
   for(Link<AgeRelationClassWritable, OWLObjectProperty> l : owlHlp.relationSourceMap.values())
   {
-   if(l.ageEl.getInverseClass() != null)
+   if(l.ageEl.getInverseRelationClass() != null)
     continue;
 
    Set<OWLObjectPropertyExpression> invset = l.owlEl.getInverses(owlHlp.ontology);
@@ -379,16 +379,16 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
 
    if(invp != null)
    {
-    l.ageEl.setInverseClass(invp.ageEl);
-    invp.ageEl.setInverseClass(l.ageEl);
+    l.ageEl.setInverseRelationClass(invp.ageEl);
+    invp.ageEl.setInverseRelationClass(l.ageEl);
    }
    else
    {
     AgeRelationClassWritable irc = createAgeRelationClass("!" + l.ageEl.getName(),"!"+l.owlEl.getIRI());
     irc.setImplicit(true);
 
-    l.ageEl.setInverseClass(irc);
-    irc.setInverseClass(l.ageEl);
+    l.ageEl.setInverseRelationClass(irc);
+    irc.setInverseRelationClass(l.ageEl);
    }
   }
  }

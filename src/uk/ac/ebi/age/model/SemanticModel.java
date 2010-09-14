@@ -11,6 +11,8 @@ import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
+import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
+import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 
 public interface SemanticModel
 {
@@ -31,7 +33,9 @@ public interface SemanticModel
 
  AgeObjectWritable createAgeObject(String id, AgeClass cls);
 
- 
+ RelationRuleWritable createRelationRule(RestrictionType type);
+ QualifierRuleWritable createQualifierRule();
+
  AgeClass getDefinedAgeClass(String name);
  AgeClass getDefinedAgeClassById(String name);
 
@@ -68,6 +72,9 @@ public interface SemanticModel
 
  void addAnnotation(AgeAnnotation ant);
  Collection<AgeAnnotation> getAnnotations();
+
+
+
 
 
 

@@ -20,7 +20,7 @@ public interface AgeRelationClass extends AgeClassProperty, AgeAbstractClass, Ag
 
  boolean isCustom();
 
- AgeRelationClass getInverseClass();
+ AgeRelationClass getInverseRelationClass();
  
  boolean isImplicit();
  

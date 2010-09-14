@@ -48,7 +48,7 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  }
  
  @Override
- public AgeRelationClass getInverseClass()
+ public AgeRelationClass getInverseRelationClass()
  {
   return inverse;
  }

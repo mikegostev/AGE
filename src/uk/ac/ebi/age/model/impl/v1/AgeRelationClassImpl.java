@@ -127,7 +127,7 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
 
 
  @Override
- public AgeRelationClass getInverseClass()
+ public AgeRelationClass getInverseRelationClass()
  {
   return inverse;
  }
@@ -159,7 +159,7 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  }
 
  @Override
- public void setInverseClass(AgeRelationClass ageEl)
+ public void setInverseRelationClass(AgeRelationClass ageEl)
  {
   inverse=ageEl;
  }
