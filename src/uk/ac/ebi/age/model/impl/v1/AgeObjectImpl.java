@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import uk.ac.ebi.age.model.AgeAttribute;
@@ -26,7 +27,7 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
 {
  private static final long serialVersionUID = 1L;
 
- private Map<String,Collection<AgeAttributeWritable>> attributes = new HashMap<String,Collection<AgeAttributeWritable>>();
+ private Map<String,List<AgeAttributeWritable>> attributes = new HashMap<String,List<AgeAttributeWritable>>();
  private Map<String, Collection<AgeRelationWritable>> relations = new HashMap<String, Collection<AgeRelationWritable>>();
 
 // private Collection<AgeAttributeWritable> attributes = new ArrayList<AgeAttributeWritable>( 10 );
@@ -68,10 +69,10 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
  
  public void addAttribute(AgeAttributeWritable attr)
  {
-  Collection<AgeAttributeWritable> coll = attributes.get(attr.getAgeElClass().getId());
+  List<AgeAttributeWritable> coll = attributes.get(attr.getAgeElClass().getId());
   
   if( coll == null )
-   attributes.put(attr.getAgeElClass().getId(),Collections.singleton(attr));
+   attributes.put(attr.getAgeElClass().getId(),Collections.singletonList(attr));
   else if( coll instanceof ArrayList<?> )
    coll.add(attr);
   else
@@ -124,6 +125,16 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
   return new CollectionsUnion<AgeAttributeWritable>(attributes.values());
  }
 
+ public Map<AgeAttributeClass, Collection<AgeAttribute> > getAttributeMap()
+ {
+  Map< AgeAttributeClass, Collection<AgeAttribute> > map = new HashMap<AgeAttributeClass, Collection<AgeAttribute>>();
+  
+  for( List<? extends AgeAttribute> vals : attributes.values() )
+   map.put(vals.get(0).getAgeElClass(), vals);
+  
+  return map;
+ }
+ 
  public Collection<AgeRelationWritable> getRelations()
  {
   return new CollectionsUnion<AgeRelationWritable>(relations.values());

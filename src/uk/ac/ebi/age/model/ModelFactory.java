@@ -11,6 +11,9 @@ import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
+import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
+import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
+import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
 public abstract class ModelFactory
@@ -61,5 +64,9 @@ public abstract class ModelFactory
 
  public abstract AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id, SemanticModel semanticModelImpl);
  public abstract AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls, SemanticModel semanticModelImpl);
+
+ public abstract AttributeAttachmentRuleWritable createAgeAttributeAttachmentRule(RestrictionType type, SemanticModel sm);
+ public abstract RelationRuleWritable createAgeRelationRule(RestrictionType type, SemanticModel sm);
+ public abstract QualifierRuleWritable createAgeQualifierRule( SemanticModel sm);
 
 }

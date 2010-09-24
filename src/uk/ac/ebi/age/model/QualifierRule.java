@@ -5,6 +5,6 @@ public interface QualifierRule
 
  RestrictionType getType();
 
- AgeAttributeClass getAttrbuteClass();
+ AgeAttributeClass getAttributeClass();
 
 }

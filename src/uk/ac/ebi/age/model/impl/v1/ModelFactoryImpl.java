@@ -15,6 +15,7 @@ import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
+import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAnnotationWritable;
@@ -25,6 +26,9 @@ import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
+import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
+import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
+import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
 public class ModelFactoryImpl extends ModelFactory implements Serializable
@@ -238,6 +242,26 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  public AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls, SemanticModel sm)
  {
   return new AgeAnnotationImpl(cls, sm);
+ }
+
+ @Override
+ public AttributeAttachmentRuleWritable createAgeAttributeAttachmentRule(RestrictionType type, SemanticModel sm)
+ {
+  return new AttributeAttachmentRuleImpl(type,sm);
+ }
+
+ @Override
+ public RelationRuleWritable createAgeRelationRule(RestrictionType type, SemanticModel sm)
+ {
+  // TODO Auto-generated method stub
+  return null;
+ }
+
+ @Override
+ public QualifierRuleWritable createAgeQualifierRule(SemanticModel sm)
+ {
+  // TODO Auto-generated method stub
+  return null;
  }
 
 }

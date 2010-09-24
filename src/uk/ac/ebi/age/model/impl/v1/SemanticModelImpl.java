@@ -18,6 +18,7 @@ import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelException;
 import uk.ac.ebi.age.model.ModelFactory;
+import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.impl.SemanticModelOwl;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
@@ -29,6 +30,9 @@ import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
+import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
+import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
+import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 
 public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel, Serializable
 {
@@ -110,6 +114,24 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  public AgeAttributeWritable createAgeAttribute( AgeAttributeClass attrClass)
  {
   return modelFactory.createAgeAttribute(attrClass, this);
+ }
+ 
+ @Override
+ public AttributeAttachmentRuleWritable createAttributeAttachmentRule(RestrictionType type)
+ {
+  return modelFactory.createAgeAttributeAttachmentRule(type, this);
+ }
+
+ @Override
+ public RelationRuleWritable createRelationRule(RestrictionType type)
+ {
+  return modelFactory.createAgeRelationRule(type, this);
+ }
+
+ @Override
+ public QualifierRuleWritable createQualifierRule()
+ {
+  return modelFactory.createAgeQualifierRule(this);
  }
  
  public AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type)
@@ -262,6 +284,13 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  }
 
  @Override
+ protected void setAnnotationClassRoot(AgeAnnotationClassWritable rr)
+ {
+  annotationRoot=rr;
+ }
+
+ 
+ @Override
  protected void setRelationClassRoot(AgeRelationClassWritable rr)
  {
   relationRoot=rr;
@@ -290,6 +319,8 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  {
   annotation.add(ant);
  }
+
+
 
 
 }

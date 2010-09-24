@@ -7,12 +7,18 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
+import uk.ac.ebi.age.model.AgeSemanticElement;
 import uk.ac.ebi.age.model.Cardinality;
+import uk.ac.ebi.age.model.QualifierRule;
 import uk.ac.ebi.age.model.QualifiersCondition;
 import uk.ac.ebi.age.model.RestrictionType;
+import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
+
+import com.pri.util.collection.CollectionsUnion;
 
 
-public class AttributeAttachmentRuleImpl implements Serializable
+public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttachmentRuleWritable, AgeSemanticElement
 {
  private static final long serialVersionUID = 1L;
 
@@ -20,17 +26,21 @@ public class AttributeAttachmentRuleImpl implements Serializable
  private Cardinality cardType = Cardinality.ANY;
  private AgeAttributeClass attributeClass;
  private int cardinality=1;
- private Map<RestrictionType,Collection<QualifierAttachmentRule>> qualifiers;
+ private Map<RestrictionType,Collection<QualifierRule>> qualifiers;
  private boolean valueUnique;
  private boolean qualifiersUnique;
  private boolean subclassesIncluded=true;
  private QualifiersCondition qualifiersCondition = QualifiersCondition.ANY ;
+ 
+ private SemanticModel model;
 
- public AttributeAttachmentRuleImpl( RestrictionType typ )
+ public AttributeAttachmentRuleImpl( RestrictionType typ, SemanticModel mod )
  {
   type=typ;
+  model = mod;
  }
  
+ @Override
  public AgeAttributeClass getAttributeClass()
  {
   return attributeClass;
@@ -66,27 +76,27 @@ public class AttributeAttachmentRuleImpl implements Serializable
   this.cardinality = cardinality;
  }
 
- public Map<RestrictionType,Collection<QualifierAttachmentRule>> getQualifiersMap()
+ public Map<RestrictionType,Collection<QualifierRule>> getQualifiersMap()
  {
   return qualifiers;
  }
 
- public void addQualifier( QualifierAttachmentRule qr )
+ public void addQualifier( QualifierRule qr )
  {
   if( qualifiers == null )
   {
-   qualifiers=new TreeMap<RestrictionType, Collection<QualifierAttachmentRule>>();
-   Collection<QualifierAttachmentRule> coll = new ArrayList<QualifierAttachmentRule>(5);
+   qualifiers=new TreeMap<RestrictionType, Collection<QualifierRule>>();
+   Collection<QualifierRule> coll = new ArrayList<QualifierRule>(5);
    coll.add(qr);
    qualifiers.put(qr.getType(), coll);
    return;
   }
   
-  Collection<QualifierAttachmentRule> coll = qualifiers.get(qr.getType());
+  Collection<QualifierRule> coll = qualifiers.get(qr.getType());
   
   if( coll == null )
   {
-   coll = new ArrayList<QualifierAttachmentRule>(5);
+   coll = new ArrayList<QualifierRule>(5);
    qualifiers.put(qr.getType(), coll);
   }
  
@@ -148,7 +158,7 @@ public class AttributeAttachmentRuleImpl implements Serializable
     
     for( RestrictionType rt : RestrictionType.values() )
     {
-     Collection<QualifierAttachmentRule> qcoll = qualifiers.get(rt);
+     Collection<QualifierRule> qcoll = qualifiers.get(rt);
      
      if( qcoll != null && qcoll.size() > 0 )
      {
@@ -160,7 +170,7 @@ public class AttributeAttachmentRuleImpl implements Serializable
       
       sb.append(" ");
       
-      for( QualifierAttachmentRule qr : qcoll )
+      for( QualifierRule qr : qcoll )
        sb.append("<b>").append(qr.getAttributeClass().getName()).append("</b>, ");
       
       sb.setLength( sb.length()-2 );
@@ -213,7 +223,7 @@ public class AttributeAttachmentRuleImpl implements Serializable
      
      sb.append( qualifiers.size() > 1?"s ":" ");
      
-     for( QualifierAttachmentRule qr : qualifiers.get(RestrictionType.MUST) )
+     for( QualifierRule qr : qualifiers.get(RestrictionType.MUST) )
       sb.append("<b>").append(qr.getAttributeClass().getName()).append("</b>, ");
 
      sb.setLength(sb.length()-2);
@@ -268,5 +278,34 @@ public class AttributeAttachmentRuleImpl implements Serializable
  public void setSubclassesIncluded(boolean subclassesIncluded)
  {
   this.subclassesIncluded = subclassesIncluded;
+ }
+
+ @Override
+ public RestrictionType getRestrictionType()
+ {
+  return type;
+ }
+
+ @Override
+ public Collection<QualifierRule> getQualifiers()
+ {
+  if( qualifiers == null )
+   return null;
+  
+  return new CollectionsUnion<QualifierRule>(qualifiers.values());
+ }
+
+
+ @Override
+ public SemanticModel getSemanticModel()
+ {
+  return model;
+ }
+
+ @Override
+ public String getId()
+ {
+  // TODO Auto-generated method stub
+  return null;
  }
 }

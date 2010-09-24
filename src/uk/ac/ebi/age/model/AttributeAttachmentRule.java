@@ -6,7 +6,7 @@ public interface AttributeAttachmentRule
 {
  RestrictionType getRestrictionType();
 
- AgeAttributeClass getAttrbuteClass();
+ AgeAttributeClass getAttributeClass();
 
  int getCardinality();
 
@@ -23,5 +23,6 @@ public interface AttributeAttachmentRule
  boolean isValueUnique();
 
  Collection<QualifierRule> getQualifiers();
+
 
 }

@@ -246,5 +246,23 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   return aliases;
  }
 
+ @Override
+ public void addRelationRule(RelationRule mrr)
+ {
+  if( relationRules == null )
+   relationRules = new ArrayList<RelationRule>();
+  
+  relationRules.add(mrr);
+ }
+
+ @Override
+ public void addAttributeAttachmentRule(AttributeAttachmentRule atatRule)
+ {
+  if( atatRules == null )
+   atatRules = new ArrayList<AttributeAttachmentRule>();
+  
+  atatRules.add(atatRule);
+ }
+
 
 }

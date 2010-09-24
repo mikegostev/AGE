@@ -40,6 +40,7 @@ import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelException;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
@@ -60,7 +61,8 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
  }
  
  private static final String CLASS_ROOT_ANNOTATION="http://www.ebi.ac.uk/age/classesRoot";
- private static final String RELATION_ROOT_ANNOTATION="http://www.ebi.ac.uk/age/relationsRoot1";
+ private static final String RELATION_ROOT_ANNOTATION="http://www.ebi.ac.uk/age/relationsRoot";
+ private static final String ANNOTATION_ROOT_ANNOTATION="http://www.ebi.ac.uk/age/annotationsRoot";
  private static final String ATTRIBUTE_ROOT_ANNOTATION="http://www.ebi.ac.uk/age/attributesRoot";
  private static final String ATTRIBUTE_ATTACHMENT_PROPERTY="http://www.ebi.ac.uk/age/attributeProperty";
  private static final String DATATYPE_ANNOTATION="http://www.ebi.ac.uk/age/datatype";
@@ -69,6 +71,7 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
  private static final String defaultClassRootName = "classes";
  private static final String defaultRelationRootName = "relations";
  private static final String defaultAttributeRootName = "attributes";
+ private static final String defaultAnnotationRootName = "annotations";
  
  
  private static class Link<AGE, OWL>
@@ -94,6 +97,7 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
  {
   Map<String,Link<AgeClassWritable,OWLClass>> classSourceMap = new TreeMap<String, Link<AgeClassWritable,OWLClass>>();
   Map<String,Link<AgeAttributeClassWritable,OWLClass>> attributeSourceMap = new TreeMap<String, Link<AgeAttributeClassWritable,OWLClass>>();
+  Map<String,Link<AgeAnnotationClassWritable,OWLClass>> annotationSourceMap = new TreeMap<String, Link<AgeAnnotationClassWritable,OWLClass>>();
   Map<String,Link<AgeRelationClassWritable,OWLObjectProperty>> relationSourceMap = new TreeMap<String, Link<AgeRelationClassWritable,OWLObjectProperty>>();
 
   OWLOntology ontology;
@@ -127,6 +131,7 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
  protected abstract void setClassRoot(AgeClassWritable reproduceClassStructure);
  protected abstract void setAttributeClassRoot(AgeAttributeClassWritable reproduceClassStructure);
  protected abstract void setRelationClassRoot(AgeRelationClassWritable reproduceClassStructure);
+ protected abstract void setAnnotationClassRoot(AgeAnnotationClassWritable reproduceClassStructure);
  protected abstract void addClass(AgeClassWritable cls);
  protected abstract void addAttributeClass(AgeAttributeClassWritable cls);
  protected abstract void addRelationClass(AgeRelationClassWritable cls);
@@ -149,7 +154,7 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
    
    owlHlp.thing = df.getOWLThing();
    
-   OWLClass classRoot=null, attributeRoot=null;
+   OWLClass classRoot=null, attributeRoot=null, annotationRoot=null;
    OWLObjectProperty attrProperty=null;
    String relationRoot=null;
    
@@ -168,6 +173,10 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
     else if( RELATION_ROOT_ANNOTATION.equals(ant.getProperty().getIRI().toString()) )
     {
      relationRoot = ((OWLTypedLiteral)ant.getValue()).getLiteral();
+    }
+    else if( ANNOTATION_ROOT_ANNOTATION.equals(ant.getProperty().getIRI().toString()) )
+    {
+     annotationRoot = df.getOWLClass(IRI.create(((OWLTypedLiteral)ant.getValue()).getLiteral()));
     }
     else if( ATTRIBUTE_ATTACHMENT_PROPERTY.equals(ant.getProperty().getIRI().toString()) )
     {
@@ -217,6 +226,31 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
     }
    }, owlHlp ) );
 
+    
+    
+    setAnnotationClassRoot( reproduceClassStructure(annotationRoot, defaultAnnotationRootName, owlHlp.annotationSourceMap, new HierHlp<AgeAnnotationClassWritable>(){
+
+     public void addSubClass(AgeAnnotationClassWritable cl, AgeAnnotationClassWritable sbcls)
+     {
+      cl.addSubClass(sbcls);
+     }
+
+     public void addSuperClass(AgeAnnotationClassWritable cl, AgeAnnotationClassWritable spcls)
+     {
+      cl.addSuperClass(spcls);
+     }
+
+     public AgeAnnotationClassWritable create(String name, OWLClass oCls)
+     {
+      if( oCls != null)
+       return createAgeAnnotationClass( name, oCls.getIRI().toString() );
+      
+      return createAgeAnnotationClass(name, "AgeAnnotationClass"+IdGenerator.getInstance().getStringId() );
+     }
+    }, owlHlp ) ); 
+    
+    
+    
    String attrAtRelName = getLabel(attrProperty, owlHlp );
    if( attrAtRelName == null )
     attrAtRelName = attrProperty.getIRI().getFragment();
@@ -357,7 +391,6 @@ public abstract class SemanticModelOwl implements SemanticModel, Serializable
  }
  
  
-
 
  private void createInverseRelations( OWLParserHelper owlHlp )
  {

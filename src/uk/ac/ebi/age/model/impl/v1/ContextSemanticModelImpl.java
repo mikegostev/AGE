@@ -18,6 +18,7 @@ import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
+import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
@@ -29,6 +30,9 @@ import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
+import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
+import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
+import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
 public class ContextSemanticModelImpl implements ContextSemanticModel, Serializable
@@ -362,5 +366,23 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  @Override
  public void addAnnotation(AgeAnnotation ant)
  {
+ }
+
+ @Override
+ public AttributeAttachmentRuleWritable createAttributeAttachmentRule(RestrictionType type)
+ {
+  return masterModel.createAttributeAttachmentRule(type);
+ }
+
+ @Override
+ public RelationRuleWritable createRelationRule(RestrictionType type)
+ {
+  return masterModel.createRelationRule(type);
+ }
+
+ @Override
+ public QualifierRuleWritable createQualifierRule()
+ {
+  return masterModel.createQualifierRule();
  }
 }
