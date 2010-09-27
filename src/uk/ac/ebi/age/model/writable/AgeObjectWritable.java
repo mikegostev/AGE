@@ -21,8 +21,8 @@ public interface AgeObjectWritable extends AgeObject
  Collection<? extends AgeRelationWritable> getRelations( AgeRelationClass cls );
  Collection<? extends AgeAttributeWritable> getAttributes( AgeAttributeClass cls );
 
-// Map<AgeAttributeClass, Collection<AgeAttributeWritable>> getAttributeMap();
-
+ Collection<? extends AgeAttributeWritable> getAttributesByClassId(String cid);
+ Collection<? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cid);
 
  
  void addAttribute(AgeAttributeWritable attr);

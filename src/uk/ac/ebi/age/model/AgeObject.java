@@ -1,7 +1,6 @@
 package uk.ac.ebi.age.model;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  @model
@@ -20,12 +19,16 @@ public interface AgeObject extends AgeAbstractObject
 
  Collection<? extends AgeRelation> getRelations( AgeRelationClass cls );
  Collection<? extends AgeAttribute> getAttributes( AgeAttributeClass cls );
- Map<AgeAttributeClass, Collection<AgeAttribute> > getAttributeMap();
-
+ Collection<String> getAttributeClassesIds();
+ Collection<? extends AgeAttribute> getAttributesByClassId(String cid);
+ Collection<? extends AgeAttribute> getAttributesByClass(AgeAttributeClass cid);
+ 
  Object getAttributeValue( AgeAttributeClass cls );
  
  int getOrder();
 
  Submission getSubmission();
+ Collection< ? extends AgeAttributeClass> getAttributeClasses();
+ 
 
 }

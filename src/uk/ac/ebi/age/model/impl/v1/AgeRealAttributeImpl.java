@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model.impl.v1;
 
+import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.SemanticModel;
@@ -102,5 +103,13 @@ class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttributeWrita
   clone.value=this.value;
   
   return clone;
+ }
+ 
+ public boolean equals( Object ob )
+ {
+  if( ! (ob instanceof AgeAttribute) )
+   return false;
+  
+   return value == ((AgeAttribute)ob).getValueAsDouble();
  }
 }

@@ -125,15 +125,15 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
   return new CollectionsUnion<AgeAttributeWritable>(attributes.values());
  }
 
- public Map<AgeAttributeClass, Collection<AgeAttribute> > getAttributeMap()
- {
-  Map< AgeAttributeClass, Collection<AgeAttribute> > map = new HashMap<AgeAttributeClass, Collection<AgeAttribute>>();
-  
-  for( List<? extends AgeAttribute> vals : attributes.values() )
-   map.put(vals.get(0).getAgeElClass(), vals);
-  
-  return map;
- }
+// public Map<AgeAttributeClass, Collection<AgeAttribute> > getAttributeMap()
+// {
+//  Map< AgeAttributeClass, Collection<AgeAttribute> > map = new HashMap<AgeAttributeClass, Collection<AgeAttribute>>();
+//  
+//  for( List<? extends AgeAttribute> vals : attributes.values() )
+//   map.put(vals.get(0).getAgeElClass(), vals);
+//  
+//  return map;
+// }
  
  public Collection<AgeRelationWritable> getRelations()
  {
@@ -214,6 +214,36 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
   return attributes.get(cls.getId());
  }
 
+ 
+ @Override
+ public Collection<String> getAttributeClassesIds()
+ {
+  return attributes.keySet();
+ }
+
+ @Override
+ public Collection<? extends AgeAttributeWritable> getAttributesByClassId(String cid)
+ {
+  return attributes.get(cid);
+ }
+
+ @Override
+ public Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls)
+ {
+  return attributes.get(cls.getId());
+ }
+
+ public Collection<? extends AgeAttributeClass> getAttributeClasses()
+ {
+  Collection<AgeAttributeClass> clsz = new ArrayList<AgeAttributeClass>( attributes.size() );
+  
+  for( List<AgeAttributeWritable> alLst : attributes.values() )
+   if( alLst.size() > 0 )
+    clsz.add(alLst.get(0).getAgeElClass());
+  
+  return clsz;
+ }
+ 
  @Override
  public Collection< ? extends AgeRelationWritable> getRelations(AgeRelationClass cls)
  {
@@ -234,6 +264,5 @@ class AgeObjectImpl extends AgeSemanticElementImpl implements Serializable, AgeO
 
   return null;
  }
-
 
 }
