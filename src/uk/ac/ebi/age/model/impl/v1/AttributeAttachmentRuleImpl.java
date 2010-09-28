@@ -3,19 +3,14 @@ package uk.ac.ebi.age.model.impl.v1;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeSemanticElement;
 import uk.ac.ebi.age.model.Cardinality;
 import uk.ac.ebi.age.model.QualifierRule;
-import uk.ac.ebi.age.model.QualifiersCondition;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
-
-import com.pri.util.collection.CollectionsUnion;
 
 
 public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttachmentRuleWritable, AgeSemanticElement
@@ -26,11 +21,9 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
  private Cardinality cardType = Cardinality.ANY;
  private AgeAttributeClass attributeClass;
  private int cardinality=1;
- private Map<RestrictionType,Collection<QualifierRule>> qualifiers;
+ private Collection<QualifierRule> qualifiers;
  private boolean valueUnique;
- private boolean qualifiersUnique;
  private boolean subclassesIncluded=true;
- private QualifiersCondition qualifiersCondition = QualifiersCondition.ANY ;
  
  private SemanticModel model;
 
@@ -76,7 +69,7 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
   this.cardinality = cardinality;
  }
 
- public Map<RestrictionType,Collection<QualifierRule>> getQualifiersMap()
+ public Collection<QualifierRule> getQualifiers()
  {
   return qualifiers;
  }
@@ -84,23 +77,9 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
  public void addQualifier( QualifierRule qr )
  {
   if( qualifiers == null )
-  {
-   qualifiers=new TreeMap<RestrictionType, Collection<QualifierRule>>();
-   Collection<QualifierRule> coll = new ArrayList<QualifierRule>(5);
-   coll.add(qr);
-   qualifiers.put(qr.getType(), coll);
-   return;
-  }
-  
-  Collection<QualifierRule> coll = qualifiers.get(qr.getType());
-  
-  if( coll == null )
-  {
-   coll = new ArrayList<QualifierRule>(5);
-   qualifiers.put(qr.getType(), coll);
-  }
- 
-  coll.add(qr);
+   qualifiers=new ArrayList<QualifierRule>();
+
+  qualifiers.add(qr);
  
  }
  
@@ -109,6 +88,7 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
   this.attributeClass = attributeClass;
  }
 
+ /*
  public String toString()
  {
   StringBuilder sb = new StringBuilder();
@@ -233,6 +213,7 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
   
   return sb.toString();
  }
+ */
 
  public void clearQualifiers()
  {
@@ -245,30 +226,12 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
   return valueUnique;
  }
  
- public boolean isQualifiersUnique()
- {
-  return qualifiersUnique;
- }
 
  public void setValueUnique(boolean valueUnique)
  {
   this.valueUnique = valueUnique;
  }
 
- public void setQualifiersUnique(boolean qualifiersUnique)
- {
-  this.qualifiersUnique = qualifiersUnique;
- }
-
- public void setQualifiersCondition(QualifiersCondition qc)
- {
-  qualifiersCondition = qc;
- }
-
- public QualifiersCondition getQualifiersCondition()
- {
-  return qualifiersCondition;
- }
 
  public boolean isSubclassesIncluded()
  {
@@ -285,16 +248,6 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
  {
   return type;
  }
-
- @Override
- public Collection<QualifierRule> getQualifiers()
- {
-  if( qualifiers == null )
-   return null;
-  
-  return new CollectionsUnion<QualifierRule>(qualifiers.values());
- }
-
 
  @Override
  public SemanticModel getSemanticModel()

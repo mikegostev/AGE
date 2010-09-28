@@ -12,10 +12,6 @@ public interface AttributeAttachmentRule
 
  Cardinality getCardinalityType();
 
- QualifiersCondition getQualifiersCondition();
-
- boolean isQualifiersUnique();
-
  boolean isSubclassesIncluded();
 
  RestrictionType getType();

@@ -72,7 +72,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
         break;
       }
       
-      if( rul.isQualifiersUnique() )
+      if( rul.isValueUnique() )
       {
        
       }
