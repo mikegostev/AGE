@@ -3,7 +3,7 @@ package uk.ac.ebi.age.model.writable;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
 
-public interface AgeRelationClassWritable extends AgeRelationClass, AgeAbstractClassWritable
+public interface AgeRelationClassWritable extends AgeRelationClass, AgeAbstractClassWritable, AttributedClassWritable
 {
  void addSubClass(AgeRelationClass makeRelationsBranch);
  void addSuperClass(AgeRelationClass ageRelCls);

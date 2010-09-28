@@ -1,7 +1,6 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -11,7 +10,7 @@ import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 
-class AgeExternalRelationImpl extends AgeSemanticElementImpl implements AgeExternalRelationWritable, Serializable
+class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRelationWritable, Serializable
 {
  private static final long serialVersionUID = 1L;
 
@@ -87,20 +86,5 @@ class AgeExternalRelationImpl extends AgeSemanticElementImpl implements AgeExter
   return infered;
  }
  
- @Override
- public Collection<AgeAttributeWritable> getQualifiers()
- {
-  return qualifiers;
- }
- 
- @Override
- public void addQualifier(AgeAttributeWritable q )
- {
-  if(qualifiers == null )
-   qualifiers = new ArrayList<AgeAttributeWritable>(5);
-
-  
-  qualifiers.add(q);
- }
 }
 

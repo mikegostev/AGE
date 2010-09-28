@@ -8,6 +8,7 @@ import uk.ac.ebi.age.model.AgeAnnotation;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.AttributeAttachmentRule;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.service.IdGenerator;
 
@@ -172,5 +173,17 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  public boolean isTransitive()
  {
   return false;
+ }
+
+ @Override
+ public Collection<AttributeAttachmentRule> getAttributeAttachmentRules()
+ {
+  return null;
+ }
+
+ @Override
+ public Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules()
+ {
+  return null;
  }
 }

@@ -5,7 +5,12 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAbstractClass;
 import uk.ac.ebi.age.model.AgeAnnotation;
+import uk.ac.ebi.age.model.AgeClass;
+import uk.ac.ebi.age.model.AttributeAttachmentRule;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.util.Collector;
+
+import com.pri.util.collection.CollectionsUnion;
 
 abstract class AgeAbstractClassImpl extends AgeSemanticElementImpl implements  AgeAbstractClass
 {
@@ -13,6 +18,10 @@ abstract class AgeAbstractClassImpl extends AgeSemanticElementImpl implements  A
 
  private Collection<AgeAnnotation> annotations = new ArrayList<AgeAnnotation>(8);
  
+ private Collection<AttributeAttachmentRule> atatRules;
+
+
+
  public AgeAbstractClassImpl(SemanticModel model)
  {
   super(model);
@@ -58,4 +67,31 @@ abstract class AgeAbstractClassImpl extends AgeSemanticElementImpl implements  A
   annotations.remove(annt);
  }
  
+ public Collection<AttributeAttachmentRule> getAttributeAttachmentRules()
+ {
+  return atatRules;
+ }
+ 
+ public void addAttributeAttachmentRule(AttributeAttachmentRule atatRule)
+ {
+  if( atatRules == null )
+   atatRules = new ArrayList<AttributeAttachmentRule>();
+  
+  atatRules.add(atatRule);
+ }
+ 
+ public Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules()
+ {
+  Collection<Collection<AttributeAttachmentRule>> allRest = new ArrayList<Collection<AttributeAttachmentRule>>(10);
+  
+  Collector.collectFromHierarchy(this,allRest, new Collector<Collection<AttributeAttachmentRule>>(){
+
+   public Collection<AttributeAttachmentRule> get(AgeAbstractClass cls)
+   {
+    Collection<AttributeAttachmentRule> restr = ((AgeClass)cls).getAttributeAttachmentRules();
+    return restr==null||restr.size()==0?null:restr;
+   }} );
+  
+  return new CollectionsUnion<AttributeAttachmentRule>(allRest);
+ }
 }

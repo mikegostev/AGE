@@ -159,5 +159,6 @@ class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttribute
  {
   return aliases;
  }
+
 }
 

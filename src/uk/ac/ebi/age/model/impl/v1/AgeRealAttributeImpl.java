@@ -112,4 +112,10 @@ class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttributeWrita
   
    return value == ((AgeAttribute)ob).getValueAsDouble();
  }
+ 
+ @Override
+ public int compareTo(AgeAttribute o)
+ {
+  return value==o.getValueAsDouble()? 0 : value-o.getValueAsDouble() > 0 ? 1 : -1;
+ }
 }

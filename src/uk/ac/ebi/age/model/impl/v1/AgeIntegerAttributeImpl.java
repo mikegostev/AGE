@@ -113,5 +113,10 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
   
    return value == ((AgeAttribute)ob).getValueAsInteger();
  }
-
+ 
+ @Override
+ public int compareTo(AgeAttribute o)
+ {
+  return value-o.getValueAsInteger();
+ }
 }

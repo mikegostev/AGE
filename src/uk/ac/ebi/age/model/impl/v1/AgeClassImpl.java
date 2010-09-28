@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import uk.ac.ebi.age.model.AgeAbstractClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRestriction;
-import uk.ac.ebi.age.model.AttributeAttachmentRule;
 import uk.ac.ebi.age.model.RelationRule;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -37,7 +36,6 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
  @Deprecated private Collection<AgeRestriction> unionRestrictions;
 
  private Collection<RelationRule> relationRules;
- private Collection<AttributeAttachmentRule> atatRules;
  
  public AgeClassImpl(String name, String id, String pfx, SemanticModel sm)
  {
@@ -77,13 +75,13 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   superClasses.add(sbCls);
  }
  
- public Collection<AgeRestriction> getRestrictions()
+ @Deprecated public Collection<AgeRestriction> getRestrictions()
  {
   return unionRestrictions;
  }
  
 
- public Collection<AgeRestriction> getAllRestrictions()
+ @Deprecated public Collection<AgeRestriction> getAllRestrictions()
  {
   Collection<Collection<AgeRestriction>> allRest = new ArrayList<Collection<AgeRestriction>>(10);
   
@@ -119,17 +117,17 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   return false;
  }
 
- public Collection<AgeRestriction> getObjectRestrictions()
+ @Deprecated public Collection<AgeRestriction> getObjectRestrictions()
  {
   return restrictions;
  }
 
- public void addObjectRestriction(AgeRestriction rest)
+ @Deprecated public void addObjectRestriction(AgeRestriction rest)
  {
   restrictions.add(rest);
  }
 
- public Collection<AgeRestriction> getAllObjectRestrictions()
+ @Deprecated public Collection<AgeRestriction> getAllObjectRestrictions()
  {
   Collection<Collection<AgeRestriction>> allRest = new ArrayList<Collection<AgeRestriction>>(10);
   
@@ -146,17 +144,17 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
  }
 
  
- public void addAttributeRestriction(AgeRestriction rest)
+ @Deprecated public void addAttributeRestriction(AgeRestriction rest)
  {
   attributeRestrictions.add(rest);
  }
 
- public Collection<AgeRestriction> getAttributeRestrictions()
+ @Deprecated public Collection<AgeRestriction> getAttributeRestrictions()
  {
   return attributeRestrictions;
  }
  
- public Collection<AgeRestriction> getAttributeAllRestrictions()
+ @Deprecated public Collection<AgeRestriction> getAttributeAllRestrictions()
  {
   Collection<Collection<AgeRestriction>> allRest = new ArrayList<Collection<AgeRestriction>>(10);
   
@@ -193,11 +191,7 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   return relationRules;
  }
 
- @Override
- public Collection<AttributeAttachmentRule> getAttributeAttachmentRules()
- {
-  return atatRules;
- }
+
 
  @Override
  public Collection<RelationRule> getAllRelationRules()
@@ -215,21 +209,7 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   return new CollectionsUnion<RelationRule>(allRest);
  }
 
- @Override
- public Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules()
- {
-  Collection<Collection<AttributeAttachmentRule>> allRest = new ArrayList<Collection<AttributeAttachmentRule>>(10);
-  
-  Collector.collectFromHierarchy(this,allRest, new Collector<Collection<AttributeAttachmentRule>>(){
 
-   public Collection<AttributeAttachmentRule> get(AgeAbstractClass cls)
-   {
-    Collection<AttributeAttachmentRule> restr = ((AgeClass)cls).getAttributeAttachmentRules();
-    return restr==null||restr.size()==0?null:restr;
-   }} );
-  
-  return new CollectionsUnion<AttributeAttachmentRule>(allRest);
- }
 
 
  @Override
@@ -255,14 +235,6 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   relationRules.add(mrr);
  }
 
- @Override
- public void addAttributeAttachmentRule(AttributeAttachmentRule atatRule)
- {
-  if( atatRules == null )
-   atatRules = new ArrayList<AttributeAttachmentRule>();
-  
-  atatRules.add(atatRule);
- }
 
 
 }

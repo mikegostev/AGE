@@ -3,18 +3,17 @@ package uk.ac.ebi.age.model.writable;
 import uk.ac.ebi.age.model.AgeAnnotation;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRestriction;
-import uk.ac.ebi.age.model.AttributeAttachmentRule;
 import uk.ac.ebi.age.model.RelationRule;
 
 /**
 @model
 */
 
-public interface AgeClassWritable extends AgeClass, AgeAbstractClassWritable
+public interface AgeClassWritable extends AgeClass, AgeAbstractClassWritable, AttributedClassWritable
 {
- void addObjectRestriction(AgeRestriction rest);
+ @Deprecated void addObjectRestriction(AgeRestriction rest);
 
- void addAttributeRestriction(AgeRestriction rest);
+ @Deprecated void addAttributeRestriction(AgeRestriction rest);
 
  void addSubClass(AgeClass cls);
  void addSuperClass(AgeClass cls);
@@ -29,6 +28,5 @@ public interface AgeClassWritable extends AgeClass, AgeAbstractClassWritable
 
  void addRelationRule(RelationRule mrr);
 
- void addAttributeAttachmentRule(AttributeAttachmentRule atatRule);
 }
 

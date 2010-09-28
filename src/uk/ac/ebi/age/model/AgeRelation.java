@@ -1,6 +1,6 @@
 package uk.ac.ebi.age.model;
 
-public interface AgeRelation extends AgeObjectProperty
+public interface AgeRelation extends Attributed
 {
  AgeObject getTargetObject();
  AgeRelationClass getAgeElClass();

@@ -117,4 +117,10 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
   
    return value == ((AgeAttribute)ob).getValueAsBoolean();
  }
+
+ @Override
+ public int compareTo(AgeAttribute o)
+ {
+  return value==o.getValueAsBoolean()? 0 : value?1:-1;
+ }
 }

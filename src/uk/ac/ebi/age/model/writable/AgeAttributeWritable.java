@@ -3,7 +3,7 @@ package uk.ac.ebi.age.model.writable;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.FormatException;
 
-public interface AgeAttributeWritable extends AgeAttribute, AgeObjectPropertyWritable
+public interface AgeAttributeWritable extends AgeAttribute, AttributedWritable
 {
  void updateValue(String value) throws FormatException;
 

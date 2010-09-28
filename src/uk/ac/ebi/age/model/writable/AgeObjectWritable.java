@@ -13,16 +13,11 @@ import uk.ac.ebi.age.model.Submission;
  @model
 */
 
-public interface AgeObjectWritable extends AgeObject
+public interface AgeObjectWritable extends AgeObject, AttributedWritable
 {
- Collection<? extends AgeAttributeWritable> getAttributes();
  Collection<? extends AgeRelationWritable> getRelations();
  
  Collection<? extends AgeRelationWritable> getRelations( AgeRelationClass cls );
- Collection<? extends AgeAttributeWritable> getAttributes( AgeAttributeClass cls );
-
- Collection<? extends AgeAttributeWritable> getAttributesByClassId(String cid);
- Collection<? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cid);
 
  
  void addAttribute(AgeAttributeWritable attr);

@@ -105,4 +105,11 @@ class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttributeWri
   
    return value.equals( ((AgeAttribute)ob).getValue() );
  }
+
+ @Override
+ public int compareTo(AgeAttribute o)
+ {
+  return value.compareTo(o.getValue().toString());
+ }
+ 
 }

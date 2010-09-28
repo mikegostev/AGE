@@ -6,7 +6,7 @@ import java.util.Collection;
 @model
 */
 
-public interface AgeClass extends AgeSemanticElement, AgeAbstractClass
+public interface AgeClass extends AgeSemanticElement, AgeAbstractClass, AttributedClass
 {
 
  boolean isCustom();
@@ -34,8 +34,5 @@ public interface AgeClass extends AgeSemanticElement, AgeAbstractClass
  Collection<RelationRule> getRelationRules();
  Collection<RelationRule> getAllRelationRules();
  
- Collection<AttributeAttachmentRule> getAttributeAttachmentRules();
- Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules();
-
 }
 

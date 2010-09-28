@@ -1,6 +1,6 @@
 package uk.ac.ebi.age.model;
 
-public interface AgeAttribute extends AgeObjectProperty
+public interface AgeAttribute extends Attributed, Comparable<AgeAttribute>
 {
  AgeAttributeClass getAgeElClass();
  
