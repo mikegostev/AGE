@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
+import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 
@@ -41,6 +42,13 @@ abstract class AgeAttributeImpl extends AttributedObject implements AgeAttribute
  public AgeAttributeClass getAgeElClass()
  {
   return attrClassPlug.getAgeAttributeClass();
+ }
+ 
+
+ @Override
+ public AttributedClass getAttributedClass()
+ {
+  return getAgeElClass();
  }
  
  public void setOrder( int ord )

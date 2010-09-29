@@ -21,12 +21,15 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
 
  private Map<String,List<AgeAttributeWritable>> attributes = new HashMap<String,List<AgeAttributeWritable>>();
 
+ private transient List<AgeAttributeClass> atClasses = null;
+
+ 
  public AttributedObject(SemanticModel m)
  {
   super(m);
  }
 
-
+ 
  @Override
  public Collection<AgeAttributeWritable> getAttributes()
  {
@@ -39,7 +42,12 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
   List<AgeAttributeWritable> coll = attributes.get(attr.getAgeElClass().getId());
   
   if( coll == null )
+  {
    attributes.put(attr.getAgeElClass().getId(),Collections.singletonList(attr));
+  
+   if( atClasses != null )
+    atClasses.add(e);
+  }
   else if( coll instanceof ArrayList<?> )
    coll.add(attr);
   else
@@ -75,13 +83,14 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
  }
 
  @Override
- public Collection<? extends AgeAttributeWritable> getAttributesByClassId(String cid)
+ public Collection<? extends AgeAttributeWritable> getAttributesByClassId(String cid, boolean wSubCls)
  {
-  return attributes.get(cid);
+  if( ! wSubCls )
+   return attributes.get(cid);
  }
 
  @Override
- public Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls)
+ public Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
  {
   return attributes.get(cls.getId());
  }

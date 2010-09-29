@@ -4,6 +4,7 @@ import java.util.Collection;
 
 public interface Attributed
 {
+ AttributedClass getAttributedClass();
 
  Collection<? extends AgeAttribute> getAttributes();
 
@@ -11,9 +12,9 @@ public interface Attributed
 
  Collection<String> getAttributeClassesIds();
 
- Collection< ? extends AgeAttribute> getAttributesByClassId(String cid);
+ Collection< ? extends AgeAttribute> getAttributesByClassId(String cid, boolean wSubCls);
 
- Collection< ? extends AgeAttribute> getAttributesByClass(AgeAttributeClass cls);
+ Collection< ? extends AgeAttribute> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls);
 
  Collection< ? extends AgeAttributeClass> getAttributeClasses();
 

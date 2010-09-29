@@ -9,10 +9,13 @@ import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeObject;
+import uk.ac.ebi.age.model.AgeRelation;
+import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeAttachmentRule;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.QualifierRule;
+import uk.ac.ebi.age.model.RelationRule;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.Submission;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
@@ -37,135 +40,66 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     valid = valid?validateObject(obj,supCls):false;
   }
   
-  validateAttributed( obj, cls );
+  validateAttributed( obj );
   
   return valid;
  }
 
- private boolean isAttributeAllowed(AgeAttributeClass atCls, Collection<? extends AgeAttribute> attrs, Collection<AttributeAttachmentRule> atRules)
+ private boolean validateRelations(AgeObject obj)
  {
-  if( atRules == null )
-   return false;
-  
-  boolean satisf = false;
+  AgeClass cls = obj.getAgeElClass();
 
-  ruleCyc: for(AttributeAttachmentRule rul : atRules)
-  {
-   if(!((rul.isSubclassesIncluded() && atCls.isClassOrSubclass(rul.getAttributeClass())) || rul.getAttributeClass().equals(atCls)))
-    continue;
+  Collection<RelationRule> rlRules = cls.getRelationRules() != null?
+    cls.getRelationRules() : Collections.<RelationRule>emptyList();
 
-   if(rul.getType() == RestrictionType.MUSTNOT)
-    continue;
-
-   switch(rul.getCardinalityType())
-   {
-    case EXACT:
-     if(rul.getCardinality() != attrs.size())
-      continue;
-
-     break;
-
-    case MAX:
-     if(rul.getCardinality() < attrs.size())
-      continue;
-
-     break;
-
-    case MIN:
-     if(rul.getCardinality() > attrs.size())
-      continue;
-
-     break;
-   }
-
-   List<AgeAttribute> atList = null;
-
-   if(rul.isValueUnique() && attrs.size() > 1)
-   {
-    atList = new ArrayList<AgeAttribute>(attrs.size());
-    atList.addAll(attrs);
-
-    for(int i = 0; i < attrs.size() - 1; i++)
-    {
-     for(int j = i + 1; j < attrs.size(); j++)
-     {
-      if(atList.get(i).equals(atList.get(j)))
-       continue ruleCyc;
-     }
-    }
-   }
-
-   if(rul.getQualifiers() != null)
-   {
-    for(QualifierRule qr : rul.getQualifiers())
-    {
-     for(AgeAttribute attr : attrs)
-     {
-      boolean found = false;
-
-      for(String atcID : attr.getAttributeClassesIds())
-      {
-       if(atcID.equals(qr.getAttributeClass().getId()))
-       {
-        found = true;
-        break;
-       }
-      }
-
-      if(!found)
-       continue ruleCyc;
-     }
-
-     if(qr.isUnique())
-     {
-      if(atList == null)
-      {
-       atList = new ArrayList<AgeAttribute>(attrs.size());
-       atList.addAll(attrs);
-      }
-
-      for(int i = 0; i < attrs.size() - 1; i++)
-      {
-       for(int j = i + 1; j < attrs.size(); j++)
-       {
-        if(!isEqual(atList.get(i).getAttributesByClass(qr.getAttributeClass()), atList.get(j).getAttributesByClass(qr.getAttributeClass())))
-         continue ruleCyc;
-       }
-      }
-
-     }
-    }
-   }
-
-   for( AgeAttribute attr : attrs )
-   {
-    Collection<? extends AgeAttributeClass> qClss = attr.getAttributeClasses();
+  Collection<? extends AgeRelationClass> rlClasses = obj.getRelationClasses();
     
-    if( qClss != null )
+  boolean objectOk=true;
+    
+    for( AgeRelationClass rlCls : rlClasses )
     {
-     for( AgeAttributeClass qCls : qClss )
+     if( rlCls.isCustom() )
+      continue;
+     
+     Collection<? extends AgeRelation> rels = obj.getRelationsByClass(rlCls);
+     
+     if( ! isRelationAllowed(rlCls, rels, atRules) )
      {
-      if( ! isAttributeAllowed(qCls, attr.getAttributesByClass(qCls), atCls.getAttributeAttachmentRules() ) )
-       return false;
+      objectOk=false;
+      break;
+     }
+   
+     for( AgeAttribute attr : attrs )
+     {
+      if( ! validateAttributed(attr) )
+      {
+       objectOk=false;
+       break;
+      }
      }
     }
-   }
-   
-   
-   satisf = true;
-   break;
-   
-  }
+    
+    if( cls.getAttributeAttachmentRules() != null )
+    {
+     for( AttributeAttachmentRule atRl : cls.getAttributeAttachmentRules() )
+      isRuleSatisfied(atRl,obj);
+    }
+    
+    
 
-  return satisf;
+    return valid;
+
  }
  
- private boolean validateAttributed( Attributed obj, AttributedClass cls )
+ 
+ private boolean validateAttributed( Attributed obj )
  {
   boolean valid = true;
   
+  AttributedClass cls = obj.getAttributedClass();
 
-  Collection<AttributeAttachmentRule> atRules = cls.getAttributeAttachmentRules() != null? cls.getAttributeAttachmentRules() : Collections.<AttributeAttachmentRule>emptyList();
+  Collection<AttributeAttachmentRule> atRules = cls.getAttributeAttachmentRules() != null?
+    cls.getAttributeAttachmentRules() : Collections.<AttributeAttachmentRule>emptyList();
   
   Collection<? extends AgeAttributeClass> atClasses = obj.getAttributeClasses();
   
@@ -184,6 +118,14 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     break;
    }
  
+   for( AgeAttribute attr : attrs )
+   {
+    if( ! validateAttributed(attr) )
+    {
+     objectOk=false;
+     break;
+    }
+   }
   }
   
   if( cls.getAttributeAttachmentRules() != null )
@@ -192,8 +134,45 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     isRuleSatisfied(atRl,obj);
   }
   
+  
+
   return valid;
  }
+ 
+ private boolean isAttributeAllowed(AgeAttributeClass atCls, Collection<? extends AgeAttribute> attrs, Collection<AttributeAttachmentRule> atRules)
+ {
+  if( atRules == null )
+   return false;
+  
+  boolean satisf = false;
+
+  for(AttributeAttachmentRule rul : atRules)
+  {
+   if(!((rul.isSubclassesIncluded() && atCls.isClassOrSubclass(rul.getAttributeClass())) || rul.getAttributeClass().equals(atCls)))
+    continue;
+
+   if(rul.getType() == RestrictionType.MUSTNOT)
+    continue;
+
+   if( ! matchCardinality( rul, attrs.size() ) )
+    continue;
+   
+   if( ! checkValuesUnique( rul, attrs ) )
+    continue;
+  
+   if( ! matchQualifiers(rul, attrs))
+    continue;
+   
+  
+   satisf = true;
+   break;
+   
+  }
+
+  return satisf;
+ }
+ 
+
 
  private boolean checkUniq( Collection<? extends AgeAttribute> attrs )
  {
@@ -252,34 +231,153 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   if( atRl.getType() == RestrictionType.MAY )
    return true;
   
-  Collection<? extends AgeAttribute> atrs = obj.getAttributesByClassId(atRl.getAttributeClass().getId());
+  Collection<? extends AgeAttribute> attrs = obj.getAttributesByClassId(atRl.getAttributeClass().getId());
 
-  if( atrs == null || atrs.size() == 0 )
+  if( attrs == null || attrs.size() == 0 )
    return atRl.getType() == RestrictionType.MUSTNOT;
+  
+  boolean cardMatch = true;
   
   switch( atRl.getCardinalityType() )
   {
    case EXACT:
-    if( atrs.size() != atRl.getCardinality() )
-     return false;
+    if( attrs.size() != atRl.getCardinality() )
+     cardMatch = false;
     
     break;
     
    case MAX:
-    if( atrs.size() > atRl.getCardinality() )
-     return false;
+    if( attrs.size() > atRl.getCardinality() )
+     cardMatch = false;
     
     break;
     
    case MIN:
-    if( atrs.size() < atRl.getCardinality() )
-     return false;
-
+    if( attrs.size() < atRl.getCardinality() )
+     cardMatch = false;
   }
+  
+  if( ! matchCardinality( atRl, attrs.size() ) )
+   return atRl.getType() == RestrictionType.MUSTNOT;
+
+  if( atRl.isValueUnique() && ! checkValuesUnique(atRl, attrs) )
+   return atRl.getType() == RestrictionType.MUSTNOT;
+   
+  if( ! matchQualifiers(atRl, attrs) )
+   return atRl.getType() == RestrictionType.MUSTNOT;
+  
   
   return true;
  }
 
+ private boolean matchCardinality( AttributeAttachmentRule rul, int nAttr )
+ {
+  switch(rul.getCardinalityType())
+  {
+   case EXACT:
+    if(rul.getCardinality() != nAttr)
+     return false;
+
+    break;
+
+   case MAX:
+    if(rul.getCardinality() < nAttr)
+     return false;
+
+    break;
+
+   case MIN:
+    if(rul.getCardinality() > nAttr)
+     return false;
+
+    break;
+  }
+ 
+  return true;
+ }
+ 
+ private boolean checkValuesUnique( AttributeAttachmentRule rul, Collection<? extends AgeAttribute> attrs )
+ {
+  if(rul.isValueUnique() && attrs.size() > 1)
+  {
+   ArrayList<AgeAttribute> atList = new ArrayList<AgeAttribute>(attrs.size());
+   atList.addAll(attrs);
+
+   for(int i = 0; i < attrs.size() - 1; i++)
+   {
+    for(int j = i + 1; j < attrs.size(); j++)
+    {
+     if(atList.get(i).equals(atList.get(j)))
+      return false;
+    }
+   }
+  }
+  
+  return true;
+ }
+ 
+ private boolean matchQualifiers( AttributeAttachmentRule rul, Collection<? extends AgeAttribute> attrs )
+ {
+  if(rul.getQualifiers() != null)
+  {
+   for(QualifierRule qr : rul.getQualifiers())
+   {
+    for(AgeAttribute attr : attrs)
+    {
+     boolean found = false;
+
+     for(String atcID : attr.getAttributeClassesIds())
+     {
+      if(atcID.equals(qr.getAttributeClass().getId()))
+      {
+       found = true;
+       break;
+      }
+     }
+
+     if(!found)
+      return false;
+    }
+
+    if(qr.isUnique())
+    {
+     ArrayList<AgeAttribute> atList = new ArrayList<AgeAttribute>(attrs.size());
+     atList.addAll(attrs);
+
+     for(int i = 0; i < attrs.size() - 1; i++)
+     {
+      for(int j = i + 1; j < attrs.size(); j++)
+      {
+       if( isEqual(atList.get(i).getAttributesByClass(qr.getAttributeClass()), atList.get(j).getAttributesByClass(qr.getAttributeClass())) )
+        return false;
+      }
+     }
+
+    }
+   }
+  }
+  
+  return true;
+ }
+ 
+ private boolean checkAllQualifiers( AgeAttributeClass atCls, Collection<? extends AgeAttribute> attrs )
+ {
+  for( AgeAttribute attr : attrs )
+  {
+   Collection<? extends AgeAttributeClass> qClss = attr.getAttributeClasses();
+   
+   if( qClss != null )
+   {
+    for( AgeAttributeClass qCls : qClss )
+    {
+     if( ! isAttributeAllowed(qCls, attr.getAttributesByClass(qCls), atCls.getAttributeAttachmentRules() ) )
+      return false;
+    }
+   }
+  }
+  
+  return true;
+ }
 // private boolean validateAttributeByAttributeRule(AttributeAttachmentRule atRl, AgeAttribute at)
 // {
 //  if( !atRl.isSubclassesIncluded() )

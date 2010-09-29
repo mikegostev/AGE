@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
+import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
@@ -84,6 +85,13 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  public boolean isInferred()
  {
   return infered;
+ }
+ 
+
+ @Override
+ public AttributedClass getAttributedClass()
+ {
+  return getAgeElClass();
  }
  
 }

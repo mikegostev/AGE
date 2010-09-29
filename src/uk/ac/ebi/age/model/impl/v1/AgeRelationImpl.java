@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
+import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -65,4 +66,9 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
   return null;
  }
 
+ @Override
+ public AttributedClass getAttributedClass()
+ {
+  return getAgeElClass();
+ }
 }
