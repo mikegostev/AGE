@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,11 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
 {
  private static final long serialVersionUID = 1L;
 
- private Map<String, List<AgeRelationWritable>> relations = new HashMap<String, List<AgeRelationWritable>>();
+ private List<AgeRelationWritable> relations;
+ 
+ private transient Map<AgeRelationClass, List<AgeRelationWritable>> relationMap;
+ 
+// private Map<String, List<AgeRelationWritable>> relations = new HashMap<String, List<AgeRelationWritable>>();
 
 // private Collection<AgeAttributeWritable> attributes = new ArrayList<AgeAttributeWritable>( 10 );
 // private Collection<Collection<AgeRelationWritable>> relations = new ArrayList<Collection<AgeRelationWritable>>(5);
@@ -229,4 +232,12 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   return getAgeElClass();
  }
 
+ @Override
+ public void reset()
+ {
+  super.reset();
+ 
+  
+ }
+ 
 }

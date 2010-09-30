@@ -10,11 +10,11 @@ public interface Attributed
 
  Collection< ? extends AgeAttribute> getAttributes(AgeAttributeClass cls);
 
- Collection<String> getAttributeClassesIds();
-
- Collection< ? extends AgeAttribute> getAttributesByClassId(String cid, boolean wSubCls);
-
  Collection< ? extends AgeAttribute> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls);
+
+ // Collection<String> getAttributeClassesIds();
+
+// Collection< ? extends AgeAttribute> getAttributesByClassId(String cid, boolean wSubCls);
 
  Collection< ? extends AgeAttributeClass> getAttributeClasses();
 

@@ -9,6 +9,8 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
+import uk.ac.ebi.age.model.writable.AgeRelationWritable;
+import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
 class SubmissionImpl  implements SubmissionWritable, Serializable
@@ -117,8 +119,30 @@ class SubmissionImpl  implements SubmissionWritable, Serializable
  @Override
  public void setMasterModel( SemanticModel newModel )
  {
+  for( AgeObjectWritable obj : objects )
+  {
+   resetAttributedObject(obj);
+   
+   if( obj.getRelations() != null )
+   {
+    for( AgeRelationWritable rel : obj.getRelations() )
+     resetAttributedObject(rel);
+   }
+   
+  }
+  
   model.setMasterModel( newModel );
  }
  
-
+ private void resetAttributedObject( AttributedWritable atbObj )
+ {
+  atbObj.reset();
+  
+  if( atbObj.getAttributes() != null )
+  {
+   for(AttributedWritable atw : atbObj.getAttributes() )
+    resetAttributedObject(atw);
+  }
+ }
+ 
 }

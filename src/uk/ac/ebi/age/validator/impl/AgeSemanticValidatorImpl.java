@@ -49,45 +49,42 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
  {
   AgeClass cls = obj.getAgeElClass();
 
-  Collection<RelationRule> rlRules = cls.getRelationRules() != null?
-    cls.getRelationRules() : Collections.<RelationRule>emptyList();
+  Collection<RelationRule> rlRules = cls.getRelationRules() != null ? cls.getRelationRules() : Collections.<RelationRule> emptyList();
 
-  Collection<? extends AgeRelationClass> rlClasses = obj.getRelationClasses();
-    
-  boolean objectOk=true;
-    
-    for( AgeRelationClass rlCls : rlClasses )
-    {
-     if( rlCls.isCustom() )
-      continue;
-     
-     Collection<? extends AgeRelation> rels = obj.getRelationsByClass(rlCls);
-     
-     if( ! isRelationAllowed(rlCls, rels, atRules) )
-     {
-      objectOk=false;
-      break;
-     }
-   
-     for( AgeAttribute attr : attrs )
-     {
-      if( ! validateAttributed(attr) )
-      {
-       objectOk=false;
-       break;
-      }
-     }
-    }
-    
-    if( cls.getAttributeAttachmentRules() != null )
-    {
-     for( AttributeAttachmentRule atRl : cls.getAttributeAttachmentRules() )
-      isRuleSatisfied(atRl,obj);
-    }
-    
-    
+  Collection< ? extends AgeRelationClass> rlClasses = obj.getRelationClasses();
 
-    return valid;
+  boolean objectOk = true;
+
+  for(AgeRelationClass rlCls : rlClasses)
+  {
+   if(rlCls.isCustom())
+    continue;
+
+   Collection< ? extends AgeRelation> rels = obj.getRelationsByClass(rlCls, true);
+
+   if(!isRelationAllowed(rlCls, rels, rlRules))
+   {
+    objectOk = false;
+    break;
+   }
+
+   for(AgeRelation rl : rels)
+   {
+    if(!validateAttributed(rl))
+    {
+     objectOk = false;
+     break;
+    }
+   }
+  }
+
+  if(cls.getRelationRules() != null)
+  {
+   for(RelationRule rlRl : cls.getRelationRules())
+    isRelationRuleSatisfied(rlRl, obj);
+  }
+
+  return objectOk;
 
  }
  
@@ -110,7 +107,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    if( atCls.isCustom() )
     continue;
    
-   Collection<? extends AgeAttribute> attrs = obj.getAttributesByClass(atCls);
+   Collection<? extends AgeAttribute> attrs = obj.getAttributesByClass(atCls, true);
    
    if( ! isAttributeAllowed(atCls, attrs, atRules) )
    {
@@ -131,7 +128,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   if( cls.getAttributeAttachmentRules() != null )
   {
    for( AttributeAttachmentRule atRl : cls.getAttributeAttachmentRules() )
-    isRuleSatisfied(atRl,obj);
+    isAttributeRuleSatisfied(atRl,obj);
   }
   
   
@@ -160,7 +157,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    if( ! checkValuesUnique( rul, attrs ) )
     continue;
   
-   if( ! matchQualifiers(rul, attrs))
+   if( ! matchQualifiers(rul.getQualifiers(), attrs))
     continue;
    
   
@@ -172,7 +169,38 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return satisf;
  }
  
+ private boolean isRelationAllowed(AgeRelationClass atCls, Collection<? extends AgeRelation> rels, Collection<RelationRule> relRules)
+ {
+  if( relRules == null )
+   return false;
+  
+  boolean satisf = false;
 
+  for(RelationRule rul : relRules)
+  {
+   if(!((rul.isSubclassesIncluded() && atCls.isClassOrSubclass(rul.getRelationClass())) || rul.getRelationClass().equals(atCls)))
+    continue;
+
+   if(rul.getType() == RestrictionType.MUSTNOT)
+    continue;
+
+   if( ! matchCardinality( rul, rels.size() ) )
+    continue;
+   
+   if( ! checkTargetsUnique( rels ) )
+    continue;
+  
+   if( ! matchQualifiers(rul.getQualifiers(), rels))
+    continue;
+   
+  
+   satisf = true;
+   break;
+   
+  }
+
+  return satisf;
+ }
 
  private boolean checkUniq( Collection<? extends AgeAttribute> attrs )
  {
@@ -226,36 +254,16 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return true;
  }
  
- private boolean isRuleSatisfied(AttributeAttachmentRule atRl, Attributed obj)
+ private boolean isAttributeRuleSatisfied(AttributeAttachmentRule atRl, Attributed obj)
  {
   if( atRl.getType() == RestrictionType.MAY )
    return true;
   
-  Collection<? extends AgeAttribute> attrs = obj.getAttributesByClassId(atRl.getAttributeClass().getId());
+  Collection<? extends AgeAttribute> attrs = obj.getAttributesByClass(atRl.getAttributeClass(), true);
 
   if( attrs == null || attrs.size() == 0 )
    return atRl.getType() == RestrictionType.MUSTNOT;
-  
-  boolean cardMatch = true;
-  
-  switch( atRl.getCardinalityType() )
-  {
-   case EXACT:
-    if( attrs.size() != atRl.getCardinality() )
-     cardMatch = false;
-    
-    break;
-    
-   case MAX:
-    if( attrs.size() > atRl.getCardinality() )
-     cardMatch = false;
-    
-    break;
-    
-   case MIN:
-    if( attrs.size() < atRl.getCardinality() )
-     cardMatch = false;
-  }
+
   
   if( ! matchCardinality( atRl, attrs.size() ) )
    return atRl.getType() == RestrictionType.MUSTNOT;
@@ -263,14 +271,64 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   if( atRl.isValueUnique() && ! checkValuesUnique(atRl, attrs) )
    return atRl.getType() == RestrictionType.MUSTNOT;
    
-  if( ! matchQualifiers(atRl, attrs) )
+  if( ! matchQualifiers(atRl.getQualifiers(), attrs) )
    return atRl.getType() == RestrictionType.MUSTNOT;
   
   
   return true;
  }
 
+ private boolean isRelationRuleSatisfied(RelationRule rlRl, AgeObject obj)
+ {
+  if( rlRl.getType() == RestrictionType.MAY )
+   return true;
+  
+  Collection<? extends AgeRelation> rels = obj.getRelationsByClass(rlRl.getRelationClass(), true);
+
+  if( rels == null || rels.size() == 0 )
+   return rlRl.getType() == RestrictionType.MUSTNOT;
+
+  
+  if( ! matchCardinality( rlRl, rels.size() ) )
+   return rlRl.getType() == RestrictionType.MUSTNOT;
+
+  if( ! checkTargetsUnique(rels) )
+   return rlRl.getType() == RestrictionType.MUSTNOT;
+   
+  if( ! matchQualifiers(rlRl.getQualifiers(), rels) )
+   return rlRl.getType() == RestrictionType.MUSTNOT;
+  
+  
+  return true;
+ }
+ 
  private boolean matchCardinality( AttributeAttachmentRule rul, int nAttr )
+ {
+  switch(rul.getCardinalityType())
+  {
+   case EXACT:
+    if(rul.getCardinality() != nAttr)
+     return false;
+
+    break;
+
+   case MAX:
+    if(rul.getCardinality() < nAttr)
+     return false;
+
+    break;
+
+   case MIN:
+    if(rul.getCardinality() > nAttr)
+     return false;
+
+    break;
+  }
+ 
+  return true;
+ }
+ 
+ private boolean matchCardinality( RelationRule rul, int nAttr )
  {
   switch(rul.getCardinalityType())
   {
@@ -316,24 +374,51 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return true;
  }
  
- private boolean matchQualifiers( AttributeAttachmentRule rul, Collection<? extends AgeAttribute> attrs )
+ private boolean checkTargetsUnique( Collection<? extends AgeRelation> rels )
  {
-  if(rul.getQualifiers() != null)
+  if(rels.size() > 1 )
   {
-   for(QualifierRule qr : rul.getQualifiers())
+   ArrayList<AgeRelation> rlList = new ArrayList<AgeRelation>(rels.size());
+   rlList.addAll(rels);
+
+   for(int i = 0; i < rels.size() - 1; i++)
    {
-    for(AgeAttribute attr : attrs)
+    for(int j = i + 1; j < rels.size(); j++)
+    {
+     if(rlList.get(i).equals(rlList.get(j)))
+      return false;
+    }
+   }
+  }
+  
+  return true;
+ }
+ 
+ private boolean matchQualifiers( Collection<QualifierRule> qRules, Collection<? extends Attributed> attrs )
+ {
+  if(qRules != null)
+  {
+   for(QualifierRule qr : qRules)
+   {
+    for(Attributed attr : attrs)
     {
      boolean found = false;
 
-     for(String atcID : attr.getAttributeClassesIds())
+     Collection<? extends AgeAttributeClass> clss = attr.getAttributeClasses();
+     
+     if( clss != null )
      {
-      if(atcID.equals(qr.getAttributeClass().getId()))
+      for(AgeAttributeClass atc : clss)
       {
-       found = true;
-       break;
+       if(atc.isClassOrSubclass(qr.getAttributeClass()))
+       {
+        found = true;
+        break;
+       }
       }
+      
      }
+     
 
      if(!found)
       return false;
@@ -341,14 +426,14 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
 
     if(qr.isUnique())
     {
-     ArrayList<AgeAttribute> atList = new ArrayList<AgeAttribute>(attrs.size());
+     ArrayList<Attributed> atList = new ArrayList<Attributed>(attrs.size());
      atList.addAll(attrs);
 
      for(int i = 0; i < attrs.size() - 1; i++)
      {
       for(int j = i + 1; j < attrs.size(); j++)
       {
-       if( isEqual(atList.get(i).getAttributesByClass(qr.getAttributeClass()), atList.get(j).getAttributesByClass(qr.getAttributeClass())) )
+       if( isEqual(atList.get(i).getAttributesByClass(qr.getAttributeClass(), true), atList.get(j).getAttributesByClass(qr.getAttributeClass(),true)) )
         return false;
       }
      }
@@ -370,7 +455,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    {
     for( AgeAttributeClass qCls : qClss )
     {
-     if( ! isAttributeAllowed(qCls, attr.getAttributesByClass(qCls), atCls.getAttributeAttachmentRules() ) )
+     if( ! isAttributeAllowed(qCls, attr.getAttributesByClass(qCls, true), atCls.getAttributeAttachmentRules() ) )
       return false;
     }
    }
