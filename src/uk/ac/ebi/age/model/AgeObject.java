@@ -16,11 +16,11 @@ public interface AgeObject extends AgeAbstractObject
  
  Collection<? extends AgeRelation> getRelations();
 
- Collection<String> getRelationClassesIds();
+// Collection<String> getRelationClassesIds();
  Collection< ? extends AgeRelationClass> getRelationClasses();
 
- Collection< ? extends AgeRelation> getRelationsByClassId(String cid);
- Collection< ? extends AgeRelation> getRelationsByClass(AgeRelationClass cls);
+// Collection< ? extends AgeRelation> getRelationsByClassId(String cid);
+ Collection< ? extends AgeRelation> getRelationsByClass(AgeRelationClass cls, boolean wSubCls);
 
  
  

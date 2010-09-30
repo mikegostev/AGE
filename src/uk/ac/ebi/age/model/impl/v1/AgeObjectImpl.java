@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -20,8 +21,6 @@ import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
-
-import com.pri.util.collection.CollectionsUnion;
 
 class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectWritable
 {
@@ -73,10 +72,36 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  
  public void addRelation(AgeRelationWritable rl)
  {
-  Collection<AgeRelationWritable> coll = relations.get(rl.getAgeElClass().getId());
+  
+  if( relations == null )
+   relations = new ArrayList<AgeRelationWritable>(5);
+  
+  relations.add(rl);
+  
+  if( relationMap != null )
+   addRelToMap(rl);
+ }
+
+
+ private Map<AgeRelationClass,List<AgeRelationWritable>> getRelMap()
+ {
+  if( relationMap != null )
+   return relationMap;
+  
+  relationMap = new HashMap<AgeRelationClass, List<AgeRelationWritable>>();
+  
+  for( AgeRelationWritable attr : relations )
+   addRelToMap(attr);
+  
+  return relationMap;
+ }
+
+ private void addRelToMap( AgeRelationWritable rl )
+ {
+  List<AgeRelationWritable> coll = relationMap.get(rl.getAgeElClass());
   
   if( coll == null )
-   relations.put(rl.getAgeElClass().getId(),Collections.singletonList(rl));
+   relationMap.put(rl.getAgeElClass(),Collections.singletonList(rl));
   else if( coll instanceof ArrayList<?> )
    coll.add(rl);
   else
@@ -84,12 +109,11 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
    ArrayList<AgeRelationWritable> nc = new ArrayList<AgeRelationWritable>(3);
    nc.addAll(coll);
    nc.add(rl);
-
-   relations.put(rl.getAgeElClass().getId(),nc);
+   
+   relationMap.put(rl.getAgeElClass(),nc);
   }
-
  }
-
+ 
  public AgeClass getAgeElClass()
  {
   return ageClassPlug.getAgeClass();
@@ -109,39 +133,49 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  
  public Collection<AgeRelationWritable> getRelations()
  {
-  return new CollectionsUnion<AgeRelationWritable>(relations.values());
+  return relations;
  }
 
- @Override
- public Collection< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls)
- {
-  return relations.get(cls.getId());
- }
  
+
  @Override
- public Collection<String> getRelationClassesIds()
+ public Collection< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSubCls)
  {
-  return relations.keySet();
+  Map<AgeRelationClass,List<AgeRelationWritable>> map = getRelMap();
+  
+  if( ! wSubCls )
+   return map.get(cls);
+  
+  List< AgeRelationWritable > lst = new ArrayList<AgeRelationWritable>();
+  
+  for( Map.Entry<AgeRelationClass,List<AgeRelationWritable>> me : map.entrySet() )
+  {
+   if( me.getKey().isClassOrSubclass(cls) )
+    lst.addAll(me.getValue());
+  }
+  
+  return lst;
  }
 
+ 
+// @Override
+// public Collection<String> getRelationClassesIds()
+// {
+//  return relations.keySet();
+// }
+//
+// @Override
+// public Collection< ? extends AgeRelationWritable> getRelationsByClassId(String cid)
+// {
+//  return relations.get(cid);
+// }
+ 
  @Override
  public Collection< ? extends AgeRelationClass> getRelationClasses()
  {
-  Collection<AgeRelationClass> clsz = new ArrayList<AgeRelationClass>( relations.size() );
-  
-  for( List<AgeRelationWritable> alLst : relations.values() )
-   if( alLst.size() > 0 )
-    clsz.add(alLst.get(0).getAgeElClass());
-  
-  return clsz;
+  return getRelMap().keySet();
  }
 
- @Override
- public Collection< ? extends AgeRelationWritable> getRelationsByClassId(String cid)
- {
-  return relations.get(cid);
- }
- 
  public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass)
  {
   AgeAttributeWritable attr = getSemanticModel().createAgeAttribute( attrClass);
@@ -237,7 +271,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  {
   super.reset();
  
-  
+  relationMap=null;
  }
  
 }
