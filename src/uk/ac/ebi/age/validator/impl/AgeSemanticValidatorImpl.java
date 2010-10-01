@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import uk.ac.ebi.age.log.LogNode;
+import uk.ac.ebi.age.log.LogNode.Level;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
@@ -24,29 +26,43 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
 {
 
  @Override
- public void validate(Submission subm)
+ public void validate(Submission subm, LogNode log)
  {
   for( AgeObject obj : subm.getObjects() )
-   validateObject( obj, obj.getAgeElClass() );
+  {
+   LogNode ln = log.branch("Validating object ID="+obj.getId()+" ("+obj.getId()+")");
+   if( !validateObject( obj, obj.getAgeElClass(), ln ) )
+    ln.log(Level.ERROR, "Object validation failed");
+   else
+    ln.log(Level.INFO, "Object validation success");
+  }
  }
 
- private boolean validateObject(AgeObject obj, AgeClass cls)
+ private boolean validateObject(AgeObject obj, AgeClass cls, LogNode log)
  {
   boolean valid = true;
+
+  log.log(Level.INFO, "Validating object ID="+obj.getId()+" ("+obj.getId()+") with class '"+cls.getName()+"'");
   
   if( cls.getSuperClasses() != null )
   {
+   LogNode ln = log.branch("Validating against super classes");
+   
    for( AgeClass supCls : cls.getSuperClasses() )
-    valid = valid?validateObject(obj,supCls):false;
+    valid = validateObject(obj,supCls,ln) && valid;
   }
   
-  validateAttributed( obj );
+  valid = validateAttributed( obj, log ) && valid;
+
+  valid = validateRelations( obj, log ) && valid;
   
   return valid;
  }
 
- private boolean validateRelations(AgeObject obj)
+ private boolean validateRelations(AgeObject obj, LogNode log)
  {
+  log = log.branch("Validating object's relations");
+  
   AgeClass cls = obj.getAgeElClass();
 
   Collection<RelationRule> rlRules = cls.getRelationRules() != null ? cls.getRelationRules() : Collections.<RelationRule> emptyList();
@@ -60,38 +76,54 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    if(rlCls.isCustom())
     continue;
 
+   
    Collection< ? extends AgeRelation> rels = obj.getRelationsByClass(rlCls, true);
 
-   if(!isRelationAllowed(rlCls, rels, rlRules))
-   {
-    objectOk = false;
-    break;
-   }
+   LogNode ln = log.branch("Checking relations of class '"+rlCls.getName()+"' Relations: "+rels.size());
 
-   for(AgeRelation rl : rels)
-   {
-    if(!validateAttributed(rl))
-    {
-     objectOk = false;
-     break;
-    }
-   }
+   boolean res = isRelationAllowed(rlCls, rels, rlRules, ln);
+   
+   if( res )
+    ln.log(Level.INFO, "Validation successful");
+   else
+    ln.log(Level.ERROR, "Validation failed");
+   
+   objectOk = res && objectOk; 
   }
 
   if(cls.getRelationRules() != null)
   {
+   LogNode ln = log.branch("Checking relation rules");
+
    for(RelationRule rlRl : cls.getRelationRules())
-    isRelationRuleSatisfied(rlRl, obj);
+   {
+    LogNode rlln = log.branch("Checking rule: "+rlRl.getId()+" of class: '"+cls.getName()+"'");
+
+    boolean res = isRelationRuleSatisfied(rlRl, obj, rlln);
+    
+    objectOk = res && objectOk;
+   }
   }
 
-  return objectOk;
+  
+  LogNode ln = log.branch("Checking relation attributes");
 
+  for(AgeRelation rl : obj.getRelations())
+  {
+   LogNode atln = log.branch("Validating relation's attributes. Relation class: '"+rl.getAgeElClass().getName()
+     +"' Target object: "+rl.getTargetObject().getOriginalId());
+   objectOk = validateAttributed(rl,atln) && objectOk;
+  }
+  
+  return objectOk;
  }
  
  
- private boolean validateAttributed( Attributed obj )
+ private boolean validateAttributed( Attributed obj, LogNode log )
  {
   boolean valid = true;
+  
+//  log.log(Level.INFO, "Validation")
   
   AttributedClass cls = obj.getAttributedClass();
 
@@ -100,8 +132,6 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   
   Collection<? extends AgeAttributeClass> atClasses = obj.getAttributeClasses();
   
-  boolean objectOk=true;
-  
   for( AgeAttributeClass atCls : atClasses )
   {
    if( atCls.isCustom() )
@@ -109,28 +139,28 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    
    Collection<? extends AgeAttribute> attrs = obj.getAttributesByClass(atCls, true);
    
-   if( ! isAttributeAllowed(atCls, attrs, atRules) )
-   {
-    objectOk=false;
-    break;
-   }
- 
-   for( AgeAttribute attr : attrs )
-   {
-    if( ! validateAttributed(attr) )
-    {
-     objectOk=false;
-     break;
-    }
-   }
+   LogNode ln = log.branch("Checking attributes of class '"+atCls.getName()+"' Attributes: "+attrs.size());
+
+   valid = isAttributeAllowed(atCls, attrs, atRules) && valid;
   }
   
   if( cls.getAttributeAttachmentRules() != null )
   {
+   LogNode ln = log.branch("Checking attribute rules");
+
    for( AttributeAttachmentRule atRl : cls.getAttributeAttachmentRules() )
     isAttributeRuleSatisfied(atRl,obj);
   }
   
+  
+  for( AgeAttribute attr : attrs )
+  {
+   if( ! validateAttributed(attr) )
+   {
+    objectOk=false;
+    break;
+   }
+  }
   
 
   return valid;

@@ -25,4 +25,6 @@ public interface RelationRule
  AgeClass getTargetClass();
 
  Collection<QualifierRule> getQualifiers();
+
+ int getId();
 }
