@@ -9,4 +9,6 @@ public interface QualifierRule
  
  boolean isUnique();
 
+ String getID();
+
 }
