@@ -20,5 +20,7 @@ public interface AttributeAttachmentRule
 
  Collection<QualifierRule> getQualifiers();
 
+ int getRuleId();
+
 
 }

@@ -31,4 +31,5 @@ public interface RelationRuleWritable extends RelationRule
 
  void addQualifier(QualifierRule qrul);
 
+ void setRuleId( int id );
 }

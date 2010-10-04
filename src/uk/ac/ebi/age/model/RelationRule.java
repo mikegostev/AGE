@@ -26,5 +26,5 @@ public interface RelationRule
 
  Collection<QualifierRule> getQualifiers();
 
- int getId();
+ int getRuleId();
 }

@@ -22,4 +22,5 @@ public interface AttributeAttachmentRuleWritable extends AttributeAttachmentRule
 
  void addQualifier(QualifierRule qrul);
 
+ void setRuleId( int id );
 }

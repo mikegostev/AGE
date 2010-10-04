@@ -8,6 +8,7 @@ public class QualifierAttachmentRule implements QualifierRuleWritable
 {
  private AgeAttributeClass attr;
  private boolean unique;
+ private int id;
 
  @Override
  public AgeAttributeClass getAttributeClass()
@@ -31,6 +32,18 @@ public class QualifierAttachmentRule implements QualifierRuleWritable
  public void setUnique(boolean unique)
  {
   this.unique = unique;
+ }
+
+ @Override
+ public int getRuleId()
+ {
+  return id;
+ }
+
+ @Override
+ public void setRuleId(int id)
+ {
+  this.id = id;
  }
 
 

@@ -27,6 +27,8 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
  
  private SemanticModel model;
 
+ private int id;
+
  public AttributeAttachmentRuleImpl( RestrictionType typ, SemanticModel mod )
  {
   type=typ;
@@ -256,9 +258,23 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
  }
 
  @Override
+ public int getRuleId()
+ {
+  return id;
+ }
+ 
+ @Override
+ public void setRuleId( int id )
+ {
+  this.id=id;
+ }
+
+ @Override
  public String getId()
  {
-  // TODO Auto-generated method stub
   return null;
  }
+
+
+
 }

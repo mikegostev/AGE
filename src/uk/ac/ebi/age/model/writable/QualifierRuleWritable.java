@@ -10,4 +10,6 @@ public interface QualifierRuleWritable extends QualifierRule
 
  void setUnique(boolean unique);
 
+ void setRuleId(int id);
+
 }

@@ -5,5 +5,5 @@ import uk.ac.ebi.age.model.Submission;
 
 public interface AgeSemanticValidator
 {
- void validate(Submission s, LogNode log);
+ boolean validate(Submission s, LogNode log);
 }
