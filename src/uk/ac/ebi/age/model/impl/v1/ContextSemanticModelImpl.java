@@ -385,4 +385,16 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  {
   return masterModel.createQualifierRule();
  }
+
+ @Override
+ public int getIdGen()
+ {
+  return masterModel.getIdGen();
+ }
+
+ @Override
+ public void setIdGen(int id)
+ {
+  masterModel.setIdGen( id );
+ }
 }

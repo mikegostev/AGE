@@ -567,6 +567,8 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
      return false;
 
     break;
+    
+   default:
   }
  
   return true;
@@ -595,6 +597,8 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
      res=false;
 
     break;
+
+   default:
   }
  
   return res;

@@ -17,6 +17,9 @@ import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 
 public interface SemanticModel
 {
+ int getIdGen();
+ void setIdGen( int id );
+ 
  AgeClassWritable createAgeClass(String name, String id, String pfx);
 
  AgeRelationClassWritable createAgeRelationClass(String name, String id);

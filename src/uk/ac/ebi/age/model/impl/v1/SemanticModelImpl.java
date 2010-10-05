@@ -56,6 +56,8 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  private AgeClass classRoot;
  private AgeRelationClass relationRoot;
  private AgeAnnotationClass annotationRoot;
+
+ private int idGen;
  
  public SemanticModelImpl(ModelFactory modelFactory)
  {
@@ -318,6 +320,18 @@ public class SemanticModelImpl extends SemanticModelOwl implements SemanticModel
  public void addAnnotation(AgeAnnotation ant)
  {
   annotation.add(ant);
+ }
+
+ @Override
+ public int getIdGen()
+ {
+  return idGen;
+ }
+
+ @Override
+ public void setIdGen(int id)
+ {
+  idGen = id;
  }
 
 
