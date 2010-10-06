@@ -1,7 +1,6 @@
 package uk.ac.ebi.age.mng;
 
 import uk.ac.ebi.age.model.ContextSemanticModel;
-import uk.ac.ebi.age.model.ModelException;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.impl.v1.ContextSemanticModelImpl;
@@ -23,10 +22,10 @@ public class SemanticManager
   return instance;
  }
  
- public void initModel(String uri) throws ModelException
- {
-  model = new SemanticModelImpl(uri, ModelFactoryImpl.getInstance());
- }
+// public void initModel(String uri) throws ModelException
+// {
+//  model = new SemanticModelImpl(uri, ModelFactoryImpl.getInstance());
+// }
  
  public SemanticModel getMasterModel()
  {

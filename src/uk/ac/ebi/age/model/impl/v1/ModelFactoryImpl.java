@@ -1,9 +1,7 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
-import java.util.Collection;
 
-import uk.ac.ebi.age.model.AgeAbstractClass;
 import uk.ac.ebi.age.model.AgeAnnotationClass;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
@@ -11,7 +9,6 @@ import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
-import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
@@ -154,53 +151,6 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
   return new AgeRelationImpl(targetObj, relClass, semanticModel);
  }
 
- @Override
- public AgeRestriction createSomeValuesFromRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls)
- {
-  return new SomeValuesFromRestrictionImpl(scls, fillerRestr, relcls);
- }
-
- @Override
- public AgeRestriction createAllValuesFromRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls)
- {
-  return new AllValuesFromRestrictionImpl(scls, fillerRestr, relcls);
- }
-
- @Override
- public AgeRestriction createExactCardinalityRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls, int cardinatily)
- {
-  return new ExactCardinalityRestrictionImpl(scls, fillerRestr, relcls, cardinatily);
- }
-
- @Override
- public AgeRestriction createMaxCardinalityRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls, int cardinatily)
- {
-  return new MaxCardinalityRestrictionImpl(scls, fillerRestr, relcls, cardinatily);
- }
-
- @Override
- public AgeRestriction createMinCardinalityRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls, int cardinatily)
- {
-  return new MinCardinalityRestrictionImpl(scls, fillerRestr, relcls, cardinatily);
- }
-
- @Override
- public AgeRestriction createAndLogicRestriction(Collection<AgeRestriction> operands)
- {
-  return new AndLogicRestrictionImpl(operands);
- }
-
- @Override
- public AgeRestriction createOrLogicRestriction(Collection<AgeRestriction> operands)
- {
-  return new OrLogicRestrictionImpl(operands);
- }
-
- @Override
- public AgeRestriction createIsClassRestriction(AgeClass srcClas, AgeAbstractClass tgtClass)
- {
-  return new IsInstanceOfRestrictionImpl(srcClas, tgtClass);
- }
 
  @Override
  public AgeAttributeClass createCustomAgeAttributeClass(String name, DataType type, SemanticModel sm, AgeClass owner)
@@ -253,15 +203,13 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public RelationRuleWritable createAgeRelationRule(RestrictionType type, SemanticModel sm)
  {
-  // TODO Auto-generated method stub
-  return null;
+  return new RelationRuleImpl(type, sm);
  }
 
  @Override
  public QualifierRuleWritable createAgeQualifierRule(SemanticModel sm)
  {
-  // TODO Auto-generated method stub
-  return null;
+  return new QualifierRuleImpl( sm);
  }
 
 }

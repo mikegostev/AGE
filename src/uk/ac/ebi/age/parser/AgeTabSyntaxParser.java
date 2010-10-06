@@ -9,7 +9,7 @@ public abstract class AgeTabSyntaxParser
 {
  public static final String customTokenBrackets="{}";
  public static final String flagsTokenBrackets="<>";
- public static final String variantTokenBrackets="[]";
+ public static final String qualifierTokenBrackets="[]";
  public static final String flagsSeparatorSign=";";
  public static final String flagsEqualSign="=";
  public static final String anonymousObjectId="?";
@@ -44,7 +44,7 @@ public abstract class AgeTabSyntaxParser
    
    new StrProc()
    {
-    public String getBrackets(){ return variantTokenBrackets; }
+    public String getBrackets(){ return qualifierTokenBrackets; }
     public void process(ClassReference nm,String s) throws ParserException
     {
      ClassReference cr = string2ClassReference(s);

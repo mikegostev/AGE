@@ -1,7 +1,5 @@
 package uk.ac.ebi.age.model;
 
-import java.util.Collection;
-
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAnnotationWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
@@ -38,23 +36,6 @@ public abstract class ModelFactory
 
  public abstract AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel);
 
- public abstract AgeRestriction createSomeValuesFromRestriction(AgeClass scls, AgeRestriction fillerRestr, AgeRelationClass relcls);
-
- public abstract AgeRestriction createAllValuesFromRestriction(AgeClass srcClas, AgeRestriction fillerRestr, AgeRelationClass ageRelation);
-
- public abstract AgeRestriction createMaxCardinalityRestriction(AgeClass srcClas, AgeRestriction fillerRestr, AgeRelationClass ageRelation, int cardinatily);
-
- public abstract AgeRestriction createMinCardinalityRestriction(AgeClass srcClas, AgeRestriction fillerRestr, AgeRelationClass ageRelation, int cardinatily);
-
- public abstract AgeRestriction createExactCardinalityRestriction(AgeClass srcClas, AgeRestriction fillerRestr, AgeRelationClass ageRelation, int cardinatily);
-
- public abstract AgeRestriction createAndLogicRestriction(Collection<AgeRestriction> operands);
-
- public abstract AgeRestriction createOrLogicRestriction(Collection<AgeRestriction> operands);
-
- public abstract AgeRestriction createIsClassRestriction(AgeClass srcClas, AgeAbstractClass ageClass);
-
- 
  
  public abstract AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, SemanticModel sm);
 

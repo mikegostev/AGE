@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import uk.ac.ebi.age.mng.SemanticManager;
-import uk.ac.ebi.age.model.ModelException;
 import uk.ac.ebi.age.model.RestrictionException;
 import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
@@ -39,7 +38,7 @@ public class Test
   {
    SemanticManager smngr = SemanticManager.getInstance();
    
-   smngr.initModel(ontologyFile);
+//   smngr.initModel(ontologyFile);
    
    ByteArrayOutputStream bais = new ByteArrayOutputStream();
    FileInputStream fis = new FileInputStream( new File("/d:/workspaceGL/eclipse/ESD/semantic/test.csv") );
@@ -61,11 +60,11 @@ public class Test
    
    str.shutdown();
   }
-  catch(ModelException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
+//  catch(ModelException e)
+//  {
+//   // TODO Auto-generated catch block
+//   e.printStackTrace();
+//  }
   catch(FileNotFoundException e)
   {
    // TODO Auto-generated catch block
