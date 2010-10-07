@@ -93,12 +93,12 @@ public class RelationRuleImpl implements Serializable, RelationRuleWritable, Age
 
  public boolean isSubclassesIncluded()
  {
-  return subclassesIncluded;
+  return subclassesIncludedTarg;
  }
 
  public void setSubclassesIncluded(boolean subclassesIncluded)
  {
-  this.subclassesIncluded = subclassesIncluded;
+  this.subclassesIncludedTarg = subclassesIncluded;
  }
 
  @Override
@@ -136,47 +136,42 @@ public class RelationRuleImpl implements Serializable, RelationRuleWritable, Age
  @Override
  public boolean isRelationSubclassesIncluded()
  {
-  // TODO Auto-generated method stub
-  return false;
+  return subClassesIncludedRel;
  }
 
 
  @Override
  public AgeRelationClass getRelationClass()
  {
-  // TODO Auto-generated method stub
-  return null;
+  return relationClass;
  }
 
 
  @Override
  public AgeClass getTargetClass()
  {
-  // TODO Auto-generated method stub
-  return null;
+  return targetClass;
  }
 
 
  @Override
  public void setRelationSubclassesIncluded(boolean relationSubclassesIncluded)
  {
-  // TODO Auto-generated method stub
-  
+  subClassesIncludedRel=relationSubclassesIncluded;
  }
 
 
  @Override
  public void setRelationClass(AgeRelationClass ageRelationClass)
  {
-  // TODO Auto-generated method stub
-  
+  relationClass = ageRelationClass;
  }
 
 
  @Override
  public void setTargetClass(AgeClass ageClass)
  {
-  // TODO Auto-generated method stub
+  targetClass = ageClass;
   
  }
 

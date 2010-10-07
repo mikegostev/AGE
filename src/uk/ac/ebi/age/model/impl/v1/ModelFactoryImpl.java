@@ -209,7 +209,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public QualifierRuleWritable createAgeQualifierRule(SemanticModel sm)
  {
-  return new QualifierRuleImpl( sm);
+  return new QualifierRuleImpl( sm );
  }
 
 }

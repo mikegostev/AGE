@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import uk.ac.ebi.age.log.LogNode;
+import uk.ac.ebi.age.log.LogNode.Level;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassProperty;
@@ -22,12 +24,11 @@ import uk.ac.ebi.age.model.Submission;
 import uk.ac.ebi.age.model.impl.IsInstanceOfRestriction;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
-import uk.ac.ebi.age.model.writable.AgeObjectPropertyWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.parser.AgeTab2AgeConverter;
 import uk.ac.ebi.age.parser.AgeTabObject;
-import uk.ac.ebi.age.parser.AgeTabSemanticValidator;
 import uk.ac.ebi.age.parser.AgeTabSubmission;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.AgeTabValue;
@@ -37,13 +38,15 @@ import uk.ac.ebi.age.parser.ConvertionException;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.SemanticException;
 
-public class AgeTabSemanticValidatorImpl2 extends AgeTabSemanticValidator
+public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
 {
 // private AttrAttchRel attributeAttachmentClass;
  
  @Override
- public SubmissionWritable parse(AgeTabSubmission data, ContextSemanticModel sm ) throws SemanticException, ConvertionException, RestrictionException
+ public SubmissionWritable convert(AgeTabSubmission data, ContextSemanticModel sm, LogNode log ) throws SemanticException, ConvertionException
  {
+  boolean result = true;
+  
   SubmissionWritable res = sm.createSubmission();
   
   Map<AgeClass, Map<String,AgeObjectWritable>> classMap = new HashMap<AgeClass, Map<String,AgeObjectWritable>>();
@@ -56,9 +59,15 @@ public class AgeTabSemanticValidatorImpl2 extends AgeTabSemanticValidator
   for( BlockHeader hdr : data.getBlocks() )
   {
    ClassReference colHdr = hdr.getClassColumnHeader();
+
+   LogNode blkLog = log.branch("Processing block for class "+colHdr.getName());
+   
    
    if( colHdr.getQualifier() != null )
-    throw new SemanticException(colHdr.getRow(),colHdr.getCol(),"Class reference must not be qualified");
+   {
+    blkLog.log(Level.WARN, "Class reference must not be qualified. Row: "+colHdr.getRow()+" Col: "+colHdr.getCol());
+//    throw new SemanticException(colHdr.getRow(),colHdr.getCol(),"Class reference must not be qualified");
+   }
    
    AgeClass cls = null;
 
@@ -71,15 +80,25 @@ public class AgeTabSemanticValidatorImpl2 extends AgeTabSemanticValidator
      if(cls == null)
       cls = sm.createCustomAgeClass(colHdr.getName(),null);
     }
-    else 
-     throw new SemanticException(colHdr.getRow(),colHdr.getCol(),"Custom classes are not allowed within this context");
+    else
+    {
+     blkLog.log(Level.ERROR, "Custom classes are not allowed within this context. Row: "+colHdr.getRow()+" Col: "+colHdr.getCol());
+     result = false;
+     continue;
+//     throw new SemanticException(colHdr.getRow(),colHdr.getCol(),"Custom classes are not allowed within this context");
+    }
    }
    else
    {
     cls = sm.getDefinedAgeClass( colHdr.getName() );
     
     if( cls == null )
-     throw new SemanticException(colHdr.getRow(),colHdr.getCol(),"Class '"+colHdr.getName()+"' not found");
+    {
+     blkLog.log(Level.ERROR, "Class '"+colHdr.getName()+"' not found. Row: "+colHdr.getRow()+" Col: "+colHdr.getCol());
+     result = false;
+     continue;
+//     throw new SemanticException(colHdr.getRow(),colHdr.getCol(),"Class '"+colHdr.getName()+"' not found");
+    }
    }
   
    blk2classMap.put(hdr, cls);
@@ -111,7 +130,7 @@ public class AgeTabSemanticValidatorImpl2 extends AgeTabSemanticValidator
   
   for( Map.Entry<BlockHeader, AgeClass> me : blk2classMap.entrySet() )
   {
-   createConvertors( me.getKey(), me.getValue(), convs, sm, classMap);
+   createConvertors( me.getKey(), me.getValue(), convs, sm, classMap );
    
    objectMap = classMap.get( me.getValue() );
    
