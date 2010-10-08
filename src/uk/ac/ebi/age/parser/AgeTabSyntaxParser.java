@@ -14,6 +14,7 @@ public abstract class AgeTabSyntaxParser
  public static final String flagsEqualSign="=";
  public static final String anonymousObjectId="?";
  public static final String commonObjectId="*";
+ public static final String parentClassPrefixSeparator=".";
  
  private static interface StrProc
  {
@@ -49,7 +50,7 @@ public abstract class AgeTabSyntaxParser
     {
      ClassReference cr = string2ClassReference(s);
      
-     nm.setQualifier(cr);
+     nm.insertQualifier(cr);
     }
    }
    
@@ -131,12 +132,26 @@ public abstract class AgeTabSyntaxParser
     throw new ParserException(0,0, "No closing bracket: '"+brckts.charAt(1)+"'");
    
    if( pos != (str.length()-1) )
-    throw new ParserException(0,0, "Invalid character at: "+(pos+1)+". The closing bracket must be the last symbol.");
+    throw new ParserException(0,0, "Invalid character at: "+(pos+1)+". The closing bracket must be the last symbol of the token.");
    
    name = str.substring(1, pos);
   }
   else
-   name = str;
+  {
+   if( str.charAt(str.length()-1) == customTokenBrackets.charAt(1) )
+   {
+    int pos = str.indexOf(parentClassPrefixSeparator+customTokenBrackets.charAt(0));
+    
+    if( pos == -1 )
+     throw new ParserException(0,0, "Invalid character at: "+(str.length())+". The closing bracket must correspond opening one.");
+    
+    name = str.substring(pos+1,str.length()-1);
+    nm.setParentClass( str.substring(0,pos) );
+    nm.setCustom(true);
+   }
+   else
+    name = str;
+  }
   
   if( name.length() == 0 )
    throw new ParserException(0,0, "Name in the header column can't be empty");

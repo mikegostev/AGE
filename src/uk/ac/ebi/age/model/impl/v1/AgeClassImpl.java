@@ -75,26 +75,6 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   superClasses.add(sbCls);
  }
  
- @Deprecated public Collection<AgeRestriction> getRestrictions()
- {
-  return unionRestrictions;
- }
- 
-
- @Deprecated public Collection<AgeRestriction> getAllRestrictions()
- {
-  Collection<Collection<AgeRestriction>> allRest = new ArrayList<Collection<AgeRestriction>>(10);
-  
-  Collector.collectFromHierarchy(this,allRest, new Collector<Collection<AgeRestriction>>(){
-
-   public Collection<AgeRestriction> get(AgeAbstractClass cls)
-   {
-    Collection<AgeRestriction> restr = ((AgeClass)cls).getRestrictions();
-    return restr==null||restr.size()==0?null:restr;
-   }} );
-  
-  return new CollectionsUnion<AgeRestriction>(allRest);
- }
 
  
  public Collection<AgeClass> getSuperClasses()
@@ -117,58 +97,7 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   return false;
  }
 
- @Deprecated public Collection<AgeRestriction> getObjectRestrictions()
- {
-  return restrictions;
- }
-
- @Deprecated public void addObjectRestriction(AgeRestriction rest)
- {
-  restrictions.add(rest);
- }
-
- @Deprecated public Collection<AgeRestriction> getAllObjectRestrictions()
- {
-  Collection<Collection<AgeRestriction>> allRest = new ArrayList<Collection<AgeRestriction>>(10);
-  
-  Collector.collectFromHierarchy(this, allRest, new Collector<Collection<AgeRestriction>>()
-  {
-   public Collection<AgeRestriction> get(AgeAbstractClass cls)
-   {
-    Collection<AgeRestriction> restr = ((AgeClass)cls).getObjectRestrictions();
-    return restr==null||restr.size()==0?null:restr;
-   }
-  });
-  
-  return new CollectionsUnion<AgeRestriction>(allRest);
- }
-
  
- @Deprecated public void addAttributeRestriction(AgeRestriction rest)
- {
-  attributeRestrictions.add(rest);
- }
-
- @Deprecated public Collection<AgeRestriction> getAttributeRestrictions()
- {
-  return attributeRestrictions;
- }
- 
- @Deprecated public Collection<AgeRestriction> getAttributeAllRestrictions()
- {
-  Collection<Collection<AgeRestriction>> allRest = new ArrayList<Collection<AgeRestriction>>(10);
-  
-  Collector.collectFromHierarchy(this, allRest, new Collector<Collection<AgeRestriction>>()
-  {
-   public Collection<AgeRestriction> get(AgeAbstractClass cls)
-   {
-    Collection<AgeRestriction> restr = ((AgeClassImpl)cls).getAttributeRestrictions();
-    return restr==null||restr.size()==0?null:restr;
-   }
-  });
-  
-  return new CollectionsUnion<AgeRestriction>(allRest);
- }
 
  public String getIdPrefix()
  {

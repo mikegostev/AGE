@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
@@ -20,6 +21,7 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
 
  private AgeClass owner;
 
+ private Collection<AgeAttributeClass> superClasses;
  
  public CustomAgeAttributeClassImpl(String name2, DataType type, SemanticModel sm, AgeClass owner2)
  {
@@ -54,7 +56,7 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
  
  public Collection<AgeAttributeClass> getSuperClasses()
  {
-  return null;
+  return superClasses;
  }
  
  
@@ -87,9 +89,12 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
  }
 
  @Override
- public void addSuperClass(AgeAttributeClass sbcls)
+ public void addSuperClass(AgeAttributeClass supcls)
  {
-  throw new UnsupportedOperationException();
+  if( superClasses == null )
+   superClasses = new ArrayList<AgeAttributeClass>(4);
+  
+  superClasses.add(supcls);
  }
 
  @Override

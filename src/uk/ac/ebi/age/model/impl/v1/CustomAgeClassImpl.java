@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeClass;
@@ -8,9 +9,10 @@ import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.AttributeAttachmentRule;
 import uk.ac.ebi.age.model.RelationRule;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeClassWritable;
 import uk.ac.ebi.age.service.IdGenerator;
 
-class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClass, Serializable 
+class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Serializable 
 {
  private static final long serialVersionUID = 1L;
  
@@ -20,7 +22,8 @@ class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClass, Seria
  
  private String idPrefix;
 
- 
+ private Collection<AgeClass> superClasses;
+
  public CustomAgeClassImpl(String name, String pfx, SemanticModel sm)
  {
   super( sm );
@@ -58,7 +61,7 @@ class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClass, Seria
  
  public Collection<AgeClass> getSuperClasses()
  {
-  return null;
+  return superClasses;
  }
  
  public Collection<AgeClass> getSubClasses()
@@ -76,27 +79,6 @@ class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClass, Seria
   return true;
  }
 
- public Collection<AgeRestriction> getObjectRestrictions()
- {
-  return null;
- }
-
-
- public Collection<AgeRestriction> getAllObjectRestrictions()
- {
-  return null;
- }
-
- 
- public Collection<AgeRestriction> getAttributeRestrictions()
- {
-  return null;
- }
- 
- public Collection<AgeRestriction> getAttributeAllRestrictions()
- {
-  return null;
- }
 
  public String getIdPrefix()
  {
@@ -131,6 +113,40 @@ class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClass, Seria
  public Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules()
  {
   return null;
+ }
+
+
+ @Override
+ public void addSubClass(AgeClass cls)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void addSuperClass(AgeClass cls)
+ {
+  if( superClasses == null )
+   superClasses = new ArrayList<AgeClass>(4);
+  
+  superClasses.add(cls);
+ }
+
+ @Override
+ public void setAbstract(boolean b)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void addAlias(String ali)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void addRelationRule(RelationRule mrr)
+ {
+  throw new UnsupportedOperationException();
  }
 
 }

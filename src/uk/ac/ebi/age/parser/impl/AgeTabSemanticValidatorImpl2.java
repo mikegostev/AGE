@@ -21,9 +21,9 @@ import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.RestrictionException;
 import uk.ac.ebi.age.model.Submission;
-import uk.ac.ebi.age.model.impl.IsInstanceOfRestriction;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
+import uk.ac.ebi.age.model.writable.AgeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
@@ -63,7 +63,7 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
    LogNode blkLog = log.branch("Processing block for class "+colHdr.getName());
    
    
-   if( colHdr.getQualifier() != null )
+   if( colHdr.getQualifiers() != null )
    {
     blkLog.log(Level.WARN, "Class reference must not be qualified. Row: "+colHdr.getRow()+" Col: "+colHdr.getCol());
 //    throw new SemanticException(colHdr.getRow(),colHdr.getCol(),"Class reference must not be qualified");
@@ -75,10 +75,7 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
    {
     if( sm.getContext().isCustomClassAllowed() )
     {
-     cls = sm.getCustomAgeClass(colHdr.getName());
-
-     if(cls == null)
-      cls = sm.createCustomAgeClass(colHdr.getName(),null);
+     cls = getCustomAgeClass(colHdr);
     }
     else
     {
@@ -228,6 +225,16 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
   return res;
  }
  
+ 
+ private AgeClass getCustomAgeClass(ClassReference colHdr, ContextSemanticModel sm)
+ {
+  AgeClassWritable cls;
+  
+  cls = sm.getCustomAgeClass(colHdr.getName());
+
+  if(cls == null)
+   cls = sm.createCustomAgeClass(colHdr.getName(),null);
+ }
  
  private void finalizeValues( Collection<AgeObjectWritable> data )
  {
@@ -568,12 +575,13 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
     continue;
    }
    
-   if( attHd.getQualifier() != null )
+   List<ClassReference> qList = attHd.getQualifiers();
+   if( qList != null && qList.size() > 0 )
    {
-    ClassReference qualif = attHd.getQualifier();
+    ClassReference qualif = qList.get(qList.size()-1);
     
-    if( qualif.getQualifier() != null )
-     throw new SemanticException(attHd.getRow(), attHd.getCol(), "A qualifier must not be qualified ifself.");
+    if( qualif.getQualifiers() != null )
+     throw new SemanticException(attHd.getRow(), attHd.getCol(), "A qualifier reference must not be qualified ifself. Use syntax attr[qual1][qual2]");
     
     ValueConverter hostConverter = null;
     for( int i=convs.size()-1; i >= 0; i-- )
@@ -582,10 +590,9 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
      
      ClassReference cr = vc.getClassReference();
      
-     if( cr == null || cr.getQualifier() != null )
+     if( cr == null || ! attHd.isQualifierFor(cr) )
       continue;
-     
-     if( cr.getName().equals(attHd.getName()) && cr.isCustom() == attHd.isCustom() )
+     else
      {
       hostConverter=vc;
       break;

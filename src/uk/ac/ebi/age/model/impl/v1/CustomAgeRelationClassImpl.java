@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model.impl.v1;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -10,9 +11,10 @@ import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeAttachmentRule;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.service.IdGenerator;
 
-class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRelationClass
+class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRelationClassWritable
 {
  private static final long serialVersionUID = 1L;
  
@@ -23,7 +25,7 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  private boolean implicit = false;
  private String id;
  
- 
+ private Collection<AgeRelationClass> superClasses;
 
 
  public CustomAgeRelationClassImpl(String name, SemanticModel sm, AgeClass range, AgeClass owner)
@@ -111,7 +113,7 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  @Override
  public Collection<AgeRelationClass> getSuperClasses()
  {
-  return null;
+  return superClasses;
  }
 
  @Override
@@ -126,7 +128,7 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
   return implicit;
  }
  
- private void setImplicit( boolean b )
+ public void setImplicit( boolean b )
  {
   implicit=b;
  }
@@ -185,5 +187,62 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  public Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules()
  {
   return null;
+ }
+
+ @Override
+ public void addAnnotation(AgeAnnotation ant)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void addAttributeAttachmentRule(AttributeAttachmentRule atatRule)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void addSubClass(AgeRelationClass makeRelationsBranch)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void addSuperClass(AgeRelationClass ageRelCls)
+ {
+  if(superClasses == null)
+   superClasses = new ArrayList<AgeRelationClass>(4);
+  
+  superClasses.add(ageRelCls);
+ }
+
+ @Override
+ public void addDomainClass(AgeClass dmCls)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void addRangeClass(AgeClass dmCls)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void setInverseRelationClass(AgeRelationClass ageEl)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void setAbstract(boolean b)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void addAlias(String ali)
+ {
+  throw new UnsupportedOperationException();
  }
 }

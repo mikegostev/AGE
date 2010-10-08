@@ -13,19 +13,6 @@ public interface AgeClass extends AgeSemanticElement, AgeAbstractClass, Attribut
 
  String getName();
 
- @Deprecated
- Collection<AgeRestriction> getObjectRestrictions();
- @Deprecated
- Collection<AgeRestriction> getAllObjectRestrictions();
-
-
-
- @Deprecated
- Collection<AgeRestriction> getRestrictions();
- @Deprecated
- Collection<AgeRestriction> getAllRestrictions();
-
-
  Collection<AgeClass> getSuperClasses();
  Collection<AgeClass> getSubClasses();
 

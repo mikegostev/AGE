@@ -238,6 +238,15 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     partName = string2ClassReference(hdrStr);
     partName.setRow(row);
     partName.setCol(col);
+    
+    if( partName.getQualifiers() != null )
+    {
+     for( ClassReference qref : partName.getQualifiers() )
+     {
+      qref.setRow(row);
+      qref.setCol(col);
+     }
+    }
    }
    catch(ParserException e)
    {
