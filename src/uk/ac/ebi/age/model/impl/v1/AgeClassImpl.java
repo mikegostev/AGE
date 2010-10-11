@@ -3,11 +3,10 @@ package uk.ac.ebi.age.model.impl.v1;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.HashSet;
 
 import uk.ac.ebi.age.model.AgeAbstractClass;
 import uk.ac.ebi.age.model.AgeClass;
-import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.RelationRule;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -27,13 +26,8 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
  
  private Collection<String> aliases;
 
- private Collection<AgeClass> subClasses = new LinkedList<AgeClass>();
- private Collection<AgeClass> superClasses = new LinkedList<AgeClass>();
-
- @Deprecated private Collection<AgeRestriction> restrictions = new LinkedList<AgeRestriction>();
- @Deprecated private Collection<AgeRestriction> attributeRestrictions = new LinkedList<AgeRestriction>();
-
- @Deprecated private Collection<AgeRestriction> unionRestrictions;
+ private Collection<AgeClass> subClasses = new HashSet<AgeClass>();
+ private Collection<AgeClass> superClasses = new HashSet<AgeClass>();
 
  private Collection<RelationRule> relationRules;
  
@@ -48,11 +42,11 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   else
    idPrefix=pfx;
   
-  Collection< Collection<AgeRestriction> > un = new ArrayList<Collection<AgeRestriction>>(2);
-  un.add(restrictions);
-  un.add(attributeRestrictions);
-  
-  unionRestrictions = new CollectionsUnion<AgeRestriction>( un );
+//  Collection< Collection<AgeRestriction> > un = new ArrayList<Collection<AgeRestriction>>(2);
+//  un.add(restrictions);
+//  un.add(attributeRestrictions);
+//  
+//  unionRestrictions = new CollectionsUnion<AgeRestriction>( un );
  }
 
  public String getId()

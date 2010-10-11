@@ -8,15 +8,15 @@ public interface AgeRelationClass extends AgeClassProperty, AgeAbstractClass, Ag
  Collection<AgeRelationClass> getSubClasses();
 
 
- boolean isWithinRange(AgeClass key);
- boolean isWithinDomain(AgeClass key);
+// boolean isWithinRange(AgeClass key);
+// boolean isWithinDomain(AgeClass key);
 
  String getId();
  String getName();
 
- Collection<AgeClass> getRange();
-
- Collection<AgeClass> getDomain();
+// Collection<AgeClass> getRange();
+//
+// Collection<AgeClass> getDomain();
 
  boolean isCustom();
 

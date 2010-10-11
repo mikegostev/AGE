@@ -14,16 +14,12 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeExternalRelation;
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.FormatException;
-import uk.ac.ebi.age.model.RestrictionException;
-import uk.ac.ebi.age.model.Submission;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
-import uk.ac.ebi.age.model.writable.AgeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
@@ -75,7 +71,21 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
    {
     if( sm.getContext().isCustomClassAllowed() )
     {
-     cls = getCustomAgeClass(colHdr);
+//     cls = getCustomAgeClass(colHdr, sm);
+     AgeClass parent = null;
+     
+     if( colHdr.getParentClass() != null )
+     {
+      parent = sm.getDefinedAgeClass(colHdr.getParentClass());
+      
+      if( parent == null )
+      {
+       blkLog.log(Level.ERROR, "Defined class '"+colHdr.getParentClass()+"' (used as superclass) is not found. Row: "+colHdr.getRow()+" Col: "+colHdr.getCol() );
+      }
+       return null;
+     }
+      
+     cls = sm.getOrCreateCustomAgeClass(colHdr.getName(), null, parent);
     }
     else
     {
@@ -218,7 +228,7 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
    }
   }
   
-  validateData(res);
+//  validateData(res);
   
   imputeReverseRelations( res );
   
@@ -226,15 +236,20 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
  }
  
  
- private AgeClass getCustomAgeClass(ClassReference colHdr, ContextSemanticModel sm)
- {
-  AgeClassWritable cls;
-  
-  cls = sm.getCustomAgeClass(colHdr.getName());
-
-  if(cls == null)
-   cls = sm.createCustomAgeClass(colHdr.getName(),null);
- }
+// private AgeClass getCustomAgeClass(ClassReference colHdr, ContextSemanticModel sm)
+// {
+//  AgeClass parent = null;
+//  
+//  if( colHdr.getParentClass() != null )
+//  {
+//   parent = sm.getDefinedAgeClass(colHdr.getParentClass());
+//   
+//   if( parent == null )
+//    return null;
+//  }
+//   
+//  return  sm.getOrCreateCustomAgeClass(colHdr.getName(),null,parent);
+// }
  
  private void finalizeValues( Collection<AgeObjectWritable> data )
  {
@@ -426,17 +441,17 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
   }
  }
 
- private void validateData( Submission data ) throws RestrictionException
- {
-  for( AgeObject obj : data.getObjects() )
-   IsInstanceOfRestriction.isInstanceOf(obj, obj.getAgeElClass());
-  
-//  for( SubmissionBlock blk : data.getSubmissionBlocks() )
-//  {
-//   for( AgeObject obj : blk.getObjects() )
-//    IsInstanceOfRestriction.isInstanceOf(obj, obj.getAgeXClass());
-//  }
- }
+// private void validateData( Submission data ) throws RestrictionException
+// {
+//  for( AgeObject obj : data.getObjects() )
+//   IsInstanceOfRestriction.isInstanceOf(obj, obj.getAgeElClass());
+//  
+////  for( SubmissionBlock blk : data.getSubmissionBlocks() )
+////  {
+////   for( AgeObject obj : blk.getObjects() )
+////    IsInstanceOfRestriction.isInstanceOf(obj, obj.getAgeXClass());
+////  }
+// }
 
 /* 
  private void isInstanceOf(AgeObject obj, AgeClass cls) throws ConvertionException

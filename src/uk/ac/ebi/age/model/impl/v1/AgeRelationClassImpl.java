@@ -3,17 +3,11 @@ package uk.ac.ebi.age.model.impl.v1;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.HashSet;
 
-import uk.ac.ebi.age.model.AgeAbstractClass;
-import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
-import uk.ac.ebi.age.model.AgeRestriction;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
-import uk.ac.ebi.age.util.Collector;
-
-import com.pri.util.collection.CollectionsUnion;
 
 class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationClassWritable, Serializable
 {
@@ -24,12 +18,12 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
 
  private boolean isAbstract;
 
- private Collection<AgeClass> domain = new LinkedList<AgeClass>();
- private Collection<AgeClass> range = new LinkedList<AgeClass>();
- private Collection<AgeRelationClass> subclasses = new LinkedList<AgeRelationClass>();
- private Collection<AgeRelationClass> superclasses = new LinkedList<AgeRelationClass>();
+// private Collection<AgeClass> domain = new LinkedList<AgeClass>();
+// private Collection<AgeClass> range = new LinkedList<AgeClass>();
+ private Collection<AgeRelationClass> subclasses = new HashSet<AgeRelationClass>();
+ private Collection<AgeRelationClass> superclasses = new HashSet<AgeRelationClass>();
 
- private Collection<AgeRestriction> attributeRestrictions = new LinkedList<AgeRestriction>();
+// private Collection<AgeRestriction> attributeRestrictions = new LinkedList<AgeRestriction>();
  
  private Collection<String> aliases;
  
@@ -59,23 +53,23 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  }
  
 
- public void addDomainClass(AgeClass dmCls)
- {
-  for( AgeClass exstDmCla : domain )
-   if( exstDmCla.equals(dmCls) )
-    return;
-
-  domain.add(dmCls);
- }
-
- public void addRangeClass(AgeClass rgCls)
- {
-  for( AgeClass exstRgCla : range )
-   if( exstRgCla.equals(rgCls) )    //TODO should be class or subclass here?
-    return;
-  
-  range.add(rgCls);
- }
+// public void addDomainClass(AgeClass dmCls)
+// {
+//  for( AgeClass exstDmCla : domain )
+//   if( exstDmCla.equals(dmCls) )
+//    return;
+//
+//  domain.add(dmCls);
+// }
+//
+// public void addRangeClass(AgeClass rgCls)
+// {
+//  for( AgeClass exstRgCla : range )
+//   if( exstRgCla.equals(rgCls) )    //TODO should be class or subclass here?
+//    return;
+//  
+//  range.add(rgCls);
+// }
 
  public void addSubClass(AgeRelationClass sbcls)
  {
@@ -88,27 +82,27 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  }
 
 
- public boolean isWithinRange(AgeClass key)
- {
-  if( range.size() == 0 )
-   return true;
-  
-  for( AgeClass rgCls : range )
-   if( key.equals(rgCls) )
-    return true;
-  
-  return false;
- }
-
- public Collection<AgeClass> getRange()
- {
-  return range;
- }
- 
- public Collection<AgeClass> getDomain()
- {
-  return domain;
- }
+// public boolean isWithinRange(AgeClass key)
+// {
+//  if( range.size() == 0 )
+//   return true;
+//  
+//  for( AgeClass rgCls : range )
+//   if( key.equals(rgCls) )
+//    return true;
+//  
+//  return false;
+// }
+//
+// public Collection<AgeClass> getRange()
+// {
+//  return range;
+// }
+// 
+// public Collection<AgeClass> getDomain()
+// {
+//  return domain;
+// }
 
  public Collection<AgeRelationClass> getSubClasses()
  {
@@ -133,18 +127,18 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  }
 
 
- @Override
- public boolean isWithinDomain(AgeClass key)
- {
-  if( domain.size() == 0 )
-   return true;
-  
-  for( AgeClass rgCls : domain )
-   if( key.equals(rgCls) )   //TODO should be class or subclass here?
-    return true;
-  
-  return false;
- }
+// @Override
+// public boolean isWithinDomain(AgeClass key)
+// {
+//  if( domain.size() == 0 )
+//   return true;
+//  
+//  for( AgeClass rgCls : domain )
+//   if( key.equals(rgCls) )   //TODO should be class or subclass here?
+//    return true;
+//  
+//  return false;
+// }
 
  @Override
  public boolean isImplicit()
@@ -169,31 +163,31 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  {
  }
 
- public void addAttributeRestriction(AgeRestriction rest)
- {
-  attributeRestrictions.add(rest);
- }
-
- public Collection<AgeRestriction> getAttributeRestrictions()
- {
-  return attributeRestrictions;
- }
-
- public Collection<AgeRestriction> getAttributeAllRestrictions()
- {
-  Collection<Collection<AgeRestriction>> allRest = new ArrayList<Collection<AgeRestriction>>(10);
-  
-  Collector.collectFromHierarchy(this, allRest, new Collector<Collection<AgeRestriction>>()
-  {
-   public Collection<AgeRestriction> get(AgeAbstractClass cls)
-   {
-    Collection<AgeRestriction> restr = ((AgeRelationClassImpl)cls).getAttributeRestrictions();
-    return restr==null||restr.size()==0?null:restr;
-   }
-  });
-  
-  return new CollectionsUnion<AgeRestriction>(allRest);
- }
+// public void addAttributeRestriction(AgeRestriction rest)
+// {
+//  attributeRestrictions.add(rest);
+// }
+//
+// public Collection<AgeRestriction> getAttributeRestrictions()
+// {
+//  return attributeRestrictions;
+// }
+//
+// public Collection<AgeRestriction> getAttributeAllRestrictions()
+// {
+//  Collection<Collection<AgeRestriction>> allRest = new ArrayList<Collection<AgeRestriction>>(10);
+//  
+//  Collector.collectFromHierarchy(this, allRest, new Collector<Collection<AgeRestriction>>()
+//  {
+//   public Collection<AgeRestriction> get(AgeAbstractClass cls)
+//   {
+//    Collection<AgeRestriction> restr = ((AgeRelationClassImpl)cls).getAttributeRestrictions();
+//    return restr==null||restr.size()==0?null:restr;
+//   }
+//  });
+//  
+//  return new CollectionsUnion<AgeRestriction>(allRest);
+// }
 
  public boolean isAbstract()
  {

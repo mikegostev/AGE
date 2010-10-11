@@ -65,7 +65,7 @@ public interface SemanticModel
 
  AgeRelationClassPlug getAgeRelationClassPlug(AgeRelationClass relClass);
 
- Collection<AgeClass> getAgeClasses();
+ Collection< ? extends AgeClass> getAgeClasses();
  
  
  AgeClass getRootAgeClass();

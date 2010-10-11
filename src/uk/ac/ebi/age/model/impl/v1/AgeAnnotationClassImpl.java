@@ -3,7 +3,7 @@ package uk.ac.ebi.age.model.impl.v1;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.HashSet;
 
 import uk.ac.ebi.age.model.AgeAnnotationClass;
 import uk.ac.ebi.age.model.SemanticModel;
@@ -20,8 +20,8 @@ class AgeAnnotationClassImpl extends AgeAbstractClassImpl implements AgeAnnotati
 
 
 
- private Collection<AgeAnnotationClass> subClasses = new LinkedList<AgeAnnotationClass>();
- private Collection<AgeAnnotationClass> superClasses = new LinkedList<AgeAnnotationClass>();
+ private Collection<AgeAnnotationClass> subClasses = new HashSet<AgeAnnotationClass>();
+ private Collection<AgeAnnotationClass> superClasses = new HashSet<AgeAnnotationClass>();
 
  private Collection<String> aliases;
 
