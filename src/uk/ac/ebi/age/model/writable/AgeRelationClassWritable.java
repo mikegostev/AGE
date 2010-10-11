@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model.writable;
 
+import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
 
 public interface AgeRelationClassWritable extends AgeRelationClass, AgeAbstractClassWritable, AttributedClassWritable
@@ -7,9 +8,8 @@ public interface AgeRelationClassWritable extends AgeRelationClass, AgeAbstractC
  void addSubClass(AgeRelationClass makeRelationsBranch);
  void addSuperClass(AgeRelationClass ageRelCls);
 
-// void addDomainClass(AgeClass dmCls);
-//
-// void addRangeClass(AgeClass dmCls);
+ void addDomainClass(AgeClass dmCls);
+ void addRangeClass(AgeClass dmCls);
 
  void setInverseRelationClass(AgeRelationClass ageEl);
  

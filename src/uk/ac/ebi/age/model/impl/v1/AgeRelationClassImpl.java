@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
+import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
@@ -18,8 +19,8 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
 
  private boolean isAbstract;
 
-// private Collection<AgeClass> domain = new LinkedList<AgeClass>();
-// private Collection<AgeClass> range = new LinkedList<AgeClass>();
+ private Collection<AgeClass> domain = new HashSet<AgeClass>();
+ private Collection<AgeClass> range = new HashSet<AgeClass>();
  private Collection<AgeRelationClass> subclasses = new HashSet<AgeRelationClass>();
  private Collection<AgeRelationClass> superclasses = new HashSet<AgeRelationClass>();
 
@@ -53,23 +54,23 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  }
  
 
-// public void addDomainClass(AgeClass dmCls)
-// {
+ public void addDomainClass(AgeClass dmCls)
+ {
 //  for( AgeClass exstDmCla : domain )
 //   if( exstDmCla.equals(dmCls) )
 //    return;
-//
-//  domain.add(dmCls);
-// }
-//
-// public void addRangeClass(AgeClass rgCls)
-// {
+
+  domain.add(dmCls);
+ }
+
+ public void addRangeClass(AgeClass rgCls)
+ {
 //  for( AgeClass exstRgCla : range )
 //   if( exstRgCla.equals(rgCls) )    //TODO should be class or subclass here?
 //    return;
-//  
-//  range.add(rgCls);
-// }
+  
+  range.add(rgCls);
+ }
 
  public void addSubClass(AgeRelationClass sbcls)
  {
@@ -82,27 +83,42 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  }
 
 
-// public boolean isWithinRange(AgeClass key)
-// {
-//  if( range.size() == 0 )
-//   return true;
-//  
-//  for( AgeClass rgCls : range )
-//   if( key.equals(rgCls) )
-//    return true;
-//  
-//  return false;
-// }
-//
-// public Collection<AgeClass> getRange()
-// {
-//  return range;
-// }
-// 
-// public Collection<AgeClass> getDomain()
-// {
-//  return domain;
-// }
+ @Override
+ public boolean isWithinRange(AgeClass key)
+ {
+  if( range.size() == 0 )
+   return true;
+  
+  for( AgeClass rgCls : range )
+   if( key.isClassOrSubclass(rgCls) )
+    return true;
+  
+  return false;
+ }
+ 
+ @Override
+ public boolean isWithinDomain(AgeClass key)
+ {
+  if( domain.size() == 0 )
+   return true;
+  
+  for( AgeClass rgCls : domain )
+   if( key.isClassOrSubclass(rgCls) )
+    return true;
+  
+  return false;
+ }
+
+
+ public Collection<AgeClass> getRange()
+ {
+  return range;
+ }
+ 
+ public Collection<AgeClass> getDomain()
+ {
+  return domain;
+ }
 
  public Collection<AgeRelationClass> getSubClasses()
  {
@@ -127,18 +143,6 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  }
 
 
-// @Override
-// public boolean isWithinDomain(AgeClass key)
-// {
-//  if( domain.size() == 0 )
-//   return true;
-//  
-//  for( AgeClass rgCls : domain )
-//   if( key.equals(rgCls) )   //TODO should be class or subclass here?
-//    return true;
-//  
-//  return false;
-// }
 
  @Override
  public boolean isImplicit()
