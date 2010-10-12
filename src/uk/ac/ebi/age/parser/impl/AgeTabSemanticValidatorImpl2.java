@@ -140,15 +140,23 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
   {
    LogNode subLog = log.branch("Creating value converters for class '"+me.getValue().getName()+"'. Block at :"+me.getKey().getClassColumnHeader().getRow());
    
-   createConvertors( me.getKey(), me.getValue(), convs, sm, classMap, subLog );
+   if( ! createConvertors( me.getKey(), me.getValue(), convs, sm, classMap, subLog ) )
+   {
+    subLog.log(Level.ERROR,"Convertors creation failed");
+    result = false;
+   }
    
    objectMap = classMap.get( me.getValue() );
-   
+  
+   subLog = log.branch("Converting values for class '"+me.getValue().getName()+"'. Block at :"+me.getKey().getClassColumnHeader().getRow());
+ 
    for( AgeTabObject atObj : data.getObjects(me.getKey()) )
    {
     AgeObjectWritable obj = objectMap.get(atObj.getId());
     
-    if( obj == null )
+    LogNode objLog = subLog.branch("Processing object: "+atObj.getId());
+    
+    if( obj == null ) // It seems it must not happen
     {
      obj = sm.createAgeObject(null, me.getValue());
      obj.setOrder( atObj.getRow() );
@@ -169,15 +177,44 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
      
      for( ValueConverter cnv : convs )
      {
+      
       List<AgeTabValue> vals = atObj.getValues(cnv.getClassReference());
       
-      if( vals== null || vals.size() <= ln )
-       cnv.convert(obj,null);
-      else
-      {
-       hasValue=true;
-       cnv.convert(obj,vals.get(ln));
-      }
+
+       if(vals == null || vals.size() <= ln)
+       {
+        try
+        {
+         cnv.convert(obj, null);
+        }
+        catch (ConvertionException e)
+        {
+         objLog.log(Level.ERROR, "Empty value processing error: "+e.getMessage());
+        }
+       }
+       else
+       {
+        hasValue = true;
+
+        AgeTabValue val = vals.get(ln);
+
+        LogNode colLog = objLog.branch("Processing column: " + cnv.getClassReference().getCol() + ". Value: '" + val.getValue() + "'");
+
+
+        try
+        {
+         cnv.convert(obj, val);
+         colLog.log(Level.INFO, "Ok");
+        }
+        catch (ConvertionException e) 
+        {
+         colLog.log(Level.ERROR, "Conversion error: "+e.getMessage());
+         result = false;
+        }
+
+       }
+
+      
       
      }
      
@@ -530,11 +567,15 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
  }
 */
  
- private AgeAttributeClass getCustomAttributeClass( ClassReference cr , AgeClass aCls, ContextSemanticModel sm, LogNode log) throws SemanticException
+ private AgeAttributeClass getCustomAttributeClass( ClassReference cr , AgeClass aCls, ContextSemanticModel sm, LogNode log)
  {
    if(!sm.getContext().isCustomAttributeClassAllowed())
-    throw new SemanticException(cr.getRow(), cr.getCol(), "Custom attribure class (" + cr.getName() + ") is not allowed within this context.");
-
+   {
+    log.log(Level.ERROR, "Custom attribure class (" + cr.getName() + ") is not allowed within this context. Row: "+cr.getRow()+" Col: "+cr.getCol() );
+    return null;
+//    throw new SemanticException(cr.getRow(), cr.getCol(), "Custom attribure class (" + cr.getName() + ") is not allowed within this context.");
+   }
+   
    AgeAttributeClass attrClass = sm.getCustomAgeAttributeClass(cr.getName(), aCls);
 
    String typeName = cr.getFlagValue(typeFlag);
@@ -549,7 +590,9 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
     }
     catch(Exception e)
     {
-     throw new SemanticException(cr.getRow(), cr.getCol(), "Invalid type name: " + typeName);
+     log.log(Level.ERROR, "Invalid type name: " + typeName+". Row: "+cr.getRow()+" Col: "+cr.getCol() );
+     return null;
+//     throw new SemanticException(cr.getRow(), cr.getCol(), "Invalid type name: " + typeName);
     }
    }
    else
@@ -575,34 +618,49 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
 
    
    if(attrClass.getDataType() != type)
-    throw new SemanticException(cr.getRow(), cr.getCol(), "Data type ('" + type + "') mismatches with the previous definition: " + attrClass.getDataType());
+   {
+    log.log(Level.ERROR, "Data type ('" + type + "') mismatches with the previous definition: " + attrClass.getDataType()+". Row: "+cr.getRow()+" Col: "+cr.getCol() );
+    return null; 
+//    throw new SemanticException(cr.getRow(), cr.getCol(), "Data type ('" + type + "') mismatches with the previous definition: " + attrClass.getDataType());
+   }
    
    
    return attrClass;
  }
  
- private void addConverter( List<ValueConverter> convs, ValueConverter cnv ) throws SemanticException
+ private int addConverter( List<ValueConverter> convs, ValueConverter cnv )
  {
+  int i=0;
   for( ValueConverter exstC : convs )
   {
-   if( exstC.getProperty() == cnv.getProperty() && exstC.getQualifiedProperty() == cnv.getQualifiedProperty() && cnv.getProperty() != null )
-    throw new SemanticException(cnv.getClassReference().getRow(), cnv.getClassReference().getCol(),
-      "Column header duplicates header at column "+exstC.getClassReference().getCol());
+   if( exstC.getClassReference().equals( cnv.getClassReference() ) )
+   {
+    convs.add(new InvalidColumnConvertor(cnv.getClassReference()));
+    return i;
+   }
+   
+   i++;
+//   if( exstC.getProperty() == cnv.getProperty() && exstC.getQualifiedProperty() == cnv.getQualifiedProperty() && cnv.getProperty() != null )
+//    throw new SemanticException(cnv.getClassReference().getRow(), cnv.getClassReference().getCol(),
+//      "Column header duplicates header at column "+exstC.getClassReference().getCol());
   }
   
   convs.add(cnv);
+  return -1;
  }
  
- private void createConvertors( BlockHeader blck, AgeClass blkCls, List<ValueConverter> convs, ContextSemanticModel sm,
+ private boolean createConvertors( BlockHeader blck, AgeClass blkCls, List<ValueConverter> convs, ContextSemanticModel sm,
    Map<AgeClass, Map<String,AgeObjectWritable>> classMap, LogNode log ) throws SemanticException
  {
+  boolean result = true;
+  
   convs.clear();
   
   for( ClassReference attHd : blck.getColumnHeaders() )
   {
    if( attHd == null )
    {
-    addConverter(convs, new EmptyColumnConvertor() );
+    addConverter(convs, new EmptyColumnConvertor(attHd) );
     continue;
    }
    
@@ -615,6 +673,7 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
     {
      log.log(Level.ERROR, "A qualifier reference must not be qualified ifself. Use syntax attr[qual1][qual2]. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
      addConverter(convs, new InvalidColumnConvertor(attHd) );
+     result = false;
      continue;
      //throw new SemanticException(attHd.getRow(), attHd.getCol(), "A qualifier reference must not be qualified ifself. Use syntax attr[qual1][qual2]");
     }
@@ -639,6 +698,7 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
     {
      log.log(Level.ERROR, "A qualifier must follow to a qualified property. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
      addConverter(convs, new InvalidColumnConvertor(attHd) );
+     result = false;
      continue;
 //     throw new SemanticException(attHd.getRow(), attHd.getCol(), "A qualifier must follow to a qualified property.");
     }
@@ -648,6 +708,7 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
     {
      log.log(Level.ERROR, "Custom qualifier ("+qualif.getName()+") is not allowed within this context. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
      addConverter(convs, new InvalidColumnConvertor(attHd) );
+     result = false;
      continue;
 //     throw new SemanticException(attHd.getRow(), attHd.getCol(), "Custom qualifier ("+qualif.getName()+") is not allowed within this context.");
     }
@@ -661,6 +722,7 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
      if( qClass == null )
      {
       addConverter(convs, new InvalidColumnConvertor(attHd) );
+      result = false;
       continue;
      }
     }
@@ -672,14 +734,22 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
      {
       log.log(Level.ERROR, "Unknown attribute class (qualifier): '"+qualif.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
       addConverter(convs, new InvalidColumnConvertor(attHd) );
+      result = false;
       continue;
 //      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Unknown attribute class (qualifier): '"+qualif.getName()+"'");
      }
     }
     
-    addConverter(convs, new QualifierConvertor( attHd, qClass, hostConverter ), log );
-    continue;
+    int dupCol = addConverter(convs, new QualifierConvertor( attHd, qClass, hostConverter ) );
     
+    if( dupCol != -1 )
+    {
+     log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
+       +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+     result = false;
+    }
+    
+    continue;
    }
    
    if( attHd.isCustom() )
@@ -690,7 +760,13 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
     if( rangeClassName != null )
     {
      if( ! sm.getContext().isCustomRelationClassAllowed() )
-      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Custom relation class ("+attHd.getName()+") is not allowed within this context.");
+     {
+      log.log(Level.ERROR, "Custom relation class ("+attHd.getName()+") is not allowed within this context. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      addConverter(convs, new InvalidColumnConvertor(attHd) );
+      result = false;
+      continue;
+//      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Custom relation class ("+attHd.getName()+") is not allowed within this context.");
+     }
       
      AgeClass rangeClass=null;
      
@@ -701,7 +777,11 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
      }
      catch(ParserException e)
      {
-      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Invalid range class syntax",e);
+      log.log(Level.ERROR, "Invalid range class syntax. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      addConverter(convs, new InvalidColumnConvertor(attHd) );
+      result = false;
+      continue;
+//      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Invalid range class syntax",e);
      }
      
      if( rgHdr.isCustom() )
@@ -710,7 +790,13 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
       rangeClass = sm.getDefinedAgeClass(rangeClassName);
 
      if( rangeClass == null )
-      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Invalid range class: '"+rangeClassName+"'");
+     {
+      log.log(Level.ERROR, "Invalid range class: '"+rangeClassName+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      addConverter(convs, new InvalidColumnConvertor(attHd) );
+      result = false;
+      continue;
+//      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Invalid range class: '"+rangeClassName+"'");
+     }
 
      AgeRelationClass parent = null;
      
@@ -720,7 +806,8 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
       
       if( parent == null )
       {
-       blkLog.log(Level.ERROR, "Defined relation class '"+attHd.getParentClass()+"' (used as superclass) is not found. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
+       log.log(Level.ERROR, "Defined relation class '"+attHd.getParentClass()+"' (used as superclass) is not found. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
+       addConverter(convs, new InvalidColumnConvertor(attHd) );
        result = false;
        continue;
       }
@@ -733,13 +820,37 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
 //     if( relCls == null )
 //      relCls = sm.createCustomAgeRelationClass(attHd.getName(), rangeClass, blkCls);
      
-     addConverter(convs, new RelationConvertor(attHd,relCls,classMap.get(rangeClass)) );
+     int dupCol = addConverter(convs, new RelationConvertor(attHd,relCls,classMap.get(rangeClass)) );
+     
+     if( dupCol != -1 )
+     {
+      log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
+        +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      result = false;
+     }
+
     }
     else
     {
-     AgeAttributeClass attrClass = getCustomAttributeClass(attHd, blkCls, sm);
+     AgeAttributeClass attrClass = getCustomAttributeClass(attHd, blkCls, sm, log);
      
-     addConverter(convs, new AttributeConvertor(attHd,attrClass) );
+     if( attrClass == null )
+     {
+      result=false;
+      addConverter(convs, new InvalidColumnConvertor(attHd) );
+     }
+     else
+     {
+
+      int dupCol = addConverter(convs, new AttributeConvertor(attHd, attrClass));
+
+      if(dupCol != -1)
+      {
+       log.log(Level.ERROR, "Column header duplicates header at column " + convs.get(dupCol).getClassReference().getCol() + ". Row: " + attHd.getRow()
+         + " Col: " + attHd.getCol());
+       result = false;
+      }
+     }
     }
    }
    else
@@ -747,7 +858,13 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
     AgeClassProperty prop = sm.getDefinedAgeClassProperty(attHd.getName());
     
     if( prop == null )
-     throw new SemanticException(attHd.getRow(), attHd.getCol(), "Unknown object property: '"+attHd.getName()+"'");
+    {
+     log.log(Level.ERROR, "Defined property '"+attHd.getName()+"' not found. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
+     addConverter(convs, new InvalidColumnConvertor(attHd) );
+     result = false;
+     continue;
+//     throw new SemanticException(attHd.getRow(), attHd.getCol(), "Unknown object property: '"+attHd.getName()+"'");
+    }
     
 //    if( ! sm.isValidProperty( prop, blck.ageClass ) )
 //     throw new SemanticException(attHd.getRow(), attHd.getCol(), "Defined property '"+attHd.getName()+"' is not valid for class '"+blck.ageClass.getName()+"'");
@@ -756,13 +873,20 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
     {
      AgeAttributeClass attClass = (AgeAttributeClass)prop;
      
-     addConverter(convs, new AttributeConvertor(attHd,attClass) );
+     int dupCol = addConverter(convs, new AttributeConvertor(attHd,attClass) );
+     
+     if( dupCol != -1 )
+     {
+      log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
+        +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      result = false;
+     }
     }
     else
     {
      AgeRelationClass rCls = (AgeRelationClass)prop;
      
-     if( rCls.getDomain() != null )
+     if( rCls.getDomain() != null && rCls.getDomain().size() > 0 )
      {
       boolean found=false;
       
@@ -776,13 +900,29 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
       }
       
       if( !found )
-       throw new SemanticException(attHd.getRow(),attHd.getCol(),"Class '"+blkCls.getName()+"' is not in the domain of relation class '"+rCls.getName()+"'");
+      {
+       log.log(Level.ERROR, "Class '"+blkCls.getName()+"' is not in the domain of relation class '"+rCls.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
+       addConverter(convs, new InvalidColumnConvertor(attHd) );
+       result = false;
+       continue;
+//       throw new SemanticException(attHd.getRow(),attHd.getCol(),"Class '"+blkCls.getName()+"' is not in the domain of relation class '"+rCls.getName()+"'");
+      }
      }
      
-     addConverter(convs, new DefinedRelationConvertor( attHd, rCls, classMap) );
+     int dupCol = addConverter(convs, new DefinedRelationConvertor( attHd, rCls, classMap) );
+     
+     if( dupCol != -1 )
+     {
+      log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
+        +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      result = false;
+     }
+
     }
    }
   }
+  
+  return result;
  }
  
  
@@ -957,9 +1097,9 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
  private class EmptyColumnConvertor  extends ValueConverter
  {
 
-  protected EmptyColumnConvertor()
+  protected EmptyColumnConvertor( ClassReference cr )
   {
-   super(null);
+   super(cr);
   }
 
   @Override
