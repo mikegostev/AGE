@@ -33,14 +33,13 @@ import uk.ac.ebi.age.parser.BlockHeader;
 import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ConvertionException;
 import uk.ac.ebi.age.parser.ParserException;
-import uk.ac.ebi.age.parser.SemanticException;
 
 public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
 {
 // private AttrAttchRel attributeAttachmentClass;
  
  @Override
- public SubmissionWritable convert(AgeTabSubmission data, ContextSemanticModel sm, LogNode log ) throws SemanticException, ConvertionException
+ public SubmissionWritable convert(AgeTabSubmission data, ContextSemanticModel sm, LogNode log )// throws SemanticException, ConvertionException
  {
   boolean result = true;
   
@@ -650,7 +649,7 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
  }
  
  private boolean createConvertors( BlockHeader blck, AgeClass blkCls, List<ValueConverter> convs, ContextSemanticModel sm,
-   Map<AgeClass, Map<String,AgeObjectWritable>> classMap, LogNode log ) throws SemanticException
+   Map<AgeClass, Map<String,AgeObjectWritable>> classMap, LogNode log )// throws SemanticException
  {
   boolean result = true;
   
@@ -1129,15 +1128,15 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
  {
   private AgeAttributeClass attrClass;
 
-  public AttributeConvertor(ClassReference hd, AgeAttributeClass attCls) throws SemanticException
+  public AttributeConvertor(ClassReference hd, AgeAttributeClass attCls) // throws SemanticException
   {
    super( hd );
    attrClass = attCls;
    
-   DataType dt = attrClass.getDataType();
-   
-   if( dt == null )
-    throw new SemanticException(hd.getRow(), hd.getCol(), "Attribute class: '"+attrClass.getName()+"' has no data type and can't be instantiated");
+//   DataType dt = attrClass.getDataType();
+//   
+//   if( dt == null )
+//    throw new SemanticException(hd.getRow(), hd.getCol(), "Attribute class: '"+attrClass.getName()+"' has no data type and can't be instantiated");
   }
 
   @Override
@@ -1210,15 +1209,15 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
   private ValueConverter hostConverter;
 
 
-  public QualifierConvertor(ClassReference attHd, AgeAttributeClass qClass, ValueConverter hc) throws SemanticException
+  public QualifierConvertor(ClassReference attHd, AgeAttributeClass qClass, ValueConverter hc)// throws SemanticException
   {
    super(attHd);
    attrClass = qClass;
 
-   DataType dt = attrClass.getDataType();
-   
-   if( dt == null )
-    throw new SemanticException(attHd.getRow(), attHd.getCol(), "Attribute class: '"+attrClass.getName()+"' has no data type and can't be instantiated");
+//   DataType dt = attrClass.getDataType();
+//   
+//   if( dt == null )
+//    throw new SemanticException(attHd.getRow(), attHd.getCol(), "Attribute class: '"+attrClass.getName()+"' has no data type and can't be instantiated");
    
    hostConverter = hc;
   }
