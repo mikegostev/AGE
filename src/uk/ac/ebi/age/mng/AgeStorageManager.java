@@ -1,5 +1,6 @@
-package uk.ac.ebi.age.storage;
+package uk.ac.ebi.age.mng;
 
+import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
 
 public class AgeStorageManager

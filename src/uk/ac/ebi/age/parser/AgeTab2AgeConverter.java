@@ -10,5 +10,5 @@ public interface AgeTab2AgeConverter
  public static final String typeFlag="TYPE";
 
  
- public SubmissionWritable convert( AgeTabSubmission data, ContextSemanticModel sm, LogNode logNode ) throws SemanticException, ConvertionException;
+ public SubmissionWritable convert( AgeTabSubmission data, ContextSemanticModel sm, LogNode logNode );
 }

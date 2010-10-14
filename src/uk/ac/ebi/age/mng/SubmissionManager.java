@@ -1,15 +1,14 @@
 package uk.ac.ebi.age.mng;
 
 import uk.ac.ebi.age.log.LogNode;
-import uk.ac.ebi.age.log.impl.BufferLogger;
+import uk.ac.ebi.age.log.LogNode.Level;
 import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 import uk.ac.ebi.age.parser.AgeTab2AgeConverter;
 import uk.ac.ebi.age.parser.AgeTabSubmission;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
-import uk.ac.ebi.age.parser.ConvertionException;
 import uk.ac.ebi.age.parser.ParserException;
-import uk.ac.ebi.age.parser.SemanticException;
+import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
 import uk.ac.ebi.age.parser.impl.AgeTabSyntaxParserImpl;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
@@ -24,41 +23,63 @@ public class SubmissionManager
  }
  
  private AgeTabSyntaxParser ageTabParser = new AgeTabSyntaxParserImpl();
- private AgeTab2AgeConverter converter;
+ private AgeTab2AgeConverter converter = new AgeTab2AgeConverterImpl();
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
  
- public boolean submit( String text, SubmissionContext context )
+ public SubmissionWritable prepareSubmission( String text, SubmissionContext context, LogNode logRoot )
  {
+  AgeTabSubmission atSbm=null;
+  
+  LogNode atLog = logRoot.branch("Parsing AgeTab");
   try
   {
-   BufferLogger logBuf = new BufferLogger();
-   LogNode logRoot = logBuf.getRootNode();
-
-   AgeTabSubmission atSbm =  ageTabParser.parse(text);
-   
-   SubmissionWritable ageSbm = converter.convert(atSbm, SemanticManager.getInstance().getContextModel(context), logRoot.branch("Converting AgeTab to Age model") );
-  
-   validator.validate(ageSbm, logRoot.branch("Validationg semantic") );
-   
-   //Impute reverse relation and revalidate.
+   atSbm =  ageTabParser.parse(text);
+   atLog.log(Level.INFO, "Success");
   }
   catch(ParserException e)
   {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
+   atLog.log(Level.ERROR, "Parsing failed: "+e.getMessage()+". Row: "+e.getLineNumber()+". Col: "+e.getColumnNumber());
+   return null;
   }
-  catch(SemanticException e)
+
+  LogNode convLog = logRoot.branch("Converting AgeTab to Age model");
+  SubmissionWritable ageSbm = converter.convert(atSbm, SemanticManager.getInstance().getContextModel(context), convLog );
+  
+  if( ageSbm != null )
+   convLog.log(Level.INFO, "Success");
+  else
   {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
-  catch(ConvertionException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
+   convLog.log(Level.ERROR, "Conversion failed");
+   return null;
   }
   
-  return true;
+  LogNode semLog = logRoot.branch("Validating semantic");
   
+  if( validator.validate(ageSbm, semLog ) )
+   convLog.log(Level.INFO, "Success");
+  else
+  {
+   convLog.log(Level.ERROR, "Validation failed");
+   return null;
+  }
+
+  //Impute reverse relation and revalidate.
+
+  return ageSbm;
+ }
+
+ public AgeTabSyntaxParser getAgeTabParser()
+ {
+  return ageTabParser;
+ }
+
+ public AgeTab2AgeConverter getAgeTab2AgeConverter()
+ {
+  return converter;
+ }
+
+ public AgeSemanticValidator getAgeSemanticValidator()
+ {
+  return validator;
  }
 }

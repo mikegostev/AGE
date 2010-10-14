@@ -34,7 +34,7 @@ import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ConvertionException;
 import uk.ac.ebi.age.parser.ParserException;
 
-public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
+public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 {
 // private AttrAttchRel attributeAttachmentClass;
  
@@ -188,7 +188,8 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
         }
         catch (ConvertionException e)
         {
-         objLog.log(Level.ERROR, "Empty value processing error: "+e.getMessage());
+         objLog.log(Level.ERROR, "Empty value processing error: "+e.getMessage()+". Row: "+e.getRow()+" Col: "+e.getColumn());
+         result = false;
         }
        }
        else
@@ -197,23 +198,21 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
 
         AgeTabValue val = vals.get(ln);
 
-        LogNode colLog = objLog.branch("Processing column: " + cnv.getClassReference().getCol() + ". Value: '" + val.getValue() + "'");
+//        LogNode colLog = objLog.branch("Processing column: " + cnv.getClassReference().getCol() + ". Value: '" + val.getValue() + "'");
 
 
         try
         {
          cnv.convert(obj, val);
-         colLog.log(Level.INFO, "Ok");
+//         colLog.log(Level.INFO, "Ok");
         }
         catch (ConvertionException e) 
         {
-         colLog.log(Level.ERROR, "Conversion error: "+e.getMessage());
+         objLog.log(Level.ERROR, "Conversion error: "+e.getMessage()+". Row: "+e.getRow()+" Col: "+e.getColumn());
          result = false;
         }
 
        }
-
-      
       
      }
      
@@ -235,9 +234,14 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
      obj.setSubmission(res);
     }
    }
-   
-
   }
+  
+  if( ! result )
+  {
+   log.log(Level.ERROR, "Conversion failed");
+   return null;
+  }
+  
 
 //  attributeAttachmentClass = new AttrAttchRel(sm.getAttributeAttachmentClass());
   
@@ -297,9 +301,9 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
    AgeAttributeWritable attr;
    AgeObjectWritable obj;
    
-   boolean isBool=false;
-   boolean isInt=false;
-   boolean isReal=false;
+//   boolean isBool=false;
+//   boolean isInt=false;
+//   boolean isReal=false;
    
    int     intValue;
    boolean boolValue;
@@ -366,26 +370,26 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
      {
       if( value.equalsIgnoreCase("true") )
       {
-       aInf.isBool = true;
+//       aInf.isBool = true;
        aInf.boolValue=true;
       }
       else if( value.equalsIgnoreCase("false") )
       {
-       aInf.isBool = true;
+//       aInf.isBool = true;
        aInf.boolValue=false;
       }
       else
        atcInfo.isBool=false;
      }
      
-     if( ! aInf.isBool )
+     if( ! atcInfo.isBool )
      {
       if( atcInfo.isInt )
       {
        try
        {
         aInf.intValue = Integer.parseInt( value );
-        aInf.isInt=true;
+//        aInf.isInt=true;
        }
        catch(Exception e)
        {
@@ -398,7 +402,7 @@ public class AgeTabSemanticValidatorImpl2 implements AgeTab2AgeConverter
        try
        {
         aInf.realValue = Double.parseDouble( value );
-        aInf.isReal=true;
+//        aInf.isReal=true;
        }
        catch(Exception e)
        {

@@ -62,18 +62,18 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
   return name;
  }
 
-// @Override
-// public Collection<AgeClass> getDomain()
-// {
-//  return Collections.singletonList(ownerClass.getAgeClass());
-// }
-//
-//
-// @Override
-// public Collection<AgeClass> getRange()
-// {
-//  return Collections.singletonList(rangeClass.getAgeClass());
-// }
+ @Override
+ public Collection<AgeClass> getDomain()
+ {
+  return Collections.singletonList(ownerClass.getAgeClass());
+ }
+
+
+ @Override
+ public Collection<AgeClass> getRange()
+ {
+  return Collections.singletonList(rangeClass.getAgeClass());
+ }
  
  public void setId(String id)
  {
@@ -92,17 +92,17 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
   return true;
  }
 
-// @Override
-// public boolean isWithinDomain(AgeClass key)
-// {
-//  return key.equals(ownerClass.getAgeClass());
-// }
-//
-// @Override
-// public boolean isWithinRange(AgeClass key)
-// {
-//  return key.isClassOrSubclass(rangeClass.getAgeClass());
-// }
+ @Override
+ public boolean isWithinDomain(AgeClass key)
+ {
+  return key.equals(ownerClass.getAgeClass());
+ }
+
+ @Override
+ public boolean isWithinRange(AgeClass key)
+ {
+  return key.isClassOrSubclass(rangeClass.getAgeClass());
+ }
 
  @Override
  public Collection<AgeRelationClass> getSubClasses()
@@ -216,17 +216,17 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
   superClasses.add(ageRelCls);
  }
 
-// @Override
-// public void addDomainClass(AgeClass dmCls)
-// {
-//  throw new UnsupportedOperationException();
-// }
-//
-// @Override
-// public void addRangeClass(AgeClass dmCls)
-// {
-//  throw new UnsupportedOperationException();
-// }
+ @Override
+ public void addDomainClass(AgeClass dmCls)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void addRangeClass(AgeClass dmCls)
+ {
+  throw new UnsupportedOperationException();
+ }
 
  @Override
  public void setInverseRelationClass(AgeRelationClass ageEl)
@@ -245,4 +245,5 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  {
   throw new UnsupportedOperationException();
  }
+
 }

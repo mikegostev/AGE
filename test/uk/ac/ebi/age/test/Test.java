@@ -6,16 +6,14 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import uk.ac.ebi.age.log.impl.BufferLogger;
 import uk.ac.ebi.age.mng.SemanticManager;
-import uk.ac.ebi.age.model.RestrictionException;
 import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
-import uk.ac.ebi.age.parser.AgeTabSemanticValidator;
 import uk.ac.ebi.age.parser.AgeTabSubmission;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
-import uk.ac.ebi.age.parser.ConvertionException;
 import uk.ac.ebi.age.parser.ParserException;
-import uk.ac.ebi.age.parser.SemanticException;
+import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.exeption.SubmissionStoreException;
 import uk.ac.ebi.age.storage.impl.ser.SerializedStorage;
@@ -49,7 +47,15 @@ public class Test
  
    AgeTabSubmission sbm =  AgeTabSyntaxParser.getInstance().parse(text);
    
-   SubmissionWritable dblock = AgeTabSemanticValidator.getInstance().parse(sbm, smngr.getContextModel(new DefContext()));
+   BufferLogger logBuf = new BufferLogger();
+  
+   SubmissionWritable dblock = new AgeTab2AgeConverterImpl().convert(sbm, smngr.getContextModel(new DefContext()), logBuf.getRootNode() );
+   
+   if( dblock == null )
+   {
+    System.out.println("Convertion failed");
+    return;
+   }
    
 //   AgeStorageGrafImpl str = new AgeStorageGrafImpl();
    SerializedStorage str = new SerializedStorage();
@@ -73,22 +79,6 @@ public class Test
   catch(IOException e)
   {
    // TODO Auto-generated catch bloc
-   e.printStackTrace();
-  }
-
-  catch(SemanticException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
-  catch(ConvertionException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
-  catch(RestrictionException e)
-  {
-   // TODO Auto-generated catch block
    e.printStackTrace();
   }
   catch(RelationResolveException e)
