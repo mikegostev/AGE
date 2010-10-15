@@ -106,6 +106,9 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
    case GUESS:
     attr = new AgeStringAttributeImpl(attrClass, sm);
     break;
+   
+   case OBJECT:
+    attr = new AgeObjectAttributeImpl(attrClass, sm);
   }
   
   

@@ -13,5 +13,7 @@ public interface AgeTabSubmission
  Collection<AgeTabObject> getObjects(BlockHeader hdr);
 
  AgeTabObject createObject(String part, BlockHeader header, int ln);
+ 
+ AgeTabSyntaxParser getParser();
 
 }

@@ -15,4 +15,6 @@ public interface AgeAttributeClass extends AgeClassProperty, AgeSemanticElement,
  
  Collection<AgeAttributeClass> getSuperClasses();
  Collection<AgeAttributeClass> getSubClasses();
+
+ AgeClass getTargetClass();
 }

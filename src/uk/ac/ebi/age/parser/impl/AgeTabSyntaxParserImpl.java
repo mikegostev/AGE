@@ -18,7 +18,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 
  public AgeTabSubmission parse( String txt ) throws ParserException
  {
-  AgeTabSubmission data = new AgeTabSubmissionImpl();
+  AgeTabSubmission data = new AgeTabSubmissionImpl( this );
   
   
   int cpos = 0;
@@ -137,7 +137,8 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 
     newContext = false;
 
-    header = analyzeHeader(parts,ln);
+    header = new BlockHeaderImpl(data);
+    analyzeHeader(header, parts, ln);
     
     cObj = null;
     
@@ -150,7 +151,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    
    if( part.length() != 0 )
    {
-    if( part.equals(anonymousObjectId) )
+    if( part.equals(getAnonymousObjectId()) )
     { 
      String id = IdGenerator.getInstance().getStringId();
      cObj = data.createObject(id,header,ln);
@@ -160,8 +161,8 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     {
      cObj = data.getOrCreateObject(part,header,ln);
      
-     cObj.setIdDefined( ! part.startsWith(anonymousObjectId) );
-     cObj.setPrototype( part.equals(commonObjectId) );
+     cObj.setIdDefined( ! part.startsWith(getAnonymousObjectId()) );
+     cObj.setPrototype( part.equals(getCommonObjectId()) );
     }
    }
    else if( cObj == null )
@@ -195,9 +196,9 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   return data;
  }
 
- private BlockHeader analyzeHeader(List<String> parts, int row) throws ParserException
+ private void analyzeHeader(BlockHeader hdr, List<String> parts, int row) throws ParserException
  {
-  BlockHeader hdr = new BlockHeaderImpl();
+//  BlockHeader hdr = new BlockHeaderImpl( this );
   
   Iterator<String> itr = parts.iterator();
   
@@ -260,7 +261,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   }
   
   
-  return hdr;
+//  return hdr;
  }
 
  

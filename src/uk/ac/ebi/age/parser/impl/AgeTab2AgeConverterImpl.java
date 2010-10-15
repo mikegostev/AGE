@@ -32,7 +32,6 @@ import uk.ac.ebi.age.parser.AgeTabValue;
 import uk.ac.ebi.age.parser.BlockHeader;
 import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ConvertionException;
-import uk.ac.ebi.age.parser.ParserException;
 
 public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 {
@@ -581,8 +580,10 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    AgeAttributeClass attrClass = sm.getCustomAgeAttributeClass(cr.getName(), aCls);
 
-   String typeName = cr.getFlagValue(typeFlag);
-
+   String typeName = cr.getFlagValue(AgeTabSyntaxParser.typeFlag);
+   
+   ClassReference targCR = cr.getTargetClassRef();
+   
    DataType type = DataType.GUESS;
 
    if(typeName != null)
@@ -604,6 +605,36 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      type = attrClass.getDataType();
    }
 
+   if( attrClass != null )
+   {
+    if(attrClass.getDataType() != type)
+    {
+     log.log(Level.ERROR, "Data type ('" + type + "') mismatches with the previous definition: " + attrClass.getDataType()+". Row: "+cr.getRow()+" Col: "+cr.getCol() );
+     return null; 
+//     throw new SemanticException(cr.getRow(), cr.getCol(), "Data type ('" + type + "') mismatches with the previous definition: " + attrClass.getDataType());
+    }
+
+    if( type == DataType.OBJECT )
+    {
+     if( attrClass.getTargetClass() == null )
+     {
+      log.log(Level.ERROR, "Reference to OBJECT attribute class with no target class. Row: "+cr.getRow()+" Col: "+cr.getCol() );
+      return null; 
+     }
+     
+     if( targCR != null && ! ( targCR.getName().equals(attrClass.getTargetClass().getName()) && targCR.isCustom() == attrClass.isCustom()) )
+     {
+      String prevTarg = attrClass.getTargetClass().getName();
+      
+     
+      log.log(Level.ERROR, "Target class '"+targCR.getName()+"' "+
+        (targCR.isCustom()?"(custom)":"")+"mismatches with previous definition: '"+prevTarg+"' "+
+        (attrClass.getTargetClass().isCustom()?"(custom)":"")+". Row: "+cr.getRow()+" Col: "+cr.getCol() );
+      return null; 
+     }
+    }
+   }
+   
    AgeAttributeClass parent = null;
 
    if( cr.getParentClass() != null )
@@ -620,12 +651,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    attrClass = sm.getOrCreateCustomAgeAttributeClass(cr.getName(), type, aCls, parent);
 
    
-   if(attrClass.getDataType() != type)
-   {
-    log.log(Level.ERROR, "Data type ('" + type + "') mismatches with the previous definition: " + attrClass.getDataType()+". Row: "+cr.getRow()+" Col: "+cr.getCol() );
-    return null; 
-//    throw new SemanticException(cr.getRow(), cr.getCol(), "Data type ('" + type + "') mismatches with the previous definition: " + attrClass.getDataType());
-   }
    
    
    return attrClass;
@@ -757,10 +782,11 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    if( attHd.isCustom() )
    {
-    String rangeClassName = attHd.getFlagValue(rangeFlag);
+//    String rangeClassName = attHd.getFlagValue(rangeFlag);
     
+    ClassReference rgHdr=attHd.getRangeClassRef();
     
-    if( rangeClassName != null )
+    if( rgHdr != null )
     {
      if( ! sm.getContext().isCustomRelationClassAllowed() )
      {
@@ -773,28 +799,15 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       
      AgeClass rangeClass=null;
      
-     ClassReference rgHdr=null;
-     try
-     {
-      rgHdr = AgeTabSyntaxParser.string2ClassReference(rangeClassName);
-     }
-     catch(ParserException e)
-     {
-      log.log(Level.ERROR, "Invalid range class syntax. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
-      addConverter(convs, new InvalidColumnConvertor(attHd) );
-      result = false;
-      continue;
-//      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Invalid range class syntax",e);
-     }
-     
+   
      if( rgHdr.isCustom() )
-      rangeClass = sm.getCustomAgeClass(rangeClassName);
+      rangeClass = sm.getCustomAgeClass(rgHdr.getName());
      else
-      rangeClass = sm.getDefinedAgeClass(rangeClassName);
+      rangeClass = sm.getDefinedAgeClass(rgHdr.getName());
 
      if( rangeClass == null )
      {
-      log.log(Level.ERROR, "Invalid range class: '"+rangeClassName+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      log.log(Level.ERROR, "Invalid range class: '"+rgHdr.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
       addConverter(convs, new InvalidColumnConvertor(attHd) );
       result = false;
       continue;
@@ -875,8 +888,28 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     if( prop instanceof AgeAttributeClass )
     {
      AgeAttributeClass attClass = (AgeAttributeClass)prop;
+
+     int dupCol = -1;
      
-     int dupCol = addConverter(convs, new AttributeConvertor(attHd,attClass) );
+     if( attClass.getDataType() == DataType.OBJECT )
+     {
+      if( attClass.getTargetClass() == null )
+      {
+       log.log(Level.ERROR, "No target class defined for OBJECT attribute class '"+attClass.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+       result=false;
+       addConverter(convs, new InvalidColumnConvertor(attHd) );
+      }
+      else
+      {
+       dupCol = addConverter(convs, new ObjectAttributeConvertor(attHd,attClass, classMap.get(attClass.getTargetClass()) ) );
+      }
+       
+     }
+     else
+     {
+      dupCol = addConverter(convs, new AttributeConvertor(attHd,attClass) );
+     }
+     
      
      if( dupCol != -1 )
      {
@@ -1041,6 +1074,65 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
  }
 
+ 
+ 
+ private class ObjectAttributeConvertor extends ValueConverter
+ {
+  private Map<String, AgeObjectWritable> rangeObjects;
+  private AgeAttributeClass       attrClass;
+
+  public ObjectAttributeConvertor(ClassReference hd, AgeAttributeClass aCls, Map<String, AgeObjectWritable> map)
+  {
+   super(hd);
+   rangeObjects = map;
+   attrClass = aCls;
+  }
+
+  @Override
+  public void convert(AgeObjectWritable obj, AgeTabValue atVal)
+  {
+   setLastConvertedProperty(null);
+
+   if(atVal == null )
+    return;
+   
+   String val = atVal.getValue().trim();
+
+   if(val.length() == 0)
+    return;
+
+   AgeObjectWritable targetObj = null;
+
+   if(rangeObjects != null)
+    targetObj = rangeObjects.get(val);
+
+   AgeAttributeWritable rel = null;
+   if(targetObj == null)
+    rel = obj.createExternalRelation(val, attrClass);
+   else
+   {
+    rel = obj.createAgeAttribute(attrClass);
+    rel.setValue(targetObj);
+   }
+   
+   rel.setOrder(getClassReference().getCol());
+   setLastConvertedProperty(rel);
+
+  }
+  
+  @Override
+  public AgeClassProperty getProperty()
+  {
+   return attrClass;
+  }
+  
+  public AgeClassProperty getQualifiedProperty()
+  {
+   return null;
+  }
+
+ }
+ 
  
  private class RelationConvertor extends ValueConverter
  {

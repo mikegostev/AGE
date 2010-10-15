@@ -14,6 +14,9 @@ public class ClassReference extends AgeTabElement
  private Map<String,String> flags;
  private LinkedList<ClassReference> qualifiers;
  private String parentClass;
+ 
+ private ClassReference targetClassRef;
+ private ClassReference rangeClassRef;
 
  public ClassReference()
  {
@@ -157,6 +160,26 @@ public class ClassReference extends AgeTabElement
     return false;
   
   return true;
+ }
+
+ public ClassReference getTargetClassRef()
+ {
+  return targetClassRef;
+ }
+
+ public void setTargetClassRef(ClassReference targetClassRef)
+ {
+  this.targetClassRef = targetClassRef;
+ }
+
+ public ClassReference getRangeClassRef()
+ {
+  return rangeClassRef;
+ }
+
+ public void setRangeClassRef(ClassReference rangeClassRef)
+ {
+  this.rangeClassRef = rangeClassRef;
  }
  
 }

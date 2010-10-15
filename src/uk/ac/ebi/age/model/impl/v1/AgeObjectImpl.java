@@ -178,7 +178,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
 
  public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass)
  {
-  AgeAttributeWritable attr = getSemanticModel().createAgeAttribute( attrClass);
+  AgeAttributeWritable attr = getSemanticModel().createAgeAttribute( attrClass );
 
   addAttribute(attr);
   

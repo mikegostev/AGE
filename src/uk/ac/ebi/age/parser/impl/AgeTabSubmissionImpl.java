@@ -6,12 +6,19 @@ import java.util.Map;
 
 import uk.ac.ebi.age.parser.AgeTabObject;
 import uk.ac.ebi.age.parser.AgeTabSubmission;
+import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.BlockHeader;
 
 public class AgeTabSubmissionImpl implements AgeTabSubmission
 {
+ private AgeTabSyntaxParser parser;
  private Map<BlockHeader, Map<String,AgeTabObject>> blockObjectMap = new HashMap<BlockHeader, Map<String,AgeTabObject>>();
  
+ 
+ public AgeTabSubmissionImpl( AgeTabSyntaxParser p )
+ {
+  parser = p;
+ }
  
  public AgeTabObject getObject(String part, BlockHeader classColumnHeader)
  {
@@ -85,6 +92,12 @@ public class AgeTabSubmissionImpl implements AgeTabSubmission
   objMap.put(objId, obj);
   
   return obj;
+ }
+
+ @Override
+ public AgeTabSyntaxParser getParser()
+ {
+  return parser;
  }
 
 }

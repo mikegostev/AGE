@@ -7,45 +7,109 @@ import uk.ac.ebi.age.util.StringUtil;
 
 public abstract class AgeTabSyntaxParser
 {
- public static final String customTokenBrackets="{}";
- public static final String flagsTokenBrackets="<>";
- public static final String qualifierTokenBrackets="[]";
- public static final String flagsSeparatorSign=";";
- public static final String flagsEqualSign="=";
- public static final String anonymousObjectId="?";
- public static final String commonObjectId="*";
- public static final String parentClassPrefixSeparator=".";
- 
+ public static final String rangeFlag="RANGE";
+ public static final String typeFlag="TYPE";
+ public static final String targetFlag="TARGET";
+
+
  private static interface StrProc
  {
   String getBrackets();
   void process(ClassReference nm, String s) throws ParserException;
  }
  
+ public String getCustomTokenBrackets()
+ {
+  return DefaultSyntaxProfile.customTokenBrackets;
+ }
  
- private static StrProc[] prc = new StrProc[]{
+ public String getFlagsTokenBrackets()
+ {
+  return DefaultSyntaxProfile.flagsTokenBrackets;
+ }
+ 
+ public String getQualifierTokenBrackets()
+ {
+  return DefaultSyntaxProfile.qualifierTokenBrackets;
+ }
+ 
+ public String getFlagsSeparatorSign()
+ {
+  return DefaultSyntaxProfile.flagsSeparatorSign;
+ }
+ 
+ public String getFlagsEqualSign()
+ {
+  return DefaultSyntaxProfile.flagsEqualSign;
+ }
+ 
+ public String getAnonymousObjectId()
+ {
+  return DefaultSyntaxProfile.anonymousObjectId;
+ }
+ 
+ public String getCommonObjectId()
+ {
+  return DefaultSyntaxProfile.commonObjectId;
+ }
+ 
+ public String getParentClassPrefixSeparator()
+ {
+  return DefaultSyntaxProfile.parentClassPrefixSeparator;
+ }
+ 
+ 
+ private StrProc[] prc = new StrProc[]{
    new StrProc()
    {
-    public String getBrackets(){ return flagsTokenBrackets; }
-    public void process(ClassReference nm, String s)
+    public String getBrackets(){ return getFlagsTokenBrackets(); }
+    public void process(ClassReference nm, String s) throws ParserException
     {
-     List<String> flags = StringUtil.splitString(s, flagsSeparatorSign);
+     List<String> flags = StringUtil.splitString(s, getFlagsSeparatorSign() );
      
      for( String flagstr : flags )
      {
-      int eqpos = flagstr.indexOf(flagsEqualSign);
+      int eqpos = flagstr.indexOf(getFlagsEqualSign());
       
       if( eqpos == -1 )
        nm.addFlag(flagstr,null);
       else
-       nm.addFlag(flagstr.substring(0,eqpos),flagstr.substring(eqpos+1));
+      {
+       String fname = flagstr.substring(0,eqpos);
+       String fval =  flagstr.substring(eqpos+1);
+       
+       nm.addFlag(fname,fval);
+       
+       if( fname.equals( rangeFlag ) )
+       {
+        try
+        {
+         nm.setRangeClassRef( string2ClassReference(fval) );
+        }
+        catch (ParserException e)
+        {
+         throw new ParserException(0,0,"Invalid range class reference: "+e.getMessage());
+        }
+       }
+       else if( fname.equals( targetFlag ) )
+       {
+        try
+        {
+         nm.setTargetClassRef( string2ClassReference(fval) );
+        }
+        catch (ParserException e)
+        {
+         throw new ParserException(0,0,"Invalid target class reference: "+e.getMessage());
+        }
+       }
+      }
      }
     }
    },
    
    new StrProc()
    {
-    public String getBrackets(){ return qualifierTokenBrackets; }
+    public String getBrackets(){ return getQualifierTokenBrackets(); }
     public void process(ClassReference nm,String s) throws ParserException
     {
      ClassReference cr = string2ClassReference(s);
@@ -65,16 +129,16 @@ public abstract class AgeTabSyntaxParser
  public abstract AgeTabSubmission parse( String txt ) throws ParserException;
 
  
- public static ClassReference string2ClassReference( String str ) throws ParserException
+ public ClassReference string2ClassReference( String str ) throws ParserException
  {
   final ClassReference nm = new ClassReference();
   
   String brckts = null;
   
-  if( str.charAt(0) == customTokenBrackets.charAt(0) )
+  if( str.charAt(0) == getCustomTokenBrackets().charAt(0) )
   {
    nm.setCustom(true);
-   brckts  = customTokenBrackets;
+   brckts  = getCustomTokenBrackets();
   }
   else
    nm.setCustom(false);
@@ -138,9 +202,9 @@ public abstract class AgeTabSyntaxParser
   }
   else
   {
-   if( str.charAt(str.length()-1) == customTokenBrackets.charAt(1) )
+   if( str.charAt(str.length()-1) == getCustomTokenBrackets().charAt(1) )
    {
-    int pos = str.indexOf(parentClassPrefixSeparator+customTokenBrackets.charAt(0));
+    int pos = str.indexOf(getParentClassPrefixSeparator()+getCustomTokenBrackets().charAt(0));
     
     if( pos == -1 )
      throw new ParserException(0,0, "Invalid character at: "+(str.length())+". The closing bracket must correspond opening one.");
