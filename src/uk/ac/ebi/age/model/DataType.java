@@ -9,7 +9,8 @@ public enum DataType
  TEXT   (true,false,true),
  URI    (true,false,false),
  BOOLEAN(false,false,false),
- GUESS  (false,false,false);
+ GUESS  (false,false,false), 
+ OBJECT (false,false,false);
  
  
  boolean isTextual;

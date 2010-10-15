@@ -246,4 +246,28 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
   throw new UnsupportedOperationException();
  }
 
+ @Override
+ public void setFunctional(boolean functional)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void setInverseFunctional(boolean inverseFunctional)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void setSymmetric(boolean symmetric)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void setTransitive(boolean transitive)
+ {
+  throw new UnsupportedOperationException();
+ }
+
 }

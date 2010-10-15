@@ -240,5 +240,25 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
  {
   return aliases;
  }
+
+ public void setFunctional(boolean functional)
+ {
+  this.functional = functional;
+ }
+
+ public void setInverseFunctional(boolean inverseFunctional)
+ {
+  this.inverseFunctional = inverseFunctional;
+ }
+
+ public void setSymmetric(boolean symmetric)
+ {
+  this.symmetric = symmetric;
+ }
+
+ public void setTransitive(boolean transitive)
+ {
+  this.transitive = transitive;
+ }
  
 }

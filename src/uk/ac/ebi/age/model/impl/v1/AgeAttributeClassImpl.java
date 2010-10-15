@@ -22,6 +22,8 @@ class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttribute
  private boolean isAbstract;
 
  private Collection<String> aliases;
+ 
+ private AgeClass targetClass;
 
  private Collection<AgeAttributeClass> subClasses = new HashSet<AgeAttributeClass>();
  private Collection<AgeAttributeClass> superClasses = new HashSet<AgeAttributeClass>();
@@ -153,6 +155,16 @@ class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttribute
  public Collection<String> getAliases()
  {
   return aliases;
+ }
+
+ public AgeClass getTargetClass()
+ {
+  return targetClass;
+ }
+
+ public void setTargetClass(AgeClass targetClass)
+ {
+  this.targetClass = targetClass;
  }
 
 }

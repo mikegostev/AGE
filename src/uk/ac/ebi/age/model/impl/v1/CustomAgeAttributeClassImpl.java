@@ -20,6 +20,8 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
  private String id;
 
  private AgeClass owner;
+ 
+ private AgeClass targetClass;
 
  private Collection<AgeAttributeClass> superClasses;
  
@@ -111,6 +113,17 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
  @Override
  public void addAlias(String ali)
  {
+ }
+
+ @Override
+ public void setTargetClass(AgeClass cls)
+ {
+  targetClass=cls;
+ }
+
+ public AgeClass getTargetClass()
+ {
+  return targetClass;
  }
 
 }

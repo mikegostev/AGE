@@ -19,4 +19,9 @@ public interface AgeRelationClassWritable extends AgeRelationClass, AgeAbstractC
  
  void addAlias(String ali);
  
+ void setFunctional(boolean functional);
+ void setInverseFunctional(boolean inverseFunctional);
+ void setSymmetric(boolean symmetric);
+ void setTransitive(boolean transitive);
+ 
 }
