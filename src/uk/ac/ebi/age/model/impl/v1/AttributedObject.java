@@ -31,6 +31,27 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
 
  
  @Override
+ public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass)
+ {
+  AgeAttributeWritable attr = getSemanticModel().createAgeAttribute(attrClass);
+  
+  addAttribute(attr);
+  
+  return attr;
+ }
+ 
+ @Override
+ public AgeAttributeWritable createExternalObjectAttribute(String val, AgeAttributeClass attrClass)
+ {
+  AgeAttributeWritable attr = getSemanticModel().createExternalObjectAttribute();
+  
+  addAttribute(attr);
+  
+  return attr;
+ }
+
+ 
+ @Override
  public Collection<AgeAttributeWritable> getAttributes()
  {
   return attributes;

@@ -8,6 +8,10 @@ import uk.ac.ebi.age.model.Attributed;
 
 public interface AttributedWritable extends Attributed
 {
+ AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass);
+ AgeAttributeWritable createExternalObjectAttribute(String val, AgeAttributeClass attrClass);
+
+ 
  Collection<? extends AgeAttributeWritable> getAttributes();
 
  Collection< ? extends AgeAttributeWritable> getAttributes(AgeAttributeClass cls);

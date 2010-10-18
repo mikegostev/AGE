@@ -193,6 +193,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   
   return rel;
  }
+ 
 
  public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass)
  {

@@ -2,7 +2,6 @@ package uk.ac.ebi.age.model.writable;
 
 import java.util.Collection;
 
-import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Submission;
@@ -26,7 +25,6 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
 
  void addRelation(AgeRelationWritable createExternalRelation);
 
- AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass);
 
  AgeExternalRelationWritable createExternalRelation(String val, AgeRelationClass relClass);
 
@@ -37,6 +35,7 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  void setSubmission( Submission s );
  
  void setId( String id );
+
  
 // void resetModel();
 }

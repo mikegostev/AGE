@@ -33,6 +33,8 @@ public interface SemanticModel
 
  AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String val, AgeRelationClass relClass);
 
+ AgeAttributeWritable createExternalObjectAttribute();
+
  AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass);
 
  AgeObjectWritable createAgeObject(String id, AgeClass cls);
