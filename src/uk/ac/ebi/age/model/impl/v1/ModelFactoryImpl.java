@@ -147,6 +147,13 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  {
   return new AgeExternalRelationImpl(targetClass, sourceObj, id, sm);
  }
+ 
+
+ @Override
+ public AgeAttributeWritable createExternalObjectAttribute(AgeAttributeClass atCls, String id, SemanticModel sm)
+ {
+  return new AgeExternalObjectAttributeImpl(atCls, id, sm);
+ }
 
  @Override
  public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel)
@@ -214,5 +221,6 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  {
   return new QualifierRuleImpl( sm );
  }
+
 
 }

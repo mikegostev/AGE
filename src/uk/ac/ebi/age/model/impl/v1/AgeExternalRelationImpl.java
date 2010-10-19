@@ -1,13 +1,11 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
-import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.SemanticModel;
-import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 
@@ -21,7 +19,6 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  private AgeObjectWritable sourceObject;
  private transient AgeObjectWritable target;
  private boolean infered;
- private Collection<AgeAttributeWritable> qualifiers;
 
  public AgeExternalRelationImpl(AgeRelationClass relClass, AgeObjectWritable srcOb, String id, SemanticModel sm)
  {

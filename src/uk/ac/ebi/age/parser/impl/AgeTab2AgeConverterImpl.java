@@ -186,7 +186,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
        {
         try
         {
-         cnv.convert(obj, null);
+         cnv.convert(null);
         }
         catch (ConvertionException e)
         {
@@ -205,7 +205,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
         try
         {
-         cnv.convert(obj, val);
+         cnv.convert(val);
 //         colLog.log(Level.INFO, "Ok");
         }
         catch (ConvertionException e) 
@@ -800,7 +800,23 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      }
     }
     
-    int dupCol = addConverter(convs, new QualifierConvertor( attHd, qClass, hostConverter ) );
+    int dupCol = -1;
+    
+    if( qClass.getDataType() == DataType.OBJECT )
+    {
+     if( qClass.getTargetClass() == null )
+     {
+      log.log(Level.ERROR, "No target class defined for OBJECT attribute class '"+qClass.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      result=false;
+      addConverter(convs, new InvalidColumnConvertor(attHd) );
+     }
+     else
+     {
+      dupCol = addConverter(convs, new ObjectQualifierConvertor(attHd, qClass, hostConverter, classMap.get(qClass.getTargetClass()) ) );
+     }
+    }
+    else
+     dupCol = addConverter(convs, new QualifierConvertor( attHd, qClass, hostConverter ) );
     
     if( dupCol != -1 )
     {

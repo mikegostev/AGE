@@ -30,6 +30,7 @@ public abstract class ModelFactory
  public abstract AgeAttributeClassWritable createCustomAgeAttributeClass( String name, DataType type, SemanticModel sm, AgeClass owner );
 
  public abstract AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass,  SemanticModel sm);
+ public abstract AgeAttributeWritable createExternalObjectAttribute(AgeAttributeClass atCls, String id, SemanticModel sm);
 
  public abstract AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass, SemanticModel sm);
 
@@ -49,5 +50,7 @@ public abstract class ModelFactory
  public abstract AttributeAttachmentRuleWritable createAgeAttributeAttachmentRule(RestrictionType type, SemanticModel sm);
  public abstract RelationRuleWritable createAgeRelationRule(RestrictionType type, SemanticModel sm);
  public abstract QualifierRuleWritable createAgeQualifierRule( SemanticModel sm);
+
+
 
 }

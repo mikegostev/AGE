@@ -150,11 +150,21 @@ public class SemanticModelImpl implements SemanticModel, Serializable
   return modelFactory.createAgeClass(name, id, pfx, this);
  }
 
+ @Override
  public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass)
  {
   return modelFactory.createExternalRelation(sourceObj, id, targetClass,  this);
  }
 
+ @Override
+ public AgeAttributeWritable createExternalObjectAttribute( AgeAttributeClass atCls, String id )
+ {
+  return modelFactory.createExternalObjectAttribute( atCls, id, this );
+ }
+
+
+
+ 
  public AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass)
  {
   return modelFactory.createRelation(targetObj, relClass, this);
@@ -324,8 +334,5 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  {
   idGen = id;
  }
-
-
-
 
 }
