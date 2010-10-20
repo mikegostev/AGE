@@ -3,7 +3,9 @@ package uk.ac.ebi.age.validator.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import uk.ac.ebi.age.log.LogNode;
 import uk.ac.ebi.age.log.LogNode.Level;
@@ -74,7 +76,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   
   
   ln = log.branch("Validating object's relations");
-  res = validateRelations( obj, ln );
+  res = validateRelations( obj, null, ln );
 
   valid = res && valid;
 
@@ -87,7 +89,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return valid;
  }
 
- private boolean validateRelations(AgeObject obj, LogNode log)
+ public boolean validateRelations(AgeObject obj, Collection<? extends AgeRelation> auxRels, LogNode log)
  {
   AgeClass cls = obj.getAgeElClass();
 
@@ -98,7 +100,24 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   
   Collection< ? extends AgeRelationClass> rlClasses = obj.getRelationClasses();
 
+  Collection<AgeRelation> byClassRels = null;
+
+  if( auxRels != null )
+  {
+   Set<AgeRelationClass> clsSet = new HashSet<AgeRelationClass>();
+   
+   clsSet.addAll(rlClasses);
+   
+   for( AgeRelation r : auxRels )
+    clsSet.add(r.getAgeElClass());
+    
+   byClassRels = new ArrayList<AgeRelation>(10);
+   
+   rlClasses=clsSet;
+  }
+  
   boolean objectOk = true;
+
 
   for(AgeRelationClass rlCls : rlClasses)
   {
@@ -108,6 +127,23 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    
    Collection< ? extends AgeRelation> rels = obj.getRelationsByClass(rlCls, true);
 
+   if( auxRels != null )
+   {
+    byClassRels.clear();
+    
+    for( AgeRelation r : auxRels )
+    {
+     if( r.getAgeElClass().isClassOrSubclass(rlCls) )
+      byClassRels.add(r);
+    }
+    
+    if( byClassRels.size() > 0 )
+    {
+     byClassRels.addAll(rels);
+     rels = byClassRels;
+    }
+   }
+   
    LogNode ln = log.branch("Validation relations of class '"+rlCls.getName()+"' Relations number: "+rels.size());
 
    

@@ -23,7 +23,7 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  void addAttribute(AgeAttributeWritable attr);
  void removeAttribute(AgeAttributeWritable attr);
 
- void addRelation(AgeRelationWritable createExternalRelation);
+ void addRelation(AgeRelationWritable r);
 
 
  AgeExternalRelationWritable createExternalRelation(String val, AgeRelationClass relClass);

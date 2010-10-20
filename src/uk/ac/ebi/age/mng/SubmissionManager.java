@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.mng;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,14 +9,14 @@ import java.util.Stack;
 import uk.ac.ebi.age.log.LogNode;
 import uk.ac.ebi.age.log.LogNode.Level;
 import uk.ac.ebi.age.model.AgeAttribute;
-import uk.ac.ebi.age.model.AgeExternalObjectAttribute;
 import uk.ac.ebi.age.model.AgeObject;
-import uk.ac.ebi.age.model.AgeRelation;
+import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
+import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.SubmissionWritable;
 import uk.ac.ebi.age.parser.AgeTab2AgeConverter;
 import uk.ac.ebi.age.parser.AgeTabSubmission;
@@ -24,7 +25,6 @@ import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
 import uk.ac.ebi.age.parser.impl.AgeTabSyntaxParserImpl;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
-import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
 
@@ -71,16 +71,19 @@ public class SubmissionManager
   
   try
   {
-   LogNode connLog = logRoot.branch("Connecting submission to the graph");
+   LogNode connLog = logRoot.branch("Connecting submission to the main graph");
    stor.lockWrite();
 
-   if( ! connectSubmission(ageSbm,stor,connLog) )
+   Map<AgeObject,Collection<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Collection<AgeRelationWritable>>();
+   
+   if( ! connectSubmission( ageSbm, stor, invRelMap, connLog) )
     connLog.log(Level.INFO, "Success");
    else
    {
     connLog.log(Level.ERROR, "Connection failed");
     return null;
    }
+   
    
    LogNode semLog = logRoot.branch("Validating semantic");
 
@@ -90,6 +93,46 @@ public class SubmissionManager
    {
     convLog.log(Level.ERROR, "Validation failed");
     return null;
+   }
+
+   if( invRelMap.size() > 0 )
+   {
+    LogNode invRelLog = connLog.branch("Validating inverse external relations semantic");
+    
+    boolean res = true;
+    for( Map.Entry<AgeObject, Collection<AgeRelationWritable>> me :  invRelMap.entrySet() )
+    {
+     LogNode objLogNode = invRelLog.branch("Validating object Id: "+me.getKey().getId()+" Class: "+me.getKey().getAgeElClass());
+     
+     if( validator.validateRelations(me.getKey(),me.getValue(),objLogNode) )
+      objLogNode.log(Level.INFO, "Success");
+     else
+      res = false;
+    }
+    
+    if(res)
+     invRelLog.log(Level.INFO, "Success");
+    else
+    {
+     invRelLog.log(Level.ERROR, "Validation failed");
+     return null;
+    }
+
+    LogNode storLog = connLog.branch("Storing submission");
+    try
+    {
+     stor.storeSubmission(ageSbm);
+     storLog.log(Level.INFO, "Success");
+    }
+    catch(Exception e)
+    {
+     storLog.log(Level.ERROR, "Submission storing failed: "+e.getMessage());
+     return null;
+    }
+    
+    for( Map.Entry<AgeObject, Collection<AgeRelationWritable>> me :  invRelMap.entrySet() )
+     stor.addRelations(me.getKey().getId(),me.getValue());
+
    }
 
   }
@@ -103,12 +146,9 @@ public class SubmissionManager
   return ageSbm;
  }
 
- private boolean connectSubmission(SubmissionWritable sbm, AgeStorageAdm stor, Map<AgeObject,Collection<AgeRelation>> invRelMap, LogNode connLog)
+ private boolean connectSubmission(SubmissionWritable sbm, AgeStorageAdm stor, Map<AgeObject,Collection<AgeRelationWritable>> invRelMap, LogNode connLog)
  {
   boolean res = true;
-  
-//  Collection<String> invIds = null;
-  Map<Attributed,Collection<AgeExternalObjectAttribute>> extAttrMap = new HashMap<Attributed, Collection<AgeExternalObjectAttribute>>();
   
   LogNode extAttrLog = connLog.branch("Connecting external object attributes");
   boolean extAttrRes = true;
@@ -158,15 +198,90 @@ public class SubmissionManager
        +"' (Class: "+exr.getSourceObject().getAgeElClass()
        +", Order: "+exr.getSourceObject().getOrder()+"). Relation: "+exr.getAgeElClass()+" Order: "+exr.getOrder());
     }
+    else
+    {
+      if( ! exr.getAgeElClass().isWithinRange(tgObj.getAgeElClass()) )
+      {
+       extRelRes = false;
+       extRelLog.log(Level.ERROR,"External relation target object's class is not within range. Target object: '"+ref
+         +"' (Class: "+tgObj.getAgeElClass()
+         +"'). Source object: '"+exr.getSourceObject().getId()
+         +"' (Class: "+exr.getSourceObject().getAgeElClass()
+         +", Order: "+exr.getSourceObject().getOrder()+"). Relation: "+exr.getAgeElClass()+" Order: "+exr.getOrder());
+      }
+      else
+      {
+       AgeRelationClass invRCls = exr.getAgeElClass().getInverseRelationClass();
+       
+       boolean invClassOk=false;
+       if( invRCls != null )
+       {
+        if(invRCls.isCustom())
+        {
+         extRelRes = false;
+         extRelLog.log(Level.ERROR,"Class of external inverse relation can't be custom. Target object: '"+ref
+           +"' (Class: "+tgObj.getAgeElClass()
+           +"'). Source object: '"+exr.getSourceObject().getId()
+           +"' (Class: "+exr.getSourceObject().getAgeElClass()
+           +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
+           +". Inverse relation: "+invRCls);
+        }
+        else if( ! invRCls.isWithinDomain(tgObj.getAgeElClass()) )
+        {
+         extRelRes = false;
+         extRelLog.log(Level.ERROR,"Target object's class is not within domain of inverse relation. Target object: '"+ref
+           +"' (Class: "+tgObj.getAgeElClass()
+           +"'). Source object: '"+exr.getSourceObject().getId()
+           +"' (Class: "+exr.getSourceObject().getAgeElClass()
+           +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
+           +". Inverse relation: "+invRCls);
+        }
+        else if( ! invRCls.isWithinRange(exr.getSourceObject().getAgeElClass()) )
+        {
+         extRelRes = false;
+         extRelLog.log(Level.ERROR,"Source object's class is not within range of inverse relation. Target object: '"+ref
+           +"' (Class: "+tgObj.getAgeElClass()
+           +"'). Source object: '"+exr.getSourceObject().getId()
+           +"' (Class: "+exr.getSourceObject().getAgeElClass()
+           +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
+           +". Inverse relation: "+invRCls);
+        }
+        else
+         invClassOk=true;
+       }
+       
+       if( invClassOk )
+       {
+        AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
+        invRel.setTargetObject(exr.getSourceObject());
+        invRel.setInferred(true);
+        
+        Collection<AgeRelationWritable> rels = invRelMap.get(tgObj);
+        
+        if( rels == null )
+        {
+         rels = new ArrayList<AgeRelationWritable>(5);
+         invRelMap.put(tgObj, rels);
+        }
+        
+        rels.add(invRel);
+       }
+       
+       
+       exr.setTargetObject(tgObj);
+      }
+    }
     
-    exr.setTargetObject(tgObj);
    }
+  
+   if( extRelRes )
+    extRelLog.log(Level.INFO, "Success");
   }
   
-  if( invIds != null )
-   throw new RelationResolveException(exr.getOrder(),exr.getSourceObject().getOrder(),"Can't resolve external relation: "+exr.getTargetObjectId());
+  res = uniqRes && extRelRes;
+
   
-  return false;
+  return res;
  }
 
  

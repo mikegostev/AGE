@@ -13,6 +13,7 @@ import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeClassProperty;
+import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.ContextSemanticModel;
@@ -136,7 +137,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  }
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String val, AgeRelationClass targetClass )
+ public AgeExternalRelationWritable createExternalRelation(AgeObject sourceObj, String val, AgeRelationClass targetClass )
  {
   return masterModel.createExternalRelation(sourceObj, val, targetClass);
  }

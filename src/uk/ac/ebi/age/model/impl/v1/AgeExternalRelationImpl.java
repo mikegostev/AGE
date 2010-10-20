@@ -2,12 +2,12 @@ package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
 
+import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
-import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 
 class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRelationWritable, Serializable
 {
@@ -16,11 +16,11 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  private AgeRelationClassPlug relClassPlug; 
  private String objId;
  private int order;
- private AgeObjectWritable sourceObject;
- private transient AgeObjectWritable target;
+ private AgeObject sourceObject;
+ private transient AgeObject target;
  private boolean infered;
 
- public AgeExternalRelationImpl(AgeRelationClass relClass, AgeObjectWritable srcOb, String id, SemanticModel sm)
+ public AgeExternalRelationImpl(AgeRelationClass relClass, AgeObject srcOb, String id, SemanticModel sm)
  {
   super(sm);
   
@@ -35,12 +35,12 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
   return relClassPlug.getAgeRelationClass();
  }
 
- public AgeObjectWritable getTargetObject()
+ public AgeObject getTargetObject()
  {
   return target;
  }
  
- public AgeObjectWritable getSourceObject()
+ public AgeObject getSourceObject()
  {
   return sourceObject;
  }
@@ -61,7 +61,7 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  }
 
  @Override
- public void setTargetObject(AgeObjectWritable obj)
+ public void setTargetObject(AgeObject obj)
  {
   target = obj;
  }

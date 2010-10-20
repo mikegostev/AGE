@@ -14,6 +14,7 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeExternalRelation;
+import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
@@ -471,7 +472,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      continue;
     
     boolean found=false;
-    for( AgeRelationWritable irl : rl.getTargetObject().getRelations() )
+    for( AgeRelation irl : rl.getTargetObject().getRelations() )
     {
      if( irl.getAgeElClass().equals(invClass) && irl.getTargetObject() == obj )
      {
@@ -481,7 +482,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     }
     
     if( ! found )
-     rl.getTargetObject().createRelation(obj, invClass).setInferred(true);
+     ((AgeObjectWritable)rl.getTargetObject()).createRelation(obj, invClass).setInferred(true);
    }
   }
  }
@@ -1001,7 +1002,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       
       if( !found )
       {
-       log.log(Level.ERROR, "Class '"+blkCls.getName()+"' is not in the domain of relation class '"+rCls.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
+       log.log(Level.ERROR, "Class '"+blkCls+"' is not in the domain of relation class '"+rCls+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
        addConverter(convs, new InvalidColumnConvertor(attHd) );
        result = false;
        continue;
@@ -1080,8 +1081,16 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     rangeObjects = new LinkedList<Map<String,AgeObjectWritable>>();
     
     for( Map.Entry<AgeClass, Map<String, AgeObjectWritable>> me : classMap.entrySet() )
-     if( rngSet.contains(me.getKey()) )
-      rangeObjects.add(me.getValue());
+    {
+     for(AgeClass rgClass : rngSet )
+     {
+      if( me.getKey().isClassOrSubclass(rgClass))
+      {
+       rangeObjects.add(me.getValue());
+       break;
+      }
+     }
+    }
    }
   }
   
