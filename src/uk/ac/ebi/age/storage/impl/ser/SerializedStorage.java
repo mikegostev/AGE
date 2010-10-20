@@ -19,7 +19,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import uk.ac.ebi.age.mng.SemanticManager;
+import uk.ac.ebi.age.model.AgeExternalObjectAttribute;
 import uk.ac.ebi.age.model.AgeObject;
+import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -33,6 +35,7 @@ import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.SubmissionReaderWriter;
 import uk.ac.ebi.age.storage.TextIndex;
 import uk.ac.ebi.age.storage.exeption.ModelStoreException;
+import uk.ac.ebi.age.storage.exeption.NotUniqueIdException;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
 import uk.ac.ebi.age.storage.exeption.SubmissionStoreException;
 import uk.ac.ebi.age.storage.impl.AgeStorageIndex;
@@ -184,8 +187,49 @@ public class SerializedStorage implements AgeStorageAdm
 
    sbm.setId(newSubmissionId);
  
+   Collection<String> invIds = null;
+   Map<Attributed,Collection<AgeExternalObjectAttribute>> extAttrMap = new HashMap<Attributed, Collection<AgeExternalObjectAttribute>>();
+   
+   
    for( AgeObjectWritable obj : sbm.getObjects() )
-    obj.setId( obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId()+"-"+obj.getOriginalId() );
+   {
+    if( mainIndexMap.containsKey(obj.getId()) )
+    {
+     if( invIds == null )
+      invIds = new ArrayList<String>();
+     
+     invIds.add(obj.getId());
+    }
+    
+    collectExternalAttrs( obj, extAttrMap );
+   }
+   
+   if( invIds != null )
+    throw new NotUniqueIdException(invIds);
+
+   if( sbm.getExternalRelations() != null )
+   {
+    for( AgeExternalRelationWritable exr : sbm.getExternalRelations() )
+    {
+     AgeObjectWritable tgObj = mainIndexMap.get(exr.getTargetObjectId());
+     
+     if( tgObj == null )
+     {
+      if( invIds == null )
+       invIds = new ArrayList<String>();
+      
+      invIds.add(exr.getTargetObjectId());
+     }
+     
+     exr.setTargetObject(tgObj);
+    }
+   }
+   
+   if( invIds != null )
+    throw new RelationResolveException(exr.getOrder(),exr.getSourceObject().getOrder(),"Can't resolve external relation: "+exr.getTargetObjectId());
+
+//   for( AgeObjectWritable obj : sbm.getObjects() )
+//    obj.setId( obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId()+"-"+obj.getOriginalId() );
    
    saveSubmission(sbm);
    
@@ -195,18 +239,9 @@ public class SerializedStorage implements AgeStorageAdm
    for( AgeObjectWritable obj : sbm.getObjects() )
     mainIndexMap.put(obj.getId(), obj);
    
-   if( sbm.getExternalRelations() != null )
-   {
-    for( AgeExternalRelationWritable exr : sbm.getExternalRelations() )
-    {
-     AgeObjectWritable tgObj = mainIndexMap.get(exr.getTargetObjectId());
-     
-     if( tgObj == null )
-      throw new RelationResolveException(exr.getOrder(),exr.getSourceObject().getOrder(),"Can't resolve external relation: "+exr.getTargetObjectId());
-     
-     exr.setTargetObject(tgObj);
-    }
-   }
+
+   
+//   for( AgeObjectWritable obj : sbm.getObjects() )
    
    updateIndices( sbm );
    
@@ -221,6 +256,7 @@ public class SerializedStorage implements AgeStorageAdm
   }
 
  }
+
 
  public void init(String initStr) throws StorageInstantiationException
  {
@@ -398,6 +434,13 @@ public class SerializedStorage implements AgeStorageAdm
  {
   return mainIndexMap.get( objID );
  }
+ 
+ @Override
+ public boolean hasObject(String objID)
+ {
+  return mainIndexMap.containsKey( objID );
+ }
+
 
  @Override
  public void addDataChangeListener(DataChangeListener dataChangeListener)

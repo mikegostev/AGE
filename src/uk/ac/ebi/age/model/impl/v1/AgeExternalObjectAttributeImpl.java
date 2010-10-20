@@ -10,7 +10,6 @@ import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
-import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 
 class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExternalObjectAttributeWritable, Serializable
 {
@@ -54,7 +53,7 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
  }
 
  @Override
- public void setTargetObject(AgeObjectWritable obj)
+ public void setTargetObject(AgeObject obj)
  {
   target = obj;
   objId = target.getId();

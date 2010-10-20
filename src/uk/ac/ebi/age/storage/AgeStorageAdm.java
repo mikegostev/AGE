@@ -15,4 +15,8 @@ public interface AgeStorageAdm extends AgeStorage
  void init( String initStr) throws StorageInstantiationException;
  void shutdown();
 
+ void lockWrite();
+ void unlockWrite();
+
+
 }

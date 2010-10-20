@@ -159,5 +159,4 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
  }
 
 
-
 }

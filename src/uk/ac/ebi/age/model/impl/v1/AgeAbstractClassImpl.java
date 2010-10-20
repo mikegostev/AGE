@@ -43,11 +43,6 @@ abstract class AgeAbstractClassImpl extends AgeSemanticElementImpl implements  A
   
   return false;
  }
- 
- public String toString()
- {
-  return getName();
- }
 
 
  @Override
@@ -93,5 +88,14 @@ abstract class AgeAbstractClassImpl extends AgeSemanticElementImpl implements  A
    }} );
   
   return new CollectionsUnion<AttributeAttachmentRule>(allRest);
+ }
+ 
+
+ public String toString()
+ {
+  if( isCustom() )
+   return "{"+getName()+"}";
+  
+  return getName();
  }
 }

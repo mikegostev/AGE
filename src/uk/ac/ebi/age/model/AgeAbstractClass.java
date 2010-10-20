@@ -16,6 +16,7 @@ public interface AgeAbstractClass
 // Collection<AgeRestriction> getAttributeAllRestrictions();
 
  boolean isAbstract();
+ boolean isCustom();
  
  Collection<AgeAnnotation> getAnnotations();
 }

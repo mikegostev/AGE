@@ -6,4 +6,6 @@ public interface AttributedClass
 {
  Collection<AttributeAttachmentRule> getAttributeAttachmentRules();
  Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules();
+ 
+ String getName();
 }
