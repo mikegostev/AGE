@@ -102,7 +102,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
 
   for(AgeRelationClass rlCls : rlClasses)
   {
-   if(rlCls.isCustom())
+   if(rlCls.isCustom() || rlCls.isImplicit() )
     continue;
 
    

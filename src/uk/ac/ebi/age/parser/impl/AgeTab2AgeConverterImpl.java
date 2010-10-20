@@ -275,7 +275,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
 //  validateData(res);
   
-  imputeReverseRelations( res );
+  imputeInverseRelations( res );
   
   return res;
  }
@@ -455,7 +455,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  
  
 
- private void imputeReverseRelations( SubmissionWritable data )
+ private void imputeInverseRelations( SubmissionWritable data )
  {
   for( AgeObjectWritable obj : data.getObjects() )
   {
