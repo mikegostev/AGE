@@ -12,4 +12,9 @@ public class IdGeneratorImpl extends IdGenerator
   return String.valueOf(init++);
  }
 
+ @Override
+ public void shutdown()
+ {
+ }
+
 }

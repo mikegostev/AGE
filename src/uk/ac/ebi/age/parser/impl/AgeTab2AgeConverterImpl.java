@@ -33,6 +33,7 @@ import uk.ac.ebi.age.parser.AgeTabValue;
 import uk.ac.ebi.age.parser.BlockHeader;
 import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ConvertionException;
+import uk.ac.ebi.age.service.IdGenerator;
 
 public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 {
@@ -125,8 +126,19 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     if( obj == null )
     {
-     obj = sm.createAgeObject(atObj.isIdDefined()?atObj.getId():null, cls);
+     String id = atObj.getId();
+
+     if( ! atObj.isIdStable() )
+     {
+      id = cls.getIdPrefix()+IdGenerator.getInstance().getStringId();
+      
+      if( atObj.isIdDefined() )
+       id+="-"+atObj.getId();
+     }
+     
+     obj = sm.createAgeObject(id, cls);
      obj.setOrder( atObj.getRow() );
+     obj.setOriginalId(atObj.getId());
      
      objectMap.put(atObj.getId(), obj);
     }
@@ -157,6 +169,11 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     if( obj == null ) // It seems it must not happen
     {
+     String id = atObj.getId();
+     
+     if( atObj.isIdStable() )
+     {}
+     
      obj = sm.createAgeObject(null, me.getValue());
      obj.setOrder( atObj.getRow() );
     }

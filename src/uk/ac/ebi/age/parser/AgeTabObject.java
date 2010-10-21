@@ -10,7 +10,7 @@ public class AgeTabObject
  private int row;
  private String id;
  private Map<ClassReference, List<AgeTabValue>> values = new HashMap<ClassReference, List<AgeTabValue>>();
- private boolean idIsDefined;
+ private boolean idIsDefined; // Whether some ID was defined in submission file
  private boolean isPrototype;
  private boolean isIdStable;
 

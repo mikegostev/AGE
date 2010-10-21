@@ -19,7 +19,8 @@ public class SeqIdGeneratorImpl extends IdGenerator
  public SeqIdGeneratorImpl( String path )
  {
   idFile = new File(path);
- 
+  idFile.getParentFile().mkdirs( );
+  
   update();
  }
  
@@ -87,6 +88,36 @@ public class SeqIdGeneratorImpl extends IdGenerator
    update();
   
   return String.valueOf(nextId++);
+ }
+
+ @Override
+ public void shutdown()
+ {
+  RandomAccessFile file = null;
+  try
+  {
+   file = new RandomAccessFile(idFile, "w");
+   file.writeChars(String.valueOf(nextId));
+  }
+  catch(IOException e)
+  {
+   throw new IdGenException("Can't read/write ID store file. ", e);
+  }
+  finally
+  {
+   if(file != null)
+   {
+    try
+    {
+     file.close();
+    }
+    catch(Exception e2)
+    {
+     throw new IdGenException("Can't close ID store file. ", e2);
+    }
+   }
+
+  }
  }
 
 }

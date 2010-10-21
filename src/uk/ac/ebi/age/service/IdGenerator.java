@@ -10,8 +10,15 @@ public abstract class IdGenerator
  {
   return instance;
  }
+ 
+ public static void setInstance( IdGenerator gen )
+ {
+  instance=gen;
+ }
 
  public abstract String getStringId();
+
+ public abstract void shutdown();
  
  
 }

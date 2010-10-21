@@ -69,6 +69,12 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   id=nId;
  }
  
+ @Override
+ public void setOriginalId(String nId)
+ {
+  origId=nId;
+ }
+
  
  public void addRelation(AgeRelationWritable rl)
  {

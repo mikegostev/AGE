@@ -36,6 +36,8 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  
  void setId( String id );
 
+ void setOriginalId(String nId);
+
  
 // void resetModel();
 }
