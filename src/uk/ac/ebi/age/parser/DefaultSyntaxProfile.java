@@ -10,5 +10,8 @@ public class DefaultSyntaxProfile
  public static final String anonymousObjectId="?";
  public static final String commonObjectId="*";
  public static final String parentClassPrefixSeparator=".";
+ public static final String stableIdPrefix="@";
+ public static final String unstableIdPrefix="$";
+ public static final boolean isUnqualifiedIdsStable=true;
 
 }

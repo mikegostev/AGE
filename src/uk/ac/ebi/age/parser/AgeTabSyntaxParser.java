@@ -58,6 +58,20 @@ public abstract class AgeTabSyntaxParser
   return DefaultSyntaxProfile.parentClassPrefixSeparator;
  }
  
+ public String getStableIdPrefix()
+ {
+  return DefaultSyntaxProfile.stableIdPrefix;
+ }
+
+ public String getUnstableIdPrefix()
+ {
+  return DefaultSyntaxProfile.unstableIdPrefix;
+ }
+ 
+ public boolean isUnqualifiedIdsStable()
+ {
+  return DefaultSyntaxProfile.isUnqualifiedIdsStable;
+ }
  
  private StrProc[] prc = new StrProc[]{
    new StrProc()

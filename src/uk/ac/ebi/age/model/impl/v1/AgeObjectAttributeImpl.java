@@ -117,5 +117,11 @@ class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjectAttrib
   return value.getId().compareTo( ((AgeObjectAttribute)ob).getValue().getId() );
  }
 
+ @Override
+ public String getTargetObjectId()
+ {
+  return value.getId();
+ }
+
 
 }

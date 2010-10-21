@@ -19,8 +19,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import uk.ac.ebi.age.mng.SemanticManager;
+import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
+import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
@@ -275,6 +278,9 @@ public class SerializedStorage implements AgeStorageAdm
      }
     }
    }
+   
+   for( AgeObjectWritable obj : mainIndexMap.values() )
+    connectObjectAttributes( obj );
   }
   catch(Exception e)
   {
@@ -283,6 +289,26 @@ public class SerializedStorage implements AgeStorageAdm
   finally
   {
    dbLock.writeLock().unlock();
+  }
+ }
+ 
+ private void connectObjectAttributes( Attributed host )
+ {
+  if( host.getAttributes() == null )
+   return;
+  
+  for( AgeAttribute attr : host.getAttributes() )
+  {
+   if( attr instanceof AgeExternalObjectAttributeWritable )
+   {
+    AgeExternalObjectAttributeWritable obAttr = (AgeExternalObjectAttributeWritable)attr;
+    
+    AgeObject targObj = mainIndexMap.get(obAttr.getTargetObjectId());
+    
+    obAttr.setTargetObject(targObj);
+   }
+   
+   connectObjectAttributes(attr);
   }
  }
  

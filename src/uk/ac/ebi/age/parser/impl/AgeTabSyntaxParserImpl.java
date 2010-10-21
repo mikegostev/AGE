@@ -159,8 +159,28 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     }
     else
     {
-     cObj = data.getOrCreateObject(part,header,ln);
+     String id = part;
+     boolean stable = isUnqualifiedIdsStable();
      
+     String stblIdPfx = getStableIdPrefix();
+     if( part.startsWith(stblIdPfx) )
+     {
+      id = part.substring(stblIdPfx.length());
+      
+      if( !  id.startsWith(stblIdPfx) )
+       stable = true;
+     }
+     else if( part.startsWith(getUnstableIdPrefix()) )
+     {
+      id = part.substring(getUnstableIdPrefix().length());
+      
+      if( !  id.startsWith(getUnstableIdPrefix()) )
+       stable = false;
+     }
+
+     cObj = data.getOrCreateObject(id,header,ln);
+     
+     cObj.setIdStable(stable);
      cObj.setIdDefined( ! part.startsWith(getAnonymousObjectId()) );
      cObj.setPrototype( part.equals(getCommonObjectId()) );
     }

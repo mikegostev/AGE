@@ -12,6 +12,7 @@ public class AgeTabObject
  private Map<ClassReference, List<AgeTabValue>> values = new HashMap<ClassReference, List<AgeTabValue>>();
  private boolean idIsDefined;
  private boolean isPrototype;
+ private boolean isIdStable;
 
  public AgeTabObject( int rw )
  {
@@ -66,5 +67,15 @@ public class AgeTabObject
  public boolean isPrototype()
  {
   return isPrototype;
+ }
+
+ public boolean isIdStable()
+ {
+  return isIdStable;
+ }
+
+ public void setIdStable(boolean isIdStable)
+ {
+  this.isIdStable = isIdStable;
  }
 }
