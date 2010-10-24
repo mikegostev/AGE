@@ -147,15 +147,6 @@ public abstract class AgeTabSyntaxParser
  {
   final ClassReference nm = new ClassReference();
   
-  String brckts = null;
-  
-  if( str.charAt(0) == getCustomTokenBrackets().charAt(0) )
-  {
-   nm.setCustom(true);
-   brckts  = getCustomTokenBrackets();
-  }
-  else
-   nm.setCustom(false);
 
   while( str.length() > 0 )
   {
@@ -199,36 +190,40 @@ public abstract class AgeTabSyntaxParser
     break;
   }
   
-
+  
   String name = null;
   
-  if( brckts != null)
+  if( str.charAt(0) == getCustomTokenBrackets().charAt(0) )
   {
-   int pos = str.indexOf(brckts.charAt(1));
+   int pos = str.indexOf(getCustomTokenBrackets().charAt(1));
    
    if( pos == -1 )
-    throw new ParserException(0,0, "No closing bracket: '"+brckts.charAt(1)+"'");
+    throw new ParserException(0,0, "No closing bracket: '"+getCustomTokenBrackets().charAt(1)+"'");
    
    if( pos != (str.length()-1) )
     throw new ParserException(0,0, "Invalid character at: "+(pos+1)+". The closing bracket must be the last symbol of the token.");
    
    name = str.substring(1, pos);
+   nm.setCustom(true);
   }
   else
   {
    if( str.charAt(str.length()-1) == getCustomTokenBrackets().charAt(1) )
    {
-    int pos = str.indexOf(getParentClassPrefixSeparator()+getCustomTokenBrackets().charAt(0));
+    int pos = str.indexOf(getCustomTokenBrackets().charAt(0));
     
     if( pos == -1 )
-     throw new ParserException(0,0, "Invalid character at: "+(str.length())+". The closing bracket must correspond opening one.");
+     throw new ParserException(0,0, "Invalid character at: "+(str.length())+". The closing bracket must correspond to opening one.");
     
     name = str.substring(pos+1,str.length()-1);
     nm.setParentClass( str.substring(0,pos) );
     nm.setCustom(true);
    }
    else
+   {
     name = str;
+    nm.setCustom(false);
+   }
   }
   
   if( name.length() == 0 )
