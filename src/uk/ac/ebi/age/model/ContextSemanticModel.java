@@ -23,6 +23,7 @@ public interface ContextSemanticModel extends SemanticModel
 
  SubmissionWritable createSubmission();
 
+ SemanticModel getMasterModel();
  void setMasterModel(SemanticModel newModel);
 
 }

@@ -1,13 +1,11 @@
 package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
-import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.SemanticModel;
-import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
@@ -19,7 +17,6 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  private AgeObjectWritable target;
  private int order;
  private boolean inferred=false;
- private Collection<AgeAttributeWritable> qualifiers;
  
  public AgeRelationImpl(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel)
  {

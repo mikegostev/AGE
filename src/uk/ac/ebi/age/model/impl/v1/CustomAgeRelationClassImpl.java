@@ -42,7 +42,7 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
   inverse.setInverseClass(this);
   inverse.setImplicit(true);
   
-  id="AgeRelationClass"+IdGenerator.getInstance().getStringId();
+  id="AgeRelationClass"+IdGenerator.getInstance().getStringId("classId");
  }
 
  protected void setInverseClass( CustomAgeRelationClassImpl inv )

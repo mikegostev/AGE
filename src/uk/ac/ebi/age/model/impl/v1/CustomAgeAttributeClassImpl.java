@@ -32,7 +32,7 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
   this.name=name2;
   owner = owner2;
   
-  id = "AgeAttributeClass"+IdGenerator.getInstance().getStringId();
+  id = "AgeAttributeClass"+IdGenerator.getInstance().getStringId("classId");
  }
 
  public String getId()

@@ -18,6 +18,8 @@ public abstract class IdGenerator
 
  public abstract String getStringId();
 
+ public abstract String getStringId( String theme );
+
  public abstract void shutdown();
  
  

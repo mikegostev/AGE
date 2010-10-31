@@ -18,7 +18,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import uk.ac.ebi.age.log.LogNode;
+import uk.ac.ebi.age.log.LogNode.Level;
+import uk.ac.ebi.age.log.impl.BufferLogger;
 import uk.ac.ebi.age.mng.SemanticManager;
+import uk.ac.ebi.age.mng.SubmissionManager;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.Attributed;
@@ -43,6 +47,7 @@ import uk.ac.ebi.age.storage.impl.AgeStorageIndex;
 import uk.ac.ebi.age.storage.impl.SerializedSubmissionReaderWriter;
 import uk.ac.ebi.age.storage.index.AgeIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
+import uk.ac.ebi.age.validator.AgeSemanticValidator;
 
 public class SerializedStorage implements AgeStorageAdm
 {
@@ -381,33 +386,75 @@ public class SerializedStorage implements AgeStorageAdm
  }
 
  @Override
- public void updateSemanticModel(SemanticModel sm) throws ModelStoreException
+ public boolean updateSemanticModel(SemanticModel sm, LogNode bfLog ) //throws ModelStoreException
  {
-  checkModelUpgradable();
-
-  saveModel(sm);
-
   try
   {
    dbLock.writeLock().lock();
+ 
+   AgeSemanticValidator validator = SubmissionManager.getInstance().getAgeSemanticValidator();
+   
+   boolean res = true;
+   
+   LogNode vldBranch = bfLog.branch("Validating model"); 
+   
+   for(SubmissionWritable sbm : submissionMap.values())
+   {
+    BufferLogger submLog=new BufferLogger();
+    
+    LogNode ln = submLog.getRootNode().branch("Validating submission: "+sbm.getId());
+    
+    if( ! validator.validate(sbm, sm, ln) )
+    {
+     ln.log(Level.ERROR,"Validation failed");
+     res = false;
+     vldBranch.append( submLog.getRootNode() );
+    }
+   }
+   
+   if( !res )
+   {
+    vldBranch.log(Level.ERROR,"Validation failed");    
+    return false;
+   }
+   else
+    vldBranch.log(Level.INFO,"Success");    
 
+   
+   LogNode saveBranch = bfLog.branch("Saving model"); 
+
+   try
+   {
+    saveModel(sm);
+   }
+   catch(ModelStoreException e)
+   {
+    saveBranch.log(Level.ERROR, "Model saving failed: "+e.getMessage());
+    return false;
+   }
+
+   saveBranch.log(Level.INFO, "Success");
+
+   LogNode setupBranch = bfLog.branch("Installing model"); 
+
+   
    for(SubmissionWritable sbm : submissionMap.values())
     sbm.setMasterModel(sm);
 
    model = sm;
 
    SemanticManager.getInstance().setMasterModel(model);
+   
+   setupBranch.log(Level.INFO, "Success");
   }
   finally
   {
    dbLock.writeLock().unlock();
   }
 
+  return true;
  }
 
- private void checkModelUpgradable()
- {
- }
 
  @Override
  public AgeObject getObjectById(String objID)

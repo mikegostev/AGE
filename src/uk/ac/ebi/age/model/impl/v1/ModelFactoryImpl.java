@@ -200,6 +200,12 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
+ public AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass relClass, SemanticModel mod)
+ {
+  return new AgeRelationInverseClassPlugPluggable(relClass, mod);
+ }
+
+ @Override
  public AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls, SemanticModel sm)
  {
   return new AgeAnnotationImpl(cls, sm);

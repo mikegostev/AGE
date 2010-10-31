@@ -34,7 +34,7 @@ class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritabl
   else
    idPrefix=pfx;
   
-  id = "AgeClass"+IdGenerator.getInstance().getStringId();
+  id = "AgeClass"+IdGenerator.getInstance().getStringId("classId");
  }
 
  public String getId()

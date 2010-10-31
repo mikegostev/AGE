@@ -13,6 +13,12 @@ public class IdGeneratorImpl extends IdGenerator
  }
 
  @Override
+ public String getStringId( String theme )
+ {
+  return getStringId();
+ }
+
+ @Override
  public void shutdown()
  {
  }

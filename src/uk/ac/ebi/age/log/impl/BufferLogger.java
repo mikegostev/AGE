@@ -55,6 +55,15 @@ public class BufferLogger
   }
 
   @Override
+  public void append(LogNode node)
+  {
+   if( subNodes == null )
+    subNodes = new ArrayList<LogNode>(10);
+   
+   subNodes.add(node);
+  }
+  
+  @Override
   public String getMessage()
   {
    return nodeMessage;
@@ -71,6 +80,8 @@ public class BufferLogger
   {
    return subNodes;
   }
+
+
   
  }
 }

@@ -21,6 +21,7 @@ import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.QualifierRule;
 import uk.ac.ebi.age.model.RelationRule;
 import uk.ac.ebi.age.model.RestrictionType;
+import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.Submission;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 
@@ -30,13 +31,25 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
  @Override
  public boolean validate(Submission subm, LogNode log)
  {
+
+  return validate(subm, Resolver.getIntsance(), log);
+ }
+
+ @Override
+ public boolean validate(Submission subm, SemanticModel mod, LogNode log)
+ {
+  return validate(subm, new ExtModelResolver(subm.getContextSemanticModel().getMasterModel(), mod), log);
+ }
+
+ private boolean validate(Submission subm, Resolver rslv, LogNode log)
+ {
   boolean res = true;
   
   for( AgeObject obj : subm.getObjects() )
   {
    LogNode ln = log.branch("Validating object ID="+obj.getId()+" (OrigId="+obj.getOriginalId()+") Order: "+obj.getOrder());
    
-   if( !validateObject( obj, obj.getAgeElClass(), ln ) )
+   if( !validateObject( obj, rslv, ln ) )
    {
     ln.log(Level.ERROR, "Object validation failed");
    
@@ -49,7 +62,8 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return res;
  }
 
- private boolean validateObject(AgeObject obj, AgeClass cls, LogNode log)
+
+ private boolean validateObject(AgeObject obj, Resolver mod, LogNode log)
  {
   boolean valid = true;
 
@@ -66,7 +80,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   boolean res;
   
   LogNode ln = log.branch("Validating object's attributes");
-  res = validateAttributed( obj, 0, ln );
+  res = validateAttributed( obj, 0,mod, ln );
   valid = res && valid;
 
   if( res )
@@ -76,7 +90,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   
   
   ln = log.branch("Validating object's relations");
-  res = validateRelations( obj, null, ln );
+  res = validateRelations( obj, null, mod, ln );
 
   valid = res && valid;
 
@@ -91,7 +105,18 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
 
  public boolean validateRelations(AgeObject obj, Collection<? extends AgeRelation> auxRels, LogNode log)
  {
-  AgeClass cls = obj.getAgeElClass();
+  return validateRelations(obj, auxRels, Resolver.getIntsance(), log);
+ }
+ 
+ private boolean validateRelations(AgeObject obj, Collection<? extends AgeRelation> auxRels, Resolver mod, LogNode log)
+ {
+  AgeClass cls = mod.getAgeClass(obj.getAgeElClass());
+  
+  if(cls == null)
+  {
+   log.log(Level.ERROR, "Class '" + obj.getAgeElClass() + "' doesn't exist in the new model");
+   return false;
+  }
 
   Collection<RelationRule> rlRules = cls.getAllRelationRules();
 
@@ -124,6 +149,15 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    if(rlCls.isCustom() || rlCls.isImplicit() )
     continue;
 
+   AgeRelationClass rslvRlCls = mod.getAgeRelationClass( rlCls );
+   
+   if( rslvRlCls == null )
+   {
+    log.log(Level.ERROR, "Relation class '"+rlCls+"' doesn't exist in the new model");
+    objectOk = false;
+    
+    continue;
+   }
    
    Collection< ? extends AgeRelation> rels = obj.getRelationsByClass(rlCls, true);
 
@@ -144,7 +178,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     }
    }
    
-   LogNode ln = log.branch("Validation relations of class '"+rlCls.getName()+"' Relations number: "+rels.size());
+   LogNode ln = log.branch("Validation relations of class '"+rlCls+"' Relations number: "+rels.size());
 
    
    boolean res = checkTargetsUnique( rels, log ); 
@@ -154,7 +188,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    
    objectOk = res && objectOk; 
 
-   res = isRelationAllowed(rlCls, rels, rlRules, ln);
+   res = isRelationAllowed(rslvRlCls, rels, rlRules, mod, ln);
    
    if( res )
     ln.log(Level.INFO, "Validation successful");
@@ -173,7 +207,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    {
     LogNode rlln = ln.branch("Validating rule: "+rlRl.getRuleId()+" of class: '"+cls.getName()+"'");
 
-    boolean res = isRelationRuleSatisfied(rlRl, obj, rlln);
+    boolean res = isRelationRuleSatisfied(rlRl, obj, mod, rlln);
     
     if( res )
      rlln.log(Level.ERROR, "Rule failed");
@@ -199,7 +233,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    LogNode atln = ln.branch("Validating relation's qualifiers. Relation class: '"+rl.getAgeElClass().getName()
      +"' Target object: "+rl.getTargetObject().getOriginalId()+" Order: "+rl.getOrder());
 
-   boolean res = validateAttributed(rl,1,atln);
+   boolean res = validateAttributed(rl,1, mod, atln);
    
    if( res )
     atln.log(Level.INFO, "Validation successful" );
@@ -220,13 +254,19 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
  }
  
  
- private boolean validateAttributed( Attributed obj, int level, LogNode log )
+ private boolean validateAttributed( Attributed obj, int level, Resolver rslv, LogNode log )
  {
   boolean valid = true;
   
 //  log.log(Level.INFO, "Validation")
   
-  AttributedClass cls = obj.getAttributedClass();
+  AttributedClass cls = rslv.getAttributedClass(obj);
+  
+  if( cls == null )
+  {
+   log.log(Level.ERROR, "Class '"+obj.getAttributedClass()+"' doesn't exist in the new model");
+   return false;
+  }
 
   Collection<AttributeAttachmentRule> atRules = cls.getAttributeAttachmentRules() != null?
     cls.getAttributeAttachmentRules() : Collections.<AttributeAttachmentRule>emptyList();
@@ -235,14 +275,24 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   
   for( AgeAttributeClass atCls : atClasses )
   {
+   AgeAttributeClass rslvAtCls = rslv.getAttributeClass(atCls);
+   
    if( atCls.isCustom() )
     continue;
+
+   if( rslvAtCls == null )
+   {
+    log.log(Level.ERROR, "Class '"+atCls+"' doesn't exist in the new model");
+    valid = false;
+    continue;
+   }
+   
    
    Collection<? extends AgeAttribute> attrs = obj.getAttributesByClass(atCls, true);
    
    LogNode ln = log.branch("Validating attributes of class '"+atCls.getName()+"' Attributes: "+attrs.size());
 
-   boolean res = isAttributeAllowed(atCls, attrs, atRules, ln);
+   boolean res = isAttributeAllowed(rslvAtCls, attrs, atRules, rslv, ln);
    
    if( res )
     ln.log(Level.INFO, "Validation successful");
@@ -261,7 +311,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    {
     LogNode sln = ln.branch("Validating rule "+atRl.getRuleId()+". Type: "+atRl.getType().name());
 
-    boolean res = isAttributeRuleSatisfied( atRl, obj, sln );
+    boolean res = isAttributeRuleSatisfied( atRl, obj, rslv, sln );
     
     if( res )
      sln.log(Level.INFO, "Validation successful");
@@ -287,7 +337,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    {
     LogNode sln = ln.branch("Validating qualifier. Class: "+attr.getAgeElClass().getName()+" Column: "+attr.getOrder() );
     
-    boolean res = validateAttributed(attr,level+1,sln);
+    boolean res = validateAttributed(attr, level+1, rslv, sln);
 
     if( res )
      sln.log(Level.INFO, "Qualifier validation successful");
@@ -308,7 +358,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return valid;
  }
  
- private boolean isAttributeAllowed(AgeAttributeClass atCls, Collection<? extends AgeAttribute> attrs, Collection<AttributeAttachmentRule> atRules, LogNode log)
+ private boolean isAttributeAllowed(AgeAttributeClass rslvAtCls, Collection<? extends AgeAttribute> attrs, Collection<AttributeAttachmentRule> atRules, Resolver rslv, LogNode log)
  {
   if( atRules == null )
    return false;
@@ -323,7 +373,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     continue;
    }
    
-   if(!((rul.isSubclassesIncluded() && atCls.isClassOrSubclass(rul.getAttributeClass())) || rul.getAttributeClass().equals(atCls)))
+   if(!((rul.isSubclassesIncluded() && rslvAtCls.isClassOrSubclass(rul.getAttributeClass())) || rul.getAttributeClass().equals(rslvAtCls)))
    {
     ln.log(Level.DEBUG, "Rule doesn't belong to attribute class. Skiping rule.");
     continue;
@@ -352,7 +402,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    
    if( rul.getQualifiers() != null  )
    {
-    if( ! matchQualifiers( rul.getQualifiers(), attrs, ln ) )
+    if( ! matchQualifiers( rul.getQualifiers(), attrs, rslv, ln ) )
     {
      ln.log(Level.INFO, "Qualifiers don't match. Skiping rule");
      continue;
@@ -369,7 +419,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return false;
  }
  
- private boolean isRelationAllowed(AgeRelationClass rlCls, Collection<? extends AgeRelation> rels, Collection<RelationRule> relRules, LogNode log)
+ private boolean isRelationAllowed(AgeRelationClass rslvRlCls, Collection<? extends AgeRelation> rels, Collection<RelationRule> relRules, Resolver rslv, LogNode log)
  {
   if( relRules == null )
    return false;
@@ -380,9 +430,9 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   {
    LogNode ln = log.branch("Validating rule "+rul.getRuleId());
 
-   if(!((rul.isSubclassesIncluded() && rlCls.isClassOrSubclass(rul.getRelationClass())) || rul.getRelationClass().equals(rlCls)))
+   if(!((rul.isSubclassesIncluded() && rslvRlCls.isClassOrSubclass(rul.getRelationClass())) || rul.getRelationClass().equals(rslvRlCls)))
    {
-    ln.log(Level.DEBUG, "Rule "+rul.getRuleId()+" doesn't match class '"+rlCls.getName()+"'. Skiping.");
+    ln.log(Level.DEBUG, "Rule "+rul.getRuleId()+" doesn't match class '"+rslvRlCls+"'. Skiping.");
     continue;
    }
    
@@ -404,7 +454,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   
    if( rul.getQualifiers() != null  )
    {
-    if( ! matchQualifiers( rul.getQualifiers(), rels, ln ) )
+    if( ! matchQualifiers( rul.getQualifiers(), rels, rslv, ln ) )
     {
      ln.log(Level.INFO, "Qualifiers don't match. Skiping rule");
      continue;
@@ -414,7 +464,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    }
 
   
-   ln.log(Level.INFO,"Relations of class '"+rlCls.getName()+"' are allowed by rule "+rul.getRuleId());
+   ln.log(Level.INFO,"Relations of class '"+rslvRlCls+"' are allowed by rule "+rul.getRuleId());
 
    
    return true;
@@ -475,7 +525,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return true;
  }
  
- private boolean isAttributeRuleSatisfied(AttributeAttachmentRule atRl, Attributed obj, LogNode log)
+ private boolean isAttributeRuleSatisfied(AttributeAttachmentRule atRl, Attributed obj, Resolver rslv, LogNode log)
  {
   if( atRl.getType() == RestrictionType.MAY )
   {
@@ -483,7 +533,15 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return true;
   }
   
-  Collection<? extends AgeAttribute> attrs = obj.getAttributesByClass(atRl.getAttributeClass(), true);
+  AgeAttributeClass reslInvRuleCls = rslv.getAttributeClassInverse(atRl.getAttributeClass());
+  
+  if( reslInvRuleCls == null )
+  {
+   log.log(Level.INFO,"Class '"+atRl.getAttributeClass()+"' doen't exist in the current model");
+   return atRl.getType() == RestrictionType.MUSTNOT;
+  }
+  
+  Collection<? extends AgeAttribute> attrs = obj.getAttributesByClass(reslInvRuleCls, true);
 
   if( attrs == null || attrs.size() == 0 )
   {
@@ -519,7 +577,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   if( atRl.getQualifiers() != null )
   {
    ln = log.branch("Matching qualifiers");
-   if( ! matchQualifiers(atRl.getQualifiers(), attrs, ln) )
+   if( ! matchQualifiers(atRl.getQualifiers(), attrs, rslv, ln) )
    {
     ln.log(Level.INFO, "Qualifiers match failed");
     
@@ -532,7 +590,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return true;
  }
 
- private boolean isRelationRuleSatisfied(RelationRule rlRl, AgeObject obj, LogNode log)
+ private boolean isRelationRuleSatisfied(RelationRule rlRl, AgeObject obj, Resolver rslv, LogNode log)
  {
   if( rlRl.getType() == RestrictionType.MAY )
   {
@@ -540,8 +598,15 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return true;
   }
 
+  AgeRelationClass origRelCls = rslv.getAgeRelationClassInverse(rlRl.getRelationClass());
   
-  Collection<? extends AgeRelation> rels = obj.getRelationsByClass(rlRl.getRelationClass(), true);
+  if( origRelCls == null )
+  {
+   log.log(Level.INFO,"Class '"+rlRl.getRelationClass()+"' doen't exist in the current model");
+   return rlRl.getType() == RestrictionType.MUSTNOT;
+  }
+  
+  Collection<? extends AgeRelation> rels = obj.getRelationsByClass(origRelCls, true);
 
   if( rels == null || rels.size() == 0 )
   {
@@ -568,7 +633,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   if( rlRl.getQualifiers() != null )
   {
    ln = log.branch("Matching qualifiers");
-   if( ! matchQualifiers(rlRl.getQualifiers(), rels, ln) )
+   if( ! matchQualifiers(rlRl.getQualifiers(), rels, rslv, ln) )
    {
     ln.log(Level.INFO, "Qualifiers match failed");
     
@@ -691,7 +756,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return true;
  }
  
- private boolean matchQualifiers( Collection<QualifierRule> qRules, Collection<? extends Attributed> attrs, LogNode log )
+ private boolean matchQualifiers( Collection<QualifierRule> qRules, Collection<? extends Attributed> attrs, Resolver resolv,  LogNode log )
  {
   boolean matched = true;
 
@@ -701,6 +766,15 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    {
     LogNode ln = log.branch("Validating qualifier rule " + qr.getRuleId());
 
+    AgeAttributeClass invReslRuleAttrCls = resolv.getAttributeClassInverse(qr.getAttributeClass());
+    
+    if( invReslRuleAttrCls == null )
+    {
+     log.log(Level.INFO, "Attribute class '"+qr.getAttributeClass()+"' doesn't exist in current model");
+     matched = false;
+     continue;
+    }
+   
     for(Attributed attr : attrs)
     {
      boolean found = false;
@@ -711,7 +785,15 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
      {
       for(AgeAttributeClass atc : clss)
       {
-       if(atc.isClassOrSubclass(qr.getAttributeClass()))
+       AgeAttributeClass rslvAtc = resolv.getAttributeClass(atc);
+       
+       if( rslvAtc == null )
+       {
+        log.log(Level.ERROR, "Attribute class '"+atc+"' doesn't exist in current model");
+        return false;
+       }
+       
+       if(rslvAtc.isClassOrSubclass(qr.getAttributeClass()))
        {
         found = true;
         break;
@@ -739,7 +821,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
      {
       for(int j = i + 1; j < attrs.size(); j++)
       {
-       if(isEqual(atList.get(i).getAttributesByClass(qr.getAttributeClass(), true), atList.get(j).getAttributesByClass(qr.getAttributeClass(), true)))
+       if(isEqual(atList.get(i).getAttributesByClass(invReslRuleAttrCls, true), atList.get(j).getAttributesByClass(invReslRuleAttrCls, true)))
        {
         ln.log(Level.INFO, "Rule validation failed. Qualifiers are not unique");
         matched = false;
@@ -756,6 +838,110 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return matched;
  }
  
+ private static class Resolver
+ {
+  private static Resolver instance = new Resolver();
+  
+  static Resolver getIntsance()
+  {
+   return instance;
+  }
+
+  public AgeRelationClass getAgeRelationClassInverse(AgeRelationClass relationClass)
+  {
+   return relationClass;
+  }
+
+  public AgeRelationClass getAgeRelationClass(AgeRelationClass rlCls)
+  {
+   return rlCls;
+  }
+
+  public AgeClass getAgeClass(AgeClass ageElClass)
+  {
+   return ageElClass;
+  }
+
+  public AgeAttributeClass getAttributeClassInverse(AgeAttributeClass attributeClass)
+  {
+   return attributeClass;
+  }
+
+  public AgeAttributeClass getAttributeClass(AgeAttributeClass atCls)
+  {
+   return atCls;
+  }
+
+  public AttributedClass getAttributedClass(Attributed obj)
+  {
+   return obj.getAttributedClass();
+  }
+ }
+ 
+ private static class ExtModelResolver extends Resolver
+ {
+  private SemanticModel origModel;
+  private SemanticModel newModel;
+  
+  ExtModelResolver(SemanticModel oldM,SemanticModel newM)
+  {
+   origModel = oldM;
+   newModel = newM;
+  }
+  
+  public AgeRelationClass getAgeRelationClassInverse(AgeRelationClass rlCls)
+  {
+   if( rlCls.isCustom() )
+    return rlCls;
+   
+   if( rlCls.isImplicit() )
+    return null;
+   
+   return origModel.getDefinedAgeRelationClass(rlCls.getName());
+  }
+
+  public AgeRelationClass getAgeRelationClass(AgeRelationClass rlCls)
+  {
+   if( rlCls.isCustom() )
+    return rlCls;
+   
+   if( rlCls.isImplicit() )
+    return null;
+   
+   return newModel.getDefinedAgeRelationClass(rlCls.getName());
+  }
+
+  public AgeClass getAgeClass(AgeClass ageElClass)
+  {
+   if( ageElClass.isCustom() )
+    return ageElClass;
+   
+   return newModel.getDefinedAgeClass(ageElClass.getName());
+  }
+
+  public AgeAttributeClass getAttributeClassInverse(AgeAttributeClass atCls)
+  {
+   if( atCls.isCustom() )
+    return atCls;
+   
+   return origModel.getDefinedAgeAttributeClass(atCls.getName());
+  }
+
+  public AgeAttributeClass getAttributeClass(AgeAttributeClass atCls)
+  {
+   if( atCls.isCustom() )
+    return atCls;
+   
+   return newModel.getDefinedAgeAttributeClass(atCls.getName());
+  }
+
+  public AttributedClass getAttributedClass(Attributed obj)
+  {
+   return null;
+  }
+
+ }
+
 // private boolean checkAllQualifiers( AgeAttributeClass atCls, Collection<? extends AgeAttribute> attrs )
 // {
 //  for( AgeAttribute attr : attrs )

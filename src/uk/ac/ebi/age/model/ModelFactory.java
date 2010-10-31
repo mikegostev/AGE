@@ -43,6 +43,7 @@ public abstract class ModelFactory
  public abstract AgeClassPlug createAgeClassPlug(AgeClass attrClass, SemanticModel sm);
  
  public abstract AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass attrClass, SemanticModel sm);
+ public abstract AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass cls, SemanticModel sm);
 
  public abstract AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id, SemanticModel semanticModelImpl);
  public abstract AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls, SemanticModel semanticModelImpl);
@@ -50,7 +51,6 @@ public abstract class ModelFactory
  public abstract AttributeAttachmentRuleWritable createAgeAttributeAttachmentRule(RestrictionType type, SemanticModel sm);
  public abstract RelationRuleWritable createAgeRelationRule(RestrictionType type, SemanticModel sm);
  public abstract QualifierRuleWritable createAgeQualifierRule( SemanticModel sm);
-
 
 
 }

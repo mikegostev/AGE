@@ -18,4 +18,5 @@ public interface LogNode
  String getMessage();
  Level getLevel();
  List<LogNode> getSubNodes();
+ void append(LogNode rootNode);
 }

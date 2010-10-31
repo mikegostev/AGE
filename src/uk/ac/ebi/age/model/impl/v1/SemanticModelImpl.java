@@ -40,12 +40,12 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  private Map<String,AgeClass> classMap = new TreeMap<String,AgeClass>();
  private Map<String,AgeAttributeClass> attributeMap = new TreeMap<String, AgeAttributeClass>();
  private Map<String,AgeRelationClass> relationMap = new TreeMap<String, AgeRelationClass>();
+ private Map<String,AgeAnnotationClass> annotationMap = new TreeMap<String, AgeAnnotationClass>();
 
  private Map<String,AgeClass> classIdMap = new TreeMap<String,AgeClass>();
  private Map<String,AgeAttributeClass> attributeIdMap = new TreeMap<String, AgeAttributeClass>();
  private Map<String,AgeRelationClass> relationIdMap = new TreeMap<String, AgeRelationClass>();
-
- private AgeRelationClass attributeAttachmentRelation;
+ private Map<String,AgeAnnotationClass> annotationIdMap = new TreeMap<String, AgeAnnotationClass>();
 
  private Collection<AgeAnnotation> annotation = new ArrayList<AgeAnnotation>();
  
@@ -172,10 +172,10 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  }
 
 
- public AgeRelationClass getAttributeAttachmentClass()
- {
-  return attributeAttachmentRelation;
- }
+// public AgeRelationClass getAttributeAttachmentClass()
+// {
+//  return attributeAttachmentRelation;
+// }
 
  public AgeClass getAgeClass(String name)
  {
@@ -334,6 +334,14 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  public void setIdGen(int id)
  {
   idGen = id;
+ }
+ 
+ public void setRootAgeClass( AgeClass cls )
+ {
+  classRoot = cls;
+  
+  classMap.put(cls.getName(), cls);
+  classIdMap.put(cls.getId(), cls);
  }
 
 }

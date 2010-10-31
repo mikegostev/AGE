@@ -167,16 +167,16 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     LogNode objLog = subLog.branch("Processing object: "+atObj.getId());
     
-    if( obj == null ) // It seems it must not happen
-    {
-     String id = atObj.getId();
-     
-     if( atObj.isIdStable() )
-     {}
-     
-     obj = sm.createAgeObject(null, me.getValue());
-     obj.setOrder( atObj.getRow() );
-    }
+//    if( obj == null ) // It seems it must not happen
+//    {
+//     String id = atObj.getId();
+//     
+//     if( atObj.isIdStable() )
+//     {}
+//     
+//     obj = sm.createAgeObject(null, me.getValue());
+//     obj.setOrder( atObj.getRow() );
+//    }
     
 //    for( ValueConverter cnv : convs )
 //    {
