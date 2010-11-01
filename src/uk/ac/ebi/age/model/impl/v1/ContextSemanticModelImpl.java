@@ -118,14 +118,14 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  }
 
  @Override
- public AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id)
+ public AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id, AgeAnnotationClass parent)
  {
-  return masterModel.createAgeAnnotationClass(name, id);
+  return masterModel.createAgeAnnotationClass(name, id, parent);
  }
  
- public AgeClassWritable createAgeClass(String name, String id, String pfx)
+ public AgeClassWritable createAgeClass(String name, String id, String pfx, AgeClass parent)
  {
-  return masterModel.createAgeClass(name, id, pfx);
+  return masterModel.createAgeClass(name, id, pfx, parent);
  }
  
  public AgeClassWritable getOrCreateCustomAgeClass(String name, String pfx, AgeClass parent)
@@ -240,9 +240,9 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.getModelFactory().createSubmission(this);
  }
 
- public AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type)
+ public AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type, AgeAttributeClass parent)
  {
-  return masterModel.createAgeAttributeClass(name, id, type);
+  return masterModel.createAgeAttributeClass(name, id, type, parent);
  }
 
  public AgeObjectWritable createAgeObject(String id, AgeClass cls)
@@ -250,9 +250,9 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.getModelFactory().createAgeObject(id, cls, this);
  }
 
- public AgeRelationClassWritable createAgeRelationClass(String name, String id)
+ public AgeRelationClassWritable createAgeRelationClass(String name, String id, AgeRelationClass parent)
  {
-  return masterModel.createAgeRelationClass(name, id);
+  return masterModel.createAgeRelationClass(name, id, parent);
  }
 
  public ModelFactory getModelFactory()
@@ -462,5 +462,29 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  {
   masterModel.setIdGen( id );
  }
+
+// @Override
+// public void setRootAgeClass(AgeClass cls)
+// {
+//  masterModel.setRootAgeClass(cls);
+// }
+//
+// @Override
+// public void setRootAgeAttributeClass(AgeAttributeClass cls)
+// {
+//  masterModel.setRootAgeAttributeClass(cls);
+// }
+//
+// @Override
+// public void setRootAgeRelationClass(AgeRelationClass cls)
+// {
+//  masterModel.setRootAgeRelationClass(cls);
+// }
+//
+// @Override
+// public void setRootAgeAnnotationClass(AgeAnnotationClass cls)
+// {
+//  masterModel.setRootAgeAnnotationClass(cls);
+// }
 
 }

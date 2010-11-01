@@ -17,27 +17,30 @@ import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 
 public interface SemanticModel
 {
+ static final String ROOT_CLASS_NAME = "Class";
+ static final String ROOT_ATTRIBUTE_CLASS_NAME = "Attribute";
+ static final String ROOT_RELATION_CLASS_NAME = "Relation";
+ static final String ROOT_ANNOTATION_CLASS_NAME = "Annotation";
+ static final String ROOT_CLASS_ID = "__RootAgeClass";
+ static final String ROOT_ATTRIBUTE_CLASS_ID = "__RootAgeAttributeClass";
+ static final String ROOT_RELATION_CLASS_ID = "__RootAgeRelationClass";
+ static final String ROOT_ANNOTATION_CLASS_ID = "__RootAgeAnnotationClass";
+
  int getIdGen();
  void setIdGen( int id );
  
- AgeClassWritable createAgeClass(String name, String id, String pfx);
-
- AgeRelationClassWritable createAgeRelationClass(String name, String id);
-
- AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type);
- AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id);
- AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls);
-
+ AgeClassWritable createAgeClass(String name, String id, String pfx, AgeClass parent);
+ AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type, AgeAttributeClass parent);
+ AgeRelationClassWritable createAgeRelationClass(String name, String id, AgeRelationClass parent);
+ AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id, AgeAnnotationClass parent);
  
+ AgeObjectWritable createAgeObject(String id, AgeClass cls);
+ AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls);
  AgeAttributeWritable createAgeAttribute(AgeAttributeClass attr);
-
  AgeExternalRelationWritable createExternalRelation(AgeObject sourceObj, String val, AgeRelationClass relClass);
-
  AgeAttributeWritable createExternalObjectAttribute( AgeAttributeClass atCls, String val );
-
  AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass);
 
- AgeObjectWritable createAgeObject(String id, AgeClass cls);
 
  AttributeAttachmentRuleWritable createAttributeAttachmentRule(RestrictionType type);
 
@@ -82,8 +85,10 @@ public interface SemanticModel
  Collection<AgeAnnotation> getAnnotations();
 
 
-
-
+// void setRootAgeClass( AgeClass cls );
+// void setRootAgeAttributeClass( AgeAttributeClass cls );
+// void setRootAgeRelationClass( AgeRelationClass cls );
+// void setRootAgeAnnotationClass( AgeAnnotationClass cls );
 
 
 
