@@ -107,6 +107,10 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
   AgeBooleanAttributeImpl clone  = new AgeBooleanAttributeImpl(getAgeAttributeClass(), getSemanticModel());
   clone.value=this.value;
   
+  clone.setOrder( getOrder() );
+  
+  cloneAttributes( clone );
+
   return clone;
  }
 

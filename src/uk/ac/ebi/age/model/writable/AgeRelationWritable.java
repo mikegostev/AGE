@@ -7,5 +7,6 @@ public interface AgeRelationWritable extends AgeRelation, AttributedWritable, Ag
  void setOrder(int col);
 
  public void setInferred( boolean inf );
+ AgeRelationWritable createClone();
 
 }

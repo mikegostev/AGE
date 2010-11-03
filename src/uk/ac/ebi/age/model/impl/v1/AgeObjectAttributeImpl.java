@@ -96,6 +96,10 @@ class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjectAttrib
   AgeObjectAttributeImpl clone  = new AgeObjectAttributeImpl(getAgeAttributeClass(), getSemanticModel());
   clone.value=this.value;
   
+  clone.setOrder( getOrder() );
+  
+  cloneAttributes( clone );
+
   return clone;
  }
  

@@ -8,6 +8,7 @@ import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
+import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
 class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRelationWritable, Serializable
 {
@@ -63,6 +64,7 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  @Override
  public void setTargetObject(AgeObject obj)
  {
+  objId=obj.getId();
   target = obj;
  }
 
@@ -91,5 +93,16 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
   return getAgeElClass();
  }
  
+ @Override
+ public AgeRelationWritable createClone()
+ {
+  AgeExternalRelationImpl clone = new AgeExternalRelationImpl(getAgeElClass(), getSourceObject(), getTargetObjectId(), getSemanticModel());
+  clone.setOrder( getOrder() );
+  clone.infered = infered;
+  
+  cloneAttributes(clone);
+  
+  return clone;
+ }
 }
 

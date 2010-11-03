@@ -102,6 +102,10 @@ class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttributeWrita
   AgeRealAttributeImpl clone  = new AgeRealAttributeImpl(getAgeAttributeClass(), getSemanticModel());
   clone.value=this.value;
   
+  clone.setOrder( getOrder() );
+  
+  cloneAttributes( clone );
+
   return clone;
  }
  

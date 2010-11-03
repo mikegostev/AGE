@@ -95,6 +95,10 @@ class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttributeWri
   AgeStringAttributeImpl clone  = new AgeStringAttributeImpl(getAgeAttributeClass(), getSemanticModel());
   clone.value=this.value;
   
+  clone.setOrder( getOrder() );
+  
+  cloneAttributes( clone );
+  
   return clone;
  }
  

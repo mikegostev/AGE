@@ -111,16 +111,21 @@ public class ClassReference extends AgeTabElement
 
  public boolean isQualifierFor(ClassReference cr)
  {
-  if( ! ( getName().equals( cr.getName()) && isCustom() == isCustom() ) )
+  if( ! ( getName().equals( cr.getName()) && isCustom() == isCustom() ) ) // Different bases
    return false;
 
-  if( getQualifiers() == null || getQualifiers().size() == 0 )
+  if( getQualifiers() == null || getQualifiers().size() == 0 )  // This is not qualifier at all
     return false;
   
-  if( cr.getQualifiers() == null && getQualifiers().size() != 1 )
-   return false;
+  if( cr.getQualifiers() == null )
+   {
+    if( getQualifiers().size() != 1 ) // If cr is the main attribute then out qualifier chain must consist of one link
+     return false;
+    else
+     return true;
+   }
 
-  if( getQualifiers().size() != ( cr.getQualifiers().size()+1 ) )
+  if( getQualifiers().size() != ( cr.getQualifiers().size()+1 ) ) // Our chain must be 1 link longer
    return false;
   
   Iterator<ClassReference> iter1 = getQualifiers().iterator();

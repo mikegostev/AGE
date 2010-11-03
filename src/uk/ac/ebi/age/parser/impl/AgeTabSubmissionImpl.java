@@ -2,6 +2,7 @@ package uk.ac.ebi.age.parser.impl;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import uk.ac.ebi.age.parser.AgeTabObject;
@@ -12,7 +13,7 @@ import uk.ac.ebi.age.parser.BlockHeader;
 public class AgeTabSubmissionImpl implements AgeTabSubmission
 {
  private AgeTabSyntaxParser parser;
- private Map<BlockHeader, Map<String,AgeTabObject>> blockObjectMap = new HashMap<BlockHeader, Map<String,AgeTabObject>>();
+ private Map<BlockHeader, Map<String,AgeTabObject>> blockObjectMap = new LinkedHashMap<BlockHeader, Map<String,AgeTabObject>>();
  
  
  public AgeTabSubmissionImpl( AgeTabSyntaxParser p )

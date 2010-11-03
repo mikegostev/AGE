@@ -76,7 +76,7 @@ public class SubmissionManager
 
    Map<AgeObject,Collection<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Collection<AgeRelationWritable>>();
    
-   if( ! connectSubmission( ageSbm, stor, invRelMap, connLog) )
+   if( connectSubmission( ageSbm, stor, invRelMap, connLog) )
     connLog.log(Level.INFO, "Success");
    else
    {
@@ -88,10 +88,10 @@ public class SubmissionManager
    LogNode semLog = logRoot.branch("Validating semantic");
 
    if(validator.validate(ageSbm, semLog))
-    convLog.log(Level.INFO, "Success");
+    semLog.log(Level.INFO, "Success");
    else
    {
-    convLog.log(Level.ERROR, "Validation failed");
+    semLog.log(Level.ERROR, "Validation failed");
     return null;
    }
 

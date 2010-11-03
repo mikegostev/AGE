@@ -68,4 +68,15 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  {
   return getAgeElClass();
  }
+
+ @Override
+ public AgeRelationWritable createClone()
+ {
+  AgeRelationImpl clone = new AgeRelationImpl(getTargetObject(), getAgeElClass(), getSemanticModel());
+  clone.setOrder( getOrder() );
+  
+  cloneAttributes(clone);
+  
+  return clone;
+ }
 }

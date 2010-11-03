@@ -19,6 +19,50 @@ public class BufferLogger
   return rootNode;
  }
  
+ public static void printBranch( LogNode node )
+ {
+  printBranch(node, 0);
+ }
+ 
+ private static void printBranch( LogNode node, int lvl )
+ {
+  for( int i=0; i < lvl; i++ )
+   System.out.print("  ");
+  
+  if( node.getLevel() != null )
+  {
+   switch( node.getLevel() )
+   {
+    case DEBUG:
+     System.out.print("DEBG: ");
+     break;
+    case INFO:
+     System.out.print("INFO: ");
+     break;
+    case WARN:
+     System.out.print("WARN: ");
+     break;
+    case ERROR:
+     System.out.print("ERRR: ");
+     break;
+   }
+   
+   System.out.println(node.getMessage());
+  }
+  else
+  {
+   System.out.println(node.getMessage());
+   
+   if( node.getSubNodes() != null )
+   {
+    for(LogNode sbNode : node.getSubNodes() )
+     printBranch(sbNode,lvl+1);
+   }
+  }
+   
+ }
+
+ 
  class LBNode implements LogNode
  {
   private String nodeMessage;

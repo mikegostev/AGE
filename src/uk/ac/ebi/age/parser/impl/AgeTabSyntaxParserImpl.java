@@ -160,7 +160,8 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     else
     {
      String id = part;
-     boolean stable = isUnqualifiedIdsStable();
+     boolean defined = ! part.startsWith(getAnonymousObjectId());
+     boolean stable = isUnqualifiedIdsStable() && defined;
      
      String stblIdPfx = getStableIdPrefix();
      if( part.startsWith(stblIdPfx) )
@@ -177,11 +178,12 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
       if( !  id.startsWith(getUnstableIdPrefix()) )
        stable = false;
      }
+     
 
      cObj = data.getOrCreateObject(id,header,ln);
      
      cObj.setIdStable(stable);
-     cObj.setIdDefined( ! part.startsWith(getAnonymousObjectId()) );
+     cObj.setIdDefined( defined );
      cObj.setPrototype( part.equals(getCommonObjectId()) );
     }
    }

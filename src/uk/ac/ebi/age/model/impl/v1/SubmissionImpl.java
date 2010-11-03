@@ -74,15 +74,18 @@ class SubmissionImpl  implements SubmissionWritable, Serializable
 //  relLst.add(getSemanticModel().createAgeRelation(obj, submissionRelationClass));
 
   objects.add(obj);
-  
-  for( AgeRelation rel : obj.getRelations())
+
+  if( obj.getRelations() != null )
   {
-   if( rel instanceof AgeExternalRelationWritable )
+   for(AgeRelation rel : obj.getRelations())
    {
-    if( extRels == null )
-     extRels = new ArrayList<AgeExternalRelationWritable>(10);
-    
-    extRels.add((AgeExternalRelationWritable)rel);
+    if(rel instanceof AgeExternalRelationWritable)
+    {
+     if(extRels == null)
+      extRels = new ArrayList<AgeExternalRelationWritable>(10);
+
+     extRels.add((AgeExternalRelationWritable) rel);
+    }
    }
   }
  }

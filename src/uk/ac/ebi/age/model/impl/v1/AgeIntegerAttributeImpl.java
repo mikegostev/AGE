@@ -103,6 +103,10 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
   AgeIntegerAttributeImpl clone  = new AgeIntegerAttributeImpl(getAgeAttributeClass(), getSemanticModel());
   clone.value=this.value;
   
+  clone.setOrder( getOrder() );
+  
+  cloneAttributes( clone );
+
   return clone;
  }
  

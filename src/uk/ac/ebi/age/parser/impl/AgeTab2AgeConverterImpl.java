@@ -4,6 +4,7 @@ package uk.ac.ebi.age.parser.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
   Map<String,AgeObjectWritable> objectMap = null;
   
-  Map< BlockHeader, AgeClass > blk2classMap = new HashMap<BlockHeader, AgeClass>();
+  Map< BlockHeader, AgeClass > blk2classMap = new LinkedHashMap<BlockHeader, AgeClass>();
   
   for( BlockHeader hdr : data.getBlocks() )
   {
@@ -102,7 +103,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     if( cls == null )
     {
-     blkLog.log(Level.ERROR, "Class '"+colHdr.getName()+"' not found. Row: "+colHdr.getRow()+" Col: "+colHdr.getCol());
+     blkLog.log(Level.ERROR, "Defined class '"+colHdr.getName()+"' not found. Row: "+colHdr.getRow()+" Col: "+colHdr.getCol());
      result = false;
      continue;
 //     throw new SemanticException(colHdr.getRow(),colHdr.getCol(),"Class '"+colHdr.getName()+"' not found");
@@ -149,7 +150,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
   for( Map.Entry<BlockHeader, AgeClass> me : blk2classMap.entrySet() )
   {
-   LogNode subLog = log.branch("Creating value converters for class '"+me.getValue().getName()+"'. Block at :"+me.getKey().getClassColumnHeader().getRow());
+   LogNode subLog = log.branch("Creating value converters for class '"+me.getValue()+"'. Block at: "+me.getKey().getClassColumnHeader().getRow());
    
    if( ! createConvertors( me.getKey(), me.getValue(), convs, sm, classMap, subLog ) )
    {
@@ -167,16 +168,11 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     LogNode objLog = subLog.branch("Processing object: "+atObj.getId());
     
-//    if( obj == null ) // It seems it must not happen
-//    {
-//     String id = atObj.getId();
-//     
-//     if( atObj.isIdStable() )
-//     {}
-//     
-//     obj = sm.createAgeObject(null, me.getValue());
-//     obj.setOrder( atObj.getRow() );
-//    }
+    if( atObj.isPrototype()  )
+    {
+     obj = sm.createAgeObject(null, me.getValue());
+     obj.setOrder( atObj.getRow() );
+    }
     
 //    for( ValueConverter cnv : convs )
 //    {
@@ -244,8 +240,11 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      Collection<AgeObjectWritable> protoList = prototypeMap.get(me.getValue());
      
      if( protoList == null )
+     {
       protoList = new ArrayList<AgeObjectWritable>(3);
-
+      prototypeMap.put(me.getValue(), protoList);
+     }
+     
      protoList.add(obj);
     }
     else
@@ -285,8 +284,17 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    {
     for( AgeObjectWritable po : protos )
     {
-     for( AgeAttributeWritable prat : po.getAttributes() )
-      obj.addAttribute(prat.createClone());
+     if( po.getAttributes() != null)
+     {
+      for( AgeAttributeWritable prat : po.getAttributes() )
+       obj.addAttribute(prat.createClone());
+     }
+     
+     if( po.getRelations() != null)
+     {
+      for( AgeRelationWritable prel : po.getRelations() )
+       obj.addRelation(prel.createClone());
+     }
     }
    }
   }
@@ -348,85 +356,88 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
   for( AgeObjectWritable obj : data )
   {
-   
-   if( obj.getAgeElClass() != cClass )
+
+   if(obj.getAgeElClass() != cClass)
    {
-    cClass=obj.getAgeElClass();
-    
+    cClass = obj.getAgeElClass();
+
     cClassMap = wMap.get(cClass);
-    
-    if( cClassMap == null )
+
+    if(cClassMap == null)
     {
      cClassMap = new HashMap<AgeAttributeClass, AttrClassInfo>();
      wMap.put(cClass, cClassMap);
     }
    }
-   
-   for( AgeAttributeWritable attr : obj.getAttributes() )
+
+   if(obj.getAttributes() != null)
    {
-    attr.finalizeValue();
-    
-    if( attr.getAgeElClass().getDataType() == DataType.GUESS )
+    for(AgeAttributeWritable attr : obj.getAttributes())
     {
-     AttrClassInfo atcInfo = cClassMap.get(attr.getAgeElClass());
-     
-     if(atcInfo == null)
+     attr.finalizeValue();
+
+     if(attr.getAgeElClass().getDataType() == DataType.GUESS)
      {
-      atcInfo = new AttrClassInfo();
-      atcInfo.atClass = (AgeAttributeClassWritable)attr.getAgeElClass();
-      
-      cClassMap.put(atcInfo.atClass, atcInfo);
-     }
-     
-     AttrInfo aInf = new AttrInfo();
-     aInf.attr=attr;
-     aInf.obj=obj;
-     
-     atcInfo.attributes.add(aInf);
-     
-     String value = attr.getValue().toString().trim();
-     
-     if( atcInfo.isBool )
-     {
-      if( value.equalsIgnoreCase("true") )
+      AttrClassInfo atcInfo = cClassMap.get(attr.getAgeElClass());
+
+      if(atcInfo == null)
       {
-//       aInf.isBool = true;
-       aInf.boolValue=true;
+       atcInfo = new AttrClassInfo();
+       atcInfo.atClass = (AgeAttributeClassWritable) attr.getAgeElClass();
+
+       cClassMap.put(atcInfo.atClass, atcInfo);
       }
-      else if( value.equalsIgnoreCase("false") )
+
+      AttrInfo aInf = new AttrInfo();
+      aInf.attr = attr;
+      aInf.obj = obj;
+
+      atcInfo.attributes.add(aInf);
+
+      String value = attr.getValue().toString().trim();
+
+      if(atcInfo.isBool)
       {
-//       aInf.isBool = true;
-       aInf.boolValue=false;
+       if(value.equalsIgnoreCase("true"))
+       {
+        // aInf.isBool = true;
+        aInf.boolValue = true;
+       }
+       else if(value.equalsIgnoreCase("false"))
+       {
+        // aInf.isBool = true;
+        aInf.boolValue = false;
+       }
+       else
+        atcInfo.isBool = false;
       }
-      else
-       atcInfo.isBool=false;
-     }
-     
-     if( ! atcInfo.isBool )
-     {
-      if( atcInfo.isInt )
+
+      if(!atcInfo.isBool)
       {
-       try
+       if(atcInfo.isInt)
        {
-        aInf.intValue = Integer.parseInt( value );
-//        aInf.isInt=true;
+        try
+        {
+         aInf.intValue = Integer.parseInt(value);
+         // aInf.isInt=true;
+        }
+        catch(Exception e)
+        {
+         atcInfo.isInt = false;
+        }
        }
-       catch(Exception e)
+
+       if(atcInfo.isReal)
        {
-        atcInfo.isInt=false;
-       }
-      }
-      
-      if( atcInfo.isReal )
-      {
-       try
-       {
-        aInf.realValue = Double.parseDouble( value );
-//        aInf.isReal=true;
-       }
-       catch(Exception e)
-       {
-        atcInfo.isReal=false;
+        try
+        {
+         aInf.realValue = Double.parseDouble(value);
+         // aInf.isReal=true;
+        }
+        catch(Exception e)
+        {
+         atcInfo.isReal = false;
+        }
        }
       }
      }
@@ -478,6 +489,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   for( AgeObjectWritable obj : data.getObjects() )
   {
    
+   if( obj.getRelations() == null )
+    continue;
+   
    for( AgeRelationWritable rl : obj.getRelations() )
    {
     if( rl instanceof AgeExternalRelation )
@@ -489,12 +503,16 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      continue;
     
     boolean found=false;
-    for( AgeRelation irl : rl.getTargetObject().getRelations() )
+    
+    if( rl.getTargetObject().getRelations() != null )
     {
-     if( irl.getAgeElClass().equals(invClass) && irl.getTargetObject() == obj )
+     for(AgeRelation irl : rl.getTargetObject().getRelations())
      {
-      found=true;
-      break;
+      if(irl.getAgeElClass().equals(invClass) && irl.getTargetObject() == obj)
+      {
+       found = true;
+       break;
+      }
      }
     }
     
@@ -1586,16 +1604,22 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   {}
   
   @Override
-  public void convert(AgeTabValue val) throws ConvertionException
+  public void convert(AgeTabValue atVal) throws ConvertionException
   {
-   if(val == null || val.getValue().length() == 0)
+   if(atVal == null )
     return;
+   
+   String val = atVal.getValue().trim();
+
+   if(val.length() == 0)
+    return;
+
 
    AttributedWritable prop = hostConverter.getLastConvertedProperty();
 
 
    if(prop == null )
-    throw new ConvertionException(val.getRow(), val.getCol(), "There is no main value for qualification");
+    throw new ConvertionException(atVal.getRow(), atVal.getCol(), "There is no main value for qualification");
 
    
    AgeObjectWritable targetObj = null;
@@ -1606,7 +1630,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    AgeAttributeWritable obAttr = null;
    if(targetObj == null)
    {
-    obAttr = prop.createExternalObjectAttribute(val.getValue(), attrClass);
+    obAttr = prop.createExternalObjectAttribute(val, attrClass);
    }
    else
    {

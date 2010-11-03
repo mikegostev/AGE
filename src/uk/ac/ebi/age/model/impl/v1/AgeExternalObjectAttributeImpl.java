@@ -136,6 +136,10 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
   AgeExternalObjectAttributeImpl clone  = new AgeExternalObjectAttributeImpl(getAgeAttributeClass(), objId, getSemanticModel());
   clone.target=this.target;
   
+  clone.setOrder( getOrder() );
+  
+  cloneAttributes( clone );
+
   return clone;
  }
  

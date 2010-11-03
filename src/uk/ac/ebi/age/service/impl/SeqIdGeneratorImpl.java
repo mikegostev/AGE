@@ -12,7 +12,7 @@ import uk.ac.ebi.age.service.IdGenerator;
 
 public class SeqIdGeneratorImpl extends IdGenerator
 {
- private final static int ID_BLOCK_LEN=100; 
+ private final static int ID_BLOCK_LEN=10; 
 
  private static class Counter
  { 

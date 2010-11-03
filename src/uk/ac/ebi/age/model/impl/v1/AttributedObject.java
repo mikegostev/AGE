@@ -106,8 +106,11 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
   
   attribMap = new HashMap<AgeAttributeClass, List<AgeAttributeWritable>>();
   
-  for( AgeAttributeWritable attr : attributes )
-   addAttribToMap(attr);
+  if( attributes != null )
+  {
+   for( AgeAttributeWritable attr : attributes )
+    addAttribToMap(attr);
+  }
   
   return attribMap;
  }
@@ -172,5 +175,14 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
  public void reset()
  {
   attribMap=null;
+ }
+ 
+ protected void cloneAttributes( AttributedObject objClone )
+ {
+  if( attributes != null )
+  {
+   for( AgeAttributeWritable attr : attributes )
+    objClone.addAttribute(attr.createClone());
+  }
  }
 }
