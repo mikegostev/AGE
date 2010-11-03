@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.log.impl;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,42 +22,48 @@ public class BufferLogger
  
  public static void printBranch( LogNode node )
  {
-  printBranch(node, 0);
+  printBranch(node, new PrintWriter( System.out ), 0);
  }
  
- private static void printBranch( LogNode node, int lvl )
+ public static void printBranch( LogNode node, PrintWriter out  )
+ {
+  printBranch(node, out, 0);
+ }
+
+ 
+ private static void printBranch( LogNode node, PrintWriter out, int lvl )
  {
   for( int i=0; i < lvl; i++ )
-   System.out.print("  ");
+   out.print("  ");
   
   if( node.getLevel() != null )
   {
    switch( node.getLevel() )
    {
     case DEBUG:
-     System.out.print("DEBG: ");
+     out.print("DEBG: ");
      break;
     case INFO:
-     System.out.print("INFO: ");
+     out.print("INFO: ");
      break;
     case WARN:
-     System.out.print("WARN: ");
+     out.print("WARN: ");
      break;
     case ERROR:
-     System.out.print("ERRR: ");
+     out.print("ERRR: ");
      break;
    }
    
-   System.out.println(node.getMessage());
+   out.println(node.getMessage());
   }
   else
   {
-   System.out.println(node.getMessage());
+   out.println(node.getMessage());
    
    if( node.getSubNodes() != null )
    {
     for(LogNode sbNode : node.getSubNodes() )
-     printBranch(sbNode,lvl+1);
+     printBranch(sbNode,out, lvl+1);
    }
   }
    

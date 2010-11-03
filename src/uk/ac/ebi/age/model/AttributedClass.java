@@ -8,4 +8,5 @@ public interface AttributedClass
  Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules();
  
  String getName();
+ boolean isCustom();
 }

@@ -95,7 +95,7 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
  @Override
  public Collection< ? extends AgeAttributeWritable> getAttributes(AgeAttributeClass cls)
  {
-  return getAttribMap().get(cls.getId());
+  return getAttribMap().get(cls);
  }
 
  

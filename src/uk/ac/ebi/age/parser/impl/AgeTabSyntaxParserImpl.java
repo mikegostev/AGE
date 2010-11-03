@@ -153,7 +153,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    {
     if( part.equals(getAnonymousObjectId()) )
     { 
-     String id = IdGenerator.getInstance().getStringId();
+     String id = "??"+IdGenerator.getInstance().getStringId("tempObjectId");
      cObj = data.createObject(id,header,ln);
      cObj.setIdDefined(false);
     }

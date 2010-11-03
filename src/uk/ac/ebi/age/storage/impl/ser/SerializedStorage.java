@@ -310,7 +310,10 @@ public class SerializedStorage implements AgeStorageAdm
     
     AgeObject targObj = mainIndexMap.get(obAttr.getTargetObjectId());
     
-    obAttr.setTargetObject(targObj);
+    if( targObj == null )
+     log.warn("Can't resolve object attribute: "+obAttr.getTargetObjectId());
+    else
+     obAttr.setTargetObject(targObj);
    }
    
    connectObjectAttributes(attr);
@@ -414,6 +417,8 @@ public class SerializedStorage implements AgeStorageAdm
    
    if( !res )
    {
+    BufferLogger.printBranch(vldBranch);
+    
     vldBranch.log(Level.ERROR,"Validation failed");    
     return false;
    }

@@ -278,7 +278,7 @@ public class SubmissionManager
     extRelLog.log(Level.INFO, "Success");
   }
   
-  res = uniqRes && extRelRes;
+  res = res && extRelRes;
 
   
   return res;
@@ -351,7 +351,7 @@ public class SubmissionManager
    }
    
    atStk.push(attr);
-   connectExternalAttrs(atStk,stor,log);
+   res = res && connectExternalAttrs(atStk,stor,log);
    atStk.pop();
   }
  

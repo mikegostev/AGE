@@ -131,10 +131,10 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
      if( ! atObj.isIdStable() )
      {
-      id = cls.getIdPrefix()+IdGenerator.getInstance().getStringId();
-      
-      if( atObj.isIdDefined() )
-       id+="-"+atObj.getId();
+      id = cls.getIdPrefix()+IdGenerator.getInstance().getStringId()+"-"+atObj.getId();
+//      
+//      if( atObj.isIdDefined() )
+//       id+="-"+atObj.getId();
      }
      
      obj = sm.createAgeObject(id, cls);
@@ -257,7 +257,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
   if( ! result )
   {
-   log.log(Level.ERROR, "Conversion failed");
+//   log.log(Level.ERROR, "Conversion failed");
    return null;
   }
   

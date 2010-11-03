@@ -947,6 +947,18 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
 
   public AttributedClass getAttributedClass(Attributed obj)
   {
+   AttributedClass cls = obj.getAttributedClass();
+   
+   if( cls.isCustom() )
+    return cls;
+   
+   if( cls instanceof AgeClass )
+    return newModel.getDefinedAgeClass(cls.getName());
+   else if ( cls instanceof AgeAttributeClass )
+    return newModel.getDefinedAgeAttributeClass(cls.getName());
+   else if ( cls instanceof AgeRelationClass )
+    return newModel.getDefinedAgeRelationClass(cls.getName());
+   
    return null;
   }
 
