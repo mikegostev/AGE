@@ -201,10 +201,6 @@ public class SerializedStorage implements AgeStorageAdm
    for( AgeObjectWritable obj : sbm.getObjects() )
     mainIndexMap.put(obj.getId(), obj);
    
-
-   
-//   for( AgeObjectWritable obj : sbm.getObjects() )
-   
    updateIndices( sbm );
    
    for(DataChangeListener chls : chgListeners )
