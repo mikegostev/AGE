@@ -31,14 +31,14 @@ abstract class AgeAbstractClassImpl extends AgeSemanticElementImpl implements  A
 
  public boolean isClassOrSubclass( AgeAbstractClass cl )
  {
-  if( cl.equals(this) )
+  if( cl.equals(this) && cl.isCustom() == isCustom() )
    return true;
   
-  if( cl.getSubClasses() == null )
+  if( getSuperClasses() == null )
    return false;
   
-  for( AgeAbstractClass supcls : cl.getSubClasses() )
-   if( isClassOrSubclass(supcls) )
+  for( AgeAbstractClass supcls : getSuperClasses() )
+   if( supcls.isClassOrSubclass(cl) )
     return true;
   
   return false;

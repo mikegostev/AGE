@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
+import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.SemanticModel;
@@ -23,7 +24,8 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
  
  private AgeClass targetClass;
 
- private Collection<AgeAttributeClass> superClasses;
+ private Collection<AgeAttributeClassPlug> superClassPlugs;
+ private transient Collection<AgeAttributeClass> superClasses;
  
  public CustomAgeAttributeClassImpl(String name2, DataType type, SemanticModel sm, AgeClass owner2)
  {
@@ -58,9 +60,21 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
  
  public Collection<AgeAttributeClass> getSuperClasses()
  {
+  buildSuperClassCache();
+  
   return superClasses;
  }
  
+ private void buildSuperClassCache()
+ {
+  if( superClasses != null || superClassPlugs == null )
+   return;
+   
+  superClasses = new ArrayList<AgeAttributeClass>( superClassPlugs.size() );
+  
+  for( AgeAttributeClassPlug plg : superClassPlugs )
+   superClasses.add(plg.getAgeAttributeClass());
+ }
  
  public Collection<AgeAttributeClass> getSubClasses()
  {
@@ -93,10 +107,13 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
  @Override
  public void addSuperClass(AgeAttributeClass supcls)
  {
-  if( superClasses == null )
-   superClasses = new ArrayList<AgeAttributeClass>(4);
+  if( superClassPlugs == null )
+   superClassPlugs = new ArrayList<AgeAttributeClassPlug>(4);
   
-  superClasses.add(supcls);
+  superClassPlugs.add( getSemanticModel().getAgeAttributeClassPlug(supcls) );
+  
+  if( superClasses != null )
+   superClasses.add(supcls);
  }
 
  @Override
