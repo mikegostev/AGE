@@ -70,7 +70,7 @@ public class BufferLogger
  }
 
  
- class LBNode implements LogNode
+ private static class LBNode implements LogNode
  {
   private String nodeMessage;
   private Level level;
