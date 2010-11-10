@@ -5,8 +5,8 @@ import uk.ac.ebi.age.model.AgeRelationClass;
 
 public interface AgeRelationClassWritable extends AgeRelationClass, AgeAbstractClassWritable, AttributedClassWritable
 {
- void addSubClass(AgeRelationClass makeRelationsBranch);
- void addSuperClass(AgeRelationClass ageRelCls);
+ void addSubClass(AgeRelationClassWritable makeRelationsBranch);
+ void addSuperClass(AgeRelationClassWritable ageRelCls);
 
  void addDomainClass(AgeClass dmCls);
  void addRangeClass(AgeClass dmCls);

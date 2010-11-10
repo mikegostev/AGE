@@ -70,14 +70,17 @@ class AgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttribute
  }
  
  @Override
- public void addSuperClass( AgeAttributeClass cl )
+ public void addSuperClass( AgeAttributeClassWritable cl )
  {
-  superClasses.add(cl);
+  if( superClasses.add(cl) )
+   cl.addSubClass(this);
  }
 
- public void addSubClass( AgeAttributeClass cl )
+ @Override
+ public void addSubClass( AgeAttributeClassWritable cl )
  {
-  subClasses.add(cl);
+  if( subClasses.add(cl) )
+   cl.addSuperClass(this);
  }
 
  

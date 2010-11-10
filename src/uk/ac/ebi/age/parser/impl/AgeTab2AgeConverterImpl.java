@@ -674,11 +674,11 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     }
    }
    
-   AgeAttributeClass parent = null;
+   AgeAttributeClassWritable parent = null;
 
    if( cr.getParentClass() != null )
    {
-    parent = sm.getDefinedAgeAttributeClass(cr.getParentClass());
+    parent = (AgeAttributeClassWritable)sm.getDefinedAgeAttributeClass(cr.getParentClass());
     
     if( parent == null )
     {
@@ -727,20 +727,30 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  private int addConverter( List<ValueConverter> convs, ValueConverter cnv )
  {
   int i=0;
-  for( ValueConverter exstC : convs )
-  {
-   if( exstC.getClassReference().equals( cnv.getClassReference() ) )
-   {
-    convs.add(new InvalidColumnConvertor(cnv.getClassReference()));
-    return i;
-   }
-   
-   i++;
-//   if( exstC.getProperty() == cnv.getProperty() && exstC.getQualifiedProperty() == cnv.getQualifiedProperty() && cnv.getProperty() != null )
-//    throw new SemanticException(cnv.getClassReference().getRow(), cnv.getClassReference().getCol(),
-//      "Column header duplicates header at column "+exstC.getClassReference().getCol());
-  }
   
+  if( cnv.getClassReference() != null )
+  {
+   for(ValueConverter exstC : convs)
+   {
+    if(exstC.getClassReference() == null)
+     continue;
+
+    if(exstC.getClassReference().equals(cnv.getClassReference()))
+    {
+     convs.add(new InvalidColumnConvertor(cnv.getClassReference()));
+     return i;
+    }
+
+    i++;
+    
+    // if( exstC.getProperty() == cnv.getProperty() &&
+    // exstC.getQualifiedProperty() == cnv.getQualifiedProperty() &&
+    // cnv.getProperty() != null )
+    // throw new SemanticException(cnv.getClassReference().getRow(),
+    // cnv.getClassReference().getCol(),
+    // "Column header duplicates header at column "+exstC.getClassReference().getCol());
+   }
+  }
   convs.add(cnv);
   return -1;
  }

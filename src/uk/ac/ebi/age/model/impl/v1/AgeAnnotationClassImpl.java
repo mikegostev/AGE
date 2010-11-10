@@ -55,15 +55,17 @@ class AgeAnnotationClassImpl extends AgeAbstractClassImpl implements AgeAnnotati
  }
  
  @Override
- public void addSuperClass( AgeAnnotationClass cl )
+ public void addSuperClass( AgeAnnotationClassWritable spCls )
  {
-  superClasses.add(cl);
+  if( superClasses.add(spCls) )
+   spCls.addSubClass(this);
  }
 
  @Override
- public void addSubClass( AgeAnnotationClass cl )
+ public void addSubClass( AgeAnnotationClassWritable sbCls )
  {
-  subClasses.add(cl);
+  if( subClasses.add(sbCls) )
+   sbCls.addSuperClass(this);
  }
 
  @Override 

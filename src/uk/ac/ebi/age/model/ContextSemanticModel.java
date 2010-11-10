@@ -16,7 +16,7 @@ public interface ContextSemanticModel extends SemanticModel
  AgeAttributeClass getCustomAgeAttributeClass(String name, AgeClass blkCls);
 
  AgeClassWritable getOrCreateCustomAgeClass(String name, String pfx, AgeClass parent);
- AgeAttributeClassWritable getOrCreateCustomAgeAttributeClass(String name, DataType type, AgeClass owner, AgeAttributeClass superClass);
+ AgeAttributeClassWritable getOrCreateCustomAgeAttributeClass(String name, DataType type, AgeClass owner, AgeAttributeClassWritable superClass);
  AgeRelationClassWritable getOrCreateCustomAgeRelationClass(String name, AgeClass range, AgeClass owner, AgeRelationClass superClass);
 
  AgeClassProperty getDefinedAgeClassProperty( String name );

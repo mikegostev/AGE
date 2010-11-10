@@ -6,8 +6,8 @@ import uk.ac.ebi.age.model.DataType;
 
 public interface AgeAttributeClassWritable extends AgeAttributeClass, AgeAbstractClassWritable, AttributedClassWritable
 {
- void addSubClass(AgeAttributeClass sbcls);
- void addSuperClass(AgeAttributeClass sbcls);
+ void addSubClass(AgeAttributeClassWritable sbcls);
+ void addSuperClass(AgeAttributeClassWritable sbcls);
 
  void setDataType( DataType typ );
  void setAbstract(boolean b);

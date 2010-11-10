@@ -99,13 +99,13 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
  }
 
  @Override
- public void addSubClass(AgeAttributeClass sbcls)
+ public void addSubClass(AgeAttributeClassWritable sbcls)
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public void addSuperClass(AgeAttributeClass supcls)
+ public void addSuperClass(AgeAttributeClassWritable supcls)
  {
   if( superClassPlugs == null )
    superClassPlugs = new ArrayList<AgeAttributeClassPlug>(4);

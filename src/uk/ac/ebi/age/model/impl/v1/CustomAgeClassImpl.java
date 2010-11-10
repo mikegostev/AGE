@@ -117,13 +117,13 @@ class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritabl
 
 
  @Override
- public void addSubClass(AgeClass cls)
+ public void addSubClass(AgeClassWritable cls)
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public void addSuperClass(AgeClass cls)
+ public void addSuperClass(AgeClassWritable cls)
  {
   if( superClasses == null )
    superClasses = new ArrayList<AgeClass>(4);

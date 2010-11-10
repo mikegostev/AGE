@@ -72,16 +72,19 @@ class AgeRelationClassImpl extends AgeAbstractClassImpl implements AgeRelationCl
   range.add(rgCls);
  }
 
- public void addSubClass(AgeRelationClass sbcls)
+ @Override
+ public void addSuperClass( AgeRelationClassWritable spCls )
  {
-  subclasses.add(sbcls);
+  if( superclasses.add(spCls) )
+   spCls.addSubClass(this);
  }
 
- public void addSuperClass(AgeRelationClass sbcls)
+ @Override
+ public void addSubClass( AgeRelationClassWritable sbCls )
  {
-  superclasses.add(sbcls);
+  if( subclasses.add(sbCls) )
+   sbCls.addSuperClass(this);
  }
-
 
  @Override
  public boolean isWithinRange(AgeClass key)

@@ -133,7 +133,7 @@ public class SemanticModelImpl implements SemanticModel, Serializable
   AgeAttributeClassWritable cls = modelFactory.createAgeAttributeClass(name, id, type, this);
   
   ((AgeAttributeClassWritable)parent).addSubClass(cls);
-  cls.addSuperClass(parent);
+  cls.addSuperClass((AgeAttributeClassWritable)parent);
   
   attributeMap.put(name, cls);
   attributeIdMap.put(id, cls);
@@ -149,7 +149,7 @@ public class SemanticModelImpl implements SemanticModel, Serializable
   AgeAnnotationClassWritable cls = modelFactory.createAgeAnnotationClass(name, id, this);
   
   ((AgeAnnotationClassWritable)parent).addSubClass(cls);
-  cls.addSuperClass(parent);
+  cls.addSuperClass((AgeAnnotationClassWritable)parent);
   
   annotationMap.put(name, cls);
   annotationIdMap.put(id, cls);
@@ -167,7 +167,7 @@ public class SemanticModelImpl implements SemanticModel, Serializable
   AgeClassWritable cls = modelFactory.createAgeClass(name, id, pfx, this);
   
   ((AgeClassWritable)parent).addSubClass(cls);
-  cls.addSuperClass(parent);
+  cls.addSuperClass((AgeClassWritable)parent);
   
   classMap.put(name, cls);
   classIdMap.put(id, cls);
@@ -187,7 +187,7 @@ public class SemanticModelImpl implements SemanticModel, Serializable
   if( parent != null )
   {
    ((AgeRelationClassWritable) parent).addSubClass(cls);
-   cls.addSuperClass(parent);
+   cls.addSuperClass((AgeRelationClassWritable) parent);
 
    relationMap.put(name, cls);
    relationIdMap.put(id, cls);

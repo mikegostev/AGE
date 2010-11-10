@@ -69,7 +69,8 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel;
  }
  
- public AgeAttributeClassWritable getOrCreateCustomAgeAttributeClass(String name, DataType type, AgeClass cls, AgeAttributeClass supCls )
+ @Override
+ public AgeAttributeClassWritable getOrCreateCustomAgeAttributeClass(String name, DataType type, AgeClass cls, AgeAttributeClassWritable supCls )
  {
   AgeAttributeClassWritable acls = null;
 
@@ -112,7 +113,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   }
   
   if( supCls != null )
-   cls.addSuperClass(supCls);
+   cls.addSuperClass( (AgeRelationClassWritable)supCls);
   
   return cls;
  }
@@ -138,7 +139,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
    customClassMap.put(name, cls);
   }
   
-  cls.addSuperClass(parent);
+  cls.addSuperClass((AgeClassWritable)parent);
   
   return cls;
  }
@@ -240,6 +241,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.getModelFactory().createSubmission(this);
  }
 
+ @Override
  public AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type, AgeAttributeClass parent)
  {
   return masterModel.createAgeAttributeClass(name, id, type, parent);

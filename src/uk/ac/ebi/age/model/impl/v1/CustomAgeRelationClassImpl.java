@@ -202,13 +202,13 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  }
 
  @Override
- public void addSubClass(AgeRelationClass makeRelationsBranch)
+ public void addSubClass(AgeRelationClassWritable makeRelationsBranch)
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public void addSuperClass(AgeRelationClass ageRelCls)
+ public void addSuperClass(AgeRelationClassWritable ageRelCls)
  {
   if(superClasses == null)
    superClasses = new ArrayList<AgeRelationClass>(4);

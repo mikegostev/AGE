@@ -7,9 +7,9 @@ public interface AgeAnnotationClassWritable extends AgeAnnotationClass, AgeAbstr
 
  void setAbstract(boolean b);
 
- void addSuperClass(AgeAnnotationClass cl);
+ void addSuperClass(AgeAnnotationClassWritable cl);
 
- void addSubClass(AgeAnnotationClass cl);
+ void addSubClass(AgeAnnotationClassWritable cl);
 
  void addAlias(String ali);
 

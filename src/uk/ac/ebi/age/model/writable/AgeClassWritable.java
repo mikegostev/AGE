@@ -10,8 +10,8 @@ import uk.ac.ebi.age.model.RelationRule;
 
 public interface AgeClassWritable extends AgeClass, AgeAbstractClassWritable, AttributedClassWritable
 {
- void addSubClass(AgeClass cls);
- void addSuperClass(AgeClass cls);
+ void addSubClass(AgeClassWritable cls);
+ void addSuperClass(AgeClassWritable cls);
 
  void setId(String string);
  

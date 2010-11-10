@@ -59,16 +59,19 @@ class AgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Ser
   this.id = id;
  }
  
- public void addSubClass(AgeClass sbCls)
+ @Override
+ public void addSuperClass( AgeClassWritable spCls )
  {
-  subClasses.add(sbCls);
+  if( superClasses.add(spCls) )
+   spCls.addSubClass(this);
  }
 
- public void addSuperClass(AgeClass sbCls)
+ @Override
+ public void addSubClass( AgeClassWritable sbCls )
  {
-  superClasses.add(sbCls);
+  if( subClasses.add(sbCls) )
+   sbCls.addSuperClass(this);
  }
- 
 
  
  public Collection<AgeClass> getSuperClasses()
