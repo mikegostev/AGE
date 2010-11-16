@@ -41,9 +41,22 @@ public class SubmissionManager
  private AgeTab2AgeConverter converter = new AgeTab2AgeConverterImpl();
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
  
- public SubmissionWritable prepareSubmission( String text, SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
+ public SubmissionWritable prepareSubmission( String text, String name, boolean update,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
  {
   AgeTabSubmission atSbm=null;
+  
+  SubmissionWritable origSbm = null;
+  
+  if( update && name != null )
+  {
+   origSbm = stor.getSubmission(name);
+   
+   if( origSbm == null )
+   {
+    logRoot.log(Level.ERROR, "The storage doesn't contain submission with ID='"+name+"'");
+    return null;
+   }
+  }
   
   LogNode atLog = logRoot.branch("Parsing AgeTab");
   try
@@ -95,6 +108,20 @@ public class SubmissionManager
     return null;
    }
 
+   if( origSbm != null )
+   {
+    Collection<AgeExternalRelationWritable> origExtRels = origSbm.getExternalRelations();
+    
+    if( origExtRels != null )
+    {
+     for(AgeExternalRelationWritable extRel : origExtRels )
+     {
+      // TODO detaching original submission
+     }
+    }
+   }
+   
+   
    if( invRelMap.size() > 0 )
    {
     LogNode invRelLog = connLog.branch("Validating inverse external relations semantic");

@@ -105,6 +105,12 @@ public class SerializedStorage implements AgeStorageAdm
 //  }
 // }
 
+ @Override
+ public SubmissionWritable getSubmission(String name)
+ {
+  return submissionMap.get(name);
+ }
+ 
  public AgeIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts)
  {
   AgeIndex idx = new AgeIndex();
@@ -496,5 +502,7 @@ public class SerializedStorage implements AgeStorageAdm
   for( AgeRelationWritable r : rels )
    obj.addRelation(r);
  }
+
+
  
 }

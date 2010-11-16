@@ -23,5 +23,7 @@ public interface AgeStorageAdm extends AgeStorage
 
  void addRelations(String key, Collection<AgeRelationWritable> value);
 
+ SubmissionWritable getSubmission(String name);
+
 
 }
