@@ -25,6 +25,8 @@ import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.mng.SubmissionManager;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
+import uk.ac.ebi.age.model.AgeRelation;
+import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
@@ -138,17 +140,29 @@ public class SerializedStorage implements AgeStorageAdm
  {
   ArrayList<AgeObject> res = new ArrayList<AgeObject>();
 
-  for( AgeStorageIndex idx : indexMap.values() )
+  for( Map.Entry<AgeIndex, AgeStorageIndex> me : indexMap.entrySet() )
   {
-  
-  Iterable<AgeObject> trv = traverse(idx.getQuery(), Collections.singleton(s) );
+   AgeStorageIndex idx = me.getValue();
+   
+   Collection<SubmissionWritable> objects = null;
+   
+   if( idx.getQuery().getExpression().isTestingRelations() && s.getExternalRelations() != null && s.getExternalRelations().size() > 0 )
+   {
+    idx.reset();
+    objects = submissionMap.values();
+   }
+   else
+    objects = Collections.singleton(s);
+   
+   
+   Iterable<AgeObject> trv = traverse(idx.getQuery(), objects);
 
-  res.clear();
-  
-  for(AgeObject nd : trv)
-   res.add(nd);
-  
-   if( res.size() > 0 )
+   res.clear();
+
+   for(AgeObject nd : trv)
+    res.add(nd);
+
+   if(res.size() > 0)
     idx.index(res);
   }
  }
@@ -276,12 +290,54 @@ public class SerializedStorage implements AgeStorageAdm
     {
      for( AgeExternalRelationWritable exr : smb.getExternalRelations() )
      {
+      if( exr.getTargetObject() != null )
+       continue;
+      
       AgeObjectWritable tgObj = mainIndexMap.get(exr.getTargetObjectId());
       
       if( tgObj == null )
        log.warn("Can't resolve external relation. "+exr.getTargetObjectId());
       
       exr.setTargetObject(tgObj);
+      
+      AgeRelationClass invRCls = exr.getAgeElClass().getInverseRelationClass();
+      
+      if( invRCls == null )
+       continue;
+      
+      boolean hasInv = false;
+      
+      for( AgeRelation rl : tgObj.getRelations() )
+      {
+       if( ! rl.getAgeElClass().isClassOrSubclass(invRCls) )
+        continue;
+       
+       if( rl.getTargetObject() == exr.getSourceObject() )
+       {
+        hasInv=true;
+        break;
+       }
+       else if( rl instanceof AgeExternalRelationWritable)
+       {
+        AgeExternalRelationWritable invExR = (AgeExternalRelationWritable) rl;
+        
+        if( invExR.getTargetObjectId().equals(exr.getSourceObject().getId()) )
+        {
+         invExR.setTargetObject(exr.getSourceObject());
+         hasInv=true;
+         break;
+        }
+       }
+      }
+      
+      if( ! hasInv )
+      {
+       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
+       invRel.setTargetObject(exr.getSourceObject());
+       invRel.setInferred(true);
+       tgObj.addRelation(invRel);
+      }
+      
      }
     }
    }

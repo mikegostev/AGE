@@ -17,7 +17,14 @@ public class ObjectSelectExpression implements QueryExpression
   throw new dev.NotImplementedYetException();
  }
 
- public boolean check(AgeObject obj)
+ public boolean test(AgeObject obj)
+ {
+  // TODO Auto-generated method stub
+  throw new dev.NotImplementedYetException();
+ }
+
+ @Override
+ public boolean isTestingRelations()
  {
   // TODO Auto-generated method stub
   throw new dev.NotImplementedYetException();

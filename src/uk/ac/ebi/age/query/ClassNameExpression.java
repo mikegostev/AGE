@@ -36,7 +36,7 @@ public class ClassNameExpression implements QueryExpression
  }
 
  @Override
- public boolean check(AgeObject obj)
+ public boolean test(AgeObject obj)
  {
   AgeClass cls = obj.getAgeElClass();
   
@@ -49,6 +49,12 @@ public class ClassNameExpression implements QueryExpression
   if( cls.getName().equals(className) )
    return true;
   
+  return false;
+ }
+
+ @Override
+ public boolean isTestingRelations()
+ {
   return false;
  }
  

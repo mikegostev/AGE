@@ -14,14 +14,27 @@ public class AndExpression implements QueryExpression
   exprs.add(expr);
  }
 
- public boolean check(AgeObject obj)
+ public boolean test(AgeObject obj)
  {
   for( QueryExpression expr : exprs )
   {
-   if( ! expr.check(obj) )
+   if( ! expr.test(obj) )
     return false;
   }
   
   return true;
+ }
+ 
+
+ @Override
+ public boolean isTestingRelations()
+ {
+  for( QueryExpression expr : exprs )
+  {
+   if( expr.isTestingRelations() )
+    return true;
+  }
+  
+  return false;
  }
 }

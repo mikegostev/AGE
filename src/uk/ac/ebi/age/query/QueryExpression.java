@@ -5,6 +5,8 @@ import uk.ac.ebi.age.model.AgeObject;
 public interface QueryExpression
 {
 
- boolean check(AgeObject obj);
+ boolean test(AgeObject obj);
+
+ boolean isTestingRelations();
 
 }

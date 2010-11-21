@@ -12,4 +12,6 @@ public interface AgeStorageIndex
 
  void index(List<AgeObject> res);
 
+ void reset();
+
 }

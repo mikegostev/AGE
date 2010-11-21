@@ -5,9 +5,16 @@ import uk.ac.ebi.age.model.AgeObject;
 public class TrueExpression implements QueryExpression
 {
 
- public boolean check(AgeObject obj)
+ @Override
+ public boolean test(AgeObject obj)
  {
   return true;
+ }
+
+ @Override
+ public boolean isTestingRelations()
+ {
+  return false;
  }
 
 }

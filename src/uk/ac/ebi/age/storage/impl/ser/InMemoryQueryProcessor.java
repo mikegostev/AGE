@@ -66,9 +66,9 @@ public class InMemoryQueryProcessor implements Iterable<AgeObject>, Iterator<Age
  {
  }
 
- private boolean checkQueryConditions(AgeObject obj)
+ private boolean testQueryConditions(AgeObject obj)
  {
-  return query.getExpression().check(obj);
+  return query.getExpression().test(obj);
  }
  
  private class CondIterator implements Iterator<AgeObject>
@@ -96,7 +96,7 @@ public class InMemoryQueryProcessor implements Iterable<AgeObject>, Iterator<Age
    {
     prepObj = objItr.next();
     
-    if( checkQueryConditions( prepObj ) )
+    if( testQueryConditions( prepObj ) )
      return true; 
    }
    

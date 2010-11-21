@@ -18,6 +18,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
@@ -195,6 +196,35 @@ public class LuceneFullTextIndex implements TextIndex
    e.printStackTrace();
   }
   
+ }
+
+
+ @Override
+ public void reset()
+ {
+  try
+  {
+   IndexWriter iWriter = new IndexWriter(index, analyzer, true,
+     IndexWriter.MaxFieldLength.UNLIMITED);
+   iWriter.close();
+
+   objectList=null;
+  }
+  catch(CorruptIndexException e)
+  {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+  }
+  catch(LockObtainFailedException e)
+  {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+  }
+  catch(IOException e)
+  {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+  }
  }
 
 
