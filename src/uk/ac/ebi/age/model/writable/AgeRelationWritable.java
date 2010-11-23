@@ -9,4 +9,9 @@ public interface AgeRelationWritable extends AgeRelation, AttributedWritable, Ag
  public void setInferred( boolean inf );
  AgeRelationWritable createClone();
 
+ AgeObjectWritable getTargetObject();
+
+ 
+ AgeRelationWritable getInverseRelation();
+ void setInverseRelation( AgeRelationWritable invRl );
 }

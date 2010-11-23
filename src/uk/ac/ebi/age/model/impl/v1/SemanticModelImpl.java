@@ -13,7 +13,6 @@ import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeClassProperty;
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.DataType;
@@ -229,7 +228,7 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObject sourceObj, String id, AgeRelationClass targetClass)
+ public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass)
  {
   return modelFactory.createExternalRelation(sourceObj, id, targetClass,  this);
  }

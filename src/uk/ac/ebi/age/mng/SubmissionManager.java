@@ -216,7 +216,7 @@ public class SubmissionManager
    {
     String ref = exr.getTargetObjectId();
     
-    AgeObject tgObj = stor.getObjectById(ref);
+    AgeObjectWritable tgObj = (AgeObjectWritable)stor.getObjectById(ref);
     
     if( tgObj == null )
     {

@@ -29,7 +29,7 @@ public abstract class ModelFactory
  public abstract AgeAttributeClassWritable  createAgeAttributeClass( String name, String id, DataType type, SemanticModel sm );
  public abstract AgeAttributeClassWritable createCustomAgeAttributeClass( String name, DataType type, SemanticModel sm, AgeClass owner );
 
- public abstract AgeExternalRelationWritable createExternalRelation(AgeObject sourceObj, String id, AgeRelationClass targetClass,  SemanticModel sm);
+ public abstract AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass,  SemanticModel sm);
  public abstract AgeAttributeWritable createExternalObjectAttribute(AgeAttributeClass atCls, String id, SemanticModel sm);
 
  public abstract AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass, SemanticModel sm);

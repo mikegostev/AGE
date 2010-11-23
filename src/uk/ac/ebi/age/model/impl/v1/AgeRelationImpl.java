@@ -15,6 +15,7 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  
  private AgeRelationClassPlug relClassPlug;
  private AgeObjectWritable target;
+ private AgeRelationWritable invRelation;
  private int order;
  private boolean inferred=false;
  
@@ -78,5 +79,17 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
   cloneAttributes(clone);
   
   return clone;
+ }
+
+ @Override
+ public AgeRelationWritable getInverseRelation()
+ {
+  return invRelation;
+ }
+
+ @Override
+ public void setInverseRelation(AgeRelationWritable invRl)
+ {
+  invRelation = invRl;
  }
 }

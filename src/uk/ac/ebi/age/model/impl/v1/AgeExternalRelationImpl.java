@@ -2,12 +2,12 @@ package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
 
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
+import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
 class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRelationWritable, Serializable
@@ -17,11 +17,12 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  private AgeRelationClassPlug relClassPlug; 
  private String objId;
  private int order;
- private AgeObject sourceObject;
- private transient AgeObject target;
+ private AgeObjectWritable sourceObject;
+ AgeExternalRelationWritable invRelation;
+ private transient AgeObjectWritable target;
  private boolean infered;
 
- public AgeExternalRelationImpl(AgeRelationClass relClass, AgeObject srcOb, String id, SemanticModel sm)
+ public AgeExternalRelationImpl(AgeRelationClass relClass, AgeObjectWritable srcOb, String id, SemanticModel sm)
  {
   super(sm);
   
@@ -36,12 +37,12 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
   return relClassPlug.getAgeRelationClass();
  }
 
- public AgeObject getTargetObject()
+ public AgeObjectWritable getTargetObject()
  {
   return target;
  }
  
- public AgeObject getSourceObject()
+ public AgeObjectWritable getSourceObject()
  {
   return sourceObject;
  }
@@ -62,7 +63,7 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  }
 
  @Override
- public void setTargetObject(AgeObject obj)
+ public void setTargetObject(AgeObjectWritable obj)
  {
   objId=obj.getId();
   target = obj;
@@ -103,6 +104,24 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
   cloneAttributes(clone);
   
   return clone;
+ }
+
+ @Override
+ public AgeExternalRelationWritable getInverseRelation()
+ {
+  return invRelation;
+ }
+
+ @Override
+ public void setInverseRelation(AgeRelationWritable invRl)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void setInverseRelation(AgeExternalRelationWritable invr)
+ {
+  invRelation=invr;
  }
 }
 

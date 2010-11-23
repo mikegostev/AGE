@@ -15,7 +15,6 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeExternalRelation;
-import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
@@ -497,6 +496,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     if( rl instanceof AgeExternalRelation )
      continue;
     
+    if( rl.getInverseRelation() != null )
+     continue;
+    
     AgeRelationClass invClass = rl.getAgeElClass().getInverseRelationClass();
     
     if( invClass == null )
@@ -506,10 +508,15 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     if( rl.getTargetObject().getRelations() != null )
     {
-     for(AgeRelation irl : rl.getTargetObject().getRelations())
+     for(AgeRelationWritable irl : rl.getTargetObject().getRelations())
      {
-      if(irl.getAgeElClass().equals(invClass) && irl.getTargetObject() == obj)
+      if( irl.getTargetObject() == obj && irl.getAgeElClass().isClassOrSubclass(invClass) )
       {
+       if( irl.getInverseRelation() == null )
+        irl.setInverseRelation(rl);
+       
+       rl.setInverseRelation(irl);
+       
        found = true;
        break;
       }
@@ -517,7 +524,12 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     }
     
     if( ! found )
-     ((AgeObjectWritable)rl.getTargetObject()).createRelation(obj, invClass).setInferred(true);
+    {
+     AgeRelationWritable invR = rl.getTargetObject().createRelation(obj, invClass);
+     invR.setInferred(true);
+     invR.setInverseRelation(rl);
+     rl.setInverseRelation(invR);
+    }
    }
   }
  }
