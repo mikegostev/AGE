@@ -75,6 +75,9 @@ public class SeqIdGeneratorImpl extends IdGenerator
      }
     }
     
+    if( value == null )
+     continue;
+    
     int id;
     
     try

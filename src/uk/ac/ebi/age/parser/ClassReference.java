@@ -138,6 +138,15 @@ public class ClassReference extends AgeTabElement
   return true;
  }
 
+
+ public boolean equals( Object obj )
+ {
+  if( obj instanceof ClassReference )
+   return equals((ClassReference)obj);
+  
+  return false;
+ }
+ 
  public boolean equals( ClassReference cr )
  {
   if( ! ( getName().equals( cr.getName()) && isCustom() == isCustom() ) )

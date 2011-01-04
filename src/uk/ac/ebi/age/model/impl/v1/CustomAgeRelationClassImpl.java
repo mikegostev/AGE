@@ -27,8 +27,12 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  
  private Collection<AgeRelationClass> superClasses;
 
-
  public CustomAgeRelationClassImpl(String name, SemanticModel sm, AgeClass range, AgeClass owner)
+ {
+  this( name, sm, range, owner, null);
+ }
+
+ private CustomAgeRelationClassImpl(String name, SemanticModel sm, AgeClass range, AgeClass owner, CustomAgeRelationClassImpl inv)
  {
   super(sm);
   
@@ -38,9 +42,13 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
 
   ownerClass = sm.getAgeClassPlug(owner);
   
-  inverse = new CustomAgeRelationClassImpl( "!"+name, sm, range, owner );
-  inverse.setInverseClass(this);
-  inverse.setImplicit(true);
+  if( inv == null )
+  {
+   inverse = new CustomAgeRelationClassImpl( "!"+name, sm, range, owner, this );
+   inverse.setImplicit(true);
+  }
+  else
+   inverse = inv;
   
   id="AgeRelationClass"+IdGenerator.getInstance().getStringId("classId");
  }

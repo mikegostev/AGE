@@ -339,11 +339,16 @@ public class SubmissionManager
      
      if( atStk.size() > 1 )
      {
-      attrName = atStk.get(1).getAttributedClass().getName();
-      for( int i = 2; i < atStk.size(); i++ )
-       attrName += "["+atStk.get(i).getAttributedClass().getName()+"]";
+      StringBuilder sb = new StringBuilder(200);
       
-      attrName+= "["+attr.getAgeElClass().getName()+"]";
+      sb.append(atStk.get(1).getAttributedClass().getName());
+      
+      for( int i = 2; i < atStk.size(); i++ )
+       sb.append("[").append(atStk.get(i).getAttributedClass().getName()).append("]");
+      
+      sb.append("[").append(attr.getAgeElClass().getName()).append("]");
+      
+      attrName = sb.toString();
      }
      
      log.log(Level.ERROR,"Invalid external reference: '"+ref+"'. Target object not found. Source object: '"+obj.getId()+"' (Class: "+obj.getAgeElClass()
