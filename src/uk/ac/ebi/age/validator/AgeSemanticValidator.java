@@ -13,6 +13,6 @@ public interface AgeSemanticValidator
  boolean validate(Submission s, LogNode log);
  boolean validate(Submission subm, SemanticModel mod, LogNode log);
 
- boolean validateRelations(AgeObject key, Collection<? extends AgeRelation> value, LogNode log);
+ boolean validateRelations(AgeObject obj, Collection<? extends AgeRelation> newRels, Collection<? extends AgeRelation> remRels, LogNode log);
 
 }

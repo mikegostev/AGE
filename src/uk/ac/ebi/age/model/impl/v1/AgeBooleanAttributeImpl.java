@@ -32,14 +32,8 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
   if( val.length() == 0 )
    return;
 
-  try
-  { 
-   value=Boolean.parseBoolean(val);
-  }
-  catch (NumberFormatException e) 
-  {
-   throw new FormatException("Invalid boolean format",e);
-  }
+  value = "yes".equalsIgnoreCase(val) || "1".equals(val) || "true".equalsIgnoreCase(val);
+
  }
 
  @Override

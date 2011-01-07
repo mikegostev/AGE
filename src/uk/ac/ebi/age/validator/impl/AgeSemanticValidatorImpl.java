@@ -90,7 +90,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   
   
   ln = log.branch("Validating object's relations");
-  res = validateRelations( obj, null, mod, ln );
+  res = validateRelations( obj, null, null, mod, ln );
 
   valid = res && valid;
 
@@ -103,12 +103,12 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return valid;
  }
 
- public boolean validateRelations(AgeObject obj, Collection<? extends AgeRelation> auxRels, LogNode log)
+ public boolean validateRelations(AgeObject obj, Collection<? extends AgeRelation> auxRels, Collection<? extends AgeRelation> remRels, LogNode log)
  {
-  return validateRelations(obj, auxRels, Resolver.getIntsance(), log);
+  return validateRelations(obj, auxRels, remRels, Resolver.getIntsance(), log);
  }
  
- private boolean validateRelations(AgeObject obj, Collection<? extends AgeRelation> auxRels, Resolver mod, LogNode log)
+ private boolean validateRelations(AgeObject obj, Collection<? extends AgeRelation> auxRels, Collection<? extends AgeRelation> remRels, Resolver mod, LogNode log)
  {
   AgeClass cls = mod.getAgeClass(obj.getAgeElClass());
   
@@ -167,15 +167,17 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     
     for( AgeRelation r : auxRels )
     {
-     if( r.getAgeElClass().isClassOrSubclass(rlCls) )
+     if( r.getAgeElClass().isClassOrSubclass(rlCls) || ! remRels.contains( r ) )
       byClassRels.add(r);
     }
-    
-    if( byClassRels.size() > 0 )
+ 
+    for( AgeRelation r : rels )
     {
-     byClassRels.addAll(rels);
-     rels = byClassRels;
+     if( ! remRels.contains( r ) )
+      byClassRels.add(r);
     }
+
+    rels = byClassRels;
    }
    
    LogNode ln = log.branch("Validation relations of class '"+rlCls+"' Relations number: "+rels.size());

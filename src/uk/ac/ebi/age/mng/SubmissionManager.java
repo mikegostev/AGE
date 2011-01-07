@@ -3,7 +3,9 @@ package uk.ac.ebi.age.mng;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import uk.ac.ebi.age.log.LogNode;
@@ -108,6 +110,8 @@ public class SubmissionManager
     return null;
    }
 
+   Map<AgeObject,Collection<AgeRelationWritable>> detachedRelMap = new HashMap<AgeObject, Collection<AgeRelationWritable>>();
+
    if( origSbm != null )
    {
     Collection<AgeExternalRelationWritable> origExtRels = origSbm.getExternalRelations();
@@ -116,22 +120,34 @@ public class SubmissionManager
     {
      for(AgeExternalRelationWritable extRel : origExtRels )
      {
-      // TODO detaching original submission
+      AgeObject target = extRel.getTargetObject();
+      
+      Collection<AgeRelationWritable> objectsRels = detachedRelMap.get(target); 
+      
+      if( objectsRels == null )
+       detachedRelMap.put(target, objectsRels = new ArrayList<AgeRelationWritable>(5) );
+      
+      objectsRels.add(extRel.getInverseRelation());
      }
     }
    }
    
    
-   if( invRelMap.size() > 0 )
+   Set<AgeObject> affObjSet = new HashSet<AgeObject>();
+   
+   affObjSet.addAll( invRelMap.keySet() );
+   affObjSet.addAll( detachedRelMap.keySet() );
+   
+   if( affObjSet.size() > 0 )
    {
-    LogNode invRelLog = connLog.branch("Validating inverse external relations semantic");
+    LogNode invRelLog = connLog.branch("Validating externaly related object semantic");
     
     boolean res = true;
-    for( Map.Entry<AgeObject, Collection<AgeRelationWritable>> me :  invRelMap.entrySet() )
+    for( AgeObject obj :  affObjSet )
     {
-     LogNode objLogNode = invRelLog.branch("Validating object Id: "+me.getKey().getId()+" Class: "+me.getKey().getAgeElClass());
+     LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
      
-     if( validator.validateRelations(me.getKey(),me.getValue(),objLogNode) )
+     if( validator.validateRelations(obj, invRelMap.get(obj), detachedRelMap.get(obj), objLogNode) )
       objLogNode.log(Level.INFO, "Success");
      else
       res = false;

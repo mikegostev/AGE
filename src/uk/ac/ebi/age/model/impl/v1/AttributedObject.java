@@ -58,7 +58,7 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
  }
  
  @Override
- public void addAttribute(AgeAttributeWritable attr)
+ public synchronized void addAttribute(AgeAttributeWritable attr)
  {
   if( attributes == null )
    attributes = new ArrayList<AgeAttributeWritable>(15);
@@ -70,7 +70,7 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
  }
 
  @Override
- public void removeAttribute(AgeAttributeWritable attr)
+ public synchronized void removeAttribute(AgeAttributeWritable attr)
  {
   if( attributes == null )
    return;
@@ -93,7 +93,7 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
  }
 
  @Override
- public Collection< ? extends AgeAttributeWritable> getAttributes(AgeAttributeClass cls)
+ public synchronized Collection< ? extends AgeAttributeWritable> getAttributes(AgeAttributeClass cls)
  {
   return getAttribMap().get(cls);
  }
@@ -147,7 +147,7 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
 // }
 
  @Override
- public Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
+ public synchronized Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
  {
   Map<AgeAttributeClass,List<AgeAttributeWritable>> map = getAttribMap();
   
@@ -166,7 +166,7 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
  }
 
  @Override
- public Collection<? extends AgeAttributeClass> getAttributeClasses()
+ public synchronized Collection<? extends AgeAttributeClass> getAttributeClasses()
  {
   return getAttribMap().keySet();
  }
@@ -177,8 +177,10 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
   attribMap=null;
  }
  
- protected void cloneAttributes( AttributedObject objClone )
+ protected synchronized void cloneAttributes( AttributedObject objClone )
  {
+  attribMap=null;
+  
   if( attributes != null )
   {
    for( AgeAttributeWritable attr : attributes )

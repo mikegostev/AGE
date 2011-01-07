@@ -25,5 +25,7 @@ public interface AgeStorageAdm extends AgeStorage
 
  SubmissionWritable getSubmission(String name);
 
+ void setMaster(boolean master);
+
 
 }

@@ -75,6 +75,8 @@ public class SerializedStorage implements AgeStorageAdm
 
  private Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
  
+ private boolean master = false;
+ 
  public SerializedStorage()
  {
  }
@@ -84,6 +86,10 @@ public class SerializedStorage implements AgeStorageAdm
   return model;
  }
  
+ public void setMaster( boolean m )
+ {
+  master=m;
+ }
 // public AgeIndex createTextIndex(AgeQuery qury, TextValueExtractor cb)
 // {
 //  AgeIndex idx = new AgeIndex();
@@ -204,6 +210,9 @@ public class SerializedStorage implements AgeStorageAdm
 
  public String storeSubmission(SubmissionWritable sbm) throws RelationResolveException, SubmissionStoreException
  {
+  if( ! master )
+   throw new SubmissionStoreException("Only the master instance can store data");
+  
   try
   {
    dbLock.writeLock().lock();
@@ -449,6 +458,12 @@ public class SerializedStorage implements AgeStorageAdm
  @Override
  public boolean updateSemanticModel(SemanticModel sm, LogNode bfLog ) //throws ModelStoreException
  {
+  if( ! master )
+  {
+   bfLog.log(Level.ERROR, "Only the master instance can store data");
+   return false;
+  }
+  
   try
   {
    dbLock.writeLock().lock();

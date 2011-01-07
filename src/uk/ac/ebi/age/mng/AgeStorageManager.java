@@ -22,7 +22,7 @@ public class AgeStorageManager
   private String className;
  }
 
- public static AgeStorageAdm createInstance(DB_TYPE agedb, String dbPath) throws StorageInstantiationException
+ public static AgeStorageAdm createInstance(DB_TYPE agedb, String dbPath, boolean master) throws StorageInstantiationException
  {
   try
   {
@@ -31,6 +31,7 @@ public class AgeStorageManager
    AgeStorageAdm stor = (AgeStorageAdm)storClass.newInstance();
    
    stor.init(dbPath);
+   stor.setMaster( master );
    
    return stor;
    
