@@ -1,6 +1,5 @@
 package uk.ac.ebi.age.mng;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,7 +88,7 @@ public class SubmissionManager
    LogNode connLog = logRoot.branch("Connecting submission to the main graph");
    stor.lockWrite();
 
-   Map<AgeObject,Collection<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Collection<AgeRelationWritable>>();
+   Map<AgeObject,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
    
    if( connectSubmission( ageSbm, stor, invRelMap, connLog) )
     connLog.log(Level.INFO, "Success");
@@ -110,7 +109,7 @@ public class SubmissionManager
     return null;
    }
 
-   Map<AgeObject,Collection<AgeRelationWritable>> detachedRelMap = new HashMap<AgeObject, Collection<AgeRelationWritable>>();
+   Map<AgeObject,Set<AgeRelationWritable>> detachedRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
 
    if( origSbm != null )
    {
@@ -122,10 +121,10 @@ public class SubmissionManager
      {
       AgeObject target = extRel.getTargetObject();
       
-      Collection<AgeRelationWritable> objectsRels = detachedRelMap.get(target); 
+      Set<AgeRelationWritable> objectsRels = detachedRelMap.get(target); 
       
       if( objectsRels == null )
-       detachedRelMap.put(target, objectsRels = new ArrayList<AgeRelationWritable>(5) );
+       detachedRelMap.put(target, objectsRels = new HashSet<AgeRelationWritable>() );
       
       objectsRels.add(extRel.getInverseRelation());
      }
@@ -173,7 +172,7 @@ public class SubmissionManager
      return null;
     }
     
-    for( Map.Entry<AgeObject, Collection<AgeRelationWritable>> me :  invRelMap.entrySet() )
+    for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
      stor.addRelations(me.getKey().getId(),me.getValue());
 
    }
@@ -189,7 +188,7 @@ public class SubmissionManager
   return ageSbm;
  }
 
- private boolean connectSubmission(SubmissionWritable sbm, AgeStorageAdm stor, Map<AgeObject,Collection<AgeRelationWritable>> invRelMap, LogNode connLog)
+ private boolean connectSubmission(SubmissionWritable sbm, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
  {
   boolean res = true;
   
@@ -299,11 +298,11 @@ public class SubmissionManager
         invRel.setTargetObject(exr.getSourceObject());
         invRel.setInferred(true);
         
-        Collection<AgeRelationWritable> rels = invRelMap.get(tgObj);
+        Set<AgeRelationWritable> rels = invRelMap.get(tgObj);
         
         if( rels == null )
         {
-         rels = new ArrayList<AgeRelationWritable>(5);
+         rels = new HashSet<AgeRelationWritable>();
          invRelMap.put(tgObj, rels);
         }
         

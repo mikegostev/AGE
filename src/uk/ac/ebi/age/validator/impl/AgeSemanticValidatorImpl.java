@@ -103,12 +103,12 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return valid;
  }
 
- public boolean validateRelations(AgeObject obj, Collection<? extends AgeRelation> auxRels, Collection<? extends AgeRelation> remRels, LogNode log)
+ public boolean validateRelations(AgeObject obj, Set<? extends AgeRelation> auxRels, Set<? extends AgeRelation> remRels, LogNode log)
  {
   return validateRelations(obj, auxRels, remRels, Resolver.getIntsance(), log);
  }
  
- private boolean validateRelations(AgeObject obj, Collection<? extends AgeRelation> auxRels, Collection<? extends AgeRelation> remRels, Resolver mod, LogNode log)
+ private boolean validateRelations(AgeObject obj, Set<? extends AgeRelation> auxRels, Set<? extends AgeRelation> remRels, Resolver mod, LogNode log)
  {
   AgeClass cls = mod.getAgeClass(obj.getAgeElClass());
   
@@ -209,7 +209,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    {
     LogNode rlln = ln.branch("Validating rule: "+rlRl.getRuleId()+" of class: '"+cls.getName()+"'");
 
-    boolean res = isRelationRuleSatisfied(rlRl, obj, mod, rlln);
+    boolean res = isRelationRuleSatisfied(rlRl, obj, auxRels, remRels, mod, rlln);
     
     if( res )
      rlln.log(Level.INFO, "Rule satisfied");
@@ -545,7 +545,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return true;
   }
   
-  AgeAttributeClass reslInvRuleCls = rslv.getAttributeClassInverse(atRl.getAttributeClass());
+  AgeAttributeClass reslInvRuleCls = rslv.getAttributeClassOriginal(atRl.getAttributeClass());
   
   if( reslInvRuleCls == null )
   {
@@ -602,7 +602,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return true;
  }
 
- private boolean isRelationRuleSatisfied(RelationRule rlRl, AgeObject obj, Resolver rslv, LogNode log)
+ private boolean isRelationRuleSatisfied(RelationRule rlRl, AgeObject obj, Set< ? extends AgeRelation> auxRels, Set< ? extends AgeRelation> remRels, Resolver rslv, LogNode log)
  {
   if( rlRl.getType() == RestrictionType.MAY )
   {
@@ -610,11 +610,12 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return true;
   }
 
-  AgeRelationClass origRelCls = rslv.getAgeRelationClassInverse(rlRl.getRelationClass());
+  AgeRelationClass origRelCls = rslv.getAgeRelationClassOriginal(rlRl.getRelationClass()); //If the rule came from the new model we have to get correspondent class of the older model
   
   if( origRelCls == null )
   {
    log.log(Level.INFO,"Class '"+rlRl.getRelationClass()+"' doen't exist in the current model");
+   
    return rlRl.getType() == RestrictionType.MUSTNOT;
   }
   
@@ -624,9 +625,30 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   {
    log.log(Level.DEBUG, "No relations of rule's class");
 
-   return rlRl.getType() == RestrictionType.MUSTNOT;
+   if( rlRl.getType() == RestrictionType.MUSTNOT )
+    return true;
+
+   if( rels == null )
+    rels = Collections.emptyList();
   }
   
+  if( ( auxRels != null && auxRels.size() > 0 ) || ( remRels != null && remRels.size() > 0 ) )
+  {
+   ArrayList<AgeRelation> nRls = new ArrayList<AgeRelation>( rels.size() + auxRels.size() );
+   
+   for( AgeRelation r : rels )
+   {
+    if( ! auxRels.contains(r) || ! remRels.contains(r) )
+     nRls.add(r);
+   }
+   
+   for( AgeRelation r : auxRels )
+    nRls.add(r);
+
+   rels = nRls;
+  }
+   
+   
   LogNode ln = log.branch("Validating cardinality");
   if( ! matchCardinality( rlRl, rels.size() ) )
   {
@@ -778,7 +800,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    {
     LogNode ln = log.branch("Validating qualifier rule " + qr.getRuleId());
 
-    AgeAttributeClass invReslRuleAttrCls = resolv.getAttributeClassInverse(qr.getAttributeClass());
+    AgeAttributeClass invReslRuleAttrCls = resolv.getAttributeClassOriginal(qr.getAttributeClass());
     
     if( invReslRuleAttrCls == null )
     {
@@ -859,7 +881,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return instance;
   }
 
-  public AgeRelationClass getAgeRelationClassInverse(AgeRelationClass relationClass)
+  public AgeRelationClass getAgeRelationClassOriginal(AgeRelationClass relationClass)
   {
    return relationClass;
   }
@@ -874,7 +896,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return ageElClass;
   }
 
-  public AgeAttributeClass getAttributeClassInverse(AgeAttributeClass attributeClass)
+  public AgeAttributeClass getAttributeClassOriginal(AgeAttributeClass attributeClass)
   {
    return attributeClass;
   }
@@ -901,7 +923,8 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    newModel = newM;
   }
   
-  public AgeRelationClass getAgeRelationClassInverse(AgeRelationClass rlCls)
+  @Override
+  public AgeRelationClass getAgeRelationClassOriginal(AgeRelationClass rlCls)
   {
    if( rlCls.isCustom() )
     return rlCls;
@@ -912,6 +935,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return origModel.getDefinedAgeRelationClass(rlCls.getName());
   }
 
+  @Override
   public AgeRelationClass getAgeRelationClass(AgeRelationClass rlCls)
   {
    if( rlCls.isCustom() )
@@ -923,6 +947,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return newModel.getDefinedAgeRelationClass(rlCls.getName());
   }
 
+  @Override
   public AgeClass getAgeClass(AgeClass ageElClass)
   {
    if( ageElClass.isCustom() )
@@ -931,7 +956,8 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return newModel.getDefinedAgeClass(ageElClass.getName());
   }
 
-  public AgeAttributeClass getAttributeClassInverse(AgeAttributeClass atCls)
+  @Override
+  public AgeAttributeClass getAttributeClassOriginal(AgeAttributeClass atCls)
   {
    if( atCls.isCustom() )
     return atCls;
@@ -939,6 +965,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return origModel.getDefinedAgeAttributeClass(atCls.getName());
   }
 
+  @Override
   public AgeAttributeClass getAttributeClass(AgeAttributeClass atCls)
   {
    if( atCls.isCustom() )
@@ -947,6 +974,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return newModel.getDefinedAgeAttributeClass(atCls.getName());
   }
 
+  @Override
   public AttributedClass getAttributedClass(Attributed obj)
   {
    AttributedClass cls = obj.getAttributedClass();
