@@ -127,6 +127,12 @@ public class BufferLogger
   }
 
   @Override
+  public void setLevel( Level l )
+  {
+   level=l;
+  }
+
+  @Override
   public List<LogNode> getSubNodes()
   {
    return subNodes;
