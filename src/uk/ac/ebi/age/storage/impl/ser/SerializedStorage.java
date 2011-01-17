@@ -33,20 +33,20 @@ import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.service.IdGenerator;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.storage.DataChangeListener;
+import uk.ac.ebi.age.storage.DataModuleReaderWriter;
 import uk.ac.ebi.age.storage.IndexFactory;
 import uk.ac.ebi.age.storage.RelationResolveException;
-import uk.ac.ebi.age.storage.SubmissionReaderWriter;
 import uk.ac.ebi.age.storage.TextIndex;
 import uk.ac.ebi.age.storage.exeption.ModelStoreException;
+import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
-import uk.ac.ebi.age.storage.exeption.SubmissionStoreException;
 import uk.ac.ebi.age.storage.impl.AgeStorageIndex;
-import uk.ac.ebi.age.storage.impl.SerializedSubmissionReaderWriter;
+import uk.ac.ebi.age.storage.impl.SerializedDataModuleReaderWriter;
 import uk.ac.ebi.age.storage.index.AgeIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
@@ -56,14 +56,14 @@ public class SerializedStorage implements AgeStorageAdm
  private Log log = LogFactory.getLog(this.getClass());
  
  private static final String modelPath = "model";
- private static final String submissionsPath = "submission";
+ private static final String dmStiragePath = "data";
  private static final String modelFileName = "model.ser";
  
  private File modelFile;
  private File dataDir;
  
  private Map<String, AgeObjectWritable> mainIndexMap = new HashMap<String, AgeObjectWritable>();
- private Map<String, SubmissionWritable> submissionMap = new TreeMap<String, SubmissionWritable>();
+ private Map<String, DataModuleWritable> moduleMap = new TreeMap<String, DataModuleWritable>();
 
  private Map<AgeIndex,AgeStorageIndex> indexMap = new HashMap<AgeIndex,AgeStorageIndex>();
 
@@ -71,7 +71,7 @@ public class SerializedStorage implements AgeStorageAdm
  
  private ReadWriteLock dbLock = new ReentrantReadWriteLock();
  
- private SubmissionReaderWriter submRW = new SerializedSubmissionReaderWriter();
+ private DataModuleReaderWriter submRW = new SerializedDataModuleReaderWriter();
 
  private Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
  
@@ -114,9 +114,9 @@ public class SerializedStorage implements AgeStorageAdm
 // }
 
  @Override
- public SubmissionWritable getSubmission(String name)
+ public DataModuleWritable getDataModule(String name)
  {
-  return submissionMap.get(name);
+  return moduleMap.get(name);
  }
  
  public AgeIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts)
@@ -142,7 +142,7 @@ public class SerializedStorage implements AgeStorageAdm
 
  }
 
- private void updateIndices( SubmissionWritable s )
+ private void updateIndices( DataModuleWritable s )
  {
   ArrayList<AgeObject> res = new ArrayList<AgeObject>();
 
@@ -150,12 +150,12 @@ public class SerializedStorage implements AgeStorageAdm
   {
    AgeStorageIndex idx = me.getValue();
    
-   Collection<SubmissionWritable> objects = null;
+   Collection<DataModuleWritable> objects = null;
    
    if( idx.getQuery().getExpression().isTestingRelations() && s.getExternalRelations() != null && s.getExternalRelations().size() > 0 )
    {
     idx.reset();
-    objects = submissionMap.values();
+    objects = moduleMap.values();
    }
    else
     objects = Collections.singleton(s);
@@ -180,7 +180,7 @@ public class SerializedStorage implements AgeStorageAdm
   {
    dbLock.readLock().lock();
 
-   Iterable<AgeObject> trv = traverse(qury, submissionMap.values());
+   Iterable<AgeObject> trv = traverse(qury, moduleMap.values());
 
    ArrayList<AgeObject> res = new ArrayList<AgeObject>();
 
@@ -196,7 +196,7 @@ public class SerializedStorage implements AgeStorageAdm
 
  }
 
- private Iterable<AgeObject>  traverse(AgeQuery query, Collection<SubmissionWritable> sbms)
+ private Iterable<AgeObject>  traverse(AgeQuery query, Collection<DataModuleWritable> sbms)
  {
   return new InMemoryQueryProcessor(query,sbms);
  }
@@ -208,23 +208,23 @@ public class SerializedStorage implements AgeStorageAdm
   return ti.select(query);
  }
 
- public String storeSubmission(SubmissionWritable sbm) throws RelationResolveException, SubmissionStoreException
+ public String storeDataModule(DataModuleWritable sbm) throws RelationResolveException, ModuleStoreException
  {
   if( ! master )
-   throw new SubmissionStoreException("Only the master instance can store data");
+   throw new ModuleStoreException("Only the master instance can store data");
   
   try
   {
    dbLock.writeLock().lock();
 
 
-   String newSubmissionId = "SBM" + IdGenerator.getInstance().getStringId();
+   String newDMId = "DM" + IdGenerator.getInstance().getStringId();
 
-   sbm.setId(newSubmissionId);
+   sbm.setId(newDMId);
  
-   saveSubmission(sbm);
+   saveDataModule(sbm);
    
-   submissionMap.put(newSubmissionId, sbm);
+   moduleMap.put(newDMId, sbm);
 
    
    for( AgeObjectWritable obj : sbm.getObjects() )
@@ -235,7 +235,7 @@ public class SerializedStorage implements AgeStorageAdm
    for(DataChangeListener chls : chgListeners )
     chls.dataChanged();
    
-   return newSubmissionId;
+   return newDMId;
   }
   finally
   {
@@ -252,7 +252,7 @@ public class SerializedStorage implements AgeStorageAdm
   File modelDir = new File( baseDir, modelPath );
   
   modelFile = new File(modelDir, modelFileName );
-  dataDir = new File( baseDir, submissionsPath ); 
+  dataDir = new File( baseDir, dmStiragePath ); 
   
   if( baseDir.isFile() )
    throw new StorageInstantiationException("The initial path must be directory: "+initStr);
@@ -283,17 +283,17 @@ public class SerializedStorage implements AgeStorageAdm
    
    for( File f : dataDir.listFiles() )
    {
-    SubmissionWritable submission = submRW.read(f);
+    DataModuleWritable dm = submRW.read(f);
     
-    submissionMap.put(submission.getId(), submission);
+    moduleMap.put(dm.getId(), dm);
     
-    for( AgeObjectWritable obj : submission.getObjects() )
+    for( AgeObjectWritable obj : dm.getObjects() )
      mainIndexMap.put(obj.getId(), obj);
     
-    submission.setMasterModel(model);
+    dm.setMasterModel(model);
    }
    
-   for( SubmissionWritable smb : submissionMap.values() )
+   for( DataModuleWritable smb : moduleMap.values() )
    {
     if( smb.getExternalRelations() != null )
     {
@@ -356,7 +356,7 @@ public class SerializedStorage implements AgeStorageAdm
   }
   catch(Exception e)
   {
-   throw new StorageInstantiationException("Can't read submissions. System error", e);
+   throw new StorageInstantiationException("Can't read data modules. System error", e);
   }
   finally
   {
@@ -434,7 +434,7 @@ public class SerializedStorage implements AgeStorageAdm
   }
  }
 
- private void saveSubmission(SubmissionWritable sm) throws SubmissionStoreException
+ private void saveDataModule(DataModuleWritable sm) throws ModuleStoreException
  {
   File sbmFile = new File( dataDir, sm.getId()+submRW.getExtension() );
   
@@ -446,7 +446,7 @@ public class SerializedStorage implements AgeStorageAdm
   {
    sbmFile.delete();
    
-   throw new SubmissionStoreException("Can't store model: "+e.getMessage(), e);
+   throw new ModuleStoreException("Can't store model: "+e.getMessage(), e);
   }
  }
  
@@ -474,11 +474,11 @@ public class SerializedStorage implements AgeStorageAdm
    
    LogNode vldBranch = bfLog.branch("Validating model"); 
    
-   for(SubmissionWritable sbm : submissionMap.values())
+   for(DataModuleWritable sbm : moduleMap.values())
    {
     BufferLogger submLog=new BufferLogger();
     
-    LogNode ln = submLog.getRootNode().branch("Validating submission: "+sbm.getId());
+    LogNode ln = submLog.getRootNode().branch("Validating data module: "+sbm.getId());
     
     if( ! validator.validate(sbm, sm, ln) )
     {
@@ -516,7 +516,7 @@ public class SerializedStorage implements AgeStorageAdm
    LogNode setupBranch = bfLog.branch("Installing model"); 
 
    
-   for(SubmissionWritable sbm : submissionMap.values())
+   for(DataModuleWritable sbm : moduleMap.values())
     sbm.setMasterModel(sm);
 
    model = sm;
@@ -573,7 +573,5 @@ public class SerializedStorage implements AgeStorageAdm
   for( AgeRelationWritable r : rels )
    obj.addRelation(r);
  }
-
-
  
 }

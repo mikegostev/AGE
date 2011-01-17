@@ -16,7 +16,7 @@ import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.SemanticModel;
-import uk.ac.ebi.age.model.Submission;
+import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -40,7 +40,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  private String id;
  private String origId;
 
- private Submission subm;
+ private DataModule subm;
  
  private int order;
  
@@ -223,12 +223,12 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   this.order = order;
  }
 
- public Submission getSubmission()
+ public DataModule getDataModule()
  {
   return subm;
  }
 
- public void setSubmission(Submission subm)
+ public void setDataModule(DataModule subm)
  {
   this.subm = subm;
  }

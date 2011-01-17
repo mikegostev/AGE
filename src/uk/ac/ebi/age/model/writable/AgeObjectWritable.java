@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
-import uk.ac.ebi.age.model.Submission;
+import uk.ac.ebi.age.model.DataModule;
 
 
 
@@ -32,7 +32,7 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
 
  void setOrder(int row);
 
- void setSubmission( Submission s );
+ void setDataModule( DataModule s );
  
  void setId( String id );
 

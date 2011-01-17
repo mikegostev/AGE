@@ -12,11 +12,11 @@ import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 public abstract class ModelFactory
 {
- public abstract SubmissionWritable createSubmission( ContextSemanticModel sm );
+ public abstract DataModuleWritable createDataModule( ContextSemanticModel sm );
 
  public abstract AgeClassWritable createAgeClass(String name, String id, String pfx, SemanticModel sm);
  public abstract AgeClassWritable createCustomAgeClass(String name, String pfx, SemanticModel sm);

@@ -18,9 +18,9 @@ import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.parser.AgeTab2AgeConverter;
-import uk.ac.ebi.age.parser.AgeTabSubmission;
+import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
@@ -42,19 +42,19 @@ public class SubmissionManager
  private AgeTab2AgeConverter converter = new AgeTab2AgeConverterImpl();
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
  
- public SubmissionWritable prepareSubmission( String text, String name, boolean update,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
+ public DataModuleWritable prepareSubmission( String text, String name, boolean update,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
  {
-  AgeTabSubmission atSbm=null;
+  AgeTabModule atSbm=null;
   
-  SubmissionWritable origSbm = null;
+  DataModuleWritable origSbm = null;
   
   if( update && name != null )
   {
-   origSbm = stor.getSubmission(name);
+   origSbm = stor.getDataModule(name);
    
    if( origSbm == null )
    {
-    logRoot.log(Level.ERROR, "The storage doesn't contain submission with ID='"+name+"'");
+    logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='"+name+"'");
     return null;
    }
   }
@@ -71,8 +71,8 @@ public class SubmissionManager
    return null;
   }
 
-  LogNode convLog = logRoot.branch("Converting AgeTab to Age submission");
-  SubmissionWritable ageSbm = converter.convert(atSbm, SemanticManager.getInstance().getContextModel(context), convLog );
+  LogNode convLog = logRoot.branch("Converting AgeTab to Age data module");
+  DataModuleWritable ageSbm = converter.convert(atSbm, SemanticManager.getInstance().getContextModel(context), convLog );
   
   if( ageSbm != null )
    convLog.log(Level.INFO, "Success");
@@ -85,12 +85,12 @@ public class SubmissionManager
   
   try
   {
-   LogNode connLog = logRoot.branch("Connecting submission to the main graph");
+   LogNode connLog = logRoot.branch("Connecting data module to the main graph");
    stor.lockWrite();
 
    Map<AgeObject,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
    
-   if( connectSubmission( ageSbm, stor, invRelMap, connLog) )
+   if( connectDataModule( ageSbm, stor, invRelMap, connLog) )
     connLog.log(Level.INFO, "Success");
    else
    {
@@ -160,15 +160,15 @@ public class SubmissionManager
      return null;
     }
 
-    LogNode storLog = connLog.branch("Storing submission");
+    LogNode storLog = connLog.branch("Storing data module");
     try
     {
-     stor.storeSubmission(ageSbm);
+     stor.storeDataModule(ageSbm);
      storLog.log(Level.INFO, "Success");
     }
     catch(Exception e)
     {
-     storLog.log(Level.ERROR, "Submission storing failed: "+e.getMessage());
+     storLog.log(Level.ERROR, "Data module storing failed: "+e.getMessage());
      return null;
     }
     
@@ -188,7 +188,7 @@ public class SubmissionManager
   return ageSbm;
  }
 
- private boolean connectSubmission(SubmissionWritable sbm, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
+ private boolean connectDataModule(DataModuleWritable sbm, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
  {
   boolean res = true;
   

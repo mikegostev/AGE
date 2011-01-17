@@ -7,26 +7,26 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import uk.ac.ebi.age.model.Submission;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
-import uk.ac.ebi.age.storage.SubmissionReaderWriter;
+import uk.ac.ebi.age.model.DataModule;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
+import uk.ac.ebi.age.storage.DataModuleReaderWriter;
 
-public class XMLSubmissionReaderWriter implements SubmissionReaderWriter
+public class XMLDataModuleReaderWriter implements DataModuleReaderWriter
 {
 
  @Override
- public SubmissionWritable read(File f) throws IOException, ClassNotFoundException
+ public DataModuleWritable read(File f) throws IOException, ClassNotFoundException
  {
   FileInputStream os = new FileInputStream(f);
   XMLDecoder encoder = new XMLDecoder(os);
-  SubmissionWritable sw = (SubmissionWritable) encoder.readObject();
+  DataModuleWritable sw = (DataModuleWritable) encoder.readObject();
   encoder.close();
  
   return sw;
  }
 
  @Override
- public void write(Submission s, File f) throws IOException
+ public void write(DataModule s, File f) throws IOException
  {
   FileOutputStream os = new FileOutputStream(f);
   XMLEncoder encoder = new XMLEncoder(os);

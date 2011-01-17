@@ -140,7 +140,7 @@ public abstract class AgeTabSyntaxParser
   return new AgeTabSyntaxParserImpl(  );
  }
 
- public abstract AgeTabSubmission parse( String txt ) throws ParserException;
+ public abstract AgeTabModule parse( String txt ) throws ParserException;
 
  
  public ClassReference string2ClassReference( String str ) throws ParserException

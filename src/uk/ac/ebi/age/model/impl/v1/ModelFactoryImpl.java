@@ -26,7 +26,7 @@ import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 public class ModelFactoryImpl extends ModelFactory implements Serializable
 {
@@ -44,9 +44,9 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
  
  @Override
- public SubmissionWritable createSubmission( ContextSemanticModel sm )
+ public DataModuleWritable createDataModule( ContextSemanticModel sm )
  {
-  return new SubmissionImpl( sm );
+  return new DataModuleImpl( sm );
  }
 
  @Override
