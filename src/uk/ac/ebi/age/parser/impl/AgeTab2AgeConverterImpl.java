@@ -24,27 +24,26 @@ import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.parser.AgeTab2AgeConverter;
+import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.AgeTabObject;
-import uk.ac.ebi.age.parser.AgeTabSubmission;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.AgeTabValue;
 import uk.ac.ebi.age.parser.BlockHeader;
 import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ConvertionException;
-import uk.ac.ebi.age.service.IdGenerator;
 
 public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 {
 // private AttrAttchRel attributeAttachmentClass;
  
  @Override
- public SubmissionWritable convert(AgeTabSubmission data, ContextSemanticModel sm, LogNode log )// throws SemanticException, ConvertionException
+ public DataModuleWritable convert(AgeTabModule data, ContextSemanticModel sm, LogNode log )// throws SemanticException, ConvertionException
  {
   boolean result = true;
   
-  SubmissionWritable res = sm.createSubmission();
+  DataModuleWritable res = sm.createDataModule();
   
   Map<AgeClass, Map<String,AgeObjectWritable>> classMap = new HashMap<AgeClass, Map<String,AgeObjectWritable>>();
   Map<AgeClass, Collection<AgeObjectWritable>> prototypeMap = new HashMap<AgeClass, Collection<AgeObjectWritable>>();
@@ -130,7 +129,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
      if( ! atObj.isIdStable() )
      {
-      id = cls.getIdPrefix()+IdGenerator.getInstance().getStringId()+"-"+atObj.getId();
+      id=null;
+//      id = cls.getIdPrefix()+IdGenerator.getInstance().getStringId()+"-"+atObj.getId();
 //      
 //      if( atObj.isIdDefined() )
 //       id+="-"+atObj.getId();
@@ -249,7 +249,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     else
     {
      res.addObject(obj);
-     obj.setSubmission(res);
+     obj.setDataModule(res);
     }
    }
   }
@@ -483,7 +483,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  
  
 
- private void imputeInverseRelations( SubmissionWritable data )
+ private void imputeInverseRelations( DataModuleWritable data )
  {
   for( AgeObjectWritable obj : data.getObjects() )
   {

@@ -5,13 +5,13 @@ import java.util.Collection;
 import uk.ac.ebi.age.log.LogNode;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
-import uk.ac.ebi.age.storage.exeption.SubmissionStoreException;
+import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
 
 public interface AgeStorageAdm extends AgeStorage
 {
- String storeSubmission(SubmissionWritable sbm) throws RelationResolveException, SubmissionStoreException;
+ String storeDataModule(DataModuleWritable sbm) throws RelationResolveException, ModuleStoreException;
  
  boolean updateSemanticModel( SemanticModel sm, LogNode log ); // throws ModelStoreException;
 
@@ -23,7 +23,7 @@ public interface AgeStorageAdm extends AgeStorage
 
  void addRelations(String key, Collection<AgeRelationWritable> value);
 
- SubmissionWritable getSubmission(String name);
+ DataModuleWritable getDataModule(String name);
 
  void setMaster(boolean master);
 

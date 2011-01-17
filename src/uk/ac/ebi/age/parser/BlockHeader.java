@@ -13,6 +13,6 @@ public interface BlockHeader
 
  public abstract List<ClassReference> getColumnHeaders();
  
- AgeTabSubmission getSubmission();
+ AgeTabModule getModule();
 
 }

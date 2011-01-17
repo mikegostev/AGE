@@ -28,6 +28,6 @@ public interface AgeObject extends AgeAbstractObject
  
  int getOrder();
 
- Submission getSubmission();
+ DataModule getDataModule();
 
 }

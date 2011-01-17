@@ -33,7 +33,7 @@ import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 public class ContextSemanticModelImpl implements ContextSemanticModel, Serializable
 {
@@ -235,9 +235,9 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 //  return masterModel.isValidProperty(prop, ageClass);
 // }
 
- public SubmissionWritable createSubmission()
+ public DataModuleWritable createDataModule()
  {
-  return masterModel.getModelFactory().createSubmission(this);
+  return masterModel.getModelFactory().createDataModule(this);
  }
 
  @Override

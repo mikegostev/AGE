@@ -11,9 +11,9 @@ import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
-class SubmissionImpl  implements SubmissionWritable, Serializable
+class DataModuleImpl  implements DataModuleWritable, Serializable
 {
  private static final long serialVersionUID = 1L;
  
@@ -35,7 +35,7 @@ class SubmissionImpl  implements SubmissionWritable, Serializable
  private String id;
  private String descr;
 
- public SubmissionImpl(ContextSemanticModel sm)
+ public DataModuleImpl(ContextSemanticModel sm)
  {
   model = sm;
 //  submissionClass = sm.createAgeClass("$submission", "SBM", sm);

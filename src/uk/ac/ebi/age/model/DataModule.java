@@ -5,7 +5,7 @@ import java.util.Collection;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 
 
-public interface Submission
+public interface DataModule
 {
  String getId();
  

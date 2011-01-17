@@ -3,7 +3,7 @@ package uk.ac.ebi.age.parser.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.ac.ebi.age.parser.AgeTabSubmission;
+import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.BlockHeader;
 import uk.ac.ebi.age.parser.ClassReference;
 
@@ -11,16 +11,16 @@ public class BlockHeaderImpl implements BlockHeader
 {
  private ClassReference classCol;
  private List<ClassReference> props=new ArrayList<ClassReference>(30);
- private AgeTabSubmission submission;
+ private AgeTabModule module;
  
- public BlockHeaderImpl( AgeTabSubmission s )
+ public BlockHeaderImpl( AgeTabModule s )
  {
-  submission = s;
+  module = s;
  }
  
- public AgeTabSubmission getSubmission()
+ public AgeTabModule getModule()
  {
-  return submission;
+  return module;
  }
  
  /* (non-Javadoc)

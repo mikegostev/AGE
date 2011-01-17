@@ -22,26 +22,26 @@ import uk.ac.ebi.age.model.QualifierRule;
 import uk.ac.ebi.age.model.RelationRule;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
-import uk.ac.ebi.age.model.Submission;
+import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 
 public class AgeSemanticValidatorImpl implements AgeSemanticValidator
 {
 
  @Override
- public boolean validate(Submission subm, LogNode log)
+ public boolean validate(DataModule subm, LogNode log)
  {
 
   return validate(subm, Resolver.getIntsance(), log);
  }
 
  @Override
- public boolean validate(Submission subm, SemanticModel mod, LogNode log)
+ public boolean validate(DataModule subm, SemanticModel mod, LogNode log)
  {
   return validate(subm, new ExtModelResolver(subm.getContextSemanticModel().getMasterModel(), mod), log);
  }
 
- private boolean validate(Submission subm, Resolver rslv, LogNode log)
+ private boolean validate(DataModule subm, Resolver rslv, LogNode log)
  {
   boolean res = true;
   

@@ -3,9 +3,9 @@ package uk.ac.ebi.age.model.writable;
 import java.util.Collection;
 
 import uk.ac.ebi.age.model.SemanticModel;
-import uk.ac.ebi.age.model.Submission;
+import uk.ac.ebi.age.model.DataModule;
 
-public interface SubmissionWritable extends Submission
+public interface DataModuleWritable extends DataModule
 {
  void setId( String id );
  void setDescription( String des );

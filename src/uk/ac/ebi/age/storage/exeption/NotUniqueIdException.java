@@ -2,7 +2,7 @@ package uk.ac.ebi.age.storage.exeption;
 
 import java.util.Collection;
 
-public class NotUniqueIdException extends SubmissionStoreException
+public class NotUniqueIdException extends ModuleStoreException
 {
  private static final long serialVersionUID = 1L;
 

@@ -7,27 +7,27 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import uk.ac.ebi.age.model.Submission;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
-import uk.ac.ebi.age.storage.SubmissionReaderWriter;
+import uk.ac.ebi.age.model.DataModule;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
+import uk.ac.ebi.age.storage.DataModuleReaderWriter;
 
-public class SerializedSubmissionReaderWriter implements SubmissionReaderWriter
+public class SerializedDataModuleReaderWriter implements DataModuleReaderWriter
 {
 
  @Override
- public SubmissionWritable read(File f) throws IOException, ClassNotFoundException
+ public DataModuleWritable read(File f) throws IOException, ClassNotFoundException
  {
   ObjectInputStream ois = new ObjectInputStream( new FileInputStream(f) );
   
-  SubmissionWritable submission = (SubmissionWritable)ois.readObject();
+  DataModuleWritable module = (DataModuleWritable)ois.readObject();
   
   ois.close();
   
-  return submission;
+  return module;
  }
 
  @Override
- public void write(Submission s, File f) throws IOException
+ public void write(DataModule s, File f) throws IOException
  {
   FileOutputStream fileOut = new FileOutputStream(f);
   
