@@ -1,8 +1,10 @@
 package uk.ac.ebi.age.mng;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -13,6 +15,7 @@ import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
+import uk.ac.ebi.age.model.DataModuleMeta;
 import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
@@ -33,6 +36,15 @@ public class SubmissionManager
 {
  private static SubmissionManager instance = new SubmissionManager();
  
+ private static class ModMeta
+ {
+  String text;
+  String id;
+  AgeTabModule atMod;
+  DataModuleWritable origModule;
+  DataModuleWritable module;
+ }
+ 
  public static SubmissionManager getInstance()
  {
   return instance;
@@ -42,45 +54,151 @@ public class SubmissionManager
  private AgeTab2AgeConverter converter = new AgeTab2AgeConverterImpl();
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
  
- public DataModuleWritable prepareSubmission( String text, String name, boolean update,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
+ public DataModuleWritable prepareSubmission( List<DataModuleMeta> mods, boolean update,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
  {
-  AgeTabModule atSbm=null;
+//  AgeTabModule atSbm=null;
   
-  DataModuleWritable origSbm = null;
+//  DataModuleWritable origSbm = null;
   
-  if( update && name != null )
+//  if( update && name != null )
+//  {
+//   origSbm = stor.getDataModule(name);
+//   
+//   if( origSbm == null )
+//   {
+//    logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='"+name+"'");
+//    return null;
+//   }
+//  }
+  
+  List<ModMeta> modules = new ArrayList<ModMeta>( mods.size() );
+  
+  for( DataModuleMeta dm : mods )
   {
-   origSbm = stor.getDataModule(name);
-   
-   if( origSbm == null )
+   ModMeta mm = new ModMeta();
+   mm.text = dm.getText();
+   mm.id = dm.getId();
+  }
+  
+  
+  if( update )
+  {
+   for( ModMeta mm : modules )
    {
-    logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='"+name+"'");
-    return null;
+    if( mm.id != null )
+    {
+     mm.origModule = stor.getDataModule(mm.id);
+
+     if(mm.origModule == null)
+     {
+      logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + mm.id + "'");
+      return null;
+     }
+    }
    }
   }
-  
-  LogNode atLog = logRoot.branch("Parsing AgeTab");
-  try
-  {
-   atSbm =  ageTabParser.parse(text);
-   atLog.log(Level.INFO, "Success");
-  }
-  catch(ParserException e)
-  {
-   atLog.log(Level.ERROR, "Parsing failed: "+e.getMessage()+". Row: "+e.getLineNumber()+". Col: "+e.getColumnNumber());
-   return null;
-  }
 
-  LogNode convLog = logRoot.branch("Converting AgeTab to Age data module");
-  DataModuleWritable ageSbm = converter.convert(atSbm, SemanticManager.getInstance().getContextModel(context), convLog );
+  boolean parseRes = true;
   
-  if( ageSbm != null )
-   convLog.log(Level.INFO, "Success");
-  else
+  for( int n=0; n < modules.size(); n++)
   {
-   convLog.log(Level.ERROR, "Conversion failed");
-   return null;
+   ModMeta mm = modules.get(n);
+   
+   LogNode modNode = logRoot.branch("Processing module: " + (n+1) );
+   
+   LogNode atLog = modNode.branch("Parsing AgeTab");
+   try
+   {
+    mm.atMod = ageTabParser.parse(mm.text);
+    atLog.log(Level.INFO, "Success");
+   }
+   catch(ParserException e)
+   {
+    atLog.log(Level.ERROR, "Parsing failed: " + e.getMessage() + ". Row: " + e.getLineNumber() + ". Col: " + e.getColumnNumber());
+    parseRes = false;
+    continue;
+   }
+   
+   LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
+   mm.module = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(context), convLog );
+   
+   if( mm.module != null )
+    convLog.log(Level.INFO, "Success");
+   else
+   {
+    convLog.log(Level.ERROR, "Conversion failed");
+    parseRes = false;
+   }
+   
+   boolean uniqRes1 = true;
+   
+   LogNode uniqGLog = modNode.branch("Checking global identifiers uniqueness");
+
+   LogNode uniqLog = uniqGLog.branch("Checking main graph");
+
+   for( AgeObjectWritable obj : mm.module.getObjects())
+   {
+    if( obj.getId() != null )
+    {
+     AgeObject origObj = stor.getObjectById( obj.getId() );
+     
+     if( origObj != null )
+     {
+      uniqLog.log(Level.ERROR, "Object id '"+obj.getId()+"' has been taken by the object from data module: "+origObj.getDataModule().getId());
+      uniqRes1 = false;
+     }
+    }
+   }
+   
+   if( uniqRes1 )
+    uniqLog.log(Level.INFO, "Success");
+   else
+    uniqLog.log(Level.ERROR, "Failed");
+  
+   boolean uniqRes2 = true;
+
+   if( modules.size() > 1 )
+   {
+    uniqLog = uniqGLog.branch("Checking other modules");
+    
+    for( int k=n+1; k < modules.size(); k++ )
+    {
+     DataModuleWritable om = modules.get(k).module;
+     
+     for( AgeObjectWritable obj : mm.module.getObjects())
+     {
+      if( obj.getId() != null )
+      {
+       for( AgeObject othObj : om.getObjects() )
+       {
+        if( othObj.getId() != null && othObj.getId().equals(obj.getId()) )
+        {
+         uniqLog.log(Level.ERROR, "Object id '"+obj.getId()+"' has been taken by the object from sibling data module: "+(k+1));
+         uniqRes2 = false;
+        }
+       }
+      }
+     }
+    }
+   }
+   
+   if( uniqRes2 )
+    uniqLog.log(Level.INFO, "Success");
+   else
+    uniqLog.log(Level.ERROR, "Failed");
+
+   if( uniqRes1 && uniqRes2 )
+    uniqGLog.log(Level.INFO, "Success");
+   else
+    uniqGLog.log(Level.ERROR, "Failed");
+
+   
+   parseRes = parseRes && uniqRes1 && uniqRes2;
   }
+  
+  if( ! parseRes )
+   return null;
+
   
   
   try
@@ -90,7 +208,7 @@ public class SubmissionManager
 
    Map<AgeObject,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
    
-   if( connectDataModule( ageSbm, stor, invRelMap, connLog) )
+   if( connectDataModule( modules, stor, invRelMap, connLog) )
     connLog.log(Level.INFO, "Success");
    else
    {
@@ -188,46 +306,43 @@ public class SubmissionManager
   return ageSbm;
  }
 
- private boolean connectDataModule(DataModuleWritable sbm, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
+ private boolean connectDataModule(List<DataModuleWritable> mods, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
  {
   boolean res = true;
   
   LogNode extAttrLog = connLog.branch("Connecting external object attributes");
   boolean extAttrRes = true;
 
-  LogNode uniqLog = connLog.branch("Verifing object Id uniqueness");
-  boolean uniqRes = true;
+//  LogNode uniqLog = connLog.branch("Verifing object Id uniqueness");
+//  boolean uniqRes = true;
   
   Stack<Attributed> attrStk = new Stack<Attributed>();
   
-  for( AgeObjectWritable obj : sbm.getObjects() )
+  for( AgeObjectWritable obj : mods.getObjects() )
   {
-   if( stor.hasObject(obj.getId()) )
-   {
-    uniqRes=false;
-    uniqLog.log(Level.ERROR, "Id: '"+obj.getId()+"' is already used in the database. Class: "+obj.getAgeElClass()+" Order: "+obj.getOrder());
-   }
+//   if( stor.hasObject(obj.getId()) )
+//   {
+//    uniqRes=false;
+//    uniqLog.log(Level.ERROR, "Id: '"+obj.getId()+"' is already used in the database. Class: "+obj.getAgeElClass()+" Order: "+obj.getOrder());
+//   }
    
    attrStk.clear();
    attrStk.push(obj);
    extAttrRes = extAttrRes && connectExternalAttrs( attrStk, stor, extAttrLog  );
   }
   
-  res = uniqRes && extAttrRes;
   
   if( extAttrRes )
    extAttrLog.log(Level.INFO, "Success");
 
-  if( uniqRes )
-   uniqLog.log(Level.INFO, "Success");
   
   boolean extRelRes = true;
-  if( sbm.getExternalRelations() != null )
+  if( mods.getExternalRelations() != null )
   {
    LogNode extRelLog = connLog.branch("Connecting external object relations");
 
    
-   for( AgeExternalRelationWritable exr : sbm.getExternalRelations() )
+   for( AgeExternalRelationWritable exr : mods.getExternalRelations() )
    {
     String ref = exr.getTargetObjectId();
     
