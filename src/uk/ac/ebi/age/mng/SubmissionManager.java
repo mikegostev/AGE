@@ -306,7 +306,7 @@ public class SubmissionManager
   return ageSbm;
  }
 
- private boolean connectDataModule(List<DataModuleWritable> mods, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
+ private boolean connectDataModule(List<ModMeta> mods, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
  {
   boolean res = true;
   
@@ -318,31 +318,152 @@ public class SubmissionManager
   
   Stack<Attributed> attrStk = new Stack<Attributed>();
   
-  for( AgeObjectWritable obj : mods.getObjects() )
+  int n=0;
+  for( ModMeta mm : mods )
   {
-//   if( stor.hasObject(obj.getId()) )
-//   {
-//    uniqRes=false;
-//    uniqLog.log(Level.ERROR, "Id: '"+obj.getId()+"' is already used in the database. Class: "+obj.getAgeElClass()+" Order: "+obj.getOrder());
-//   }
+   n++;
    
-   attrStk.clear();
-   attrStk.push(obj);
-   extAttrRes = extAttrRes && connectExternalAttrs( attrStk, stor, extAttrLog  );
+   LogNode extAttrModLog = extAttrLog.branch("Processing module: "+n);
+   
+   for( AgeObjectWritable obj : mm.module.getObjects() )
+   {
+    attrStk.clear();
+    attrStk.push(obj);
+    
+    boolean mdres = connectExternalAttrs( attrStk, stor, mods, extAttrModLog  );
+    
+    if( mdres )
+     extAttrModLog.log(Level.INFO, "Success");
+    else
+     extAttrModLog.log(Level.ERROR, "Failed");
+
+    extAttrRes = extAttrRes && mdres;
+   }
+   
   }
+  
+  n=0;
+  for( ModMeta mm : mods )
+  {
+   n++;
+   
+   if( mm.module.getExternalObjectAttributes() == null )
+    continue;
+   
+   LogNode extAttrModLog = extAttrLog.branch("Processing module: "+n);
+   
+   for( AgeExternalObjectAttributeWritable extAttr : mm.module.getExternalObjectAttributes() )
+   {
+    boolean exAtModRes = true;
+    
+    String ref = extAttr.getTargetObjectId();
+    
+    AgeObject tgObj = stor.getObjectById( ref );
+    
+    
+    if( tgObj == null )
+    {
+     modloop :for( ModMeta refmm : mods )
+     {
+      if( mm == refmm )
+       continue;
+      
+      for( AgeObjectWritable candObj : mm.module.getObjects() )
+      {
+       if( candObj.getId() != null && candObj.getId().equals(ref) )
+       {
+        tgObj = candObj;
+        break modloop;
+       }
+      }
+     }
+    }
+
+    
+    if( tgObj == null )
+    {
+     AgeObject obj  = (AgeObject)atStk.get(0);
+     
+     String attrName = attr.getAgeElClass().getName();
+     
+     if( atStk.size() > 1 )
+     {
+      StringBuilder sb = new StringBuilder(200);
+      
+      sb.append(atStk.get(1).getAttributedClass().getName());
+      
+      for( int i = 2; i < atStk.size(); i++ )
+       sb.append("[").append(atStk.get(i).getAttributedClass().getName()).append("]");
+      
+      sb.append("[").append(attr.getAgeElClass().getName()).append("]");
+      
+      attrName = sb.toString();
+     }
+     
+     extAttrModLog.log(Level.ERROR,"Invalid external reference: '"+ref+"'. Target object not found. Source object: '"+obj.getId()+"' (Class: "+obj.getAgeElClass()
+       +", Order: "+obj.getOrder()+"). Attribute: "+attrName+" Order: "+extAttr.getOrder());
+     
+     exAtModRes = false;
+    }
+    else
+    {
+     if( ! tgObj.getAgeElClass().isClassOrSubclass(extAttr.getAgeElClass().getTargetClass()) )
+     {
+      AgeObject obj  = (AgeObject)atStk.get(0);
+
+      String attrName = attr.getAgeElClass().getName();
+      if( atStk.size() > 1 )
+      {
+       attrName = atStk.get(1).getAttributedClass().getName();
+       for( int i = 2; i < atStk.size(); i++ )
+        attrName += "["+atStk.get(i).getAttributedClass().getName()+"]";
+       
+       attrName+= "["+attr.getAgeElClass().getName()+"]";
+      }
+
+      extAttrModLog.log(Level.ERROR,"Inappropriate target object's (Id: '"+ref+"') class: "+tgObj.getAgeElClass()
+        +". Expected class: "+extAttr.getAgeElClass().getTargetClass()+" Source object: '"+obj.getId()+"' (Class: "+obj.getAgeElClass()
+        +", Order: "+obj.getOrder()+"). Attribute: "+attrName+" Order: "+attr.getOrder());
+      
+      exAtModRes = false;
+     }
+     else
+      extAttr.setTargetObject(tgObj);
+    }
+
+
+    
+    if( exAtModRes )
+     extAttrModLog.log(Level.INFO, "Success");
+    else
+     extAttrModLog.log(Level.ERROR, "Failed");
+
+    extAttrRes = extAttrRes && exAtModRes;
+   }
+   
+  }
+
   
   
   if( extAttrRes )
    extAttrLog.log(Level.INFO, "Success");
+  else
+   extAttrLog.log(Level.ERROR, "Failed");
 
   
+  LogNode extRelLog = connLog.branch("Connecting external object relations");
   boolean extRelRes = true;
-  if( mods.getExternalRelations() != null )
+  
+  n=0;
+  for( ModMeta mm : mods )
   {
-   LogNode extRelLog = connLog.branch("Connecting external object relations");
-
+   n++;
    
-   for( AgeExternalRelationWritable exr : mods.getExternalRelations() )
+   LogNode extRelModLog = extRelLog.branch("Processing module: "+n);
+   
+   boolean extModRelRes = true;
+   
+   for( AgeExternalRelationWritable exr : mm.module.getExternalRelations() )
    {
     String ref = exr.getTargetObjectId();
     
@@ -350,8 +471,28 @@ public class SubmissionManager
     
     if( tgObj == null )
     {
-     extRelRes = false;
-     extRelLog.log(Level.ERROR,"Invalid external relation: '"+ref+"'. Target object not found. Source object: '"+exr.getSourceObject().getId()
+     modloop : for( ModMeta refmm : mods )
+     {
+      if( refmm == mm )
+       continue;
+      
+      for( AgeObjectWritable candObj : mm.module.getObjects() )
+      {
+       if( candObj.getId() != null && candObj.getId().equals(ref) )
+       {
+        tgObj = candObj;
+        break modloop;
+       }
+      }
+     }
+    }
+    
+    if( tgObj == null )
+    {
+     extModRelRes = false;
+     extRelModLog.log(Level.ERROR,"Invalid external relation: '"+ref+"'. Target object not found."
+       +" Module: "+n
+       +" Source object: '"+exr.getSourceObject().getId()
        +"' (Class: "+exr.getSourceObject().getAgeElClass()
        +", Order: "+exr.getSourceObject().getOrder()+"). Relation: "+exr.getAgeElClass()+" Order: "+exr.getOrder());
     }
@@ -359,10 +500,10 @@ public class SubmissionManager
     {
       if( ! exr.getAgeElClass().isWithinRange(tgObj.getAgeElClass()) )
       {
-       extRelRes = false;
-       extRelLog.log(Level.ERROR,"External relation target object's class is not within range. Target object: '"+ref
+       extModRelRes = false;
+       extRelModLog.log(Level.ERROR,"External relation target object's class is not within range. Target object: '"+ref
          +"' (Class: "+tgObj.getAgeElClass()
-         +"'). Source object: '"+exr.getSourceObject().getId()
+         +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
          +"' (Class: "+exr.getSourceObject().getAgeElClass()
          +", Order: "+exr.getSourceObject().getOrder()+"). Relation: "+exr.getAgeElClass()+" Order: "+exr.getOrder());
       }
@@ -375,30 +516,30 @@ public class SubmissionManager
        {
         if(invRCls.isCustom())
         {
-         extRelRes = false;
-         extRelLog.log(Level.ERROR,"Class of external inverse relation can't be custom. Target object: '"+ref
+         extModRelRes = false;
+         extRelModLog.log(Level.ERROR,"Class of external inverse relation can't be custom. Target object: '"+ref
            +"' (Class: "+tgObj.getAgeElClass()
-           +"'). Source object: '"+exr.getSourceObject().getId()
+           +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
            +"' (Class: "+exr.getSourceObject().getAgeElClass()
            +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
            +". Inverse relation: "+invRCls);
         }
         else if( ! invRCls.isWithinDomain(tgObj.getAgeElClass()) )
         {
-         extRelRes = false;
-         extRelLog.log(Level.ERROR,"Target object's class is not within domain of inverse relation. Target object: '"+ref
+         extModRelRes = false;
+         extRelModLog.log(Level.ERROR,"Target object's class is not within domain of inverse relation. Target object: '"+ref
            +"' (Class: "+tgObj.getAgeElClass()
-           +"'). Source object: '"+exr.getSourceObject().getId()
+           +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
            +"' (Class: "+exr.getSourceObject().getAgeElClass()
            +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
            +". Inverse relation: "+invRCls);
         }
         else if( ! invRCls.isWithinRange(exr.getSourceObject().getAgeElClass()) )
         {
-         extRelRes = false;
-         extRelLog.log(Level.ERROR,"Source object's class is not within range of inverse relation. Target object: '"+ref
+         extModRelRes = false;
+         extRelModLog.log(Level.ERROR,"Source object's class is not within range of inverse relation. Target object: '"+ref
            +"' (Class: "+tgObj.getAgeElClass()
-           +"'). Source object: '"+exr.getSourceObject().getId()
+           +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
            +"' (Class: "+exr.getSourceObject().getAgeElClass()
            +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
            +". Inverse relation: "+invRCls);
@@ -430,11 +571,11 @@ public class SubmissionManager
     }
     
    }
-  
-   if( extRelRes )
-    extRelLog.log(Level.INFO, "Success");
+   
+   extRelRes = extRelRes && extModRelRes;
+   
   }
-  
+
   res = res && extRelRes;
 
   
@@ -442,7 +583,7 @@ public class SubmissionManager
  }
 
  
- private boolean connectExternalAttrs( Stack<Attributed> atStk, AgeStorageAdm stor, LogNode log )
+ private boolean connectExternalAttrs( Stack<Attributed> atStk, AgeStorageAdm stor, List<ModMeta> mods, LogNode log )
  {
   boolean res = true;
   
@@ -461,7 +602,35 @@ public class SubmissionManager
     
     AgeObject tgObj = stor.getObjectById( ref );
     
+    boolean found = false;
+    
     if( tgObj == null )
+    {
+     AgeObject obj  = (AgeObject)atStk.get(0);
+
+     for( ModMeta mm : mods )
+     {
+      if( mm.module == obj.getDataModule() )
+       continue;
+      
+      for( AgeObjectWritable candObj : mm.module.getObjects() )
+      {
+       if( candObj.getId() != null && candObj.getId().equals(ref) )
+       {
+        tgObj = candObj;
+        found = true;
+        break;
+       }
+      }
+     }
+    }
+    else
+    {
+     found = true;
+
+    }
+    
+    if( ! found )
     {
      AgeObject obj  = (AgeObject)atStk.get(0);
      
@@ -513,7 +682,7 @@ public class SubmissionManager
    }
    
    atStk.push(attr);
-   res = res && connectExternalAttrs(atStk,stor,log);
+   res = res && connectExternalAttrs(atStk,stor, mods, log);
    atStk.pop();
   }
  

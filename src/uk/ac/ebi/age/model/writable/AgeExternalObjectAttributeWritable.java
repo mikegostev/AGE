@@ -7,4 +7,6 @@ public interface AgeExternalObjectAttributeWritable extends AgeExternalObjectAtt
 {
  void setTargetObject(AgeObject obj);
 
+ void setReference(String reference);
+
 }
