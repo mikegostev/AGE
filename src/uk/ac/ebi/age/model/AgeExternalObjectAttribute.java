@@ -5,5 +5,7 @@ public interface AgeExternalObjectAttribute extends AgeObjectAttribute
 {
 
  public String getTargetObjectId();
+ 
+ public String getReference();
 
 }

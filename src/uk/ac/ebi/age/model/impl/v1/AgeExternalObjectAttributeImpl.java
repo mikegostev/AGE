@@ -17,6 +17,7 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
 
  private String objId;
  private int order;
+ private String reference;
  private transient AgeObject target;
  
  public AgeExternalObjectAttributeImpl(AgeAttributeClass relClass, String id, SemanticModel sm)
@@ -159,6 +160,20 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
 
   
   return objId.compareTo( ((AgeObjectAttribute)ob).getValue().getId() );
+ }
+
+
+ @Override
+ public String getReference()
+ {
+  return reference;
+ }
+
+
+ @Override
+ public void setReference(String reference)
+ {
+  this.reference = reference;
  }
 
  

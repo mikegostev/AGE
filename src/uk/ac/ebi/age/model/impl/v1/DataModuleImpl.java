@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeRelation;
+import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
@@ -25,6 +27,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  private Collection<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
  private ContextSemanticModel model;
  private Collection<AgeExternalRelationWritable> extRels ;
+ private Collection<AgeExternalObjectAttributeWritable> extAttrs ;
 
 // private Map<AgeRelationClass, Collection<AgeRelationWritable>> rels ;
 // private Collection<AgeRelationWritable> relLst;
@@ -88,8 +91,29 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
     }
    }
   }
+  
+  collectExtAttrs( obj );
  }
 
+ private void collectExtAttrs( Attributed atb )
+ {
+  if( atb.getAttributes() == null )
+   return;
+  
+  for( Attributed at : atb.getAttributes() )
+  {
+   if( at instanceof AgeExternalObjectAttributeWritable )
+   {
+    if( extAttrs == null )
+     extAttrs = new ArrayList<AgeExternalObjectAttributeWritable>(10);
+
+    extAttrs.add((AgeExternalObjectAttributeWritable)at);
+   }
+   
+   collectExtAttrs(at);
+  }
+ }
+ 
  public void setId(String id)
  {
   this.id=id;
@@ -119,6 +143,14 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   return extRels;
  }
 
+
+ @Override
+ public Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes()
+ {
+  return extAttrs;
+ }
+
+ 
  @Override
  public void setMasterModel( SemanticModel newModel )
  {
