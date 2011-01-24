@@ -101,9 +101,9 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AgeAttributeClass atCls, String id, SemanticModel sm)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, SemanticModel sm)
  {
-  return v1factory.createExternalObjectAttribute(atCls, id, sm);
+  return v2factory.createExternalObjectAttribute(atCls, id, sm);
  }
 
  @Override

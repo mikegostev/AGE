@@ -6,7 +6,4 @@ import uk.ac.ebi.age.model.AgeObject;
 public interface AgeExternalObjectAttributeWritable extends AgeExternalObjectAttribute, AgeAttributeWritable
 {
  void setTargetObject(AgeObject obj);
-
- void setReference(String reference);
-
 }
