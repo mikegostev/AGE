@@ -105,7 +105,6 @@ public class SubmissionManager
    ModMeta mm = modules.get(n);
    
    boolean modRes = true;
-   
    LogNode modNode = logRoot.branch("Processing module: " + (n+1) );
    
    boolean atRes = true;
@@ -214,8 +213,8 @@ public class SubmissionManager
    res = res && modRes;
   }
   
-//  if( ! res )  // TODO can we continue here?
-//   return null;
+  if( ! res )  // TODO can we continue here?
+   return null;
 
   
   try
@@ -236,6 +235,7 @@ public class SubmissionManager
    
    LogNode semLog = logRoot.branch("Validating semantic");
 
+   boolean vldRes = true;
    int n=0;
    for( ModMeta mm : modules )
    {
@@ -244,39 +244,51 @@ public class SubmissionManager
     if( mm.module == null )
      continue;
     
-    LogNode vldLog = logRoot.branch("Processing module: "+n);
+    LogNode vldLog = semLog.branch("Processing module: "+n);
+    
+    boolean modRes = validator.validate(mm.module, semLog);
+    
+    if(modRes)
+     vldLog.log(Level.INFO, "Success");
+    else
+     vldLog.log(Level.ERROR, "Validation failed");
+
+    vldRes = vldRes && modRes;
    }
    
-   if(validator.validate(ageSbm, semLog))
+   if( vldRes )
     semLog.log(Level.INFO, "Success");
    else
-   {
-    semLog.log(Level.ERROR, "Validation failed");
-    return null;
-   }
+    semLog.log(Level.ERROR, "Failed");
+
+   res = res && vldRes;
+   
 
    Map<AgeObject,Set<AgeRelationWritable>> detachedRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
 
-   if( origSbm != null )
+   for( ModMeta mm : modules )
    {
-    Collection<AgeExternalRelationWritable> origExtRels = origSbm.getExternalRelations();
-    
-    if( origExtRels != null )
+
+    if(mm.origModule != null)
     {
-     for(AgeExternalRelationWritable extRel : origExtRels )
+     Collection<AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
+
+     if(origExtRels != null)
      {
-      AgeObject target = extRel.getTargetObject();
-      
-      Set<AgeRelationWritable> objectsRels = detachedRelMap.get(target); 
-      
-      if( objectsRels == null )
-       detachedRelMap.put(target, objectsRels = new HashSet<AgeRelationWritable>() );
-      
-      objectsRels.add(extRel.getInverseRelation());
+      for(AgeExternalRelationWritable extRel : origExtRels)
+      {
+       AgeObject target = extRel.getTargetObject();
+
+       Set<AgeRelationWritable> objectsRels = detachedRelMap.get(target);
+
+       if(objectsRels == null)
+        detachedRelMap.put(target, objectsRels = new HashSet<AgeRelationWritable>());
+
+       objectsRels.add(extRel.getInverseRelation());
+      }
      }
     }
    }
-   
    
    Set<AgeObject> affObjSet = new HashSet<AgeObject>();
    
@@ -285,9 +297,9 @@ public class SubmissionManager
    
    if( affObjSet.size() > 0 )
    {
-    LogNode invRelLog = connLog.branch("Validating externaly related object semantic");
+    boolean invRelRes = true;
+    LogNode invRelLog = logRoot.branch("Validating externaly related object semantic");
     
-    boolean res = true;
     for( AgeObject obj :  affObjSet )
     {
      LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
@@ -295,10 +307,10 @@ public class SubmissionManager
      if( validator.validateRelations(obj, invRelMap.get(obj), detachedRelMap.get(obj), objLogNode) )
       objLogNode.log(Level.INFO, "Success");
      else
-      res = false;
+      invRelRes = false;
     }
     
-    if(res)
+    if(invRelRes)
      invRelLog.log(Level.INFO, "Success");
     else
     {
@@ -306,6 +318,8 @@ public class SubmissionManager
      return null;
     }
 
+    res = res && invRelRes;
+    
     LogNode storLog = connLog.branch("Storing data module");
     try
     {
@@ -318,9 +332,14 @@ public class SubmissionManager
      return null;
     }
     
+    for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  detachedRelMap.entrySet() )
+     stor.removeRelations(me.getKey().getId(),me.getValue());
+
     for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
      stor.addRelations(me.getKey().getId(),me.getValue());
 
+
+    
    }
 
   }
