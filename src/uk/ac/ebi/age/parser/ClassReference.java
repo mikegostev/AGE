@@ -17,6 +17,7 @@ public class ClassReference extends AgeTabElement
  
  private ClassReference targetClassRef;
  private ClassReference rangeClassRef;
+ private String rawRef;
 
  public ClassReference()
  {
@@ -195,5 +196,15 @@ public class ClassReference extends AgeTabElement
  {
   this.rangeClassRef = rangeClassRef;
  }
+
+ public void setRawReference(String str)
+ {
+  rawRef = str;
+ }
  
+ public String getOriginalReference()
+ {
+  return rawRef;
+ }
+
 }

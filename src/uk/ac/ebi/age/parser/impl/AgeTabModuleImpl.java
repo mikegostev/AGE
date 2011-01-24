@@ -1,12 +1,11 @@
 package uk.ac.ebi.age.parser.impl;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import uk.ac.ebi.age.parser.AgeTabObject;
 import uk.ac.ebi.age.parser.AgeTabModule;
+import uk.ac.ebi.age.parser.AgeTabObject;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.BlockHeader;
 
@@ -40,7 +39,7 @@ public class AgeTabModuleImpl implements AgeTabModule
   
   if( objMap == null )
   {
-   objMap = new HashMap<String,AgeTabObject>();
+   objMap = new LinkedHashMap<String,AgeTabObject>();
    blockObjectMap.put(hdr, objMap);
   }
   else
@@ -83,7 +82,7 @@ public class AgeTabModuleImpl implements AgeTabModule
   
   if( objMap == null )
   {
-   objMap = new HashMap<String,AgeTabObject>();
+   objMap = new LinkedHashMap<String,AgeTabObject>();
    blockObjectMap.put(hdr, objMap);
   }
 

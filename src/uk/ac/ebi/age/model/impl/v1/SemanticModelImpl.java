@@ -15,6 +15,7 @@ import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
+import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.RestrictionType;
@@ -203,10 +204,19 @@ public class SemanticModelImpl implements SemanticModel, Serializable
 
 
  @Override
- public AgeAttributeWritable createAgeAttribute( AgeAttributeClass attrClass)
+ public AgeAttributeWritable createAgeAttribute( AgeAttributeClass attrClass )
+ {
+  AttributeClassRef ref = modelFactory.createAttributeClassRef( getAgeAttributeClassPlug(attrClass), 0, attrClass.getName());
+  
+  return modelFactory.createAgeAttribute(ref, this);
+ }
+ 
+ @Override
+ public AgeAttributeWritable createAgeAttribute( AttributeClassRef attrClass)
  {
   return modelFactory.createAgeAttribute(attrClass, this);
  }
+
  
  @Override
  public AttributeAttachmentRuleWritable createAttributeAttachmentRule(RestrictionType type)

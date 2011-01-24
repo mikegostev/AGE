@@ -24,6 +24,7 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  void removeAttribute(AgeAttributeWritable attr);
 
  void addRelation(AgeRelationWritable r);
+ void removeRelation(AgeRelationWritable rel);
 
 
  AgeExternalRelationWritable createExternalRelation(String val, AgeRelationClass relClass);
@@ -37,6 +38,7 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  void setId( String id );
 
  void setOriginalId(String nId);
+
 
  
 // void resetModel();

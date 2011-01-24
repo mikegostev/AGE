@@ -1,21 +1,18 @@
-package uk.ac.ebi.age.model.impl.v1;
+package uk.ac.ebi.age.model.impl.v2;
 
 import uk.ac.ebi.age.model.AgeAttribute;
-import uk.ac.ebi.age.model.AgeAttributeClass;
+import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 
-class AgeBooleanAttributeImpl extends AgeAttributeImpl 
+class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttributeWritable
 {
  private static final long serialVersionUID = 1L;
-
- private boolean value; 
-
- protected AgeBooleanAttributeImpl()
- {}
  
- public AgeBooleanAttributeImpl(AgeAttributeClass attrClass, SemanticModel sm)
+ private String value; 
+
+ public AgeStringAttributeImpl(AttributeClassRef attrClass, SemanticModel sm)
  {
   super(attrClass, sm);
  }
@@ -26,15 +23,23 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
  }
 
  public void updateValue(String val) throws FormatException
- {  
-  val=val.trim();
- 
-  if( val.length() == 0 )
-   return;
-
-  value = "yes".equalsIgnoreCase(val) || "1".equals(val) || "true".equalsIgnoreCase(val);
-
+ {
+  if( value == null )
+   value=val;
+  else if( val.length() == 0 )
+   value +="\n";
+  else
+   value += "\n"+val;
  }
+
+ public void finalizeValue()
+ {
+  if( value != null )
+   value = value.trim();
+  
+  value = value.intern();
+ }
+ 
 
  @Override
  public String getId()
@@ -45,82 +50,68 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
  @Override
  public boolean getValueAsBoolean()
  {
-  return value;
+  return false;
  }
 
  @Override
  public double getValueAsDouble()
  {
-  return value?1:0;
+  return 0;
  }
 
  @Override
  public int getValueAsInteger()
  {
-  return value?1:0;
+  return 0;
  }
 
  @Override
  public void setBooleanValue(boolean boolValue)
  {
-  value=boolValue;
+  value = String.valueOf(boolValue);
  }
 
  @Override
  public void setDoubleValue(double doubleValue)
  {
-  value = doubleValue != 0;
+  value = String.valueOf(doubleValue);
  }
 
  @Override
  public void setIntValue(int intValue)
  {
-  value = intValue != 0;
+  value = String.valueOf(intValue);
  }
 
  @Override
  public void setValue(Object val)
  {
-  if( val instanceof Boolean )
-   value=((Boolean)val).booleanValue();
-  else if( val instanceof Number )
-   value=((Number)val).intValue() != 0;
-  else
-   try
-   {
-    value=Boolean.parseBoolean(val.toString());
-   }
-   catch(Exception e)
-   {
-   }
+  value=val.toString();
  }
-
+ 
  @Override
  public AgeAttributeWritable createClone()
  {
-  AgeBooleanAttributeImpl clone  = new AgeBooleanAttributeImpl(getAgeAttributeClass(), getSemanticModel());
+  AgeStringAttributeImpl clone  = new AgeStringAttributeImpl(getClassRef(), getSemanticModel());
   clone.value=this.value;
   
-  clone.setOrder( getOrder() );
-  
   cloneAttributes( clone );
-
+  
   return clone;
  }
-
+ 
  public boolean equals( Object ob )
  {
   if( ! (ob instanceof AgeAttribute) )
    return false;
   
-   return value == ((AgeAttribute)ob).getValueAsBoolean();
+   return value.equals( ((AgeAttribute)ob).getValue() );
  }
 
  @Override
  public int compareTo(AgeAttribute o)
  {
-  return value==o.getValueAsBoolean()? 0 : value?1:-1;
+  return value.compareTo(o.getValue().toString());
  }
-
-
+ 
 }

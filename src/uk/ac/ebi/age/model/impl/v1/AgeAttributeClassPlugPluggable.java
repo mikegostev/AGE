@@ -12,7 +12,7 @@ class AgeAttributeClassPlugPluggable implements Plug, Serializable, AgeAttribute
  private static final long serialVersionUID = 1L;
 
  private String className;
- private transient AgeAttributeClass ageAttributeClass;
+ private transient AgeAttributeClass ageAttributeClass = null;
  private SemanticModel model;
  
  public AgeAttributeClassPlugPluggable(AgeAttributeClass attrClass, SemanticModel mdl)
