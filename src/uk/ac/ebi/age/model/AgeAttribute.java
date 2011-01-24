@@ -11,4 +11,6 @@ public interface AgeAttribute extends Attributed, AgeObjectProperty, Comparable<
  double getValueAsDouble();
  
  public int getOrder();
+ 
+ AttributeClassRef getClassRef();
 }

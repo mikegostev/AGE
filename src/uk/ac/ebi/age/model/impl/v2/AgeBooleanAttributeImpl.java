@@ -1,7 +1,7 @@
-package uk.ac.ebi.age.model.impl.v1;
+package uk.ac.ebi.age.model.impl.v2;
 
 import uk.ac.ebi.age.model.AgeAttribute;
-import uk.ac.ebi.age.model.AgeAttributeClass;
+import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
@@ -15,7 +15,7 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
  protected AgeBooleanAttributeImpl()
  {}
  
- public AgeBooleanAttributeImpl(AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeBooleanAttributeImpl(AttributeClassRef attrClass, SemanticModel sm)
  {
   super(attrClass, sm);
  }
@@ -98,10 +98,8 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
  @Override
  public AgeAttributeWritable createClone()
  {
-  AgeBooleanAttributeImpl clone  = new AgeBooleanAttributeImpl(getAgeAttributeClass(), getSemanticModel());
+  AgeBooleanAttributeImpl clone  = new AgeBooleanAttributeImpl(getClassRef(), getSemanticModel());
   clone.value=this.value;
-  
-  clone.setOrder( getOrder() );
   
   cloneAttributes( clone );
 
