@@ -2,7 +2,6 @@ package uk.ac.ebi.age.model;
 
 import java.util.Collection;
 
-import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 
 
@@ -18,5 +17,5 @@ public interface DataModule
  
  Collection<AgeExternalRelationWritable> getExternalRelations();
 
- Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes();
+// Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes();
 }

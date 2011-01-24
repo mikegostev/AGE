@@ -152,7 +152,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AgeAttributeClass atCls, String val)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String val)
  {
   return masterModel.createExternalObjectAttribute(atCls, val);
  }

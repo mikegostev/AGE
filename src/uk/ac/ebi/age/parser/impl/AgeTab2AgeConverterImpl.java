@@ -18,6 +18,7 @@ import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeExternalRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
+import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.FormatException;
@@ -160,6 +161,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     for( ValueConverter cnv : convs )
      cnv.reset(obj);
     
+    if( prototype != null && ! atObj.isPrototype() )
+     applyPrototype(obj, prototype);
+    
     boolean hasValue=true;
     int ln=0;
     while( hasValue )
@@ -210,10 +214,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      
      ln++;
     }
-    
-    
-    if( prototype != null )
-     applyPrototype(obj, prototype);
     
     
     if( ! atObj.isPrototype() )
@@ -276,6 +276,45 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  }
  
  
+ private void applyPrototype(AgeObjectWritable obj, AgeObjectWritable prototype)
+ {
+  if( prototype.getAttributes() != null )
+  {
+   Collection<? extends AgeAttributeClass> protoAtCls = prototype.getAttributeClasses();
+   
+   clsloop : for( AgeAttributeClass pAtCla : protoAtCls)
+   {
+    if( obj.getAttributes() != null )
+    {
+     for( AgeAttributeWritable oa : obj.getAttributes() )
+      if( oa.getAgeElClass() == pAtCla )
+       continue clsloop;
+    } 
+    
+    for( AgeAttributeWritable ptAttr : prototype.getAttributesByClass(pAtCla, false) )
+     obj.addAttribute( ptAttr.createClone() );
+   }
+  }
+  
+  if( prototype.getRelations() != null )
+  {
+   Collection<? extends AgeRelationClass> protoRlCls = prototype.getRelationClasses();
+   
+   clsloop : for( AgeRelationClass pRlCla : protoRlCls)
+   {
+    if( obj.getRelationClasses() != null )
+    {
+     for( AgeRelationWritable or : obj.getRelations() )
+      if( or.getAgeElClass() == pRlCla )
+       continue clsloop;
+    } 
+    
+    for( AgeRelationWritable ptRel : prototype.getRelationsByClass(pRlCla, false) )
+     obj.addRelation( ptRel.createClone() );
+   }
+  }
+ }
+ 
  private AgeClass getClassForBlock(ClassReference colHdr, ContextSemanticModel sm, LogNode blkLog)
  {
   if( colHdr.isCustom() )
@@ -335,12 +374,12 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 //  return  sm.getOrCreateCustomAgeClass(colHdr.getName(),null,parent);
 // }
  
- private void finalizeValues( Collection<AgeObjectWritable>! data ) //TODO не сработает для квалификаторов
+ private void finalizeValues( Collection<? extends AttributedWritable> data ) //TODO
  {
   class AttrInfo
   {
    AgeAttributeWritable attr;
-   AgeObjectWritable obj;
+   AttributedWritable obj;
    
 //   boolean isBool=false;
 //   boolean isInt=false;
@@ -362,17 +401,27 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    List<AttrInfo> attributes = new ArrayList<AttrInfo>();
   }
 
-  Map<AgeClass, Map<AgeAttributeClass,AttrClassInfo > > wMap = new HashMap<AgeClass, Map<AgeAttributeClass,AttrClassInfo >>();
+  Map<AttributedClass, Map<AgeAttributeClass,AttrClassInfo > > wMap = new HashMap<AttributedClass, Map<AgeAttributeClass,AttrClassInfo >>();
   
   Map<AgeAttributeClass, AttrClassInfo > cClassMap = null;
-  AgeClass cClass = null;
+  AttributedClass cClass = null;
   
-  for( AgeObjectWritable obj : data )
+  for( AttributedWritable obj : data )
   {
-
-   if(obj.getAgeElClass() != cClass)
+   if( obj instanceof AgeObjectWritable )
    {
-    cClass = obj.getAgeElClass();
+    AgeObjectWritable aow = (AgeObjectWritable)obj;
+    
+    if( aow.getRelations() != null )
+     finalizeValues(aow.getRelations());
+   }
+   
+   if( obj.getAttributes() != null )
+    finalizeValues(obj.getAttributes());
+   
+   if(obj.getAttributedClass() != cClass)
+   {
+    cClass = obj.getAttributedClass();
 
     cClassMap = wMap.get(cClass);
 
@@ -478,9 +527,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      for( AttrInfo ai : acInfo.attributes )
      {
       ai.obj.removeAttribute(ai.attr);
-      AgeAttributeWritable nAttr = ai.obj.createAgeAttribute(acInfo.atClass);
-      
-      nAttr.setOrder(ai.attr.getOrder());
+      AgeAttributeWritable nAttr = ai.obj.createAgeAttribute(ai.attr.getClassRef());
       
       if( typ == DataType.BOOLEAN )
        nAttr.setBooleanValue(ai.boolValue);
@@ -805,7 +852,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      }
     }
     else
-     dupCol = addConverter(convs, new QualifierConvertor( attHd, qClass, hostConverter ) );
+     dupCol = addConverter(convs, new ScalarQualifierConvertor( attHd, qClass, hostConverter ) );
     
     if( dupCol != -1 )
     {
@@ -1173,6 +1220,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   public void reset( AgeObjectWritable obj )
   {
    hostObject = obj;
+   
+   if( obj.getAttributes() != null )
+   {
+    for( AgeAttributeWritable a : obj.getAttributes() )
+     if( a.getAgeElClass() == classRef.getAttributeClass() )
+      obj.removeAttribute(a);
+   }
+
   }
   
   @Override
@@ -1238,6 +1293,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   public void reset( AgeObjectWritable obj )
   {
    hostObject = obj;
+   
+   if( obj.getRelations() != null )
+   {
+    for( AgeRelationWritable r : obj.getRelations() )
+     if( r.getAgeElClass() == relClass )
+      obj.removeRelation(r);
+   }
+
   }
   
   
@@ -1362,6 +1425,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   public void reset( AgeObjectWritable obj )
   {
    hostObject = obj;
+   
+   if( obj.getAttributes() != null )
+   {
+    for( AgeAttributeWritable a : obj.getAttributes() )
+     if( a.getAgeElClass() == classRef.getAttributeClass() )
+      obj.removeAttribute(a);
+   }
+
   }
   
   @Override
@@ -1443,12 +1514,11 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
  }
  
- 
- private class QualifierConvertor extends ValueConverter
+ private abstract class QualifierConvertor extends ValueConverter
  {
-  private AttributeClassRef classRef;
+  protected AttributeClassRef classRef;
   private ValueConverter hostConverter;
-  private AttributedWritable contextProperty;
+  protected AttributedWritable contextProperty;
 
   public QualifierConvertor(ClassReference attHd, AgeAttributeClass qClass, ValueConverter hc)// throws SemanticException
   {
@@ -1456,22 +1526,83 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    AgeAttributeClassPlug cPlug = qClass.getSemanticModel().getAgeAttributeClassPlug(qClass);
    classRef = qClass.getSemanticModel().getModelFactory().createAttributeClassRef(cPlug, attHd.getCol(), attHd.getOriginalReference());
-
-//   DataType dt = attrClass.getDataType();
-//   
-//   if( dt == null )
-//    throw new SemanticException(attHd.getRow(), attHd.getCol(), "Attribute class: '"+attrClass.getName()+"' has no data type and can't be instantiated");
-   
    hostConverter = hc;
   }
 
-  @Override
-  public void reset(AgeObjectWritable obj)
+  
+  public ValueConverter getHostConvertor()
   {
+   return hostConverter;
+  }
+  
+  public void reset( AgeObjectWritable obj )
+  {
+   List<AgeAttributeClass> chain = new ArrayList<AgeAttributeClass>(5);
+   
+   chain.add(classRef.getAttributeClass());
+   
+   ValueConverter cHost = getHostConvertor();
+   
+   while( cHost instanceof QualifierConvertor )
+   {
+    chain.add( (AgeAttributeClass)cHost.getProperty() );
+    cHost = ((QualifierConvertor)cHost).getHostConvertor();
+   }
+
+   AgeClassProperty topProp = cHost.getProperty();
+   
+   if( topProp instanceof AgeRelationClass && obj.getRelations() != null )
+   {
+    for( AgeRelationWritable r : obj.getRelations() )
+    {
+     if( r.getAgeElClass() == topProp )
+      removeQualifiers( r, chain, chain.size()-1 );
+    }
+   }
+   
+  }
+  
+  @Override
+  public AgeClassProperty getProperty()
+  {
+   return classRef.getAttributeClass();
   }
 
+  protected AttributedWritable getLastConvertedProperty()
+  {
+   if( contextProperty == hostConverter.getLastConvertedProperty() )
+    return super.getLastConvertedProperty();
+   
+   return null;
+  }
 
   
+  private void removeQualifiers( AttributedWritable host, List<AgeAttributeClass> chain, int lvl )
+  {
+   AgeAttributeClass lvlClass = chain.get(lvl);
+   
+   for( AgeAttributeWritable a : host.getAttributes() )
+   {
+    if( a.getAttributedClass() == lvlClass )
+    {
+     if( lvl == 0 )
+      host.removeAttribute(a);
+     else
+      removeQualifiers(a, chain, lvl-1);
+    }
+   }
+  }
+
+ }
+ 
+ private class ScalarQualifierConvertor extends QualifierConvertor
+ {
+
+  public ScalarQualifierConvertor(ClassReference attHd, AgeAttributeClass qClass, ValueConverter hc)// throws SemanticException
+  {
+   super(attHd, qClass, hc);
+  }
+
   @Override
   public void convert(AgeTabValue val) throws ConvertionException
   {
@@ -1491,7 +1622,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     return;
    }
    
-   AttributedWritable prop = hostConverter.getLastConvertedProperty();
+   AttributedWritable prop = getHostConvertor().getLastConvertedProperty();
 
    // if there is no host value checking whether the qualifier is multiline
    if( prop == null )
@@ -1520,48 +1651,19 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    setLastConvertedValue(attrAlt);
   }
 
-  @Override
-  public AgeClassProperty getProperty()
-  {
-   return classRef.getAttributeClass();
-  }
-
-  protected AttributedWritable getLastConvertedProperty()
-  {
-   if( contextProperty == hostConverter.getLastConvertedProperty() )
-    return super.getLastConvertedProperty();
-   
-   return null;
-  }
-
-  
-//  @Override
-//  public AgeClassProperty getQualifiedProperty()
-//  {
-//   return hostConverter.getProperty();
-//  }
  }
  
- private class ObjectQualifierConvertor extends ValueConverter
+ private class ObjectQualifierConvertor extends QualifierConvertor
  {
-  private AttributeClassRef classRef;
-  private ValueConverter hostConverter;
   private Map<String, AgeObjectWritable> rangeObjects;
-  private AttributedWritable contextProperty;
 
   public ObjectQualifierConvertor(ClassReference attHd, AgeAttributeClass qClass, ValueConverter hc, Map<String, AgeObjectWritable> map)
   {
-   super(attHd);
+   super(attHd, qClass, hc);
 
-   AgeAttributeClassPlug cPlug = qClass.getSemanticModel().getAgeAttributeClassPlug(qClass);
-   classRef = qClass.getSemanticModel().getModelFactory().createAttributeClassRef(cPlug, attHd.getCol(), attHd.getOriginalReference());
-   
    rangeObjects=map;
-   hostConverter = hc;
   }
-
-  public void reset( AgeObjectWritable obj )
-  {}
+  
   
   @Override
   public void convert(AgeTabValue atVal) throws ConvertionException
@@ -1575,7 +1677,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     return;
 
 
-   AttributedWritable prop = hostConverter.getLastConvertedProperty();
+   AttributedWritable prop = getHostConvertor().getLastConvertedProperty();
 
 
    if(prop == null )
@@ -1599,26 +1701,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    contextProperty = prop;
    setLastConvertedValue(obAttr);
   }
-
-  @Override
-  public AgeClassProperty getProperty()
-  {
-   return classRef.getAttributeClass();
-  }
-
-  protected AttributedWritable getLastConvertedProperty()
-  {
-   if( contextProperty == hostConverter.getLastConvertedProperty() )
-    return super.getLastConvertedProperty();
-   
-   return null;
-  }
-  
-//  @Override
-//  public AgeClassProperty getQualifiedProperty()
-//  {
-//   return hostConverter.getProperty();
-//  }
  }
 
 }

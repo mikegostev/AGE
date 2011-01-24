@@ -203,13 +203,13 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  }
 
 
- @Override
- public AgeAttributeWritable createAgeAttribute( AgeAttributeClass attrClass )
- {
-  AttributeClassRef ref = modelFactory.createAttributeClassRef( getAgeAttributeClassPlug(attrClass), 0, attrClass.getName());
-  
-  return modelFactory.createAgeAttribute(ref, this);
- }
+// @Override
+// public AgeAttributeWritable createAgeAttribute( AgeAttributeClass attrClass )
+// {
+//  AttributeClassRef ref = modelFactory.createAttributeClassRef( getAgeAttributeClassPlug(attrClass), 0, attrClass.getName());
+//  
+//  return modelFactory.createAgeAttribute(ref, this);
+// }
  
  @Override
  public AgeAttributeWritable createAgeAttribute( AttributeClassRef attrClass)
@@ -244,7 +244,7 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  }
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute( AgeAttributeClass atCls, String id )
+ public AgeAttributeWritable createExternalObjectAttribute( AttributeClassRef atCls, String id )
  {
   return modelFactory.createExternalObjectAttribute( atCls, id, this );
  }

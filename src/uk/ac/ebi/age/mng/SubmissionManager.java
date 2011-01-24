@@ -98,14 +98,17 @@ public class SubmissionManager
    }
   }
 
-  boolean parseRes = true;
+  boolean res = true;
   
   for( int n=0; n < modules.size(); n++)
   {
    ModMeta mm = modules.get(n);
    
+   boolean modRes = true;
+   
    LogNode modNode = logRoot.branch("Processing module: " + (n+1) );
    
+   boolean atRes = true;
    LogNode atLog = modNode.branch("Parsing AgeTab");
    try
    {
@@ -115,10 +118,11 @@ public class SubmissionManager
    catch(ParserException e)
    {
     atLog.log(Level.ERROR, "Parsing failed: " + e.getMessage() + ". Row: " + e.getLineNumber() + ". Col: " + e.getColumnNumber());
-    parseRes = false;
+    atRes = false;
     continue;
    }
    
+   boolean convRes = true;
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
    mm.module = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(context), convLog );
    
@@ -127,7 +131,8 @@ public class SubmissionManager
    else
    {
     convLog.log(Level.ERROR, "Conversion failed");
-    parseRes = false;
+    convRes = false;
+    continue;
    }
    
    boolean uniqRes1 = true;
@@ -161,9 +166,12 @@ public class SubmissionManager
    {
     uniqLog = uniqGLog.branch("Checking other modules");
     
-    for( int k=n+1; k < modules.size(); k++ )
+    for( int k=0; k < n; k++ )
     {
      DataModuleWritable om = modules.get(k).module;
+     
+     if( om == null )
+      continue;
      
      for( AgeObjectWritable obj : mm.module.getObjects())
      {
@@ -193,13 +201,22 @@ public class SubmissionManager
     uniqGLog.log(Level.ERROR, "Failed");
 
    
-   parseRes = parseRes && uniqRes1 && uniqRes2;
+   modRes = uniqRes1 && uniqRes2 && atRes && convRes;
+   
+   if( modRes )
+    modNode.log(Level.INFO, "Success");
+   else
+   {
+    modNode.log(Level.ERROR, "Failed");
+    mm.module = null;
+   }
+   
+   res = res && modRes;
   }
   
-  if( ! parseRes )
-   return null;
+//  if( ! res )  // TODO can we continue here?
+//   return null;
 
-  
   
   try
   {
@@ -219,6 +236,17 @@ public class SubmissionManager
    
    LogNode semLog = logRoot.branch("Validating semantic");
 
+   int n=0;
+   for( ModMeta mm : modules )
+   {
+    n++;
+    
+    if( mm.module == null )
+     continue;
+    
+    LogNode vldLog = logRoot.branch("Processing module: "+n);
+   }
+   
    if(validator.validate(ageSbm, semLog))
     semLog.log(Level.INFO, "Success");
    else
@@ -330,7 +358,18 @@ public class SubmissionManager
     attrStk.clear();
     attrStk.push(obj);
     
-    boolean mdres = connectExternalAttrs( attrStk, stor, mods, extAttrModLog  );
+    boolean mdres = connectExternalAttrs( attrStk, stor, mods, mm, extAttrModLog  );
+    
+    if( obj.getRelations() != null )
+    {
+     for( AgeRelationWritable rl : obj.getRelations() )
+     {
+      attrStk.clear();
+      attrStk.push(rl);
+      
+      mdres = mdres && connectExternalAttrs( attrStk, stor, mods, mm, extAttrModLog  );
+     }
+    }
     
     if( mdres )
      extAttrModLog.log(Level.INFO, "Success");
@@ -341,108 +380,6 @@ public class SubmissionManager
    }
    
   }
-  
-  n=0;
-  for( ModMeta mm : mods )
-  {
-   n++;
-   
-   if( mm.module.getExternalObjectAttributes() == null )
-    continue;
-   
-   LogNode extAttrModLog = extAttrLog.branch("Processing module: "+n);
-   
-   for( AgeExternalObjectAttributeWritable extAttr : mm.module.getExternalObjectAttributes() )
-   {
-    boolean exAtModRes = true;
-    
-    String ref = extAttr.getTargetObjectId();
-    
-    AgeObject tgObj = stor.getObjectById( ref );
-    
-    
-    if( tgObj == null )
-    {
-     modloop :for( ModMeta refmm : mods )
-     {
-      if( mm == refmm )
-       continue;
-      
-      for( AgeObjectWritable candObj : mm.module.getObjects() )
-      {
-       if( candObj.getId() != null && candObj.getId().equals(ref) )
-       {
-        tgObj = candObj;
-        break modloop;
-       }
-      }
-     }
-    }
-
-    
-    if( tgObj == null )
-    {
-     AgeObject obj  = (AgeObject)atStk.get(0);
-     
-     String attrName = attr.getAgeElClass().getName();
-     
-     if( atStk.size() > 1 )
-     {
-      StringBuilder sb = new StringBuilder(200);
-      
-      sb.append(atStk.get(1).getAttributedClass().getName());
-      
-      for( int i = 2; i < atStk.size(); i++ )
-       sb.append("[").append(atStk.get(i).getAttributedClass().getName()).append("]");
-      
-      sb.append("[").append(attr.getAgeElClass().getName()).append("]");
-      
-      attrName = sb.toString();
-     }
-     
-     extAttrModLog.log(Level.ERROR,"Invalid external reference: '"+ref+"'. Target object not found. Source object: '"+obj.getId()+"' (Class: "+obj.getAgeElClass()
-       +", Order: "+obj.getOrder()+"). Attribute: "+attrName+" Order: "+extAttr.getOrder());
-     
-     exAtModRes = false;
-    }
-    else
-    {
-     if( ! tgObj.getAgeElClass().isClassOrSubclass(extAttr.getAgeElClass().getTargetClass()) )
-     {
-      AgeObject obj  = (AgeObject)atStk.get(0);
-
-      String attrName = attr.getAgeElClass().getName();
-      if( atStk.size() > 1 )
-      {
-       attrName = atStk.get(1).getAttributedClass().getName();
-       for( int i = 2; i < atStk.size(); i++ )
-        attrName += "["+atStk.get(i).getAttributedClass().getName()+"]";
-       
-       attrName+= "["+attr.getAgeElClass().getName()+"]";
-      }
-
-      extAttrModLog.log(Level.ERROR,"Inappropriate target object's (Id: '"+ref+"') class: "+tgObj.getAgeElClass()
-        +". Expected class: "+extAttr.getAgeElClass().getTargetClass()+" Source object: '"+obj.getId()+"' (Class: "+obj.getAgeElClass()
-        +", Order: "+obj.getOrder()+"). Attribute: "+attrName+" Order: "+attr.getOrder());
-      
-      exAtModRes = false;
-     }
-     else
-      extAttr.setTargetObject(tgObj);
-    }
-
-
-    
-    if( exAtModRes )
-     extAttrModLog.log(Level.INFO, "Success");
-    else
-     extAttrModLog.log(Level.ERROR, "Failed");
-
-    extAttrRes = extAttrRes && exAtModRes;
-   }
-   
-  }
-
   
   
   if( extAttrRes )
@@ -583,7 +520,7 @@ public class SubmissionManager
  }
 
  
- private boolean connectExternalAttrs( Stack<Attributed> atStk, AgeStorageAdm stor, List<ModMeta> mods, LogNode log )
+ private boolean connectExternalAttrs( Stack<Attributed> atStk, AgeStorageAdm stor, List<ModMeta> mods, ModMeta cmod, LogNode log )
  {
   boolean res = true;
   
@@ -606,11 +543,9 @@ public class SubmissionManager
     
     if( tgObj == null )
     {
-     AgeObject obj  = (AgeObject)atStk.get(0);
-
      for( ModMeta mm : mods )
      {
-      if( mm.module == obj.getDataModule() )
+      if( mm.module == cmod )
        continue;
       
       for( AgeObjectWritable candObj : mm.module.getObjects() )
@@ -627,7 +562,6 @@ public class SubmissionManager
     else
     {
      found = true;
-
     }
     
     if( ! found )
@@ -682,7 +616,7 @@ public class SubmissionManager
    }
    
    atStk.push(attr);
-   res = res && connectExternalAttrs(atStk,stor, mods, log);
+   res = res && connectExternalAttrs(atStk,stor, mods, cmod, log);
    atStk.pop();
   }
  
