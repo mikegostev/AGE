@@ -51,7 +51,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public DataModuleWritable createDataModule( ContextSemanticModel sm )
  {
-  return v1factory.createDataModule( sm );
+  return v2factory.createDataModule( sm );
  }
 
  @Override

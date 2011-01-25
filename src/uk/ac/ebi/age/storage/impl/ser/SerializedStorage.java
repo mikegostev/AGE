@@ -3,6 +3,7 @@ package uk.ac.ebi.age.storage.impl.ser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -35,7 +36,6 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.query.AgeQuery;
-import uk.ac.ebi.age.service.IdGenerator;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.storage.DataChangeListener;
 import uk.ac.ebi.age.storage.DataModuleReaderWriter;
@@ -50,13 +50,14 @@ import uk.ac.ebi.age.storage.impl.SerializedDataModuleReaderWriter;
 import uk.ac.ebi.age.storage.index.AgeIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
+import uk.ac.ebi.mg.filedepot.FileDepot;
 
 public class SerializedStorage implements AgeStorageAdm
 {
  private Log log = LogFactory.getLog(this.getClass());
  
  private static final String modelPath = "model";
- private static final String dmStiragePath = "data";
+ private static final String dmStoragePath = "data";
  private static final String modelFileName = "model.ser";
  
  private File modelFile;
@@ -74,6 +75,8 @@ public class SerializedStorage implements AgeStorageAdm
  private DataModuleReaderWriter submRW = new SerializedDataModuleReaderWriter();
 
  private Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
+ 
+ private FileDepot depot; 
  
  private boolean master = false;
  
@@ -142,7 +145,7 @@ public class SerializedStorage implements AgeStorageAdm
 
  }
 
- private void updateIndices( DataModuleWritable s )
+ private void updateIndices( Collection<DataModuleWritable> mods, boolean fullreset )
  {
   ArrayList<AgeObject> res = new ArrayList<AgeObject>();
 
@@ -150,18 +153,24 @@ public class SerializedStorage implements AgeStorageAdm
   {
    AgeStorageIndex idx = me.getValue();
    
-   Collection<DataModuleWritable> objects = null;
+   if( ! fullreset )
+   {
+    for( DataModuleWritable s : mods )
+     if( idx.getQuery().getExpression().isTestingRelations() && s.getExternalRelations() != null && s.getExternalRelations().size() > 0 )
+     {
+      fullreset=true;
+      break;
+     }
+   }
    
-   if( idx.getQuery().getExpression().isTestingRelations() && s.getExternalRelations() != null && s.getExternalRelations().size() > 0 )
+   if( fullreset )
    {
     idx.reset();
-    objects = moduleMap.values();
+    mods = moduleMap.values();
    }
-   else
-    objects = Collections.singleton(s);
    
    
-   Iterable<AgeObject> trv = traverse(idx.getQuery(), objects);
+   Iterable<AgeObject> trv = traverse(idx.getQuery(), mods);
 
    res.clear();
 
@@ -216,34 +225,75 @@ public class SerializedStorage implements AgeStorageAdm
  }
 
 
- public String storeDataModule(DataModuleWritable sbm) throws RelationResolveException, ModuleStoreException
+ public void storeDataModule( Collection<DataModuleWritable> mods ) throws RelationResolveException, ModuleStoreException
  {
   if( ! master )
    throw new ModuleStoreException("Only the master instance can store data");
+  
+  for( DataModuleWritable dm : mods )
+  {
+   if( dm.getId() == null )
+    throw new ModuleStoreException("Module ID is null");
+  }
   
   try
   {
    dbLock.writeLock().lock();
 
+   boolean changed = false;
 
-   String newDMId = "DM" + IdGenerator.getInstance().getStringId();
+   for(DataModuleWritable dm : mods)
+   {
+    changed = changed || removeDataModule(dm.getId());
 
-   sbm.setId(newDMId);
+    saveDataModule(dm);
+
+    moduleMap.put(dm.getId(), dm);
+
+    for(AgeObjectWritable obj : dm.getObjects())
+     mainIndexMap.put(obj.getId(), obj);
+   }
+
+   updateIndices(mods, changed);
+
+   for(DataChangeListener chls : chgListeners)
+    chls.dataChanged();
+
+  }
+  finally
+  {
+   dbLock.writeLock().unlock();
+  }
+
+ }
+ 
+ public void storeDataModule(DataModuleWritable sbm) throws RelationResolveException, ModuleStoreException
+ {
+  if( ! master )
+   throw new ModuleStoreException("Only the master instance can store data");
+  
+  if( sbm.getId() == null )
+   throw new ModuleStoreException("Module ID is null");
+  
+  try
+  {
+   dbLock.writeLock().lock();
+
+   boolean changed = removeDataModule( sbm.getId() );
  
    saveDataModule(sbm);
    
-   moduleMap.put(newDMId, sbm);
+   moduleMap.put(sbm.getId(), sbm);
 
    
    for( AgeObjectWritable obj : sbm.getObjects() )
     mainIndexMap.put(obj.getId(), obj);
    
-   updateIndices( sbm );
+   updateIndices( Collections.singletonList(sbm), changed );
    
    for(DataChangeListener chls : chgListeners )
     chls.dataChanged();
    
-   return newDMId;
   }
   finally
   {
@@ -260,7 +310,16 @@ public class SerializedStorage implements AgeStorageAdm
   File modelDir = new File( baseDir, modelPath );
   
   modelFile = new File(modelDir, modelFileName );
-  dataDir = new File( baseDir, dmStiragePath ); 
+  dataDir = new File( baseDir, dmStoragePath ); 
+  
+  try
+  {
+   depot = new FileDepot(dataDir);
+  }
+  catch(IOException e)
+  {
+   throw new StorageInstantiationException( "Depot init error: "+e.getMessage(),e);
+  }
   
   if( baseDir.isFile() )
    throw new StorageInstantiationException("The initial path must be directory: "+initStr);
@@ -271,9 +330,6 @@ public class SerializedStorage implements AgeStorageAdm
   if( ! modelDir.exists() )
    modelDir.mkdirs();
 
-  if( ! dataDir.exists() )
-   dataDir.mkdirs();
- 
   if( modelFile.canRead() )
    loadModel();
   else
@@ -289,7 +345,7 @@ public class SerializedStorage implements AgeStorageAdm
   {
    dbLock.writeLock().lock();
    
-   for( File f : dataDir.listFiles() )
+   for( File f : depot.listFiles() )
    {
     DataModuleWritable dm = submRW.read(f);
     
@@ -444,19 +500,46 @@ public class SerializedStorage implements AgeStorageAdm
 
  private void saveDataModule(DataModuleWritable sm) throws ModuleStoreException
  {
-  File sbmFile = new File( dataDir, sm.getId()+submRW.getExtension() );
+  File modFile = depot.getFilePath(sm.getId(), sm.getVersion() );
   
   try
   {
-   submRW.write(sm, sbmFile);
+   submRW.write(sm, modFile);
   }
   catch(Exception e)
   {
-   sbmFile.delete();
+   modFile.delete();
    
-   throw new ModuleStoreException("Can't store model: "+e.getMessage(), e);
+   throw new ModuleStoreException("Can't store data module: "+e.getMessage(), e);
   }
  }
+ 
+ private boolean removeDataModule(String modId) throws ModuleStoreException
+ {
+  DataModuleWritable dm = moduleMap.get(modId);
+  
+  if( dm == null )
+   return false;
+  
+  File modFile = depot.getFilePath(dm.getId(), dm.getVersion() );
+  
+  if( ! modFile.delete() )
+   throw new ModuleStoreException("Can't delete module file: "+modFile.getAbsolutePath());
+  
+  if( dm.getExternalRelations() != null )
+  {
+   for( AgeExternalRelationWritable rel : dm.getExternalRelations() )
+    rel.getTargetObject().removeRelation(rel.getInverseRelation());
+  }
+  
+  for( AgeObjectWritable obj : dm.getObjects() )
+   mainIndexMap.remove(obj.getId());
+   
+  moduleMap.remove(modId);
+ 
+  return true;
+ }
+
  
  public void shutdown()
  {
@@ -554,6 +637,12 @@ public class SerializedStorage implements AgeStorageAdm
   return mainIndexMap.containsKey( objID );
  }
 
+ @Override
+ public boolean hasDataModule(String dmID)
+ {
+  return moduleMap.containsKey( dmID );
+ }
+
 
  @Override
  public void addDataChangeListener(DataChangeListener dataChangeListener)
@@ -582,4 +671,13 @@ public class SerializedStorage implements AgeStorageAdm
    obj.addRelation(r);
  }
  
+ @Override
+ public void removeRelations(String key, Collection<AgeRelationWritable> rels)
+ {
+  AgeObjectWritable obj = mainIndexMap.get(key);
+  
+  for( AgeRelationWritable r : rels )
+   obj.removeRelation(r);
+ }
+
 }

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import uk.ac.ebi.age.conf.Constants;
 import uk.ac.ebi.age.log.LogNode;
 import uk.ac.ebi.age.log.LogNode.Level;
 import uk.ac.ebi.age.model.AgeAttribute;
@@ -28,6 +29,7 @@ import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
 import uk.ac.ebi.age.parser.impl.AgeTabSyntaxParserImpl;
+import uk.ac.ebi.age.service.IdGenerator;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
@@ -54,7 +56,7 @@ public class SubmissionManager
  private AgeTab2AgeConverter converter = new AgeTab2AgeConverterImpl();
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
  
- public DataModuleWritable prepareSubmission( List<DataModuleMeta> mods, boolean update,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
+ public boolean storeSubmission( List<DataModuleMeta> mods, boolean update,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
  {
 //  AgeTabModule atSbm=null;
   
@@ -92,7 +94,7 @@ public class SubmissionManager
      if(mm.origModule == null)
      {
       logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + mm.id + "'");
-      return null;
+      return false;
      }
     }
    }
@@ -213,8 +215,8 @@ public class SubmissionManager
    res = res && modRes;
   }
   
-  if( ! res )  // TODO can we continue here?
-   return null;
+  if( ! res )  
+   return false;
 
   
   try
@@ -229,7 +231,7 @@ public class SubmissionManager
    else
    {
     connLog.log(Level.ERROR, "Connection failed");
-    return null;
+    return false;
    }
    
    
@@ -268,24 +270,23 @@ public class SubmissionManager
 
    for( ModMeta mm : modules )
    {
+    if(mm.origModule == null)
+     continue;
 
-    if(mm.origModule != null)
+    Collection<AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
+
+    if(origExtRels != null)
     {
-     Collection<AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
-
-     if(origExtRels != null)
+     for(AgeExternalRelationWritable extRel : origExtRels)
      {
-      for(AgeExternalRelationWritable extRel : origExtRels)
-      {
-       AgeObject target = extRel.getTargetObject();
+      AgeObject target = extRel.getTargetObject();
 
-       Set<AgeRelationWritable> objectsRels = detachedRelMap.get(target);
+      Set<AgeRelationWritable> objectsRels = detachedRelMap.get(target);
 
-       if(objectsRels == null)
-        detachedRelMap.put(target, objectsRels = new HashSet<AgeRelationWritable>());
+      if(objectsRels == null)
+       detachedRelMap.put(target, objectsRels = new HashSet<AgeRelationWritable>());
 
-       objectsRels.add(extRel.getInverseRelation());
-      }
+      objectsRels.add(extRel.getInverseRelation());
      }
     }
    }
@@ -315,33 +316,72 @@ public class SubmissionManager
     else
     {
      invRelLog.log(Level.ERROR, "Validation failed");
-     return null;
+     return false;
     }
 
     res = res && invRelRes;
-    
-    LogNode storLog = connLog.branch("Storing data module");
-    try
-    {
-     stor.storeDataModule(ageSbm);
-     storLog.log(Level.INFO, "Success");
-    }
-    catch(Exception e)
-    {
-     storLog.log(Level.ERROR, "Data module storing failed: "+e.getMessage());
-     return null;
-    }
-    
-    for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  detachedRelMap.entrySet() )
-     stor.removeRelations(me.getKey().getId(),me.getValue());
-
-    for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
-     stor.addRelations(me.getKey().getId(),me.getValue());
-
-
-    
    }
+   
+//   boolean storRes = true;
+   LogNode storLog = logRoot.branch("Storing data");
+    
+   long ts = System.currentTimeMillis();
+   
+   for( ModMeta mm : modules )
+   {
+    mm.module.setVersion(ts);
+    
+    if( mm.origModule == null )
+    {
+     String id = null;
+     
+     do
+     {
+      id = Constants.dataModuleIDPrefix+IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
+     }
+     while( stor.hasDataModule(id) );
+    
+     mm.module.setId(id);
+    }
+   }
+    
+   try
+   {
+    if( modules.size() > 1 )
+    {
+     ArrayList<DataModuleWritable> modList = new ArrayList<DataModuleWritable>( modules.size() );
+     
+     for( ModMeta mm : modules )
+      modList.add(mm.module);
+     
+     stor.storeDataModule(modList);
+    }
+    else
+     stor.storeDataModule(modules.get(0).module);
+    
+    storLog.log(Level.INFO, "Success");
+   }
+   catch(Exception e)
+   {
+    storLog.log(Level.ERROR, "Data module storing failed: " + e.getMessage());
+    res = false;
+   }
+   
+   for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  detachedRelMap.entrySet() )
+    stor.removeRelations(me.getKey().getId(),me.getValue());
 
+   for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
+    stor.addRelations(me.getKey().getId(),me.getValue());
+
+   n=0;
+   for( ModMeta mm : modules )
+   {
+    DataModuleMeta m = mods.get(n++);
+    
+    m.setId(mm.module.getId());
+    m.setVersion( mm.module.getVersion() );
+   }
+   
   }
   finally
   {
@@ -350,7 +390,7 @@ public class SubmissionManager
 
   //Impute reverse relation and revalidate.
 
-  return ageSbm;
+  return res;
  }
 
  private boolean connectDataModule(List<ModMeta> mods, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
