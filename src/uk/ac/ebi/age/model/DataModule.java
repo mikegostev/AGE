@@ -8,7 +8,8 @@ import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 public interface DataModule
 {
  String getId();
- 
+ long getVersion();
+
  Collection<? extends AgeObject> getObjects();
  
  String getDescription();

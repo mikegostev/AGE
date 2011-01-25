@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v1;
+package uk.ac.ebi.age.model.impl.v2;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -17,21 +17,10 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
 {
  private static final long serialVersionUID = 1L;
  
-// private AgeClass submissionClass = getModelFactoy.createAgeClass("$submission", "SBM", null);
-// private AgeRelationClass submissionRelationClass ;
-// private AgeRelationClass submissionInvRelationClass;
-  
-// private Collection<AgeClass> classes = new ArrayList<AgeClass>(10);
+ private long version;
  private Collection<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
  private ContextSemanticModel model;
  private Collection<AgeExternalRelationWritable> extRels ;
-// private Collection<AgeExternalObjectAttributeWritable> extAttrs ;
-
-// private Map<AgeRelationClass, Collection<AgeRelationWritable>> rels ;
-// private Collection<AgeRelationWritable> relLst;
- 
-// private Collection<SubmissionBlock> blocks = new ArrayList<SubmissionBlock>(10);
-// private Collection<SubmissionBlock> blocks = new ArrayList<SubmissionBlock>(10);
 
  private String id;
  private String descr;
@@ -39,18 +28,6 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  public DataModuleImpl(ContextSemanticModel sm)
  {
   model = sm;
-//  submissionClass = sm.createAgeClass("$submission", "SBM", sm);
-//  
-//  submissionRelationClass = ModelFactoryImpl.getInstance().createAgeRelationClass("$insubmission", sm);
-//  submissionInvRelationClass = ModelFactoryImpl.getInstance().createAgeRelationClass("!$insubmission", sm);
-//  
-//  submissionRelationClass.setInverseClass(submissionInvRelationClass);
-//  submissionInvRelationClass.setInverseClass(submissionRelationClass);
-//  
-//  relLst = new ArrayList<AgeRelationAlt>(100);
-//  
-//  rels = Collections.singletonMap(submissionRelationClass, relLst);
-  
  }
 
 
@@ -64,15 +41,8 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   descr=dsc;
  }
 
-// public void addClass(AgeClass cls)
-// {
-//  classes.add(cls);
-// }
-
  public void addObject(AgeObjectWritable obj)
  {
-//  obj.createRelation(this, submissionInvRelationClass);
-//  relLst.add(getSemanticModel().createAgeRelation(obj, submissionRelationClass));
 
   objects.add(obj);
 
@@ -90,27 +60,8 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
    }
   }
   
-//  collectExtAttrs( obj );
  }
 
-// private void collectExtAttrs( Attributed atb )
-// {
-//  if( atb.getAttributes() == null )
-//   return;
-//  
-//  for( Attributed at : atb.getAttributes() )
-//  {
-//   if( at instanceof AgeExternalObjectAttributeWritable )
-//   {
-//    if( extAttrs == null )
-//     extAttrs = new ArrayList<AgeExternalObjectAttributeWritable>(10);
-//
-//    extAttrs.add((AgeExternalObjectAttributeWritable)at);
-//   }
-//   
-//   collectExtAttrs(at);
-//  }
-// }
  
  public void setId(String id)
  {
@@ -140,13 +91,6 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  {
   return extRels;
  }
-
-
-// @Override
-// public Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes()
-// {
-//  return extAttrs;
-// }
 
  
  @Override
@@ -181,12 +125,13 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  @Override
  public long getVersion()
  {
-  return 0;
+  return version;
  }
 
  @Override
  public void setVersion(long version)
  {
+  this.version = version;
  }
  
 }

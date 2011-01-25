@@ -23,7 +23,9 @@ public interface AgeStorage
  void shutdown();
 
  AgeObject getObjectById(String grpID);
+
  boolean hasObject(String id);
+ boolean hasDataModule(String id);
 
  void addDataChangeListener(DataChangeListener dataChangeListener);
 }

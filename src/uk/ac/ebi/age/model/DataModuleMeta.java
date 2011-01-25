@@ -10,6 +10,7 @@ public class DataModuleMeta implements Serializable
  private String description;
  private long mtime;
  private String modifier;
+ private long version;
  
  private transient String text;
 
@@ -61,6 +62,16 @@ public class DataModuleMeta implements Serializable
  public void setText(String text)
  {
   this.text = text;
+ }
+
+ public void setVersion(long v)
+ {
+  version=v;
+ }
+
+ public long getVersion()
+ {
+  return version;
  }
 
 }

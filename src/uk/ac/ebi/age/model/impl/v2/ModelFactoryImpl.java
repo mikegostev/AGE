@@ -47,7 +47,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public DataModuleWritable createDataModule( ContextSemanticModel sm )
  {
-  throw new UnsupportedOperationException();
+  return new DataModuleImpl( sm );
  }
 
  @Override
