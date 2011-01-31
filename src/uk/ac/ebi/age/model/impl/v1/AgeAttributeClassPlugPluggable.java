@@ -40,7 +40,8 @@ class AgeAttributeClassPlugPluggable implements Plug, Serializable, AgeAttribute
  public AgeAttributeClass getAgeAttributeClass()
  {
   if( ageAttributeClass == null )
-   plug();
+   if( !plug() )
+    System.err.println("Can't plug attribute class: "+className);
   
   return ageAttributeClass;
  }

@@ -8,4 +8,6 @@ import uk.ac.ebi.age.storage.impl.AgeStorageIndex;
 public interface TextIndex extends AgeStorageIndex
 {
  List<AgeObject> select(String query);
+
+ int count(String query);
 }

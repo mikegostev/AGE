@@ -207,6 +207,14 @@ public class SerializedStorage implements AgeStorageAdm
   
   return ti.select(query);
  }
+ 
+ public int queryTextIndexCount(AgeIndex idx, String query)
+ {
+  TextIndex ti = (TextIndex)indexMap.get(idx);
+  
+  return ti.count(query);
+ }
+
 
  public String storeSubmission(SubmissionWritable sbm) throws RelationResolveException, SubmissionStoreException
  {

@@ -14,6 +14,7 @@ public interface AgeStorage
  Collection<AgeObject> executeQuery( AgeQuery qury );
  
  List<AgeObject> queryTextIndex(AgeIndex idx, String query);
+ int queryTextIndexCount(AgeIndex idx, String query);
  
 // AgeIndex createTextIndex(AgeQuery qury, TextValueExtractor cb );
  AgeIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> cb );

@@ -90,6 +90,39 @@ public class LuceneFullTextIndex implements TextIndex
   return objectList;
  }
  
+ public int count(String query)
+ {
+  
+  Query q;
+  try
+  {
+   q = new QueryParser( Version.LUCENE_30, defaultFieldName, analyzer).parse(query);
+
+   final IndexSearcher searcher = new IndexSearcher(index, true);
+   
+   CountCollector cc = new CountCollector();
+   searcher.search(q,cc);
+   
+   return cc.getCount();
+  }
+  catch(ParseException e)
+  {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+  }
+  catch(IOException e)
+  {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+  }
+
+  
+  //ScoreDoc[] hits = collector.topDocs().scoreDocs;
+  
+  return -1;
+ }
+
+ 
  public List<AgeObject> select(String query)
  {
   final List<AgeObject> res = new ArrayList<AgeObject>();
@@ -227,5 +260,36 @@ public class LuceneFullTextIndex implements TextIndex
   }
  }
 
+ private static class CountCollector extends Collector
+ {
+  int count = 0;
+
+  @Override
+  public void setScorer(Scorer arg0) throws IOException
+  {
+  }
+
+  @Override
+  public void setNextReader(IndexReader arg0, int arg1) throws IOException
+  {
+  }
+
+  @Override
+  public void collect(int docId) throws IOException
+  {
+   count++;
+  }
+
+  @Override
+  public boolean acceptsDocsOutOfOrder()
+  {
+   return true;
+  }
+  
+  int getCount()
+  {
+   return count;
+  }
+ }
 
 }
