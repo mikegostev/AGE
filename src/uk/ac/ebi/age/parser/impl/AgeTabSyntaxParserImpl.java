@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import uk.ac.ebi.age.parser.AgeTabObject;
-import uk.ac.ebi.age.parser.AgeTabSubmission;
+import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.BlockHeader;
 import uk.ac.ebi.age.parser.ClassReference;
@@ -16,9 +16,9 @@ import uk.ac.ebi.age.util.StringUtil;
 public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 {
 
- public AgeTabSubmission parse( String txt ) throws ParserException
+ public AgeTabModule parse( String txt ) throws ParserException
  {
-  AgeTabSubmission data = new AgeTabSubmissionImpl( this );
+  AgeTabModule data = new AgeTabModuleImpl( this );
   
   
   int cpos = 0;

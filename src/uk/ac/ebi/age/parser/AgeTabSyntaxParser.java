@@ -140,19 +140,20 @@ public abstract class AgeTabSyntaxParser
   return new AgeTabSyntaxParserImpl(  );
  }
 
- public abstract AgeTabSubmission parse( String txt ) throws ParserException;
+ public abstract AgeTabModule parse( String txt ) throws ParserException;
 
  
  public ClassReference string2ClassReference( String str ) throws ParserException
  {
   final ClassReference nm = new ClassReference();
   
-
+  nm.setRawReference( str.trim() );
+  
   while( str.length() > 0 )
   {
    String ps = null;
    
-   for(int i=0; i < 2; i++ )
+   for(int i=0; i < prc.length; i++ ) // Looking for expressions in braces and calling 'process' for such expressions
    {
     if( str.charAt(str.length()-1) == prc[i].getBrackets().charAt(1) )
     {
@@ -161,7 +162,7 @@ public abstract class AgeTabSyntaxParser
      int j;
      for( j= str.length()-2; j>=0; j--)
      {
-      if( str.charAt(j) == prc[i].getBrackets().charAt(1) )
+      if( str.charAt(j) == prc[i].getBrackets().charAt(1) ) //We've found another closing brace so assuming a nested expression
        level++;
       else if( str.charAt(j) == prc[i].getBrackets().charAt(0) )
       {

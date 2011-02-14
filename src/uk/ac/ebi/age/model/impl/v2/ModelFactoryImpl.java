@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v1;
+package uk.ac.ebi.age.model.impl.v2;
 
 import java.io.Serializable;
 
@@ -53,162 +53,161 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, SemanticModel sm)
  {
-  return new AgeObjectImpl(id, ageClass, sm);
+  throw new UnsupportedOperationException();
  }
 
  @Override
  public AgeClassWritable createAgeClass(String name, String id, String pfx, SemanticModel sm)
  {
-  return new AgeClassImpl(name, id, pfx, sm);
+  throw new UnsupportedOperationException();
  }
 
  @Override
  public AgeRelationClassWritable createAgeRelationClass(String name, String id, SemanticModel sm)
  {
-  return new AgeRelationClassImpl(name, id, sm);
+  throw new UnsupportedOperationException();
  }
 
  @Override
  public AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id, SemanticModel sm)
  {
-  return new AgeAnnotationClassImpl(name, id, sm);
+  throw new UnsupportedOperationException();
  }
 
  
  @Override
  public AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type, SemanticModel sm)
  {
-  return new AgeAttributeClassImpl(name, id, type, sm);
+  throw new UnsupportedOperationException();
  }
 
-
-
- @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, SemanticModel sm)
- {
-  return new AgeExternalRelationImpl(targetClass, sourceObj, id, sm);
- }
- 
-
- @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, SemanticModel sm)
- {
-  return new AgeExternalObjectAttributeImpl(atCls.getAttributeClass(), id, sm);
- }
-
- @Override
- public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel)
- {
-  return new AgeRelationImpl(targetObj, relClass, semanticModel);
- }
-
-
- @Override
- public AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, SemanticModel sm, AgeClass owner)
- {
-  return new CustomAgeAttributeClassImpl(name, type, sm, owner);
- }
-
- @Override
- public AgeClassWritable createCustomAgeClass(String name, String pfx, SemanticModel sm)
- {
-  return new CustomAgeClassImpl(name, pfx, sm);
- }
-
- @Override
- public AgeRelationClassWritable createCustomAgeRelationClass(String name, SemanticModel sm, AgeClass range, AgeClass owner)
- {
-  return new CustomAgeRelationClassImpl(name, sm, range, owner);
- }
-
- @Override
- public AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, SemanticModel sm)
- {
-  return new AgeAttributeClassPlugPluggable(attrClass, sm);
- }
-
- @Override
- public AgeClassPlug createAgeClassPlug(AgeClass cls, SemanticModel mdl)
- {
-  return new AgeClassPlugPluggable(cls, mdl);
- }
-
- @Override
- public AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass relClass, SemanticModel mod)
- {
-  return new AgeRelationClassPlugPluggable(relClass, mod);
- }
-
- @Override
- public AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass relClass, SemanticModel mod)
- {
-  return new AgeRelationInverseClassPlugPluggable(relClass, mod);
- }
-
- @Override
- public AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls, SemanticModel sm)
- {
-  return new AgeAnnotationImpl(cls, sm);
- }
-
- @Override
- public AttributeAttachmentRuleWritable createAgeAttributeAttachmentRule(RestrictionType type, SemanticModel sm)
- {
-  return new AttributeAttachmentRuleImpl(type,sm);
- }
-
- @Override
- public RelationRuleWritable createAgeRelationRule(RestrictionType type, SemanticModel sm)
- {
-  return new RelationRuleImpl(type, sm);
- }
-
- @Override
- public QualifierRuleWritable createAgeQualifierRule(SemanticModel sm)
- {
-  return new QualifierRuleImpl( sm );
- }
 
  @Override
  public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, SemanticModel sm)
  {
   AgeAttributeWritable attr=null;
   
-  AgeAttributeClass attrClass = attrClassRef.getAttributeClass();
-  
-  switch( attrClass.getDataType() )
+  switch( attrClassRef.getAttributeClass().getDataType() )
   {
    case INTEGER:
-    attr = new AgeIntegerAttributeImpl(attrClass, sm);
+    attr = new AgeIntegerAttributeImpl(attrClassRef, sm);
     break;
    
    case REAL:
-    attr = new AgeRealAttributeImpl(attrClass, sm);
+    attr = new AgeRealAttributeImpl(attrClassRef, sm);
     break;
    
    case BOOLEAN:
-    attr = new AgeBooleanAttributeImpl(attrClass, sm);
+    attr = new AgeBooleanAttributeImpl(attrClassRef, sm);
     break;
    
    case URI:
    case TEXT: 
    case STRING:
    case GUESS:
-    attr = new AgeStringAttributeImpl(attrClass, sm);
+    attr = new AgeStringAttributeImpl(attrClassRef, sm);
     break;
    
    case OBJECT:
-    attr = new AgeObjectAttributeImpl(attrClass, sm);
+    attr = new AgeObjectAttributeImpl(attrClassRef, sm);
   }
   
   
   return attr;
+  
+ }
+
+ @Override
+ public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, SemanticModel sm)
+ {
+  throw new UnsupportedOperationException();
+ }
+ 
+
+ @Override
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, SemanticModel sm)
+ {
+  return new AgeExternalObjectAttributeImpl(atCls, id, sm);
+ }
+
+ @Override
+ public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+
+ @Override
+ public AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, SemanticModel sm, AgeClass owner)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeClassWritable createCustomAgeClass(String name, String pfx, SemanticModel sm)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeRelationClassWritable createCustomAgeRelationClass(String name, SemanticModel sm, AgeClass range, AgeClass owner)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, SemanticModel sm)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeClassPlug createAgeClassPlug(AgeClass cls, SemanticModel mdl)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass relClass, SemanticModel mod)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass relClass, SemanticModel mod)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls, SemanticModel sm)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AttributeAttachmentRuleWritable createAgeAttributeAttachmentRule(RestrictionType type, SemanticModel sm)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public RelationRuleWritable createAgeRelationRule(RestrictionType type, SemanticModel sm)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public QualifierRuleWritable createAgeQualifierRule(SemanticModel sm)
+ {
+  throw new UnsupportedOperationException();
  }
 
  @Override
  public AttributeClassRef createAttributeClassRef(AgeAttributeClassPlug plug, int order, String heading)
  {
-  throw new UnsupportedOperationException();
+  return new AttrClassRef(plug, order, heading);
  }
+
 
 }

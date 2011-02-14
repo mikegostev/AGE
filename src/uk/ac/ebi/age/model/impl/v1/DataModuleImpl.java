@@ -11,9 +11,9 @@ import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
-class SubmissionImpl  implements SubmissionWritable, Serializable
+class DataModuleImpl  implements DataModuleWritable, Serializable
 {
  private static final long serialVersionUID = 1L;
  
@@ -25,6 +25,7 @@ class SubmissionImpl  implements SubmissionWritable, Serializable
  private Collection<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
  private ContextSemanticModel model;
  private Collection<AgeExternalRelationWritable> extRels ;
+// private Collection<AgeExternalObjectAttributeWritable> extAttrs ;
 
 // private Map<AgeRelationClass, Collection<AgeRelationWritable>> rels ;
 // private Collection<AgeRelationWritable> relLst;
@@ -35,7 +36,7 @@ class SubmissionImpl  implements SubmissionWritable, Serializable
  private String id;
  private String descr;
 
- public SubmissionImpl(ContextSemanticModel sm)
+ public DataModuleImpl(ContextSemanticModel sm)
  {
   model = sm;
 //  submissionClass = sm.createAgeClass("$submission", "SBM", sm);
@@ -88,8 +89,29 @@ class SubmissionImpl  implements SubmissionWritable, Serializable
     }
    }
   }
+  
+//  collectExtAttrs( obj );
  }
 
+// private void collectExtAttrs( Attributed atb )
+// {
+//  if( atb.getAttributes() == null )
+//   return;
+//  
+//  for( Attributed at : atb.getAttributes() )
+//  {
+//   if( at instanceof AgeExternalObjectAttributeWritable )
+//   {
+//    if( extAttrs == null )
+//     extAttrs = new ArrayList<AgeExternalObjectAttributeWritable>(10);
+//
+//    extAttrs.add((AgeExternalObjectAttributeWritable)at);
+//   }
+//   
+//   collectExtAttrs(at);
+//  }
+// }
+ 
  public void setId(String id)
  {
   this.id=id;
@@ -119,6 +141,14 @@ class SubmissionImpl  implements SubmissionWritable, Serializable
   return extRels;
  }
 
+
+// @Override
+// public Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes()
+// {
+//  return extAttrs;
+// }
+
+ 
  @Override
  public void setMasterModel( SemanticModel newModel )
  {
@@ -146,6 +176,17 @@ class SubmissionImpl  implements SubmissionWritable, Serializable
    for(AttributedWritable atw : atbObj.getAttributes() )
     resetAttributedObject(atw);
   }
+ }
+
+ @Override
+ public long getVersion()
+ {
+  return 0;
+ }
+
+ @Override
+ public void setVersion(long version)
+ {
  }
  
 }

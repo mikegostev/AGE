@@ -10,13 +10,13 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
 public abstract class ModelFactory
 {
- public abstract SubmissionWritable createSubmission( ContextSemanticModel sm );
+ public abstract DataModuleWritable createDataModule( ContextSemanticModel sm );
 
  public abstract AgeClassWritable createAgeClass(String name, String id, String pfx, SemanticModel sm);
  public abstract AgeClassWritable createCustomAgeClass(String name, String pfx, SemanticModel sm);
@@ -30,9 +30,9 @@ public abstract class ModelFactory
  public abstract AgeAttributeClassWritable createCustomAgeAttributeClass( String name, DataType type, SemanticModel sm, AgeClass owner );
 
  public abstract AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass,  SemanticModel sm);
- public abstract AgeAttributeWritable createExternalObjectAttribute(AgeAttributeClass atCls, String id, SemanticModel sm);
+ public abstract AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, SemanticModel sm);
 
- public abstract AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass, SemanticModel sm);
+ public abstract AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, SemanticModel sm);
 
 
  public abstract AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel);
@@ -51,6 +51,8 @@ public abstract class ModelFactory
  public abstract AttributeAttachmentRuleWritable createAgeAttributeAttachmentRule(RestrictionType type, SemanticModel sm);
  public abstract RelationRuleWritable createAgeRelationRule(RestrictionType type, SemanticModel sm);
  public abstract QualifierRuleWritable createAgeQualifierRule( SemanticModel sm);
+
+ public abstract AttributeClassRef createAttributeClassRef( AgeAttributeClassPlug plug, int order, String heading);
 
 
 }

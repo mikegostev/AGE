@@ -3,7 +3,7 @@ package uk.ac.ebi.age.model;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 public interface ContextSemanticModel extends SemanticModel
 {
@@ -21,7 +21,7 @@ public interface ContextSemanticModel extends SemanticModel
 
  AgeClassProperty getDefinedAgeClassProperty( String name );
 
- SubmissionWritable createSubmission();
+ DataModuleWritable createDataModule();
 
  SemanticModel getMasterModel();
  void setMasterModel(SemanticModel newModel);

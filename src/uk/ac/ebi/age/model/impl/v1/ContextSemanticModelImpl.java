@@ -15,6 +15,7 @@ import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
+import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
@@ -31,9 +32,9 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
 
 public class ContextSemanticModelImpl implements ContextSemanticModel, Serializable
 {
@@ -151,7 +152,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AgeAttributeClass atCls, String val)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String val)
  {
   return masterModel.createExternalObjectAttribute(atCls, val);
  }
@@ -235,9 +236,9 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 //  return masterModel.isValidProperty(prop, ageClass);
 // }
 
- public SubmissionWritable createSubmission()
+ public DataModuleWritable createDataModule()
  {
-  return masterModel.getModelFactory().createSubmission(this);
+  return masterModel.getModelFactory().createDataModule(this);
  }
 
  @Override
@@ -263,14 +264,21 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 
  public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass)
  {
+  AttributeClassRef ref = masterModel.getModelFactory().createAttributeClassRef( getAgeAttributeClassPlug(attrClass), 0, attrClass.getName());
+  
+  return masterModel.getModelFactory().createAgeAttribute(ref,this);
+ }
+ 
+ public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass)
+ {
   return masterModel.getModelFactory().createAgeAttribute(attrClass,this);
  }
+
  
  public AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass)
  {
   return masterModel.getModelFactory().createRelation(targetObj, relClass, this);
  }
-
 
 
  public AgeAttributeClass getDefinedAgeAttributeClass(String attrClass)

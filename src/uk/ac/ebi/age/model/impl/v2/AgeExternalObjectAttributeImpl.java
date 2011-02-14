@@ -1,11 +1,11 @@
-package uk.ac.ebi.age.model.impl.v1;
+package uk.ac.ebi.age.model.impl.v2;
 
 import java.io.Serializable;
 
 import uk.ac.ebi.age.model.AgeAttribute;
-import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeObjectAttribute;
+import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.SemanticModel;
@@ -16,10 +16,9 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
  private static final long serialVersionUID = 1L;
 
  private String objId;
- private int order;
  private transient AgeObject target;
  
- public AgeExternalObjectAttributeImpl(AgeAttributeClass relClass, String id, SemanticModel sm)
+ public AgeExternalObjectAttributeImpl(AttributeClassRef relClass, String id, SemanticModel sm)
  {
   super(relClass, sm);
   
@@ -40,17 +39,6 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
   return objId;
  }
 
- @Override
- public int getOrder()
- {
-  return order;
- }
-
- @Override
- public void setOrder(int ord)
- {
-  order=ord;
- }
 
  @Override
  public void setTargetObject(AgeObject obj)
@@ -133,10 +121,8 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
  @Override
  public AgeExternalObjectAttributeWritable createClone()
  {
-  AgeExternalObjectAttributeImpl clone  = new AgeExternalObjectAttributeImpl(getAgeAttributeClass(), objId, getSemanticModel());
+  AgeExternalObjectAttributeImpl clone  = new AgeExternalObjectAttributeImpl(getClassRef(), objId, getSemanticModel());
   clone.target=this.target;
-  
-  clone.setOrder( getOrder() );
   
   cloneAttributes( clone );
 

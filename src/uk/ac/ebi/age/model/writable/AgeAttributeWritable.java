@@ -9,8 +9,6 @@ public interface AgeAttributeWritable extends AgeAttribute, AttributedWritable, 
 
  void finalizeValue();
 
- void setOrder(int col);
-
  void setValue( Object val );
  
  void setBooleanValue(boolean boolValue);

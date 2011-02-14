@@ -15,9 +15,8 @@ import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributedClass;
+import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.SemanticModel;
-import uk.ac.ebi.age.model.Submission;
-import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
@@ -40,7 +39,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  private String id;
  private String origId;
 
- private Submission subm;
+ private DataModule subm;
  
  private int order;
  
@@ -76,7 +75,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  }
 
  
- public void addRelation(AgeRelationWritable rl)
+ public synchronized void addRelation(AgeRelationWritable rl)
  {
   
   if( relations == null )
@@ -86,6 +85,29 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   
   if( relationMap != null )
    addRelToMap(rl);
+ }
+ 
+ @Override
+ public synchronized void removeRelation(AgeRelationWritable rel)
+ {
+  if( relations == null )
+   return;
+  
+  if( ! relations.remove(rel) )
+   return;
+  
+  if( relationMap == null )
+   return;
+  
+  Collection<AgeRelationWritable> coll = relationMap.get(rel.getAgeElClass());
+  
+  if( coll == null )
+   return;
+  
+  coll.remove(rel);
+  
+  if( coll.size() == 0 )
+   relationMap.remove(rel.getAgeElClass());
  }
 
 
@@ -185,15 +207,9 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   return getRelMap().keySet();
  }
 
- public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass)
- {
-  AgeAttributeWritable attr = getSemanticModel().createAgeAttribute( attrClass );
 
-  addAttribute(attr);
-  
-  return attr;
- }
  
+ @Override
  public AgeExternalRelationWritable createExternalRelation(String val, AgeRelationClass relClass)
  {
   AgeExternalRelationWritable rel = getSemanticModel().createExternalRelation(this, val, relClass);
@@ -204,6 +220,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  }
  
 
+ @Override
  public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass)
  {
   AgeRelationWritable rel = getSemanticModel().createAgeRelation(targetObj, relClass);
@@ -223,12 +240,12 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   this.order = order;
  }
 
- public Submission getSubmission()
+ public DataModule getDataModule()
  {
   return subm;
  }
 
- public void setSubmission(Submission subm)
+ public void setDataModule(DataModule subm)
  {
   this.subm = subm;
  }

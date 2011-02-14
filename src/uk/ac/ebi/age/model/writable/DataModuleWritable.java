@@ -2,12 +2,13 @@ package uk.ac.ebi.age.model.writable;
 
 import java.util.Collection;
 
+import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.SemanticModel;
-import uk.ac.ebi.age.model.Submission;
 
-public interface SubmissionWritable extends Submission
+public interface DataModuleWritable extends DataModule
 {
  void setId( String id );
+ void setVersion( long ts );
  void setDescription( String des );
  
  

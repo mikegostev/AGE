@@ -3,8 +3,8 @@ package uk.ac.ebi.age.mng;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.SubmissionContext;
+import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
 import uk.ac.ebi.age.model.impl.v1.ContextSemanticModelImpl;
-import uk.ac.ebi.age.model.impl.v1.ModelFactoryImpl;
 import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
 
 public class SemanticManager

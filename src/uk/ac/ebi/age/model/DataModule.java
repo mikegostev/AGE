@@ -5,10 +5,11 @@ import java.util.Collection;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 
 
-public interface Submission
+public interface DataModule
 {
  String getId();
- 
+ long getVersion();
+
  Collection<? extends AgeObject> getObjects();
  
  String getDescription();
@@ -16,4 +17,6 @@ public interface Submission
  ContextSemanticModel getContextSemanticModel();
  
  Collection<AgeExternalRelationWritable> getExternalRelations();
+
+// Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes();
 }

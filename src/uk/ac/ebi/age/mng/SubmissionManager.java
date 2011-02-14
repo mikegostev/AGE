@@ -1,30 +1,35 @@
 package uk.ac.ebi.age.mng;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import uk.ac.ebi.age.conf.Constants;
 import uk.ac.ebi.age.log.LogNode;
 import uk.ac.ebi.age.log.LogNode.Level;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
+import uk.ac.ebi.age.model.DataModuleMeta;
 import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.parser.AgeTab2AgeConverter;
-import uk.ac.ebi.age.parser.AgeTabSubmission;
+import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
 import uk.ac.ebi.age.parser.impl.AgeTabSyntaxParserImpl;
+import uk.ac.ebi.age.service.IdGenerator;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
@@ -32,6 +37,15 @@ import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
 public class SubmissionManager
 {
  private static SubmissionManager instance = new SubmissionManager();
+ 
+ private static class ModMeta
+ {
+  String text;
+  String id;
+  AgeTabModule atMod;
+  DataModuleWritable origModule;
+  DataModuleWritable module;
+ }
  
  public static SubmissionManager getInstance()
  {
@@ -42,95 +56,240 @@ public class SubmissionManager
  private AgeTab2AgeConverter converter = new AgeTab2AgeConverterImpl();
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
  
- public SubmissionWritable prepareSubmission( String text, String name, boolean update,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
+ public boolean storeSubmission( List<DataModuleMeta> mods, boolean update,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
  {
-  AgeTabSubmission atSbm=null;
+//  AgeTabModule atSbm=null;
   
-  SubmissionWritable origSbm = null;
+//  DataModuleWritable origSbm = null;
   
-  if( update && name != null )
+//  if( update && name != null )
+//  {
+//   origSbm = stor.getDataModule(name);
+//   
+//   if( origSbm == null )
+//   {
+//    logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='"+name+"'");
+//    return null;
+//   }
+//  }
+  
+  List<ModMeta> modules = new ArrayList<ModMeta>( mods.size() );
+  
+  for( DataModuleMeta dm : mods )
   {
-   origSbm = stor.getSubmission(name);
-   
-   if( origSbm == null )
+   ModMeta mm = new ModMeta();
+   mm.text = dm.getText();
+   mm.id = dm.getId();
+  }
+  
+  
+  if( update )
+  {
+   for( ModMeta mm : modules )
    {
-    logRoot.log(Level.ERROR, "The storage doesn't contain submission with ID='"+name+"'");
-    return null;
+    if( mm.id != null )
+    {
+     mm.origModule = stor.getDataModule(mm.id);
+
+     if(mm.origModule == null)
+     {
+      logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + mm.id + "'");
+      return false;
+     }
+    }
    }
   }
-  
-  LogNode atLog = logRoot.branch("Parsing AgeTab");
-  try
-  {
-   atSbm =  ageTabParser.parse(text);
-   atLog.log(Level.INFO, "Success");
-  }
-  catch(ParserException e)
-  {
-   atLog.log(Level.ERROR, "Parsing failed: "+e.getMessage()+". Row: "+e.getLineNumber()+". Col: "+e.getColumnNumber());
-   return null;
-  }
 
-  LogNode convLog = logRoot.branch("Converting AgeTab to Age submission");
-  SubmissionWritable ageSbm = converter.convert(atSbm, SemanticManager.getInstance().getContextModel(context), convLog );
+  boolean res = true;
   
-  if( ageSbm != null )
-   convLog.log(Level.INFO, "Success");
-  else
+  for( int n=0; n < modules.size(); n++)
   {
-   convLog.log(Level.ERROR, "Conversion failed");
-   return null;
+   ModMeta mm = modules.get(n);
+   
+   boolean modRes = true;
+   LogNode modNode = logRoot.branch("Processing module: " + (n+1) );
+   
+   boolean atRes = true;
+   LogNode atLog = modNode.branch("Parsing AgeTab");
+   try
+   {
+    mm.atMod = ageTabParser.parse(mm.text);
+    atLog.log(Level.INFO, "Success");
+   }
+   catch(ParserException e)
+   {
+    atLog.log(Level.ERROR, "Parsing failed: " + e.getMessage() + ". Row: " + e.getLineNumber() + ". Col: " + e.getColumnNumber());
+    atRes = false;
+    continue;
+   }
+   
+   boolean convRes = true;
+   LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
+   mm.module = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(context), convLog );
+   
+   if( mm.module != null )
+    convLog.log(Level.INFO, "Success");
+   else
+   {
+    convLog.log(Level.ERROR, "Conversion failed");
+    convRes = false;
+    continue;
+   }
+   
+   boolean uniqRes1 = true;
+   
+   LogNode uniqGLog = modNode.branch("Checking global identifiers uniqueness");
+
+   LogNode uniqLog = uniqGLog.branch("Checking main graph");
+
+   for( AgeObjectWritable obj : mm.module.getObjects())
+   {
+    if( obj.getId() != null )
+    {
+     AgeObject origObj = stor.getObjectById( obj.getId() );
+     
+     if( origObj != null )
+     {
+      uniqLog.log(Level.ERROR, "Object id '"+obj.getId()+"' has been taken by the object from data module: "+origObj.getDataModule().getId());
+      uniqRes1 = false;
+     }
+    }
+   }
+   
+   if( uniqRes1 )
+    uniqLog.log(Level.INFO, "Success");
+   else
+    uniqLog.log(Level.ERROR, "Failed");
+  
+   boolean uniqRes2 = true;
+
+   if( modules.size() > 1 )
+   {
+    uniqLog = uniqGLog.branch("Checking other modules");
+    
+    for( int k=0; k < n; k++ )
+    {
+     DataModuleWritable om = modules.get(k).module;
+     
+     if( om == null )
+      continue;
+     
+     for( AgeObjectWritable obj : mm.module.getObjects())
+     {
+      if( obj.getId() != null )
+      {
+       for( AgeObject othObj : om.getObjects() )
+       {
+        if( othObj.getId() != null && othObj.getId().equals(obj.getId()) )
+        {
+         uniqLog.log(Level.ERROR, "Object id '"+obj.getId()+"' has been taken by the object from sibling data module: "+(k+1));
+         uniqRes2 = false;
+        }
+       }
+      }
+     }
+    }
+   }
+   
+   if( uniqRes2 )
+    uniqLog.log(Level.INFO, "Success");
+   else
+    uniqLog.log(Level.ERROR, "Failed");
+
+   if( uniqRes1 && uniqRes2 )
+    uniqGLog.log(Level.INFO, "Success");
+   else
+    uniqGLog.log(Level.ERROR, "Failed");
+
+   
+   modRes = uniqRes1 && uniqRes2 && atRes && convRes;
+   
+   if( modRes )
+    modNode.log(Level.INFO, "Success");
+   else
+   {
+    modNode.log(Level.ERROR, "Failed");
+    mm.module = null;
+   }
+   
+   res = res && modRes;
   }
   
+  if( ! res )  
+   return false;
+
   
   try
   {
-   LogNode connLog = logRoot.branch("Connecting submission to the main graph");
+   LogNode connLog = logRoot.branch("Connecting data module to the main graph");
    stor.lockWrite();
 
    Map<AgeObject,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
    
-   if( connectSubmission( ageSbm, stor, invRelMap, connLog) )
+   if( connectDataModule( modules, stor, invRelMap, connLog) )
     connLog.log(Level.INFO, "Success");
    else
    {
     connLog.log(Level.ERROR, "Connection failed");
-    return null;
+    return false;
    }
    
    
    LogNode semLog = logRoot.branch("Validating semantic");
 
-   if(validator.validate(ageSbm, semLog))
+   boolean vldRes = true;
+   int n=0;
+   for( ModMeta mm : modules )
+   {
+    n++;
+    
+    if( mm.module == null )
+     continue;
+    
+    LogNode vldLog = semLog.branch("Processing module: "+n);
+    
+    boolean modRes = validator.validate(mm.module, semLog);
+    
+    if(modRes)
+     vldLog.log(Level.INFO, "Success");
+    else
+     vldLog.log(Level.ERROR, "Validation failed");
+
+    vldRes = vldRes && modRes;
+   }
+   
+   if( vldRes )
     semLog.log(Level.INFO, "Success");
    else
-   {
-    semLog.log(Level.ERROR, "Validation failed");
-    return null;
-   }
+    semLog.log(Level.ERROR, "Failed");
+
+   res = res && vldRes;
+   
 
    Map<AgeObject,Set<AgeRelationWritable>> detachedRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
 
-   if( origSbm != null )
+   for( ModMeta mm : modules )
    {
-    Collection<AgeExternalRelationWritable> origExtRels = origSbm.getExternalRelations();
-    
-    if( origExtRels != null )
+    if(mm.origModule == null)
+     continue;
+
+    Collection<AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
+
+    if(origExtRels != null)
     {
-     for(AgeExternalRelationWritable extRel : origExtRels )
+     for(AgeExternalRelationWritable extRel : origExtRels)
      {
       AgeObject target = extRel.getTargetObject();
-      
-      Set<AgeRelationWritable> objectsRels = detachedRelMap.get(target); 
-      
-      if( objectsRels == null )
-       detachedRelMap.put(target, objectsRels = new HashSet<AgeRelationWritable>() );
-      
+
+      Set<AgeRelationWritable> objectsRels = detachedRelMap.get(target);
+
+      if(objectsRels == null)
+       detachedRelMap.put(target, objectsRels = new HashSet<AgeRelationWritable>());
+
       objectsRels.add(extRel.getInverseRelation());
      }
     }
    }
-   
    
    Set<AgeObject> affObjSet = new HashSet<AgeObject>();
    
@@ -139,9 +298,9 @@ public class SubmissionManager
    
    if( affObjSet.size() > 0 )
    {
-    LogNode invRelLog = connLog.branch("Validating externaly related object semantic");
+    boolean invRelRes = true;
+    LogNode invRelLog = logRoot.branch("Validating externaly related object semantic");
     
-    boolean res = true;
     for( AgeObject obj :  affObjSet )
     {
      LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
@@ -149,34 +308,80 @@ public class SubmissionManager
      if( validator.validateRelations(obj, invRelMap.get(obj), detachedRelMap.get(obj), objLogNode) )
       objLogNode.log(Level.INFO, "Success");
      else
-      res = false;
+      invRelRes = false;
     }
     
-    if(res)
+    if(invRelRes)
      invRelLog.log(Level.INFO, "Success");
     else
     {
      invRelLog.log(Level.ERROR, "Validation failed");
-     return null;
+     return false;
     }
 
-    LogNode storLog = connLog.branch("Storing submission");
-    try
-    {
-     stor.storeSubmission(ageSbm);
-     storLog.log(Level.INFO, "Success");
-    }
-    catch(Exception e)
-    {
-     storLog.log(Level.ERROR, "Submission storing failed: "+e.getMessage());
-     return null;
-    }
-    
-    for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
-     stor.addRelations(me.getKey().getId(),me.getValue());
-
+    res = res && invRelRes;
    }
+   
+//   boolean storRes = true;
+   LogNode storLog = logRoot.branch("Storing data");
+    
+   long ts = System.currentTimeMillis();
+   
+   for( ModMeta mm : modules )
+   {
+    mm.module.setVersion(ts);
+    
+    if( mm.origModule == null )
+    {
+     String id = null;
+     
+     do
+     {
+      id = Constants.dataModuleIDPrefix+IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
+     }
+     while( stor.hasDataModule(id) );
+    
+     mm.module.setId(id);
+    }
+   }
+    
+   try
+   {
+    if( modules.size() > 1 )
+    {
+     ArrayList<DataModuleWritable> modList = new ArrayList<DataModuleWritable>( modules.size() );
+     
+     for( ModMeta mm : modules )
+      modList.add(mm.module);
+     
+     stor.storeDataModule(modList);
+    }
+    else
+     stor.storeDataModule(modules.get(0).module);
+    
+    storLog.log(Level.INFO, "Success");
+   }
+   catch(Exception e)
+   {
+    storLog.log(Level.ERROR, "Data module storing failed: " + e.getMessage());
+    res = false;
+   }
+   
+   for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  detachedRelMap.entrySet() )
+    stor.removeRelations(me.getKey().getId(),me.getValue());
 
+   for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
+    stor.addRelations(me.getKey().getId(),me.getValue());
+
+   n=0;
+   for( ModMeta mm : modules )
+   {
+    DataModuleMeta m = mods.get(n++);
+    
+    m.setId(mm.module.getId());
+    m.setVersion( mm.module.getVersion() );
+   }
+   
   }
   finally
   {
@@ -185,49 +390,76 @@ public class SubmissionManager
 
   //Impute reverse relation and revalidate.
 
-  return ageSbm;
+  return res;
  }
 
- private boolean connectSubmission(SubmissionWritable sbm, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
+ private boolean connectDataModule(List<ModMeta> mods, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
  {
   boolean res = true;
   
   LogNode extAttrLog = connLog.branch("Connecting external object attributes");
   boolean extAttrRes = true;
 
-  LogNode uniqLog = connLog.branch("Verifing object Id uniqueness");
-  boolean uniqRes = true;
+//  LogNode uniqLog = connLog.branch("Verifing object Id uniqueness");
+//  boolean uniqRes = true;
   
   Stack<Attributed> attrStk = new Stack<Attributed>();
   
-  for( AgeObjectWritable obj : sbm.getObjects() )
+  int n=0;
+  for( ModMeta mm : mods )
   {
-   if( stor.hasObject(obj.getId()) )
+   n++;
+   
+   LogNode extAttrModLog = extAttrLog.branch("Processing module: "+n);
+   
+   for( AgeObjectWritable obj : mm.module.getObjects() )
    {
-    uniqRes=false;
-    uniqLog.log(Level.ERROR, "Id: '"+obj.getId()+"' is already used in the database. Class: "+obj.getAgeElClass()+" Order: "+obj.getOrder());
+    attrStk.clear();
+    attrStk.push(obj);
+    
+    boolean mdres = connectExternalAttrs( attrStk, stor, mods, mm, extAttrModLog  );
+    
+    if( obj.getRelations() != null )
+    {
+     for( AgeRelationWritable rl : obj.getRelations() )
+     {
+      attrStk.clear();
+      attrStk.push(rl);
+      
+      mdres = mdres && connectExternalAttrs( attrStk, stor, mods, mm, extAttrModLog  );
+     }
+    }
+    
+    if( mdres )
+     extAttrModLog.log(Level.INFO, "Success");
+    else
+     extAttrModLog.log(Level.ERROR, "Failed");
+
+    extAttrRes = extAttrRes && mdres;
    }
    
-   attrStk.clear();
-   attrStk.push(obj);
-   extAttrRes = extAttrRes && connectExternalAttrs( attrStk, stor, extAttrLog  );
   }
   
-  res = uniqRes && extAttrRes;
   
   if( extAttrRes )
    extAttrLog.log(Level.INFO, "Success");
+  else
+   extAttrLog.log(Level.ERROR, "Failed");
 
-  if( uniqRes )
-   uniqLog.log(Level.INFO, "Success");
   
+  LogNode extRelLog = connLog.branch("Connecting external object relations");
   boolean extRelRes = true;
-  if( sbm.getExternalRelations() != null )
+  
+  n=0;
+  for( ModMeta mm : mods )
   {
-   LogNode extRelLog = connLog.branch("Connecting external object relations");
-
+   n++;
    
-   for( AgeExternalRelationWritable exr : sbm.getExternalRelations() )
+   LogNode extRelModLog = extRelLog.branch("Processing module: "+n);
+   
+   boolean extModRelRes = true;
+   
+   for( AgeExternalRelationWritable exr : mm.module.getExternalRelations() )
    {
     String ref = exr.getTargetObjectId();
     
@@ -235,8 +467,28 @@ public class SubmissionManager
     
     if( tgObj == null )
     {
-     extRelRes = false;
-     extRelLog.log(Level.ERROR,"Invalid external relation: '"+ref+"'. Target object not found. Source object: '"+exr.getSourceObject().getId()
+     modloop : for( ModMeta refmm : mods )
+     {
+      if( refmm == mm )
+       continue;
+      
+      for( AgeObjectWritable candObj : mm.module.getObjects() )
+      {
+       if( candObj.getId() != null && candObj.getId().equals(ref) )
+       {
+        tgObj = candObj;
+        break modloop;
+       }
+      }
+     }
+    }
+    
+    if( tgObj == null )
+    {
+     extModRelRes = false;
+     extRelModLog.log(Level.ERROR,"Invalid external relation: '"+ref+"'. Target object not found."
+       +" Module: "+n
+       +" Source object: '"+exr.getSourceObject().getId()
        +"' (Class: "+exr.getSourceObject().getAgeElClass()
        +", Order: "+exr.getSourceObject().getOrder()+"). Relation: "+exr.getAgeElClass()+" Order: "+exr.getOrder());
     }
@@ -244,10 +496,10 @@ public class SubmissionManager
     {
       if( ! exr.getAgeElClass().isWithinRange(tgObj.getAgeElClass()) )
       {
-       extRelRes = false;
-       extRelLog.log(Level.ERROR,"External relation target object's class is not within range. Target object: '"+ref
+       extModRelRes = false;
+       extRelModLog.log(Level.ERROR,"External relation target object's class is not within range. Target object: '"+ref
          +"' (Class: "+tgObj.getAgeElClass()
-         +"'). Source object: '"+exr.getSourceObject().getId()
+         +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
          +"' (Class: "+exr.getSourceObject().getAgeElClass()
          +", Order: "+exr.getSourceObject().getOrder()+"). Relation: "+exr.getAgeElClass()+" Order: "+exr.getOrder());
       }
@@ -260,30 +512,30 @@ public class SubmissionManager
        {
         if(invRCls.isCustom())
         {
-         extRelRes = false;
-         extRelLog.log(Level.ERROR,"Class of external inverse relation can't be custom. Target object: '"+ref
+         extModRelRes = false;
+         extRelModLog.log(Level.ERROR,"Class of external inverse relation can't be custom. Target object: '"+ref
            +"' (Class: "+tgObj.getAgeElClass()
-           +"'). Source object: '"+exr.getSourceObject().getId()
+           +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
            +"' (Class: "+exr.getSourceObject().getAgeElClass()
            +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
            +". Inverse relation: "+invRCls);
         }
         else if( ! invRCls.isWithinDomain(tgObj.getAgeElClass()) )
         {
-         extRelRes = false;
-         extRelLog.log(Level.ERROR,"Target object's class is not within domain of inverse relation. Target object: '"+ref
+         extModRelRes = false;
+         extRelModLog.log(Level.ERROR,"Target object's class is not within domain of inverse relation. Target object: '"+ref
            +"' (Class: "+tgObj.getAgeElClass()
-           +"'). Source object: '"+exr.getSourceObject().getId()
+           +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
            +"' (Class: "+exr.getSourceObject().getAgeElClass()
            +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
            +". Inverse relation: "+invRCls);
         }
         else if( ! invRCls.isWithinRange(exr.getSourceObject().getAgeElClass()) )
         {
-         extRelRes = false;
-         extRelLog.log(Level.ERROR,"Source object's class is not within range of inverse relation. Target object: '"+ref
+         extModRelRes = false;
+         extRelModLog.log(Level.ERROR,"Source object's class is not within range of inverse relation. Target object: '"+ref
            +"' (Class: "+tgObj.getAgeElClass()
-           +"'). Source object: '"+exr.getSourceObject().getId()
+           +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
            +"' (Class: "+exr.getSourceObject().getAgeElClass()
            +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
            +". Inverse relation: "+invRCls);
@@ -315,11 +567,11 @@ public class SubmissionManager
     }
     
    }
-  
-   if( extRelRes )
-    extRelLog.log(Level.INFO, "Success");
+   
+   extRelRes = extRelRes && extModRelRes;
+   
   }
-  
+
   res = res && extRelRes;
 
   
@@ -327,7 +579,7 @@ public class SubmissionManager
  }
 
  
- private boolean connectExternalAttrs( Stack<Attributed> atStk, AgeStorageAdm stor, LogNode log )
+ private boolean connectExternalAttrs( Stack<Attributed> atStk, AgeStorageAdm stor, List<ModMeta> mods, ModMeta cmod, LogNode log )
  {
   boolean res = true;
   
@@ -346,7 +598,32 @@ public class SubmissionManager
     
     AgeObject tgObj = stor.getObjectById( ref );
     
+    boolean found = false;
+    
     if( tgObj == null )
+    {
+     for( ModMeta mm : mods )
+     {
+      if( mm.module == cmod )
+       continue;
+      
+      for( AgeObjectWritable candObj : mm.module.getObjects() )
+      {
+       if( candObj.getId() != null && candObj.getId().equals(ref) )
+       {
+        tgObj = candObj;
+        found = true;
+        break;
+       }
+      }
+     }
+    }
+    else
+    {
+     found = true;
+    }
+    
+    if( ! found )
     {
      AgeObject obj  = (AgeObject)atStk.get(0);
      
@@ -398,7 +675,7 @@ public class SubmissionManager
    }
    
    atStk.push(attr);
-   res = res && connectExternalAttrs(atStk,stor,log);
+   res = res && connectExternalAttrs(atStk,stor, mods, cmod, log);
    atStk.pop();
   }
  

@@ -9,13 +9,13 @@ import java.io.IOException;
 import uk.ac.ebi.age.log.impl.BufferLogger;
 import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.SubmissionContext;
-import uk.ac.ebi.age.model.writable.SubmissionWritable;
-import uk.ac.ebi.age.parser.AgeTabSubmission;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
+import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
 import uk.ac.ebi.age.storage.RelationResolveException;
-import uk.ac.ebi.age.storage.exeption.SubmissionStoreException;
+import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
 import uk.ac.ebi.age.storage.impl.ser.SerializedStorage;
 
 import com.pri.util.stream.StreamPump;
@@ -45,11 +45,11 @@ public class Test
    
    String text = new String(bais.toByteArray());
  
-   AgeTabSubmission sbm =  AgeTabSyntaxParser.getInstance().parse(text);
+   AgeTabModule sbm =  AgeTabSyntaxParser.getInstance().parse(text);
    
    BufferLogger logBuf = new BufferLogger();
   
-   SubmissionWritable dblock = new AgeTab2AgeConverterImpl().convert(sbm, smngr.getContextModel(new DefContext()), logBuf.getRootNode() );
+   DataModuleWritable dblock = new AgeTab2AgeConverterImpl().convert(sbm, smngr.getContextModel(new DefContext()), logBuf.getRootNode() );
    
    if( dblock == null )
    {
@@ -60,7 +60,7 @@ public class Test
 //   AgeStorageGrafImpl str = new AgeStorageGrafImpl();
    SerializedStorage str = new SerializedStorage();
    
-   str.storeSubmission(dblock);
+   str.storeDataModule(dblock);
    
    System.out.println("Done");
    
@@ -91,7 +91,7 @@ public class Test
    // TODO Auto-generated catch block
    e.printStackTrace();
   }
-  catch(SubmissionStoreException e)
+  catch(ModuleStoreException e)
   {
    // TODO Auto-generated catch block
    e.printStackTrace();

@@ -2,7 +2,7 @@ package uk.ac.ebi.age.parser;
 
 import java.util.Collection;
 
-public interface AgeTabSubmission
+public interface AgeTabModule
 {
  AgeTabObject getObject(String part, BlockHeader classColumnHeader);
 

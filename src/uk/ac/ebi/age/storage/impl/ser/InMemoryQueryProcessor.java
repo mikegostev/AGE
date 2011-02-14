@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import uk.ac.ebi.age.model.AgeObject;
-import uk.ac.ebi.age.model.Submission;
+import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.query.AgeQuery;
 
 import com.pri.util.collection.EmptyIterator;
@@ -13,17 +13,17 @@ import com.pri.util.collection.EmptyIterator;
 public class InMemoryQueryProcessor implements Iterable<AgeObject>, Iterator<AgeObject>
 {
  private AgeQuery query;
- private Iterator<? extends Submission> submsItr ;
+ private Iterator<? extends DataModule> submsItr ;
  
  private CondIterator objItr = new CondIterator();
  
- public InMemoryQueryProcessor(AgeQuery qury, Collection<? extends Submission> roots)
+ public InMemoryQueryProcessor(AgeQuery qury, Collection<? extends DataModule> roots)
  {
   query = qury;
   
   if( roots.size() == 0 )
   {
-   submsItr = new EmptyIterator<Submission>();
+   submsItr = new EmptyIterator<DataModule>();
    objItr.setObjIterator(new EmptyIterator<AgeObject>());
   }
   else

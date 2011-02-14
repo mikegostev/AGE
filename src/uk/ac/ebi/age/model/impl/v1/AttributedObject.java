@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
+import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
@@ -30,8 +31,19 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
  }
 
  
+// @Override
+// public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass)
+// {
+//  AgeAttributeWritable attr = getSemanticModel().createAgeAttribute(attrClass);
+//  
+//  addAttribute(attr);
+//  
+//  return attr;
+// }
+ 
+ 
  @Override
- public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass)
+ public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass)
  {
   AgeAttributeWritable attr = getSemanticModel().createAgeAttribute(attrClass);
   
@@ -39,16 +51,27 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
   
   return attr;
  }
+
  
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(String val, AgeAttributeClass attrClass)
+ public AgeAttributeWritable createExternalObjectAttribute(String val, AttributeClassRef attrClass)
  {
-  AgeAttributeWritable attr = getSemanticModel().createExternalObjectAttribute(attrClass, val);
-  
+  AgeAttributeWritable attr = getSemanticModel().createExternalObjectAttribute(  attrClass, val );
+
   addAttribute(attr);
-  
+
   return attr;
  }
+ 
+// @Override
+// public AgeAttributeWritable createExternalObjectAttribute(String val, AgeAttributeClass attrClass)
+// {
+//  AgeAttributeWritable attr = getSemanticModel().createExternalObjectAttribute(attrClass, val);
+//  
+//  addAttribute(attr);
+//  
+//  return attr;
+// }
 
  
  @Override
@@ -172,7 +195,7 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
  }
 
  @Override
- public void reset()
+ public synchronized void reset()
  {
   attribMap=null;
  }
