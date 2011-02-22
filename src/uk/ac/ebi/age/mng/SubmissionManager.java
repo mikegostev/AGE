@@ -80,6 +80,8 @@ public class SubmissionManager
    ModMeta mm = new ModMeta();
    mm.text = dm.getText();
    mm.id = dm.getId();
+   
+   modules.add(mm);
   }
   
   
@@ -119,11 +121,10 @@ public class SubmissionManager
    catch(ParserException e)
    {
     atLog.log(Level.ERROR, "Parsing failed: " + e.getMessage() + ". Row: " + e.getLineNumber() + ". Col: " + e.getColumnNumber());
-    atRes = false;
+    res = false;
     continue;
    }
    
-   boolean convRes = true;
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
    mm.module = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(context), convLog );
    
@@ -132,7 +133,7 @@ public class SubmissionManager
    else
    {
     convLog.log(Level.ERROR, "Conversion failed");
-    convRes = false;
+    res = false;
     continue;
    }
    
@@ -202,7 +203,7 @@ public class SubmissionManager
     uniqGLog.log(Level.ERROR, "Failed");
 
    
-   modRes = uniqRes1 && uniqRes2 && atRes && convRes;
+   modRes = uniqRes1 && uniqRes2 && atRes;
    
    if( modRes )
     modNode.log(Level.INFO, "Success");
@@ -322,6 +323,9 @@ public class SubmissionManager
     res = res && invRelRes;
    }
    
+   if( ! res )
+    return false;
+   
 //   boolean storRes = true;
    LogNode storLog = logRoot.branch("Storing data");
     
@@ -410,6 +414,9 @@ public class SubmissionManager
   {
    n++;
    
+   if( mm.module == null )
+    continue;
+   
    LogNode extAttrModLog = extAttrLog.branch("Processing module: "+n);
    
    for( AgeObjectWritable obj : mm.module.getObjects() )
@@ -454,6 +461,9 @@ public class SubmissionManager
   for( ModMeta mm : mods )
   {
    n++;
+   
+   if( mm.module == null )
+    continue;
    
    LogNode extRelModLog = extRelLog.branch("Processing module: "+n);
    
@@ -571,6 +581,12 @@ public class SubmissionManager
    extRelRes = extRelRes && extModRelRes;
    
   }
+  
+  if( extRelRes )
+   extRelLog.log(Level.INFO, "Success");
+  else
+   extRelLog.log(Level.ERROR, "Failed");
+
 
   res = res && extRelRes;
 
