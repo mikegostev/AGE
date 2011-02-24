@@ -61,7 +61,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   {
    ClassReference colHdr = hdr.getClassColumnHeader();
 
-   LogNode blkLog = log.branch("Processing block for class "+colHdr.getName());
+   LogNode blkLog = log.branch("Processing block for class "+colHdr.getName()+" at line: "+colHdr.getRow());
    
    
    if( colHdr.getQualifiers() != null )
