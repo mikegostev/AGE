@@ -10,7 +10,8 @@ public enum DataType
  URI    (true,false,false),
  BOOLEAN(false,false,false),
  GUESS  (false,false,false), 
- OBJECT (false,false,false);
+ OBJECT (false,false,false),
+ FILE   (false,false,false);
  
  
  boolean isTextual;
