@@ -26,7 +26,7 @@ public class Log2JSON
   if(  ln.getMessage() != null )
   {
    sb.append(" message: \"");
-   StringUtils.appendSlashed(sb, ln.getMessage());
+   StringUtils.appendBackslashed(sb, ln.getMessage(),'"');
    sb.append("\",\n");
   }
   
