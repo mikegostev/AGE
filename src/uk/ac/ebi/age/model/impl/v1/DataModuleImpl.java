@@ -189,4 +189,15 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  {
  }
  
+
+ public String getClusterId()
+ {
+  throw new UnsupportedOperationException();
+ }
+
+
+ public void setClusterId(String clusterId)
+ {
+  throw new UnsupportedOperationException();
+ }
 }

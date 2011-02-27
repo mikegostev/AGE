@@ -10,7 +10,7 @@ import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.BlockHeader;
 import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ParserException;
-import uk.ac.ebi.age.service.IdGenerator;
+import uk.ac.ebi.age.service.id.IdGenerator;
 import uk.ac.ebi.age.util.StringUtil;
 
 public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser

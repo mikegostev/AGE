@@ -32,7 +32,7 @@ import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
-import uk.ac.ebi.age.service.IdGenerator;
+import uk.ac.ebi.age.service.id.IdGenerator;
 
 public class SemanticModelImpl implements SemanticModel, Serializable
 {

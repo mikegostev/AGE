@@ -5,8 +5,10 @@ import java.io.File;
 public class FileAttachmentMeta
 {
  private String id;
+ private String originalId;
  private String description;
  private File   file;
+ private boolean global;
 
  public String getId()
  {
@@ -36,5 +38,25 @@ public class FileAttachmentMeta
  public void setFile(File file)
  {
   this.file = file;
+ }
+
+ public void setGlobal(boolean b)
+ {
+  global=b;
+ }
+
+ public boolean isGlobal()
+ {
+  return global;
+ }
+
+ public String getOriginalId()
+ {
+  return originalId;
+ }
+
+ public void setOriginalId(String originalId)
+ {
+  this.originalId = originalId;
  }
 }

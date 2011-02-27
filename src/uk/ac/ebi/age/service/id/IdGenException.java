@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.service;
+package uk.ac.ebi.age.service.id;
 
 public class IdGenException extends RuntimeException
 {

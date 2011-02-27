@@ -10,7 +10,7 @@ public interface DataModuleWritable extends DataModule
  void setId( String id );
  void setVersion( long ts );
  void setDescription( String des );
- 
+ void setClusterId( String clstId );
  
 // void addClass(AgeClass cls);
  void addObject( AgeObjectWritable obj );

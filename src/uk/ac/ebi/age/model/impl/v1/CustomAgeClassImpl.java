@@ -10,7 +10,7 @@ import uk.ac.ebi.age.model.AttributeAttachmentRule;
 import uk.ac.ebi.age.model.RelationRule;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
-import uk.ac.ebi.age.service.IdGenerator;
+import uk.ac.ebi.age.service.id.IdGenerator;
 
 class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritable, Serializable 
 {

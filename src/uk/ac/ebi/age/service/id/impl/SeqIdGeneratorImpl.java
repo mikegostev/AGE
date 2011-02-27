@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.service.impl;
+package uk.ac.ebi.age.service.id.impl;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -7,8 +7,8 @@ import java.io.RandomAccessFile;
 import java.util.HashMap;
 import java.util.Map;
 
-import uk.ac.ebi.age.service.IdGenException;
-import uk.ac.ebi.age.service.IdGenerator;
+import uk.ac.ebi.age.service.id.IdGenException;
+import uk.ac.ebi.age.service.id.IdGenerator;
 
 public class SeqIdGeneratorImpl extends IdGenerator
 {

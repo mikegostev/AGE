@@ -24,6 +24,8 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
 
  private String id;
  private String descr;
+ 
+ private String clusterId;
 
  public DataModuleImpl(ContextSemanticModel sm)
  {
@@ -132,6 +134,18 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  public void setVersion(long version)
  {
   this.version = version;
+ }
+
+
+ public String getClusterId()
+ {
+  return clusterId;
+ }
+
+
+ public void setClusterId(String clusterId)
+ {
+  this.clusterId = clusterId;
  }
  
 }

@@ -2,6 +2,7 @@ package uk.ac.ebi.age.mng;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,7 +18,9 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.DataModuleMeta;
+import uk.ac.ebi.age.model.FileAttachmentMeta;
 import uk.ac.ebi.age.model.SubmissionContext;
+import uk.ac.ebi.age.model.SubmissionMeta;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -29,7 +32,8 @@ import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
 import uk.ac.ebi.age.parser.impl.AgeTabSyntaxParserImpl;
-import uk.ac.ebi.age.service.IdGenerator;
+import uk.ac.ebi.age.service.id.IdGenerator;
+import uk.ac.ebi.age.service.submission.SubmissionDB;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
@@ -37,6 +41,9 @@ import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
 public class SubmissionManager
 {
  private static SubmissionManager instance = new SubmissionManager();
+ 
+ private SubmissionDB submissionDB;
+
  
  private static class ModMeta
  {
@@ -56,7 +63,7 @@ public class SubmissionManager
  private AgeTab2AgeConverter converter = new AgeTab2AgeConverterImpl();
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
  
- public boolean storeSubmission( List<DataModuleMeta> mods, boolean update,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
+ public boolean storeSubmission( SubmissionMeta sMeta,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
  {
 //  AgeTabModule atSbm=null;
   
@@ -72,8 +79,26 @@ public class SubmissionManager
 //    return null;
 //   }
 //  }
+  List<DataModuleMeta> mods = sMeta.getDataModules();
+  List<FileAttachmentMeta> files = sMeta.getAttachments();
   
-  List<ModMeta> modules = new ArrayList<ModMeta>( mods.size() );
+  String clusterId = sMeta.getClusterId();
+  
+  boolean update = true;
+  
+  if( clusterId == null )
+  {
+   update = false;
+   clusterId=IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
+  }
+  
+  
+  List<ModMeta> modules;
+  
+  if( mods == null )
+   modules = Collections.emptyList();
+  else
+   modules = new ArrayList<ModMeta>( mods.size() );
   
   for( DataModuleMeta dm : mods )
   {
@@ -85,23 +110,44 @@ public class SubmissionManager
   }
   
   
-  if( update )
+  boolean modChk = true;
+  for( ModMeta mm : modules )
   {
-   for( ModMeta mm : modules )
+   if( mm.id != null )
    {
-    if( mm.id != null )
+    if( ! update )
     {
-     mm.origModule = stor.getDataModule(mm.id);
+     logRoot.log(Level.ERROR, "Module ID is specified ('"+mm.id+"') but submission is not in UPDATE mode");
+     modChk = false;
+     continue;
+    }
+    
+    mm.origModule = stor.getDataModule(mm.id);
 
-     if(mm.origModule == null)
-     {
-      logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + mm.id + "'");
-      return false;
-     }
+    if(mm.origModule == null)
+    {
+     logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + mm.id + "' for update");
+     modChk = false;
+    }
+    else if( ! mm.origModule.getClusterId().equals(clusterId) )
+    {
+     logRoot.log(Level.ERROR, "Module with ID='" + mm.id + "' belongs to another cluster ("+mm.origModule.getClusterId()+")");
+     modChk = false;
     }
    }
-  }
+   else if( mm.text == null )
+   {
+    logRoot.log(Level.ERROR, "Module is marked for deletion but submission is not in UPDATE mode");
+    modChk = false;
+    continue;
+   }
 
+  }
+  
+  if( ! modChk )
+   return false;
+
+  
   boolean res = true;
   
   for( int n=0; n < modules.size(); n++)
@@ -110,6 +156,18 @@ public class SubmissionManager
    
    boolean modRes = true;
    LogNode modNode = logRoot.branch("Processing module: " + (n+1) );
+   
+   if( mm.text == null )
+   {
+    if( update )
+     modNode.log(Level.INFO, "Module is marked for deletion. Skiping");
+    else
+    {
+     modNode.log(Level.ERROR, "Module is marked for deletion but submission is not in UPDATE mode");
+     res = false;
+     continue;
+    }
+   }
    
    boolean atRes = true;
    LogNode atLog = modNode.branch("Parsing AgeTab");
@@ -145,14 +203,36 @@ public class SubmissionManager
 
    for( AgeObjectWritable obj : mm.module.getObjects())
    {
-    if( obj.getId() != null )
+    if( obj.getId() != null ) //Local object have no IDs yet
     {
      AgeObject origObj = stor.getObjectById( obj.getId() );
      
+     boolean unqOK = true;
      if( origObj != null )
      {
-      uniqLog.log(Level.ERROR, "Object id '"+obj.getId()+"' has been taken by the object from data module: "+origObj.getDataModule().getId());
-      uniqRes1 = false;
+      String oModId = origObj.getDataModule().getId();
+      unqOK = false;
+      
+      if( update )
+      {
+       for( ModMeta updMM : modules )
+       {
+        if( updMM.id == null )
+         continue;
+        
+        if( updMM.id.equals(oModId) )
+        {
+         unqOK = true;
+         break;
+        }
+       }
+      }
+      
+      if( ! unqOK )
+      {
+       uniqLog.log(Level.ERROR, "Object id '"+obj.getId()+"' has been taken by the object from data module: "+oModId);
+       uniqRes1 = false;
+      }
      }
     }
    }
@@ -216,13 +296,85 @@ public class SubmissionManager
    res = res && modRes;
   }
   
+  if( files != null && files.size() > 0 )
+  {
+   LogNode fileNode = logRoot.branch("Checking file ID uniqueness");
+
+   
+   if( files != null )
+   {
+    for( FileAttachmentMeta att : files )
+    {
+     if( att.getId() != null && stor.getAttachment( att.getId() ) == null  )
+     {
+      logRoot.log(Level.ERROR, "The storage doesn't contain attachment file with ID='" + att.getId() + "' for update");
+      modChk = false;
+     }
+    }
+   }
+   
+   for( int n=0; n < files.size(); n++)
+   {
+    FileAttachmentMeta fm = files.get(n);
+
+    if( fm.getOriginalId() == null )
+    {
+     fileNode.log(Level.ERROR, "File "+(n+1)+" has empty ID");
+     res = false;
+     continue;
+    }
+
+    
+    for( int k=n+1; k < files.size(); k++ )
+    {
+     if( fm.getOriginalId().equals(files.get(k).getOriginalId() ) )
+     {
+      fileNode.log(Level.ERROR, "File ID conflict. Files: "+(n+1)+" and "+(k+1));
+      res = false;
+      continue;
+     }
+    }
+    
+    if( fm.getId() == null )
+    {
+     if( fm.getFile() == null )
+     {
+      fileNode.log(Level.INFO, "File "+(n+1)+" is marked for deletion but it doesn't exist");
+      res = false;
+      continue;
+     }
+
+     if( stor.getGlobalAttachment( fm.getOriginalId() ) != null )
+     {
+      fileNode.log(Level.INFO, "File "+(n+1)+" has global ID but this ID is already taken");
+      res = false;
+      continue;
+     }
+    }
+    else
+    {
+     if( fm.getFile() == null )
+     {
+      if( ! update )
+      {
+       fileNode.log(Level.ERROR, "File is marked for deletion but submission is not in UPDATE mode");
+       res = false;
+       continue;
+      }
+     }
+     
+    }
+    
+   }
+  }
+  
   if( ! res )  
    return false;
 
   
   try
   {
-   LogNode connLog = logRoot.branch("Connecting data module to the main graph");
+   LogNode connLog = logRoot.branch("Connecting data module"+(modules.size()>1?"s":"")+" to the main graph");
    stor.lockWrite();
 
    Map<AgeObject,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
@@ -346,6 +498,20 @@ public class SubmissionManager
      while( stor.hasDataModule(id) );
     
      mm.module.setId(id);
+     
+     for( AgeObjectWritable obj : mm.module.getObjects() )
+     {
+      if( obj.getId() == null )
+      {
+       do
+       {
+        id = Constants.localObjectIDPrefix+obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId(Constants.objectIDDomain)+"-"+obj.getOriginalId()+"@"+mm.module.getId();
+       }
+       while( stor.hasObject(id) );
+       
+       obj.setId(id);
+      }
+     }
     }
    }
     

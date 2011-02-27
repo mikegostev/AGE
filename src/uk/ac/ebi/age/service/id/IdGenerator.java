@@ -1,6 +1,6 @@
-package uk.ac.ebi.age.service;
+package uk.ac.ebi.age.service.id;
 
-import uk.ac.ebi.age.service.impl.IdGeneratorImpl;
+import uk.ac.ebi.age.service.id.impl.IdGeneratorImpl;
 
 public abstract class IdGenerator
 {

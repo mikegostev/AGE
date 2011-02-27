@@ -1,6 +1,6 @@
-package uk.ac.ebi.age.service.impl;
+package uk.ac.ebi.age.service.id.impl;
 
-import uk.ac.ebi.age.service.IdGenerator;
+import uk.ac.ebi.age.service.id.IdGenerator;
 
 public class IdGeneratorImpl extends IdGenerator
 {

@@ -9,6 +9,7 @@ public interface DataModule
 {
  String getId();
  long getVersion();
+ String getClusterId();
 
  Collection<? extends AgeObject> getObjects();
  

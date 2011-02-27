@@ -12,7 +12,7 @@ import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeAttachmentRule;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
-import uk.ac.ebi.age.service.IdGenerator;
+import uk.ac.ebi.age.service.id.IdGenerator;
 
 class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRelationClassWritable
 {
