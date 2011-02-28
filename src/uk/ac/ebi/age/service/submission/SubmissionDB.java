@@ -28,4 +28,7 @@ public abstract class SubmissionDB
 
  public abstract List<SubmissionMeta> getSubmissions(SubmissionQuery q);
 
+ public abstract SubmissionMeta getSubmission(String id);
+
+
 }

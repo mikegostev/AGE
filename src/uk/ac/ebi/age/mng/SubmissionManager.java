@@ -84,7 +84,7 @@ public class SubmissionManager
   
   if( sMeta.getId() != null )
   {
-   origSbm = stor.getSubmission( sMeta.getId() );
+   origSbm = submissionDB.getSubmission( sMeta.getId() );
    
    if( origSbm == null )
    {
@@ -114,21 +114,29 @@ public class SubmissionManager
   else
    modules = new ArrayList<ModMeta>( mods.size() );
   
+//  for( DataModuleMeta dm : mods )
+//  {
+//   ModMeta mm = new ModMeta();
+//   mm.text = dm.getText();
+//   mm.id = dm.getId();
+//   
+//   modules.add(mm);
+//  }
+  
+  boolean res = true;
+  
+
+  int n=0;
   for( DataModuleMeta dm : mods )
   {
+   n++;
+   
    ModMeta mm = new ModMeta();
    mm.text = dm.getText();
    mm.id = dm.getId();
    
    modules.add(mm);
-  }
-  
-  
-  int n=0;
-  boolean modChk = true;
-  for( ModMeta mm : modules )
-  {
-   n++;
+
    
    if( mm.id != null )
    {
@@ -144,42 +152,30 @@ public class SubmissionManager
     if(mm.origModule == null)
     {
      logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + mm.id + "' for update");
-     modChk = false;
+     res = false;
     }
     else if( ! mm.origModule.getClusterId().equals(origSbm.getId()) )
     {
      logRoot.log(Level.ERROR, "Module with ID='" + mm.id + "' belongs to another submission ("+mm.origModule.getClusterId()+")");
-     modChk = false;
+     res = false;
     }
    }
    else if( mm.text == null )
    {
     logRoot.log(Level.ERROR, "Module is marked for deletion but ID is not specified");
-    modChk = false;
+    res = false;
     continue;
    }
 
   }
   
-  if( ! modChk )
+  if( ! res )
    return false;
 
   if( files != null && files.size() > 0 )
   {
    LogNode fileNode = logRoot.branch("Checking file ID uniqueness");
 
-   
-   if( files != null )
-   {
-    for( FileAttachmentMeta att : files )
-    {
-     if( att.getId() != null && stor.getAttachment( att.getId() ) == null  )
-     {
-      logRoot.log(Level.ERROR, "The storage doesn't contain attachment file with ID='" + att.getId() + "' for update");
-      modChk = false;
-     }
-    }
-   }
    
    for( n=0; n < files.size(); n++)
    {
@@ -192,15 +188,57 @@ public class SubmissionManager
      continue;
     }
 
+    FileAttachmentMeta origFm = null;
+    
+    if( origSbm.getAttachments() != null )
+    {
+     for( FileAttachmentMeta ofa : origSbm.getAttachments() )
+     { 
+      if( ofa.getOriginalId().equals(fm.getOriginalId()) )
+      {
+       origFm = ofa;
+       break;
+      }
+     }
+    }
     
     for( int k=n+1; k < files.size(); k++ )
     {
      if( fm.getOriginalId().equals(files.get(k).getOriginalId() ) )
      {
-      fileNode.log(Level.ERROR, "File ID conflict. Files: "+(n+1)+" and "+(k+1));
+      fileNode.log(Level.ERROR, "File ID ("+fm.getOriginalId()+") conflict. Files: "+(n+1)+" and "+(k+1));
       res = false;
       continue;
      }
+    }
+    
+    if( fm.getAux() == null )
+    {
+     if( origSbm == null )
+     {
+      fileNode.log(Level.ERROR, "File " + (n + 1) + " is marked for deletion but submission is not in UPDATE mode");
+      res = false;
+      continue;
+     }
+
+     if(stor.getAttachment(fm.getId()) == null)
+     {
+      fileNode.log(Level.ERROR, "File " + (n + 1) + " is marked for deletion but it doesn't exist");
+      res = false;
+      continue;
+     }
+     
+     if( origFm == null )
+     {
+      fileNode.log(Level.ERROR, "File " + (n + 1) + " is marked for deletion but it belongs to another submission");
+      res = false;
+      continue;
+     }
+ 
+    }
+    else
+    {
+     
     }
     
     if( fm.getId() == null )
@@ -235,8 +273,6 @@ public class SubmissionManager
     
    }
   }
-  
-  boolean res = true;
   
   for( n=0; n < modules.size(); n++)
   {

@@ -19,8 +19,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import uk.ac.ebi.age.ext.submission.SubmissionMeta;
-import uk.ac.ebi.age.ext.submission.SubmissionQuery;
 import uk.ac.ebi.age.log.LogNode;
 import uk.ac.ebi.age.log.LogNode.Level;
 import uk.ac.ebi.age.log.impl.BufferLogger;
@@ -690,28 +688,5 @@ public class SerializedStorage implements AgeStorageAdm
   //return null;
  }
 
- @Override
- public File getGlobalAttachment(String originalId)
- {
-  // TODO Auto-generated method stub
-  throw new dev.NotImplementedYetException();
-  //return null;
- }
-
- @Override
- public List<SubmissionMeta> getSubmissions(SubmissionQuery q)
- {
-  // TODO Auto-generated method stub
-  throw new dev.NotImplementedYetException();
-  //return null;
- }
-
- @Override
- public SubmissionMeta getSubmission(String id)
- {
-  // TODO Auto-generated method stub
-  throw new dev.NotImplementedYetException();
-  //return null;
- }
 
 }

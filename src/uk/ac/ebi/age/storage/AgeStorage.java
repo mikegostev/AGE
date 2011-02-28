@@ -4,8 +4,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-import uk.ac.ebi.age.ext.submission.SubmissionMeta;
-import uk.ac.ebi.age.ext.submission.SubmissionQuery;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.query.AgeQuery;
@@ -34,9 +32,5 @@ public interface AgeStorage
  void addDataChangeListener(DataChangeListener dataChangeListener);
  
  File getAttachment(String id);
- File getGlobalAttachment(String originalId);
- 
- List<SubmissionMeta> getSubmissions(SubmissionQuery q);
- SubmissionMeta getSubmission(String id);
 
 }
