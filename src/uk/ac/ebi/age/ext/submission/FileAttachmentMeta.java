@@ -1,14 +1,17 @@
-package uk.ac.ebi.age.model;
+package uk.ac.ebi.age.ext.submission;
 
-import java.io.File;
+import java.io.Serializable;
 
-public class FileAttachmentMeta
+
+public class FileAttachmentMeta implements Serializable
 {
+ private static final long serialVersionUID = 470378715679227484L;
+
  private String id;
  private String originalId;
  private String description;
- private File   file;
  private boolean global;
+ private transient Object aux;
 
  public String getId()
  {
@@ -30,16 +33,6 @@ public class FileAttachmentMeta
   this.description = description;
  }
 
- public File getFile()
- {
-  return file;
- }
-
- public void setFile(File file)
- {
-  this.file = file;
- }
-
  public void setGlobal(boolean b)
  {
   global=b;
@@ -58,5 +51,15 @@ public class FileAttachmentMeta
  public void setOriginalId(String originalId)
  {
   this.originalId = originalId;
+ }
+
+ public Object getAux()
+ {
+  return aux;
+ }
+
+ public void setAux(Object aux)
+ {
+  this.aux = aux;
  }
 }

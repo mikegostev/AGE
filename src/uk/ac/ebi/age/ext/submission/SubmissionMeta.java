@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model;
+package uk.ac.ebi.age.ext.submission;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ public class SubmissionMeta implements Serializable
 
  private String id;
  
- private String clusterId;
+// private String clusterId;
  
  private String description;
  private String submitter;
@@ -107,13 +107,13 @@ public class SubmissionMeta implements Serializable
   return atts;
  }
 
- public String getClusterId()
- {
-  return clusterId;
- }
-
- public void setClusterId(String clusterId)
- {
-  this.clusterId = clusterId;
- }
+// public String getClusterId()
+// {
+//  return clusterId;
+// }
+//
+// public void setClusterId(String clusterId)
+// {
+//  this.clusterId = clusterId;
+// }
 }

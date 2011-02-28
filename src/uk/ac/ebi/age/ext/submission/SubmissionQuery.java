@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.service.submission;
+package uk.ac.ebi.age.ext.submission;
 
 import java.io.Serializable;
 

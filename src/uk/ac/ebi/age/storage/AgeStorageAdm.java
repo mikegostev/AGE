@@ -1,6 +1,5 @@
 package uk.ac.ebi.age.storage;
 
-import java.io.File;
 import java.util.Collection;
 
 import uk.ac.ebi.age.log.LogNode;
@@ -29,8 +28,5 @@ public interface AgeStorageAdm extends AgeStorage
  DataModuleWritable getDataModule(String name);
 
  void setMaster(boolean master);
- 
- File getAttachment(String id);
- File getGlobalAttachment(String originalId);
 
 }

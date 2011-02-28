@@ -11,16 +11,16 @@ import java.util.Set;
 import java.util.Stack;
 
 import uk.ac.ebi.age.conf.Constants;
+import uk.ac.ebi.age.ext.submission.DataModuleMeta;
+import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
+import uk.ac.ebi.age.ext.submission.SubmissionMeta;
 import uk.ac.ebi.age.log.LogNode;
 import uk.ac.ebi.age.log.LogNode.Level;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
-import uk.ac.ebi.age.model.DataModuleMeta;
-import uk.ac.ebi.age.model.FileAttachmentMeta;
 import uk.ac.ebi.age.model.SubmissionContext;
-import uk.ac.ebi.age.model.SubmissionMeta;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -79,18 +79,32 @@ public class SubmissionManager
 //    return null;
 //   }
 //  }
+  
+  SubmissionMeta origSbm = null;
+  
+  if( sMeta.getId() != null )
+  {
+   origSbm = stor.getSubmission( sMeta.getId() );
+   
+   if( origSbm == null )
+   {
+    logRoot.log(Level.ERROR, "Submission with ID='"+sMeta.getId()+"' is not found for update");
+    return false;
+   }
+  }
+  
   List<DataModuleMeta> mods = sMeta.getDataModules();
   List<FileAttachmentMeta> files = sMeta.getAttachments();
   
-  String clusterId = sMeta.getClusterId();
-  
-  boolean update = true;
-  
-  if( clusterId == null )
-  {
-   update = false;
-   clusterId=IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
-  }
+//  String clusterId = sMeta.getClusterId();
+//  
+//  boolean update = true;
+//  
+//  if( clusterId == null )
+//  {
+//   update = false;
+//   clusterId=IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
+//  }
   
   
   List<ModMeta> modules;
@@ -110,15 +124,18 @@ public class SubmissionManager
   }
   
   
+  int n=0;
   boolean modChk = true;
   for( ModMeta mm : modules )
   {
+   n++;
+   
    if( mm.id != null )
    {
-    if( ! update )
+    if( origSbm == null )
     {
-     logRoot.log(Level.ERROR, "Module ID is specified ('"+mm.id+"') but submission is not in UPDATE mode");
-     modChk = false;
+     logRoot.log(Level.WARN,"Module "+n+" has ID specified ('"+ mm.id+"') but submission is not in UPDATE mode. Ignoring ID");
+     mm.id = null;
      continue;
     }
     
@@ -129,15 +146,15 @@ public class SubmissionManager
      logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + mm.id + "' for update");
      modChk = false;
     }
-    else if( ! mm.origModule.getClusterId().equals(clusterId) )
+    else if( ! mm.origModule.getClusterId().equals(origSbm.getId()) )
     {
-     logRoot.log(Level.ERROR, "Module with ID='" + mm.id + "' belongs to another cluster ("+mm.origModule.getClusterId()+")");
+     logRoot.log(Level.ERROR, "Module with ID='" + mm.id + "' belongs to another submission ("+mm.origModule.getClusterId()+")");
      modChk = false;
     }
    }
    else if( mm.text == null )
    {
-    logRoot.log(Level.ERROR, "Module is marked for deletion but submission is not in UPDATE mode");
+    logRoot.log(Level.ERROR, "Module is marked for deletion but ID is not specified");
     modChk = false;
     continue;
    }
@@ -147,10 +164,81 @@ public class SubmissionManager
   if( ! modChk )
    return false;
 
+  if( files != null && files.size() > 0 )
+  {
+   LogNode fileNode = logRoot.branch("Checking file ID uniqueness");
+
+   
+   if( files != null )
+   {
+    for( FileAttachmentMeta att : files )
+    {
+     if( att.getId() != null && stor.getAttachment( att.getId() ) == null  )
+     {
+      logRoot.log(Level.ERROR, "The storage doesn't contain attachment file with ID='" + att.getId() + "' for update");
+      modChk = false;
+     }
+    }
+   }
+   
+   for( n=0; n < files.size(); n++)
+   {
+    FileAttachmentMeta fm = files.get(n);
+
+    if( fm.getOriginalId() == null )
+    {
+     fileNode.log(Level.ERROR, "File "+(n+1)+" has empty ID");
+     res = false;
+     continue;
+    }
+
+    
+    for( int k=n+1; k < files.size(); k++ )
+    {
+     if( fm.getOriginalId().equals(files.get(k).getOriginalId() ) )
+     {
+      fileNode.log(Level.ERROR, "File ID conflict. Files: "+(n+1)+" and "+(k+1));
+      res = false;
+      continue;
+     }
+    }
+    
+    if( fm.getId() == null )
+    {
+     if( stor.getAttachment( fm.getId() ) == null )
+     {
+      fileNode.log(Level.INFO, "File "+(n+1)+" is marked for deletion but it doesn't exist");
+      res = false;
+      continue;
+     }
+
+     if( stor.getGlobalAttachment( fm.getOriginalId() ) != null )
+     {
+      fileNode.log(Level.INFO, "File "+(n+1)+" has global ID but this ID is already taken");
+      res = false;
+      continue;
+     }
+    }
+    else
+    {
+     if( stor.getAttachment( fm.getId() ) == null )
+     {
+      if( ! update )
+      {
+       fileNode.log(Level.ERROR, "File is marked for deletion but submission is not in UPDATE mode");
+       res = false;
+       continue;
+      }
+     }
+     
+    }
+    
+   }
+  }
   
   boolean res = true;
   
-  for( int n=0; n < modules.size(); n++)
+  for( n=0; n < modules.size(); n++)
   {
    ModMeta mm = modules.get(n);
    
@@ -296,77 +384,7 @@ public class SubmissionManager
    res = res && modRes;
   }
   
-  if( files != null && files.size() > 0 )
-  {
-   LogNode fileNode = logRoot.branch("Checking file ID uniqueness");
 
-   
-   if( files != null )
-   {
-    for( FileAttachmentMeta att : files )
-    {
-     if( att.getId() != null && stor.getAttachment( att.getId() ) == null  )
-     {
-      logRoot.log(Level.ERROR, "The storage doesn't contain attachment file with ID='" + att.getId() + "' for update");
-      modChk = false;
-     }
-    }
-   }
-   
-   for( int n=0; n < files.size(); n++)
-   {
-    FileAttachmentMeta fm = files.get(n);
-
-    if( fm.getOriginalId() == null )
-    {
-     fileNode.log(Level.ERROR, "File "+(n+1)+" has empty ID");
-     res = false;
-     continue;
-    }
-
-    
-    for( int k=n+1; k < files.size(); k++ )
-    {
-     if( fm.getOriginalId().equals(files.get(k).getOriginalId() ) )
-     {
-      fileNode.log(Level.ERROR, "File ID conflict. Files: "+(n+1)+" and "+(k+1));
-      res = false;
-      continue;
-     }
-    }
-    
-    if( fm.getId() == null )
-    {
-     if( fm.getFile() == null )
-     {
-      fileNode.log(Level.INFO, "File "+(n+1)+" is marked for deletion but it doesn't exist");
-      res = false;
-      continue;
-     }
-
-     if( stor.getGlobalAttachment( fm.getOriginalId() ) != null )
-     {
-      fileNode.log(Level.INFO, "File "+(n+1)+" has global ID but this ID is already taken");
-      res = false;
-      continue;
-     }
-    }
-    else
-    {
-     if( fm.getFile() == null )
-     {
-      if( ! update )
-      {
-       fileNode.log(Level.ERROR, "File is marked for deletion but submission is not in UPDATE mode");
-       res = false;
-       continue;
-      }
-     }
-     
-    }
-    
-   }
-  }
   
   if( ! res )  
    return false;
