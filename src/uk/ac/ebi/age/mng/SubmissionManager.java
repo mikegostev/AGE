@@ -114,6 +114,16 @@ public class SubmissionManager
   else
    modules = new ArrayList<ModMeta>( mods.size() );
   
+  
+  List<ModMeta> mod2Ins;
+  List<ModMeta> mod2Upd;
+  List<ModMeta> mod2Del;
+
+  List<FileAttachmentMeta> att2Ins;
+  List<FileAttachmentMeta> att2Upd;
+  List<FileAttachmentMeta> att2Del;
+  List<FileAttachmentMeta> att2ChVis;
+  
 //  for( DataModuleMeta dm : mods )
 //  {
 //   ModMeta mm = new ModMeta();
@@ -144,6 +154,12 @@ public class SubmissionManager
     {
      logRoot.log(Level.WARN,"Module "+n+" has ID specified ('"+ mm.id+"') but submission is not in UPDATE mode. Ignoring ID");
      mm.id = null;
+
+     if( mod2Ins == null )
+      mod2Ins = new ArrayList<ModMeta>(5);
+
+     mod2Ins.add(mm);
+     
      continue;
     }
     
@@ -159,6 +175,21 @@ public class SubmissionManager
      logRoot.log(Level.ERROR, "Module with ID='" + mm.id + "' belongs to another submission ("+mm.origModule.getClusterId()+")");
      res = false;
     }
+    else if( mm.text == null  )
+    {
+     if( mod2Del == null )
+      mod2Del = new ArrayList<ModMeta>(5);
+     
+     mod2Del.add(mm);
+    }
+    else
+    {
+     if( mod2Upd == null )
+      mod2Upd = new ArrayList<ModMeta>(5);
+     
+     mod2Upd.add(mm);
+    }
+    
    }
    else if( mm.text == null )
    {
@@ -221,56 +252,66 @@ public class SubmissionManager
       continue;
      }
 
-     if(stor.getAttachment(fm.getId()) == null)
+     if(origFm == null)
      {
-      fileNode.log(Level.ERROR, "File " + (n + 1) + " is marked for deletion but it doesn't exist");
+      fileNode.log(Level.ERROR, "File " + (n + 1) + " is marked for deletion but it doesn't exist within the submission");
       res = false;
       continue;
      }
      
-     if( origFm == null )
+     if( fm.isGlobal() != origFm.isGlobal() )
      {
-      fileNode.log(Level.ERROR, "File " + (n + 1) + " is marked for deletion but it belongs to another submission");
-      res = false;
-      continue;
+      if( att2ChVis == null )
+       att2ChVis = new ArrayList<FileAttachmentMeta>(5);
+      
+      att2ChVis.add(fm);
+     }
+     else
+     {
+      if( att2Del == null )
+       att2Del = new ArrayList<FileAttachmentMeta>(5);
+      
+      att2Del.add(fm);
      }
  
     }
     else
     {
-     
-    }
-    
-    if( fm.getId() == null )
-    {
-     if( stor.getAttachment( fm.getId() ) == null )
+     if( (origSbm == null || origFm == null ) && fm.isGlobal() )
      {
-      fileNode.log(Level.INFO, "File "+(n+1)+" is marked for deletion but it doesn't exist");
-      res = false;
-      continue;
-     }
-
-     if( stor.getGlobalAttachment( fm.getOriginalId() ) != null )
-     {
-      fileNode.log(Level.INFO, "File "+(n+1)+" has global ID but this ID is already taken");
-      res = false;
-      continue;
-     }
-    }
-    else
-    {
-     if( stor.getAttachment( fm.getId() ) == null )
-     {
-      if( ! update )
+      String gid = makeGlobalFileID( fm.getId() );
+      
+      if( stor.getAttachment( gid ) != null )
       {
-       fileNode.log(Level.ERROR, "File is marked for deletion but submission is not in UPDATE mode");
+       fileNode.log(Level.ERROR, "File " + (n + 1) + " has global ID but this ID is already taken");
        res = false;
        continue;
       }
      }
-     
+
+     if(origFm == null)
+     {
+      if( att2Ins == null )
+       att2Ins = new ArrayList<FileAttachmentMeta>(5);
+      
+      att2Ins.add(fm);
+     }
+     else
+     {
+      if( att2Upd == null )
+       att2Upd = new ArrayList<FileAttachmentMeta>(5);
+      
+      att2Upd.add(fm);
+
+      if( fm.isGlobal() != origFm.isGlobal() )
+      {
+       if( att2ChVis == null )
+        att2ChVis = new ArrayList<FileAttachmentMeta>(5);
+       
+       att2ChVis.add(fm);
+      }
+     }
     }
-    
    }
   }
   
@@ -283,14 +324,8 @@ public class SubmissionManager
    
    if( mm.text == null )
    {
-    if( update )
-     modNode.log(Level.INFO, "Module is marked for deletion. Skiping");
-    else
-    {
-     modNode.log(Level.ERROR, "Module is marked for deletion but submission is not in UPDATE mode");
-     res = false;
-     continue;
-    }
+    modNode.log(Level.INFO, "Module is marked for deletion. Skiping");
+    continue;
    }
    
    boolean atRes = true;
@@ -327,7 +362,7 @@ public class SubmissionManager
 
    for( AgeObjectWritable obj : mm.module.getObjects())
    {
-    if( obj.getId() != null ) //Local object have no IDs yet
+    if( obj.getId() != null ) //Local objects have no IDs yet
     {
      AgeObject origObj = stor.getObjectById( obj.getId() );
      
@@ -337,7 +372,7 @@ public class SubmissionManager
       String oModId = origObj.getDataModule().getId();
       unqOK = false;
       
-      if( update )
+      if( origSbm != null )
       {
        for( ModMeta updMM : modules )
        {
@@ -617,6 +652,16 @@ public class SubmissionManager
   return res;
  }
 
+ public static String makeGlobalFileID(String id)
+ {
+  return "G"+id;
+ }
+
+ public static String makeLocalFileID(String id, String clustID)
+ {
+  return "L"+id+"-"+clustID;
+ }
+
  private boolean connectDataModule(List<ModMeta> mods, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
  {
   boolean res = true;
@@ -699,10 +744,10 @@ public class SubmissionManager
     {
      modloop : for( ModMeta refmm : mods )
      {
-      if( refmm == mm )
+      if( refmm == mm || refmm.module == null )
        continue;
       
-      for( AgeObjectWritable candObj : mm.module.getObjects() )
+      for( AgeObjectWritable candObj : refmm.module.getObjects() )
       {
        if( candObj.getId() != null && candObj.getId().equals(ref) )
        {
@@ -834,13 +879,11 @@ public class SubmissionManager
     
     AgeObject tgObj = stor.getObjectById( ref );
     
-    boolean found = false;
-    
     if( tgObj == null )
     {
      for( ModMeta mm : mods )
      {
-      if( mm.module == cmod )
+      if( mm.module == cmod || mm.module == null )
        continue;
       
       for( AgeObjectWritable candObj : mm.module.getObjects() )
@@ -848,18 +891,14 @@ public class SubmissionManager
        if( candObj.getId() != null && candObj.getId().equals(ref) )
        {
         tgObj = candObj;
-        found = true;
         break;
        }
       }
      }
     }
-    else
-    {
-     found = true;
-    }
+
     
-    if( ! found )
+    if( tgObj == null )
     {
      AgeObject obj  = (AgeObject)atStk.get(0);
      
@@ -917,8 +956,7 @@ public class SubmissionManager
  
   return res;
  }
- 
- 
+
  public AgeTabSyntaxParser getAgeTabParser()
  {
   return ageTabParser;

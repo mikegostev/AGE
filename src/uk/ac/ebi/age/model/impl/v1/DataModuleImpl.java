@@ -7,6 +7,7 @@ import java.util.Collection;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
@@ -197,6 +198,13 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
 
 
  public void setClusterId(String clusterId)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+
+ @Override
+ public Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes()
  {
   throw new UnsupportedOperationException();
  }

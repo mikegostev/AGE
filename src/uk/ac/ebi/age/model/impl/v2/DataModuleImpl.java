@@ -1,12 +1,18 @@
 package uk.ac.ebi.age.model.impl.v2;
 
 import java.io.Serializable;
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 import uk.ac.ebi.age.model.AgeRelation;
+import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
@@ -94,6 +100,12 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   return extRels;
  }
 
+ @Override
+ public Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes()
+ {
+  return new ExtAttrCollection();
+ }
+
  
  @Override
  public void setMasterModel( SemanticModel newModel )
@@ -146,6 +158,84 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  public void setClusterId(String clusterId)
  {
   this.clusterId = clusterId;
+ }
+ 
+
+ private class ExtAttrCollection extends AbstractCollection<AgeExternalObjectAttributeWritable>
+ {
+  class ExtAttrIter implements Iterator<AgeExternalObjectAttributeWritable>
+  {
+   private List<Iterator<? extends Attributed>> stk = new ArrayList<Iterator<? extends Attributed>>(5);
+   
+   {
+    stk.add(objects.iterator());
+   }
+
+   private AgeExternalObjectAttributeWritable nextEl;
+   
+   @Override
+   public boolean hasNext()
+   {
+    if( nextEl != null )
+     return true;
+    
+    int last = stk.size()-1;
+    Iterator<? extends Attributed> cIter = stk.get(last);
+    Attributed atbt = null;
+    do
+    {
+     while(!cIter.hasNext())
+     {
+      if(stk.size() == 1)
+       return false;
+      
+      stk.remove(last);
+      cIter = stk.get(--last);
+     }
+    
+     atbt = cIter.next();
+    
+     if( atbt.getAttributes() != null )
+      stk.add(atbt.getAttributes().iterator());
+     
+    } while(!(atbt instanceof AgeExternalObjectAttributeWritable));
+
+    nextEl = (AgeExternalObjectAttributeWritable)atbt;
+    
+    return true;
+   }
+
+   @Override
+   public AgeExternalObjectAttributeWritable next()
+   {
+    if( ! hasNext() )
+     throw new NoSuchElementException();
+
+    AgeExternalObjectAttributeWritable nxt = nextEl;
+    nextEl = null;
+    
+    return nxt;
+   }
+
+   @Override
+   public void remove()
+   {
+    throw new UnsupportedOperationException();
+   }
+   
+  }
+
+  @Override
+  public Iterator<AgeExternalObjectAttributeWritable> iterator()
+  {
+   return new ExtAttrIter();
+  }
+
+  @Override
+  public int size()
+  {
+   throw new UnsupportedOperationException();
+  }
  }
  
 }
