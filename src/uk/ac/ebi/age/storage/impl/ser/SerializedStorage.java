@@ -122,6 +122,13 @@ public class SerializedStorage implements AgeStorageAdm
   return moduleMap.get(name);
  }
  
+ @Override
+ public Collection<? extends DataModuleWritable> getDataModules()
+ {
+  return moduleMap.values();
+ }
+
+ 
  public AgeIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts)
  {
   AgeIndex idx = new AgeIndex();

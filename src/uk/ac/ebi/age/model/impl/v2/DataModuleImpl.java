@@ -68,6 +68,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
    }
   }
   
+  obj.setDataModule( this );
  }
 
  
@@ -101,9 +102,23 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  }
 
  @Override
+ public Collection<? extends AttributedWritable> getAttributed( AttributedSelector sel )
+ {
+  return new SelectionCollection<AttributedWritable>( sel );
+ }
+ 
+ @Override
  public Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes()
  {
-  return new ExtAttrCollection();
+  return new SelectionCollection<AgeExternalObjectAttributeWritable>( new AttributedSelector()
+  {
+   @Override
+   public boolean select(Attributed at)
+   {
+    return at instanceof AgeExternalObjectAttributeWritable;
+   }
+  });
+
  }
 
  
@@ -160,10 +175,16 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   this.clusterId = clusterId;
  }
  
-
- private class ExtAttrCollection extends AbstractCollection<AgeExternalObjectAttributeWritable>
+ private class SelectionCollection<T extends AttributedWritable> extends AbstractCollection<T>
  {
-  class ExtAttrIter implements Iterator<AgeExternalObjectAttributeWritable>
+  private AttributedSelector selector;
+  
+  SelectionCollection( AttributedSelector sel )
+  {
+   selector = sel;
+  }
+  
+  class SelAttrIter implements Iterator<T>
   {
    private List<Iterator<? extends Attributed>> stk = new ArrayList<Iterator<? extends Attributed>>(5);
    
@@ -171,7 +192,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
     stk.add(objects.iterator());
    }
 
-   private AgeExternalObjectAttributeWritable nextEl;
+   private T nextEl;
    
    @Override
    public boolean hasNext()
@@ -179,14 +200,16 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
     if( nextEl != null )
      return true;
     
+    Attributed atbt = null;
     int last = stk.size()-1;
     Iterator<? extends Attributed> cIter = stk.get(last);
-    Attributed atbt = null;
+    
     do
     {
+
      while(!cIter.hasNext())
      {
-      if(stk.size() == 1)
+      if(last == 0 )
        return false;
       
       stk.remove(last);
@@ -196,22 +219,25 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
      atbt = cIter.next();
     
      if( atbt.getAttributes() != null )
-      stk.add(atbt.getAttributes().iterator());
+     {
+      stk.add(cIter = atbt.getAttributes().iterator());
+      last++;
+     }
      
-    } while(!(atbt instanceof AgeExternalObjectAttributeWritable));
+    } while(!selector.select(atbt));
 
-    nextEl = (AgeExternalObjectAttributeWritable)atbt;
+    nextEl = (T)atbt;
     
     return true;
    }
 
    @Override
-   public AgeExternalObjectAttributeWritable next()
+   public T next()
    {
     if( ! hasNext() )
      throw new NoSuchElementException();
 
-    AgeExternalObjectAttributeWritable nxt = nextEl;
+    T nxt = nextEl;
     nextEl = null;
     
     return nxt;
@@ -226,9 +252,9 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   }
 
   @Override
-  public Iterator<AgeExternalObjectAttributeWritable> iterator()
+  public Iterator<T> iterator()
   {
-   return new ExtAttrIter();
+   return new SelAttrIter();
   }
 
   @Override
@@ -237,5 +263,6 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
    throw new UnsupportedOperationException();
   }
  }
- 
+
+
 }

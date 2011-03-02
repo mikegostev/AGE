@@ -26,6 +26,7 @@ public interface AgeStorageAdm extends AgeStorage
  void removeRelations(String id, Collection<AgeRelationWritable> value);
 
  DataModuleWritable getDataModule(String name);
+ Collection<? extends DataModuleWritable> getDataModules();
 
  void setMaster(boolean master);
 

@@ -2,12 +2,14 @@ package uk.ac.ebi.age.model;
 
 import java.util.Collection;
 
-import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
-import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
-
 
 public interface DataModule
 {
+ public static interface AttributedSelector
+ {
+  boolean select( Attributed at );
+ }
+ 
  String getId();
  long getVersion();
  String getClusterId();
@@ -18,8 +20,8 @@ public interface DataModule
  
  ContextSemanticModel getContextSemanticModel();
  
- Collection<AgeExternalRelationWritable> getExternalRelations();
- Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes();
+ Collection<? extends AgeExternalRelation> getExternalRelations();
+ Collection<? extends AgeExternalObjectAttribute> getExternalObjectAttributes();
 
-// Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes();
+ Collection<? extends Attributed> getAttributed( AttributedSelector sel );
 }

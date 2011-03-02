@@ -20,6 +20,9 @@ import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
+import uk.ac.ebi.age.model.DataModule;
+import uk.ac.ebi.age.model.DataModule.AttributedSelector;
+import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
@@ -37,6 +40,8 @@ import uk.ac.ebi.age.service.submission.SubmissionDB;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
+
+import com.pri.util.Pair;
 
 public class SubmissionManager
 {
@@ -119,10 +124,11 @@ public class SubmissionManager
   List<ModMeta> mod2Upd;
   List<ModMeta> mod2Del;
 
-  List<FileAttachmentMeta> att2Ins;
-  List<FileAttachmentMeta> att2Upd;
-  List<FileAttachmentMeta> att2Del;
-  List<FileAttachmentMeta> att2ChVis;
+  List<FileAttachmentMeta> att4Ins;
+  List<FileAttachmentMeta> att4Upd;
+  List<FileAttachmentMeta> att4Del;
+  List<FileAttachmentMeta> att4G2L;
+  List<FileAttachmentMeta> att4L2G;
   
 //  for( DataModuleMeta dm : mods )
 //  {
@@ -235,7 +241,7 @@ public class SubmissionManager
     
     for( int k=n+1; k < files.size(); k++ )
     {
-     if( fm.getOriginalId().equals(files.get(k).getOriginalId() ) )
+     if( fm.getOriginalId().equals(files.get(k).getOriginalId() ) &&  )
      {
       fileNode.log(Level.ERROR, "File ID ("+fm.getOriginalId()+") conflict. Files: "+(n+1)+" and "+(k+1));
       res = false;
@@ -243,7 +249,7 @@ public class SubmissionManager
      }
     }
     
-    if( fm.getAux() == null )
+    if( fm.getAux() == null ) //File for deletion or visibility change without update
     {
      if( origSbm == null )
      {
@@ -261,58 +267,84 @@ public class SubmissionManager
      
      if( fm.isGlobal() != origFm.isGlobal() )
      {
-      if( att2ChVis == null )
-       att2ChVis = new ArrayList<FileAttachmentMeta>(5);
+      if( fm.isGlobal() )
+      {
+       if( att4L2G == null )
+        att4L2G = new ArrayList<FileAttachmentMeta>(5);
+       
+       att4L2G.add(fm);
+      }
+      else
+      {
+       if( att4G2L == null )
+        att4G2L = new ArrayList<FileAttachmentMeta>(5);
+       
+       att4G2L.add(fm);
+      }
       
-      att2ChVis.add(fm);
      }
      else
      {
-      if( att2Del == null )
-       att2Del = new ArrayList<FileAttachmentMeta>(5);
+      if( att4Del == null )
+       att4Del = new ArrayList<FileAttachmentMeta>(5);
       
-      att2Del.add(fm);
+      att4Del.add(fm);
      }
  
     }
-    else
+    else //Files for update and for update+visibility change
     {
-     if( (origSbm == null || origFm == null ) && fm.isGlobal() )
-     {
-      String gid = makeGlobalFileID( fm.getId() );
-      
-      if( stor.getAttachment( gid ) != null )
-      {
-       fileNode.log(Level.ERROR, "File " + (n + 1) + " has global ID but this ID is already taken");
-       res = false;
-       continue;
-      }
-     }
+//     if( (origSbm == null || origFm == null ) && fm.isGlobal() )
+//     {
+//      String gid = makeGlobalFileID( fm.getId() );
+//      
+//      if( stor.getAttachment( gid ) != null )
+//      {
+//       fileNode.log(Level.ERROR, "File " + (n + 1) + " has global ID but this ID is already taken");
+//       res = false;
+//       continue;
+//      }
+//     }
 
      if(origFm == null)
      {
-      if( att2Ins == null )
-       att2Ins = new ArrayList<FileAttachmentMeta>(5);
+      if( att4Ins == null )
+       att4Ins = new ArrayList<FileAttachmentMeta>(5);
       
-      att2Ins.add(fm);
+      att4Ins.add(fm);
      }
      else
      {
-      if( att2Upd == null )
-       att2Upd = new ArrayList<FileAttachmentMeta>(5);
+      if( att4Upd == null )
+       att4Upd = new ArrayList<FileAttachmentMeta>(5);
       
-      att2Upd.add(fm);
+      att4Upd.add(fm);
 
       if( fm.isGlobal() != origFm.isGlobal() )
       {
-       if( att2ChVis == null )
-        att2ChVis = new ArrayList<FileAttachmentMeta>(5);
-       
-       att2ChVis.add(fm);
+       if( fm.isGlobal() )
+       {
+        if( att4L2G == null )
+         att4L2G = new ArrayList<FileAttachmentMeta>(5);
+        
+        att4L2G.add(fm);
+       }
+       else
+       {
+        if( att4G2L == null )
+         att4G2L = new ArrayList<FileAttachmentMeta>(5);
+        
+        att4G2L.add(fm);
+       }
       }
      }
     }
    }
+  }
+  
+  if( att4Ins != null ) //Checking validity of new global identifiers
+  {
+   for( FileAttachmentMeta insf : att4Ins )
   }
   
   for( n=0; n < modules.size(); n++)
@@ -515,7 +547,7 @@ public class SubmissionManager
     if(mm.origModule == null)
      continue;
 
-    Collection<AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
+    Collection<? extends AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
 
     if(origExtRels != null)
     {
@@ -660,6 +692,162 @@ public class SubmissionManager
  public static String makeLocalFileID(String id, String clustID)
  {
   return "L"+id+"-"+clustID;
+ }
+
+ private boolean reconnectDataModules(List<ModMeta> mods, Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> conn, AgeStorageAdm stor, LogNode logRoot)
+ {
+  
+  LogNode logRecon = logRoot.branch("Reconnecting external object attributes");
+  
+  boolean res = true; 
+  
+  for( DataModule extDM : stor.getDataModules() )
+  {
+   Collection<? extends Attributed> attrs = extDM.getAttributed( new AttributedSelector()
+   {
+    @Override
+    public boolean select(Attributed at)
+    {
+     return at instanceof AgeExternalObjectAttributeWritable;
+    }
+   });
+   
+   for( Attributed atb : attrs )
+   {
+    AgeExternalObjectAttributeWritable extObjAttr = (AgeExternalObjectAttributeWritable) atb;
+    String modId = extObjAttr.getValue().getDataModule().getId();
+
+    int n = 0;
+    for(ModMeta mm : mods)
+    {
+     n++;
+
+     if(mm.id == null)
+      continue;
+
+     if(mm.id.equals(modId))
+     {
+      AgeObject replObj = null;
+
+      
+      lookup : for(ModMeta rfmm : mods)
+      {
+       if( rfmm.module != null )
+       {
+        for( AgeObject rfObj : rfmm.module.getObjects() )
+        {
+         if( rfObj.getId() != null && rfObj.getId().equals(extObjAttr.getTargetObjectId()) )
+         {
+          replObj = rfObj;
+          break lookup;
+         }
+        }
+       }
+      }
+     
+      if( replObj == null )
+      {
+       if(mm.module == null)
+        logRecon.log(Level.ERROR, "Module " + n + " (ID='" + mm.id + "') is marked for deletion but some object (ID='" + extObjAttr.getValue().getId()
+          + "') is referred by object attribute from module '" + extDM.getId() + "' of cluster '" + extDM.getClusterId() + "'");
+       else
+        logRecon.log(Level.ERROR, "Module " + n + " (ID='" + mm.id + "') is marked for update but some object (ID='" + extObjAttr.getValue().getId()
+          + "') is referred by object attribute from module '" + extDM.getId() + "' of cluster '" + extDM.getClusterId() + "' and the reference can't be resolved anymore");
+       
+       res = false;
+      }
+      else
+       conn.add( new Pair<AgeExternalObjectAttributeWritable, AgeObject>(extObjAttr, replObj) );
+       
+     }
+    }
+   }
+  }
+   
+  if( res )
+   logRecon.log(Level.INFO, "Success");
+  else
+   logRecon.log(Level.INFO, "Failed");
+  
+  return res;
+ }
+
+ private boolean reconnectDataFiles(List<ModMeta> mods, Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> conn, AgeStorageAdm stor, LogNode logRoot)
+ {
+  
+  LogNode logRecon = logRoot.branch("Reconnecting external object attributes");
+  
+  boolean res = true; 
+  
+  for( DataModule extDM : stor.getDataModules() )
+  {
+   Collection<? extends Attributed> attrs = extDM.getAttributed( new AttributedSelector()
+   {
+    @Override
+    public boolean select(Attributed at)
+    {
+     return at instanceof AgeAttribute && ((AgeAttribute)at).getAgeElClass().getDataType() == DataType.FILE;
+    }
+   });
+   
+   for( Attributed atb : attrs )
+   {
+    AgeExternalObjectAttributeWritable extObjAttr = (AgeExternalObjectAttributeWritable) atb;
+    String modId = extObjAttr.getValue().getDataModule().getId();
+
+    int n = 0;
+    for(ModMeta mm : mods)
+    {
+     n++;
+
+     if(mm.id == null)
+      continue;
+
+     if(mm.id.equals(modId))
+     {
+      AgeObject replObj = null;
+
+      
+      lookup : for(ModMeta rfmm : mods)
+      {
+       if( mm.module != null )
+       {
+        for( AgeObject rfObj : mm.module.getObjects() )
+        {
+         if( rfObj.getId() != null && rfObj.getId().equals(extObjAttr.getTargetObjectId()) )
+         {
+          replObj = rfObj;
+          break lookup;
+         }
+        }
+       }
+      }
+     
+      if( replObj == null )
+      {
+       if(mm.module == null)
+        logRecon.log(Level.ERROR, "Module " + n + " (ID='" + mm.id + "') is marked for deletion but some object (ID='" + extObjAttr.getValue().getId()
+          + "') is referred by object attribute from module '" + extDM.getId() + "' of cluster '" + extDM.getClusterId() + "'");
+       else
+        logRecon.log(Level.ERROR, "Module " + n + " (ID='" + mm.id + "') is marked for update but some object (ID='" + extObjAttr.getValue().getId()
+          + "') is referred by object attribute from module '" + extDM.getId() + "' of cluster '" + extDM.getClusterId() + "' and the reference can't be resolved anymore");
+       
+       res = false;
+      }
+      else
+       conn.add( new Pair<AgeExternalObjectAttributeWritable, AgeObject>(extObjAttr, replObj) );
+       
+     }
+    }
+   }
+  }
+   
+  if( res )
+   logRecon.log(Level.INFO, "Success");
+  else
+   logRecon.log(Level.INFO, "Failed");
+  
+  return res;
  }
 
  private boolean connectDataModule(List<ModMeta> mods, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)

@@ -18,4 +18,10 @@ public interface DataModuleWritable extends DataModule
  Collection<AgeObjectWritable> getObjects();
  
  void setMasterModel(SemanticModel newModel);
+ 
+ Collection<? extends AgeExternalRelationWritable> getExternalRelations();
+ Collection<? extends AgeExternalObjectAttributeWritable> getExternalObjectAttributes();
+
+ Collection<? extends AttributedWritable> getAttributed( AttributedSelector sel );
+
 }

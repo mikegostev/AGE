@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 
 import uk.ac.ebi.age.model.AgeObject;
+import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.storage.index.AgeIndex;
@@ -32,5 +33,9 @@ public interface AgeStorage
  void addDataChangeListener(DataChangeListener dataChangeListener);
  
  File getAttachment(String id);
+ 
+ DataModule getDataModule(String name);
+
+ Collection<? extends DataModule> getDataModules();
 
 }
