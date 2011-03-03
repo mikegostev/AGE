@@ -30,4 +30,5 @@ public interface AgeStorageAdm extends AgeStorage
 
  void setMaster(boolean master);
 
+
 }

@@ -58,10 +58,12 @@ public class SerializedStorage implements AgeStorageAdm
  
  private static final String modelPath = "model";
  private static final String dmStoragePath = "data";
+ private static final String fileStoragePath = "files";
  private static final String modelFileName = "model.ser";
  
  private File modelFile;
  private File dataDir;
+ private File filesDir;
  
  private Map<String, AgeObjectWritable> mainIndexMap = new HashMap<String, AgeObjectWritable>();
  private Map<String, DataModuleWritable> moduleMap = new TreeMap<String, DataModuleWritable>();
@@ -76,7 +78,8 @@ public class SerializedStorage implements AgeStorageAdm
 
  private Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
  
- private FileDepot depot; 
+ private FileDepot dataDepot; 
+ private FileDepot fileDepot; 
  
  private boolean master = false;
  
@@ -318,16 +321,9 @@ public class SerializedStorage implements AgeStorageAdm
   
   modelFile = new File(modelDir, modelFileName );
   dataDir = new File( baseDir, dmStoragePath ); 
+  filesDir = new File( baseDir, fileStoragePath ); 
   
-  try
-  {
-   depot = new FileDepot(dataDir);
-  }
-  catch(IOException e)
-  {
-   throw new StorageInstantiationException( "Depot init error: "+e.getMessage(),e);
-  }
-  
+
   if( baseDir.isFile() )
    throw new StorageInstantiationException("The initial path must be directory: "+initStr);
   
@@ -336,6 +332,25 @@ public class SerializedStorage implements AgeStorageAdm
 
   if( ! modelDir.exists() )
    modelDir.mkdirs();
+  
+  try
+  {
+   dataDepot = new FileDepot(dataDir);
+  }
+  catch(IOException e)
+  {
+   throw new StorageInstantiationException( "Data depot init error: "+e.getMessage(),e);
+  }
+ 
+  try
+  {
+   fileDepot = new FileDepot(filesDir);
+  }
+  catch(IOException e)
+  {
+   throw new StorageInstantiationException( "File depot init error: "+e.getMessage(),e);
+  }
+
 
   if( modelFile.canRead() )
    loadModel();
@@ -352,7 +367,7 @@ public class SerializedStorage implements AgeStorageAdm
   {
    dbLock.writeLock().lock();
    
-   for( File f : depot.listFiles() )
+   for( File f : dataDepot.listFiles() )
    {
     DataModuleWritable dm = submRW.read(f);
     
@@ -507,7 +522,7 @@ public class SerializedStorage implements AgeStorageAdm
 
  private void saveDataModule(DataModuleWritable sm) throws ModuleStoreException
  {
-  File modFile = depot.getFilePath(sm.getId(), sm.getVersion() );
+  File modFile = dataDepot.getFilePath(sm.getId(), sm.getVersion() );
   
   try
   {
@@ -528,7 +543,7 @@ public class SerializedStorage implements AgeStorageAdm
   if( dm == null )
    return false;
   
-  File modFile = depot.getFilePath(dm.getId(), dm.getVersion() );
+  File modFile = dataDepot.getFilePath(dm.getId(), dm.getVersion() );
   
   if( ! modFile.delete() )
    throw new ModuleStoreException("Can't delete module file: "+modFile.getAbsolutePath());
@@ -690,10 +705,22 @@ public class SerializedStorage implements AgeStorageAdm
  @Override
  public File getAttachment(String id)
  {
-  // TODO Auto-generated method stub
-  throw new dev.NotImplementedYetException();
-  //return null;
+  return fileDepot.getFilePath(id);
  }
 
+ public static String makeGlobalFileID(String id)
+ {
+  return "G"+id;
+ }
 
+ public static String makeLocalFileID(String id, String clustID)
+ {
+  return "L"+id+"-"+clustID;
+ }
+
+ @Override
+ public boolean isFileIdGlobal(String fileID)
+ {
+  return fileID.charAt(0) == 'G';
+ }
 }

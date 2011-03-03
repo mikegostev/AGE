@@ -208,4 +208,11 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  {
   throw new UnsupportedOperationException();
  }
+
+
+ @Override
+ public Collection< ? extends AttributedWritable> getAttributed(AttributedSelector sel)
+ {
+  throw new UnsupportedOperationException();
+ }
 }
