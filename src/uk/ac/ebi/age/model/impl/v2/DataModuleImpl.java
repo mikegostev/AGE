@@ -14,6 +14,7 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
+import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
@@ -27,6 +28,8 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  private Collection<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
  private ContextSemanticModel model;
  private Collection<AgeExternalRelationWritable> extRels ;
+ private Collection<AgeExternalObjectAttributeWritable> extObjAttrs ;
+ private Collection<AgeFileAttributeWritable> fileRefs ;
 
  private String id;
  private String descr;
@@ -110,12 +113,32 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  @Override
  public Collection<AgeExternalObjectAttributeWritable> getExternalObjectAttributes()
  {
+  if( extObjAttrs != null )
+   return extObjAttrs;
+  
   return new SelectionCollection<AgeExternalObjectAttributeWritable>( new AttributedSelector()
   {
    @Override
    public boolean select(Attributed at)
    {
     return at instanceof AgeExternalObjectAttributeWritable;
+   }
+  });
+
+ }
+
+ @Override
+ public Collection<AgeFileAttributeWritable> getFileAttributes()
+ {
+  if( fileRefs != null )
+   return fileRefs;
+  
+  return new SelectionCollection<AgeFileAttributeWritable>( new AttributedSelector()
+  {
+   @Override
+   public boolean select(Attributed at)
+   {
+    return at instanceof AgeFileAttributeWritable;
    }
   });
 

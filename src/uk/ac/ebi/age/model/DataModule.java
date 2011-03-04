@@ -2,6 +2,8 @@ package uk.ac.ebi.age.model;
 
 import java.util.Collection;
 
+import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
+
 
 public interface DataModule
 {
@@ -22,6 +24,7 @@ public interface DataModule
  
  Collection<? extends AgeExternalRelation> getExternalRelations();
  Collection<? extends AgeExternalObjectAttribute> getExternalObjectAttributes();
+ Collection<AgeFileAttributeWritable> getFileAttributes();
 
  Collection<? extends Attributed> getAttributed( AttributedSelector sel );
 }
