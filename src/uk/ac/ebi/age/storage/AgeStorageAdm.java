@@ -30,5 +30,8 @@ public interface AgeStorageAdm extends AgeStorage
 
  void setMaster(boolean master);
 
+ String makeGlobalFileID(String id);
+ String makeLocalFileID(String id, String clustID);
+
 
 }

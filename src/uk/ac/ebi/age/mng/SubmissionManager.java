@@ -296,7 +296,7 @@ public class SubmissionManager
     {
      if( origFm == null && fm.isGlobal() ) //this is a new file with a new global ID. We have to check its uniquity
      {
-      String gid = makeGlobalFileID( fm.getOriginalId() );
+      String gid = stor.makeGlobalFileID( fm.getOriginalId() );
       
       if( stor.getAttachment( gid ) != null )
       {
@@ -761,8 +761,20 @@ public class SubmissionManager
   
   return res;
  }
+ 
+ 
 
- private boolean reconnectDataFiles(String clustId, Map<String,FileAttachmentMeta> att4Del, Map<String,FileAttachmentMeta> att4G2L, AgeStorageAdm stor, LogNode logRoot)
+ private boolean connectDataFiles( DataModuleWritable dm, Map<String, FileAttachmentMeta> files )
+ {
+  for( AgeFileAttributeWritable fattr : dm.getFileAttributes() )
+  {
+   
+  }
+  
+  return true;
+ }
+ 
+ private boolean checkRemovedDataFiles(String clustId, Map<String,FileAttachmentMeta> att4Del, Map<String,FileAttachmentMeta> att4G2L, AgeStorageAdm stor, LogNode logRoot)
  {
   
   LogNode logRecon = logRoot.branch("Reconnecting file attributes");

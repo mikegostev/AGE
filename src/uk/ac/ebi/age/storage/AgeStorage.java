@@ -39,4 +39,5 @@ public interface AgeStorage
  Collection<? extends DataModule> getDataModules();
 
  boolean isFileIdGlobal(String fileID);
+
 }

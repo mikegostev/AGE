@@ -708,12 +708,14 @@ public class SerializedStorage implements AgeStorageAdm
   return fileDepot.getFilePath(id);
  }
 
- public static String makeGlobalFileID(String id)
+ @Override
+ public String makeGlobalFileID(String id)
  {
   return "G"+id;
  }
 
- public static String makeLocalFileID(String id, String clustID)
+ @Override
+ public String makeLocalFileID(String id, String clustID)
  {
   return "L"+id+"-"+clustID;
  }
