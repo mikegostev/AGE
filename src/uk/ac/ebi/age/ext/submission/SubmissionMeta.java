@@ -11,7 +11,7 @@ public class SubmissionMeta implements Serializable
 
  private String id;
  
-// private String clusterId;
+ private boolean forUpdate;
  
  private String description;
  private String submitter;
@@ -107,13 +107,14 @@ public class SubmissionMeta implements Serializable
   return atts;
  }
 
-// public String getClusterId()
-// {
-//  return clusterId;
-// }
-//
-// public void setClusterId(String clusterId)
-// {
-//  this.clusterId = clusterId;
-// }
+ public void setForUpdate(boolean forUpdate)
+ {
+  this.forUpdate = forUpdate;
+ }
+
+ public boolean isForUpdate()
+ {
+  return forUpdate;
+ }
+
 }

@@ -12,7 +12,10 @@ public class DataModuleMeta implements Serializable
  private String modifier;
  private long version;
  
+ private boolean forUpdate;
+ 
  private transient String text;
+ private transient Object aux;
 
  public void setId(String stringId)
  {
@@ -72,6 +75,26 @@ public class DataModuleMeta implements Serializable
  public long getVersion()
  {
   return version;
+ }
+
+ public boolean isForUpdate()
+ {
+  return forUpdate;
+ }
+
+ public void setForUpdate(boolean forUpdate)
+ {
+  this.forUpdate = forUpdate;
+ }
+
+ public void setAux(Object aux)
+ {
+  this.aux = aux;
+ }
+
+ public Object getAux()
+ {
+  return aux;
  }
 
 }

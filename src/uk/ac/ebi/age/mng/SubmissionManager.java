@@ -49,14 +49,33 @@ public class SubmissionManager
  
  private SubmissionDB submissionDB;
 
+ /*
+  * submission algorithm
+  * 
+  * 0. Assumptions
+  *  0a. If subm wasn't marked "forUpdate" it assumes that this is a new submission
+  * 
+  * 1. Check whether the subm is for update
+  *  1a. Check for for the following errors:
+  *    1. Subm ID is provided but original subm doesn't exist
+  * 
+  * 2. Separate DMs into groups for insert Di, update Du, delete Dd
+  *  2a. Check for for the following errors:
+  *    1. Module ID provided but submission is not in UPDATE mode
+  *    2. Module ID provided but module is not in the storage
+  *    3. Original module exists in the storage but belongs to the other submission
+  *    4. Module has no body (assumed that it is for deletion) but ID is not provided
+  * 
+  * 
+  */
+ 
  
  private static class ModMeta
  {
-  String text;
-  String id;
   AgeTabModule atMod;
   DataModuleWritable origModule;
   DataModuleWritable module;
+  DataModuleMeta meta;
  }
  
  public static SubmissionManager getInstance()
@@ -87,18 +106,24 @@ public class SubmissionManager
   
   SubmissionMeta origSbm = null;
   
-  if( sMeta.getId() != null )
+  if( sMeta.isForUpdate() )
   {
+   if(  sMeta.getId() == null  )
+   {
+    logRoot.log(Level.ERROR, "Submission is marked for update but no ID is provided");
+    return false;
+   }
+
    origSbm = submissionDB.getSubmission( sMeta.getId() );
    
    if( origSbm == null )
    {
-    logRoot.log(Level.ERROR, "Submission with ID='"+sMeta.getId()+"' is not found for update");
+    logRoot.log(Level.ERROR, "Submission with ID='"+sMeta.getId()+"' is not found to be updated");
     return false;
    }
   }
+
   
-  List<DataModuleMeta> mods = sMeta.getDataModules();
   List<FileAttachmentMeta> files = sMeta.getAttachments();
   
 //  String clusterId = sMeta.getClusterId();
@@ -111,18 +136,21 @@ public class SubmissionManager
 //   clusterId=IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
 //  }
   
-  
   List<ModMeta> modules;
   
-  if( mods == null )
+  
+  if(sMeta.getDataModules() == null )
    modules = Collections.emptyList();
   else
-   modules = new ArrayList<ModMeta>( mods.size() );
+   modules = new ArrayList<ModMeta>( sMeta.getDataModules().size() );
+   
   
   
   List<ModMeta> mod2Ins;
-  List<ModMeta> mod2Upd;
-  List<ModMeta> mod2Del;
+  
+  Map<String,ModMeta> mod2Upd;
+  Map<String,ModMeta> mod2Del;
+  Map<String,DataModuleMeta> mod2Hld;
 
   Map<String,FileAttachmentMeta> att4Ins;
   Map<String,FileAttachmentMeta> att4Upd;
@@ -130,81 +158,117 @@ public class SubmissionManager
   Map<String,FileAttachmentMeta> att4G2L;
   Map<String,FileAttachmentMeta> att4L2G;
   
-//  for( DataModuleMeta dm : mods )
-//  {
-//   ModMeta mm = new ModMeta();
-//   mm.text = dm.getText();
-//   mm.id = dm.getId();
-//   
-//   modules.add(mm);
-//  }
   
   boolean res = true;
   
 
   int n=0;
-  for( DataModuleMeta dm : mods )
+  
+  if( sMeta.getDataModules() != null )
   {
-   n++;
-   
-   ModMeta mm = new ModMeta();
-   mm.text = dm.getText();
-   mm.id = dm.getId();
-   
-   modules.add(mm);
+   modules = new ArrayList<ModMeta>(sMeta.getDataModules().size());
 
-   
-   if( mm.id != null )
+   for(DataModuleMeta dm : sMeta.getDataModules())
    {
-    if( origSbm == null )
+    n++;
+
+    ModMeta mm = new ModMeta();
+    mm.meta = dm;
+
+    modules.add(mm);
+
+    if(dm.isForUpdate())
     {
-     logRoot.log(Level.WARN,"Module "+n+" has ID specified ('"+ mm.id+"') but submission is not in UPDATE mode. Ignoring ID");
-     mm.id = null;
+     if(origSbm == null)
+     {
+      logRoot.log(Level.ERROR, "Module " + n + " is marked for update but submission is not in UPDATE mode");
+      res = false;
+      continue;
+     }
 
-     if( mod2Ins == null )
-      mod2Ins = new ArrayList<ModMeta>(5);
-
-     mod2Ins.add(mm);
+     if( mm.meta.getId() == null  )
+     {
+      logRoot.log(Level.ERROR, "Module " + n + " is marked for update but no ID is provided");
+      res = false;
+      continue;
+     }
      
+     mm.origModule = stor.getDataModule(mm.meta.getId());
+
+     if(mm.origModule == null)
+     {
+      logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + mm.meta.getId() + "' to be updated");
+      res = false;
+     }
+     else if(!mm.origModule.getClusterId().equals(origSbm.getId()))
+     {
+      logRoot.log(Level.ERROR, "Module with ID='" + mm.meta.getId() + "' belongs to another submission (" + mm.origModule.getClusterId() + ")");
+      res = false;
+     }
+     else if(mm.meta.getText() == null)
+     {
+      if(mod2Del == null)
+       mod2Del = new HashMap<String, SubmissionManager.ModMeta>();
+
+      mod2Del.put(mm.meta.getId(),mm);
+     }
+     else
+     {
+      if(mod2Upd == null)
+       mod2Upd = new HashMap<String, SubmissionManager.ModMeta>();
+
+      mod2Upd.put(mm.meta.getId(),mm);
+     }
+
+    }
+    else if(mm.meta.getText() == null)
+    {
+     logRoot.log(Level.ERROR, "Module "+n+" is marked for insertion but no data were provided");
+     res = false;
      continue;
-    }
-    
-    mm.origModule = stor.getDataModule(mm.id);
-
-    if(mm.origModule == null)
-    {
-     logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + mm.id + "' for update");
-     res = false;
-    }
-    else if( ! mm.origModule.getClusterId().equals(origSbm.getId()) )
-    {
-     logRoot.log(Level.ERROR, "Module with ID='" + mm.id + "' belongs to another submission ("+mm.origModule.getClusterId()+")");
-     res = false;
-    }
-    else if( mm.text == null  )
-    {
-     if( mod2Del == null )
-      mod2Del = new ArrayList<ModMeta>(5);
-     
-     mod2Del.add(mm);
     }
     else
     {
-     if( mod2Upd == null )
-      mod2Upd = new ArrayList<ModMeta>(5);
+     if( mm.meta.getId() != null)
+     {
+      DataModuleWritable clashMod = stor.getDataModule(mm.meta.getId());
+      
+      if( clashMod != null )
+      {
+       logRoot.log(Level.ERROR,"Module "+n+" is marked for insertion and has it's own ID ("+mm.meta.getId()
+         +") but this ID it already taken by module of cluster '"+clashMod.getClusterId()+"'");
+       res = false;
+       continue;
+      }
+     }
      
-     mod2Upd.add(mm);
-    }
-    
-   }
-   else if( mm.text == null )
-   {
-    logRoot.log(Level.ERROR, "Module is marked for deletion but ID is not specified");
-    res = false;
-    continue;
-   }
+     if(mod2Ins == null)
+      mod2Ins = new ArrayList<ModMeta>(5);
 
+     mod2Ins.add(mm);
+    }
+
+   }
   }
+  else
+   modules = Collections.emptyList();
+  
+  if( origSbm != null && origSbm.getDataModules() != null )
+  {
+   for( DataModuleMeta odm : origSbm.getDataModules() )
+   {
+    String modID = odm.getId();
+    
+    if( ! mod2Upd.containsKey(modID) && ! mod2Del.containsKey(modID) )
+    {
+     if( mod2Hld == null )
+      mod2Hld = new HashMap<String, DataModuleMeta>();
+     
+     mod2Hld.put(modID, odm);
+    }
+   }
+  }
+  
   
   if( ! res )
    return false;
@@ -251,7 +315,7 @@ public class SubmissionManager
     
     if( fm.getAux() == null ) //File for deletion or visibility change without update
     {
-     if( origSbm == null ) // No original submission. This means the new submission 
+     if( origSbm == null ) // No original submission. This means a new submission 
      {
       fileNode.log(Level.ERROR, "File " + (n + 1) + " is marked for deletion but submission is not in UPDATE mode");
       res = false;
@@ -294,7 +358,7 @@ public class SubmissionManager
     }
     else //Files for update and for update+visibility change
     {
-     if( origFm == null && fm.isGlobal() ) //this is a new file with a new global ID. We have to check its uniquity
+     if( origFm == null && fm.isGlobal() ) //this is a new file with a new global ID. We have to check its uniqueness
      {
       String gid = stor.makeGlobalFileID( fm.getOriginalId() );
       
@@ -352,7 +416,7 @@ public class SubmissionManager
    boolean modRes = true;
    LogNode modNode = logRoot.branch("Processing module: " + (n+1) );
    
-   if( mm.text == null )
+   if( mm.meta.getText() == null )
    {
     modNode.log(Level.INFO, "Module is marked for deletion. Skiping");
     continue;
@@ -362,7 +426,7 @@ public class SubmissionManager
    LogNode atLog = modNode.branch("Parsing AgeTab");
    try
    {
-    mm.atMod = ageTabParser.parse(mm.text);
+    mm.atMod = ageTabParser.parse(mm.meta.getText());
     atLog.log(Level.INFO, "Success");
    }
    catch(ParserException e)
@@ -397,27 +461,11 @@ public class SubmissionManager
      AgeObject origObj = stor.getObjectById( obj.getId() );
      
      boolean unqOK = true;
-     if( origObj != null )
+     if( origObj != null ) //We've found an object but if it belongs to updated/replaced module we postpone the conflict resolution 
      {
       String oModId = origObj.getDataModule().getId();
-      unqOK = false;
       
-      if( origSbm != null )
-      {
-       for( ModMeta updMM : modules )
-       {
-        if( updMM.id == null )
-         continue;
-        
-        if( updMM.id.equals(oModId) )
-        {
-         unqOK = true;
-         break;
-        }
-       }
-      }
-      
-      if( ! unqOK )
+      if( ! ( (mod2Del != null && mod2Del.containsKey(oModId)) || (mod2Upd != null && mod2Upd.containsKey(oModId) ) ) )
       {
        uniqLog.log(Level.ERROR, "Object id '"+obj.getId()+"' has been taken by the object from data module: "+oModId);
        uniqRes1 = false;
@@ -435,7 +483,7 @@ public class SubmissionManager
 
    if( modules.size() > 1 )
    {
-    uniqLog = uniqGLog.branch("Checking other modules");
+    uniqLog = uniqGLog.branch("Checking other modules within this cluster");
     
     for( int k=0; k < n; k++ )
     {
@@ -497,6 +545,8 @@ public class SubmissionManager
    stor.lockWrite();
 
    Map<AgeObject,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
+   
+   // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
    
    if( connectDataModule( modules, stor, invRelMap, connLog) )
     connLog.log(Level.INFO, "Success");
@@ -705,17 +755,14 @@ public class SubmissionManager
    for( Attributed atb : attrs )
    {
     AgeExternalObjectAttributeWritable extObjAttr = (AgeExternalObjectAttributeWritable) atb;
-    String modId = extObjAttr.getValue().getDataModule().getId();
+    String refModId = extObjAttr.getValue().getDataModule().getId();
 
     int n = 0;
     for(ModMeta mm : mods)
     {
      n++;
 
-     if(mm.id == null)
-      continue;
-
-     if(mm.id.equals(modId))
+     if(refModId.equals(mm.meta.getId()))
      {
       AgeObject replObj = null;
 
@@ -726,7 +773,7 @@ public class SubmissionManager
        {
         for( AgeObject rfObj : rfmm.module.getObjects() )
         {
-         if( rfObj.getId() != null && rfObj.getId().equals(extObjAttr.getTargetObjectId()) )
+         if( extObjAttr.getTargetObjectId().equals(rfObj.getId())  )
          {
           replObj = rfObj;
           break lookup;

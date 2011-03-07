@@ -9,6 +9,7 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
+import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
@@ -212,6 +213,13 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
 
  @Override
  public Collection< ? extends AttributedWritable> getAttributed(AttributedSelector sel)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+
+ @Override
+ public Collection<AgeFileAttributeWritable> getFileAttributes()
  {
   throw new UnsupportedOperationException();
  }
