@@ -2,7 +2,6 @@ package uk.ac.ebi.age.mng;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,6 +18,7 @@ import uk.ac.ebi.age.log.LogNode.Level;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.DataModule.AttributedSelector;
@@ -81,19 +81,22 @@ public class SubmissionManager
  
  private static class ClustMeta
  {
-  List<ModMeta> modules;
+  List<ModMeta> modules = new ArrayList<SubmissionManager.ModMeta>();
   
-  List<ModMeta> mod2Ins;
+  List<ModMeta> mod2Ins = new ArrayList<SubmissionManager.ModMeta>();
   
-  Map<String,ModMeta> mod2Upd;
-  Map<String,ModMeta> mod2Del;
-  Map<String,DataModuleMeta> mod2Hld;
+  Map<String,ModMeta> mod2Upd = new HashMap<String, SubmissionManager.ModMeta>();
+  Map<String,ModMeta> mod2Del = new HashMap<String, SubmissionManager.ModMeta>();
+  Map<String,ModMeta> mod2Hld = new HashMap<String, SubmissionManager.ModMeta>();
 
-  Map<String,FileAttachmentMeta> att4Ins;
-  Map<String,FileAttachmentMeta> att4Upd;
-  Map<String,FileAttachmentMeta> att4Del;
-  Map<String,FileAttachmentMeta> att4G2L;
-  Map<String,FileAttachmentMeta> att4L2G;
+  Map<String,FileAttachmentMeta> att4Ins = new HashMap<String, FileAttachmentMeta>();
+  Map<String,FileAttachmentMeta> att4Upd = new HashMap<String, FileAttachmentMeta>();
+  Map<String,FileAttachmentMeta> att4Del = new HashMap<String, FileAttachmentMeta>();
+  Map<String,FileAttachmentMeta> att4G2L = new HashMap<String, FileAttachmentMeta>();
+  Map<String,FileAttachmentMeta> att4L2G = new HashMap<String, FileAttachmentMeta>();
+  Map<String,FileAttachmentMeta> att4Hld = new HashMap<String, FileAttachmentMeta>();
+
+  public Object id;
 
  }
  
@@ -143,6 +146,7 @@ public class SubmissionManager
   }
   
   ClustMeta cstMeta = new ClustMeta();
+  cstMeta.id = sMeta.getId();
   
   List<FileAttachmentMeta> files = sMeta.getAttachments();
   
@@ -156,14 +160,6 @@ public class SubmissionManager
 //   clusterId=IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
 //  }
   
-  if(sMeta.getDataModules() == null )
-   cstMeta.modules = Collections.emptyList();
-  else
-   cstMeta.modules = new ArrayList<ModMeta>( sMeta.getDataModules().size() );
-   
-  
-  
-  
   
   boolean res = true;
   
@@ -172,8 +168,6 @@ public class SubmissionManager
   
   if( sMeta.getDataModules() != null )
   {
-   cstMeta.modules = new ArrayList<ModMeta>(sMeta.getDataModules().size());
-
    for(DataModuleMeta dm : sMeta.getDataModules())
    {
     n++;
@@ -213,19 +207,9 @@ public class SubmissionManager
       res = false;
      }
      else if(mm.meta.getText() == null)
-     {
-      if(cstMeta.mod2Del == null)
-       cstMeta.mod2Del = new HashMap<String, SubmissionManager.ModMeta>();
-
       cstMeta.mod2Del.put(mm.meta.getId(),mm);
-     }
      else
-     {
-      if(cstMeta.mod2Upd == null)
-       cstMeta.mod2Upd = new HashMap<String, SubmissionManager.ModMeta>();
-
       cstMeta.mod2Upd.put(mm.meta.getId(),mm);
-     }
 
     }
     else if(mm.meta.getText() == null)
@@ -249,29 +233,27 @@ public class SubmissionManager
       }
      }
      
-     if(cstMeta.mod2Ins == null)
-      cstMeta.mod2Ins = new ArrayList<ModMeta>(5);
-
      cstMeta.mod2Ins.add(mm);
     }
 
    }
   }
-  else
-   cstMeta.modules = Collections.emptyList();
   
   if( origSbm != null && origSbm.getDataModules() != null )
   {
    for( DataModuleMeta odm : origSbm.getDataModules() )
    {
     String modID = odm.getId();
+
     
     if( ! cstMeta.mod2Upd.containsKey(modID) && ! cstMeta.mod2Del.containsKey(modID) )
     {
-     if( cstMeta.mod2Hld == null )
-      cstMeta.mod2Hld = new HashMap<String, DataModuleMeta>();
+     ModMeta mm = new ModMeta();
+     mm.meta = odm;
+     mm.origModule = stor.getDataModule(modID);
+
      
-     cstMeta.mod2Hld.put(modID, odm);
+     cstMeta.mod2Hld.put(modID, mm);
     }
    }
   }
@@ -339,28 +321,13 @@ public class SubmissionManager
      if( fm.isGlobal() != origFm.isGlobal() )
      {
       if( fm.isGlobal() )
-      {
-       if( cstMeta.att4L2G == null )
-        cstMeta.att4L2G = new HashMap<String,FileAttachmentMeta>();
-       
        cstMeta.att4L2G.put(fm.getOriginalId(), fm);
-      }
       else
-      {
-       if( cstMeta.att4G2L == null )
-        cstMeta.att4G2L = new HashMap<String,FileAttachmentMeta>();
-       
        cstMeta.att4G2L.put(fm.getOriginalId(), fm);
-      }
       
      }
      else
-     {
-      if( cstMeta.att4Del == null )
-       cstMeta.att4Del = new HashMap<String,FileAttachmentMeta>();
-      
       cstMeta.att4Del.put(fm.getOriginalId(), fm);
-     }
  
     }
     else //Files for update and for update+visibility change
@@ -380,41 +347,29 @@ public class SubmissionManager
      }
 
      if(origFm == null)
-     {
-      if( cstMeta.att4Ins == null )
-       cstMeta.att4Ins = new HashMap<String,FileAttachmentMeta>();
-      
       cstMeta.att4Ins.put(fm.getOriginalId(), fm);
-     }
      else
      {
-      if( cstMeta.att4Upd == null )
-       cstMeta.att4Upd = new HashMap<String,FileAttachmentMeta>();
-      
       cstMeta.att4Upd.put(fm.getOriginalId(), fm);
 
       if( fm.isGlobal() != origFm.isGlobal() )
       {
        if( fm.isGlobal() )
-       {
-        if( cstMeta.att4L2G == null )
-         cstMeta.att4L2G = new HashMap<String,FileAttachmentMeta>();
-        
         cstMeta.att4L2G.put(fm.getOriginalId(), fm);
-       }
        else
-       {
-        if( cstMeta.att4G2L == null )
-         cstMeta.att4G2L = new HashMap<String,FileAttachmentMeta>();
-        
         cstMeta.att4G2L.put(fm.getOriginalId(), fm);
-       }
       }
      }
     }
    }
   }
   
+  if( origSbm != null && origSbm.getAttachments() != null )
+  {
+   for( FileAttachmentMeta fm : origSbm.getAttachments() )
+    if( ! cstMeta.att4Upd.containsKey(fm.getOriginalId()) && ! cstMeta.att4Del.containsKey(fm.getOriginalId()) )
+     cstMeta.att4Hld.put(fm.getDescription(), fm);
+  }
   
   for( n=0; n < cstMeta.modules.size(); n++)
   {
@@ -555,7 +510,7 @@ public class SubmissionManager
    Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject> > extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable,AgeObject>>();
    // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
    
-   if( connectDataModule( cstMeta.modules, stor, invRelMap, connLog) && reconnectDataModules(cstMeta, extAttrConnector, stor, connLog) )
+   if( connectDataModulesToGraph( cstMeta.modules, stor, invRelMap, connLog) && reconnectExternalObjectAttributes(cstMeta, extAttrConnector, stor, connLog) )
     connLog.log(Level.INFO, "Success");
    else
    {
@@ -898,17 +853,52 @@ public class SubmissionManager
  
  
 
- private boolean connectDataFiles( DataModuleWritable dm, Map<String, FileAttachmentMeta> files )
+ private boolean connectModulesToFiles( Collection<ModMeta> mods, Map<String, FileAttachmentMeta> files, AgeStorageAdm stor, LogNode logRoot ) //Identifiers must be generated by this moment
  {
-  for( AgeFileAttributeWritable fattr : dm.getFileAttributes() )
-  {
-   
-  }
+  boolean res = true;
+
+  LogNode logCon = logRoot.branch("Connecting file attributes to files");
+
   
-  return true;
+  for(ModMeta mm : mods)
+  {
+   for(AgeFileAttributeWritable fattr : mm.module.getFileAttributes())
+   {
+    FileAttachmentMeta fmt = files.get(fattr.getFileReference());
+
+    if(fmt != null)
+    {
+     fattr.setFileId(fmt.getId());
+    }
+    else
+    {
+     String gId = stor.makeGlobalFileID(fattr.getFileReference());
+
+     if(stor.getAttachment(gId) != null)
+      fattr.setFileId(gId);
+     else
+     {
+      AttributeClassRef clRef = fattr.getClassRef();
+
+      logCon.log(Level.ERROR, "Reference to file can't be resolved. Module: " + mm.ord
+        + (mm.meta.getId() != null ? (" (ID='" + mm.meta.getId() + "')") : "") + " Attribute: row: " + fattr.getOrder() + " col: " + clRef.getOrder());
+
+      res = false;
+     }
+    }
+   }
+  }
+
+  if( res )
+   logCon.log(Level.INFO, "Success");
+  else
+   logCon.log(Level.INFO, "Failed");
+
+  
+  return res;
  }
  
- private boolean checkRemovedDataFiles(String clustId, Map<String,FileAttachmentMeta> att4Del, Map<String,FileAttachmentMeta> att4G2L, AgeStorageAdm stor, LogNode logRoot)
+ private boolean checkRemovedDataFiles( ClustMeta cMeta, AgeStorageAdm stor, LogNode logRoot)
  {
   
   LogNode logRecon = logRoot.branch("Reconnecting file attributes");
@@ -917,19 +907,19 @@ public class SubmissionManager
   
   for( DataModule extDM : stor.getDataModules() )
   {
-   if( extDM.getClusterId().equals(clustId) )
+   if( extDM.getClusterId().equals(cMeta.id) )
     continue;
    
-   Collection<? extends Attributed> attrs = extDM.getAttributed( new AttributedSelector()
-   {
-    @Override
-    public boolean select(Attributed at)
-    {
-     return at instanceof AgeFileAttributeWritable;
-    }
-   });
+//   Collection<? extends Attributed> attrs = extDM.getAttributed( new AttributedSelector()
+//   {
+//    @Override
+//    public boolean select(Attributed at)
+//    {
+//     return at instanceof AgeFileAttributeWritable;
+//    }
+//   });
    
-   for( Attributed atb : attrs )
+   for( Attributed atb : extDM.getFileAttributes() )
    {
     AgeFileAttributeWritable fileAttr = (AgeFileAttributeWritable) atb;
     
@@ -972,7 +962,22 @@ public class SubmissionManager
   return res;
  }
 
- private boolean connectDataModule(List<ModMeta> mods, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
+ private boolean reconnectLocalModulesToFiles( Collection<ModMeta> mods, Collection<Pair<AgeFileAttributeWritable,String>> fileConn )
+ {
+  boolean res = true;
+  
+  for( ModMeta mm : mods )
+  {
+   for( AgeFileAttributeWritable fattr : mm.origModule.getFileAttributes() )
+   {
+    
+   }
+  }
+  
+  return res;
+ }
+ 
+ private boolean connectDataModulesToGraph(List<ModMeta> mods, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
  {
   boolean res = true;
   
