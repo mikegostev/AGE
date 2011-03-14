@@ -99,6 +99,8 @@ public class SubmissionManager
   Map<String,FileAttachmentMeta> att4Hld = new HashMap<String, FileAttachmentMeta>();
   Map<String,FileAttachmentMeta> att4Use = new HashMap<String, FileAttachmentMeta>();
 
+  ! добавить сюда карту всех объектов?
+  
   public String id;
  }
  
@@ -443,19 +445,46 @@ public class SubmissionManager
   if( ! res )  
    return false;
 
-  if( ! checkUniqObjects(cstMeta, stor, logRoot) )
-   return false;
   
   try
   {
-   LogNode connLog = logRoot.branch("Connecting data module"+(cstMeta.incomeMods.size()>1?"s":"")+" to the main graph");
    stor.lockWrite();
 
-   Map<AgeObject,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
+   
+   if( ! checkUniqObjects(cstMeta, stor, logRoot) )
+    return false;
+
    Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject> > extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable,AgeObject>>();
+   Collection<Pair<AgeRelationWritable, AgeObject> > relConnections = null;
+   Map<AgeObject,Set<AgeRelationWritable> > relationDetachMap = null;
+   
+   if( cstMeta.mod4Upd.size() != 0 || ( cstMeta.mod4Ins.size() !=0 && cstMeta.mod4Del.size() != 0 ) )
+   {
+    relConnections = new ArrayList<Pair<AgeRelationWritable,AgeObject>>();
+    relationDetachMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
+    
+    if( ! reconnectExternalObjectAttributes(cstMeta, extAttrConnector, stor, logRoot))
+     return false;
+    
+    
+    if( ! reconnectExternalRelations(cstMeta, relConnections, relationDetachMap, stor, logRoot) )
+     return false;
+   }
+   
+   if( cstMeta.att4Del.size() != 0 ||  cstMeta.att4G2L.size() != 0 )
+   {
+    if( ! checkRemovedDataFiles(cstMeta, stor, logRoot) )
+     return false;
+   }
+
+
+   Map<AgeObject,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
    // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
    
-   if( connectDataModulesToGraph( cstMeta.incomeMods, stor, invRelMap, connLog) && reconnectExternalObjectAttributes(cstMeta, extAttrConnector, stor, connLog) )
+   if( connectNewExternalRelations() )
+   {}
+   
+   if( connectDataModulesToGraph( cstMeta.incomeMods, stor, invRelMap, connLog) )
     connLog.log(Level.INFO, "Success");
    else
    {
@@ -710,7 +739,7 @@ public class SubmissionManager
   
   for( ModMeta mm : cstMeta.incomeMods )
   {
-   if( mm.origModule == null )
+   if( mm.origModule == null ) //Skipping new modules, processing only update/delete modules (where original data are going away)
     continue;
    
    Collection<? extends AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
@@ -761,9 +790,20 @@ public class SubmissionManager
           + "' with object '"  +invrsRel.getTargetObjectId() + "'");
        res = false;
       }
+      else if( ! invrsRel.getAgeElClass().isWithinRange(replObj.getAgeElClass()) ) // later we should also check range and domain of inverse relation
+      {
+        res = false;
+
+        logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
+          +(mm.module == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
+          + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
+          +extRel.getTargetObject().getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
+          + "' with object '"  +invrsRel.getTargetObjectId() + "' and the replacement object (Class: "
+          +replObj.getAgeElClass()+") is not within realtion's class range");
+
+      }
       else
        relConn.add( new Pair<AgeRelationWritable, AgeObject>(invrsRel, replObj) );
-      
      }
     
     }
@@ -918,35 +958,29 @@ public class SubmissionManager
 //    }
 //   });
    
-   for( Attributed atb : extDM.getFileAttributes() )
+   for( AgeFileAttributeWritable fileAttr : extDM.getFileAttributes() )
    {
-    AgeFileAttributeWritable fileAttr = (AgeFileAttributeWritable) atb;
-    
     if( stor.isFileIdGlobal(fileAttr.getFileID()) )
     {
-     
-     if( cMeta.att4Del != null )
-     {
-      FileAttachmentMeta meta = cMeta.att4Del.get( fileAttr.getFileReference() );
 
-      if( meta != null && meta.isGlobal() )
-      {
-       res = false;
-       logRecon.log(Level.ERROR, "File with ID '"+fileAttr.getFileReference()+"' is referred by the module '"+extDM.getId()+"' cluster '"+extDM.getClusterId()+"' and can't be deleted");
-       break;
-      }
+     FileAttachmentMeta meta = cMeta.att4Del.get(fileAttr.getFileReference());
+
+     if(meta != null && meta.isGlobal())
+     {
+      res = false;
+      logRecon.log(Level.ERROR, "File with ID '" + fileAttr.getFileReference() + "' is referred by the module '"
+        + extDM.getId() + "' cluster '" + extDM.getClusterId() + "' and can't be deleted");
+      continue;
      }
-     
-     if( cMeta.att4G2L != null )
-     {
-      FileAttachmentMeta meta =cMeta.att4G2L.get( fileAttr.getFileReference() );
 
-      if( meta != null && meta.isGlobal() )
-      {
-       res = false;
-       logRecon.log(Level.ERROR, "File with ID '"+fileAttr.getFileReference()+"' is referred by the module '"+extDM.getId()+"' cluster '"+extDM.getClusterId()+"' and can't limit visibility");
-       break;
-      }
+     meta = cMeta.att4G2L.get(fileAttr.getFileReference());
+
+     if(meta != null && meta.isGlobal())
+     {
+      res = false;
+      logRecon.log(Level.ERROR, "File with ID '" + fileAttr.getFileReference() + "' is referred by the module '"
+        + extDM.getId() + "' cluster '" + extDM.getClusterId() + "' and can't limit visibility");
+      continue;
      }
     }
     
@@ -993,8 +1027,12 @@ public class SubmissionManager
   return res;
  }
  
- private boolean connectDataModulesToGraph(List<ModMeta> mods, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode connLog)
+ // Переписать бы.... проблема с присоединением аттрибутов
+ private boolean connectDataModulesToGraph(ClustMeta cstMeta, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode logRoot)
  {
+  
+  LogNode connLog = logRoot.branch("Connecting data module"+(cstMeta.incomeMods.size()>1?"s":"")+" to the main graph");
+
   boolean res = true;
   
   LogNode extAttrLog = connLog.branch("Connecting external object attributes");
@@ -1006,7 +1044,7 @@ public class SubmissionManager
   Stack<Attributed> attrStk = new Stack<Attributed>();
   
   int n=0;
-  for( ModMeta mm : mods )
+  for( ModMeta mm : cstMeta.incomeMods )
   {
    n++;
    
@@ -1020,7 +1058,7 @@ public class SubmissionManager
     attrStk.clear();
     attrStk.push(obj);
     
-    boolean mdres = connectExternalAttrs( attrStk, stor, mods, mm, extAttrModLog  );
+    boolean mdres = connectExternalAttrs( attrStk, stor, cstMeta, mm, extAttrModLog  );
     
     if( obj.getRelations() != null )
     {
@@ -1029,7 +1067,7 @@ public class SubmissionManager
       attrStk.clear();
       attrStk.push(rl);
       
-      mdres = mdres && connectExternalAttrs( attrStk, stor, mods, mm, extAttrModLog  );
+      mdres = mdres && connectExternalAttrs( attrStk, stor, cstMeta.incomeMods, mm, extAttrModLog  );
      }
     }
     
@@ -1054,7 +1092,7 @@ public class SubmissionManager
   boolean extRelRes = true;
   
   n=0;
-  for( ModMeta mm : mods )
+  for( ModMeta mm : cstMeta.incomeMods )
   {
    n++;
    
@@ -1069,11 +1107,11 @@ public class SubmissionManager
    {
     String ref = exr.getTargetObjectId();
     
-    AgeObjectWritable tgObj = (AgeObjectWritable)stor.getObjectById(ref);
+    AgeObjectWritable tgObj = (AgeObjectWritable)stor.getObjectById(ref); 
     
-    if( tgObj == null )
+    if( tgObj == null || cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) )
     {
-     modloop : for( ModMeta refmm : mods )
+     modloop : for( ModMeta refmm : cstMeta.incomeMods ) //Old modules can't hold this ID due to obj ID uniqueness
      {
       if( refmm == mm || refmm.module == null )
        continue;
@@ -1208,7 +1246,8 @@ public class SubmissionManager
     
     String ref = extAttr.getTargetObjectId();
     
-    AgeObject tgObj = stor.getObjectById( ref );
+    AgeObject tgObj = stor.getObjectById( ref );// А как же удаляемые объекты???
+  
     
     if( tgObj == null )
     {
