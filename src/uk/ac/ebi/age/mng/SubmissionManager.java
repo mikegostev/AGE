@@ -79,6 +79,12 @@ public class SubmissionManager
   int ord;
  }
  
+ private static class FileMeta
+ {
+  FileAttachmentMeta origFile;
+  FileAttachmentMeta newFile;
+ }
+ 
  private static class ClustMeta
  {
   List<ModMeta> incomeMods = new ArrayList<SubmissionManager.ModMeta>();
@@ -92,10 +98,10 @@ public class SubmissionManager
   Map<String,ModMeta> mod4Hld = new HashMap<String, SubmissionManager.ModMeta>();
 
   Map<String,FileAttachmentMeta> att4Ins = new HashMap<String, FileAttachmentMeta>();
-  Map<String,FileAttachmentMeta> att4Upd = new HashMap<String, FileAttachmentMeta>();
+  Map<String,FileMeta> att4Upd = new HashMap<String, FileMeta>();
   Map<String,FileAttachmentMeta> att4Del = new HashMap<String, FileAttachmentMeta>();
-  Map<String,FileAttachmentMeta> att4G2L = new HashMap<String, FileAttachmentMeta>();
-  Map<String,FileAttachmentMeta> att4L2G = new HashMap<String, FileAttachmentMeta>();
+  Map<String,FileMeta> att4G2L = new HashMap<String, FileMeta>();
+  Map<String,FileMeta> att4L2G = new HashMap<String, FileMeta>();
   Map<String,FileAttachmentMeta> att4Hld = new HashMap<String, FileAttachmentMeta>();
   Map<String,FileAttachmentMeta> att4Use = new HashMap<String, FileAttachmentMeta>();
 
@@ -327,17 +333,22 @@ public class SubmissionManager
      
      if( fm.isGlobal() != origFm.isGlobal() )
      {
+      FileMeta fmeta = new FileMeta();
+      
+      fmeta.newFile = fm;
+      fmeta.origFile = origFm;
+      
       if( fm.isGlobal() )
-       cstMeta.att4L2G.put(fm.getOriginalId(), fm);
+       cstMeta.att4L2G.put(fm.getOriginalId(), fmeta);
       else
-       cstMeta.att4G2L.put(fm.getOriginalId(), fm);
+       cstMeta.att4G2L.put(fm.getOriginalId(), fmeta);
       
      }
      else
       cstMeta.att4Del.put(fm.getOriginalId(), fm);
  
     }
-    else //Files for update and for update+visibility change
+    else //Files for insert, update and for update+visibility change
     {
      if( origFm == null && fm.isGlobal() ) //this is a new file with a new global ID. We have to check its uniqueness
      {
@@ -360,14 +371,20 @@ public class SubmissionManager
      }
      else
      {
-      cstMeta.att4Upd.put(fm.getOriginalId(), fm);
+      FileMeta fmeta = new FileMeta();
+      
+      fmeta.newFile = fm;
+      fmeta.origFile = origFm;
+
+      
+      cstMeta.att4Upd.put(fm.getOriginalId(), fmeta);
 
       if( fm.isGlobal() != origFm.isGlobal() )
       {
        if( fm.isGlobal() )
-        cstMeta.att4L2G.put(fm.getOriginalId(), fm);
+        cstMeta.att4L2G.put(fm.getOriginalId(), fmeta);
        else
-        cstMeta.att4G2L.put(fm.getOriginalId(), fm);
+        cstMeta.att4G2L.put(fm.getOriginalId(), fmeta);
       }
      }
     }
@@ -616,8 +633,31 @@ public class SubmissionManager
     }
    }
    
-   for( FileAttachmentMeta fat : cstMeta.att4Upd.values() ) //XXX hello
+   for( FileMeta fatm : cstMeta.att4G2L.values() )
+    fatm.newFile.setId(stor.makeLocalFileID(fatm.origFile.getOriginalId(), cstMeta.id));
     
+   for( FileMeta fatm : cstMeta.att4L2G.values() )
+    fatm.newFile.setId(stor.makeGlobalFileID(fatm.origFile.getOriginalId()));
+
+   for( FileAttachmentMeta fam : cstMeta.att4Ins.values() )
+   {
+    if( ! fam.isGlobal() ) // We generated IDs for the global files earlier
+     fam.setId(stor.makeLocalFileID(fam.getOriginalId(), cstMeta.id));
+   }
+   
+   if( cstMeta.att4Del.size() > 0 )
+   {
+    LogNode fdelLog = logRoot.branch("Deleting files");
+    
+    for( FileAttachmentMeta fam : cstMeta.att4Del.values() )
+    {
+     fdelLog.log(Level.INFO, "Deleting file: '"+fam.getOriginalId()+"' (ID="+fam.getId()+")");
+     
+     stor.deleteAttachment(fam.getId());
+     fdelLog.log(Level.INFO, "Success");
+    }
+   }
+   
    try
    {
     if( cstMeta.incomeMods.size() > 1 )

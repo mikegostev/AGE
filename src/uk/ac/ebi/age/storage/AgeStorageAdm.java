@@ -32,6 +32,7 @@ public interface AgeStorageAdm extends AgeStorage
 
  String makeGlobalFileID(String id);
  String makeLocalFileID(String id, String clustID);
-
+ 
+ void deleteAttachment(String id);
 
 }
