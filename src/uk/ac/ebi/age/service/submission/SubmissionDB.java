@@ -30,5 +30,7 @@ public abstract class SubmissionDB
 
  public abstract SubmissionMeta getSubmission(String id);
 
+ public abstract boolean hasSubmission(String id);
+
 
 }

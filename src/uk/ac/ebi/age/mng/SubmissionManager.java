@@ -99,8 +99,6 @@ public class SubmissionManager
   Map<String,FileAttachmentMeta> att4Hld = new HashMap<String, FileAttachmentMeta>();
   Map<String,FileAttachmentMeta> att4Use = new HashMap<String, FileAttachmentMeta>();
 
-  ! добавить сюда карту всех объектов?
-  
   public String id;
  }
  
@@ -481,14 +479,13 @@ public class SubmissionManager
    Map<AgeObject,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
    // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
    
-   if( connectNewExternalRelations() )
-   {}
-   
-   if( connectDataModulesToGraph( cstMeta.incomeMods, stor, invRelMap, connLog) )
-    connLog.log(Level.INFO, "Success");
-   else
+   if( !connectNewExternalRelations(cstMeta, stor, invRelMap, logRoot) )
    {
-    connLog.log(Level.ERROR, "Connection failed");
+    return false;
+   }
+   
+   if( !connectNewObjectAttributes(cstMeta, stor, logRoot) )
+   {
     return false;
    }
    
@@ -496,7 +493,7 @@ public class SubmissionManager
    LogNode semLog = logRoot.branch("Validating semantic");
 
    boolean vldRes = true;
-   int n=0;
+   n=0;
    for( ModMeta mm : cstMeta.incomeMods )
    {
     n++;
@@ -523,36 +520,15 @@ public class SubmissionManager
 
    res = res && vldRes;
    
-
-   Map<AgeObject,Set<AgeRelationWritable>> detachedRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
-
-   for( ModMeta mm : cstMeta.incomeMods )
-   {
-    if(mm.origModule == null)
-     continue;
-
-    Collection<? extends AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
-
-    if(origExtRels != null)
-    {
-     for(AgeExternalRelationWritable extRel : origExtRels)
-     {
-      AgeObject target = extRel.getTargetObject();
-
-      Set<AgeRelationWritable> objectsRels = detachedRelMap.get(target);
-
-      if(objectsRels == null)
-       detachedRelMap.put(target, objectsRels = new HashSet<AgeRelationWritable>());
-
-      objectsRels.add(extRel.getInverseRelation());
-     }
-    }
-   }
    
+
    Set<AgeObject> affObjSet = new HashSet<AgeObject>();
    
-   affObjSet.addAll( invRelMap.keySet() );
-   affObjSet.addAll( detachedRelMap.keySet() );
+   if( invRelMap != null )
+    affObjSet.addAll( invRelMap.keySet() );
+   
+   if( relationDetachMap != null )
+    affObjSet.addAll( relationDetachMap.keySet() );
    
    if( affObjSet.size() > 0 )
    {
@@ -563,7 +539,7 @@ public class SubmissionManager
     {
      LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
      
-     if( validator.validateRelations(obj, invRelMap.get(obj), detachedRelMap.get(obj), objLogNode) )
+     if( validator.validateRelations(obj, invRelMap.get(obj), relationDetachMap.get(obj), objLogNode) )
       objLogNode.log(Level.INFO, "Success");
      else
       invRelRes = false;
@@ -588,6 +564,20 @@ public class SubmissionManager
     
    long ts = System.currentTimeMillis();
    
+   if( cstMeta.id == null )
+   {
+    String id = null;
+    
+    do
+    {
+     id = Constants.submissionIDPrefix+IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
+    }
+    while( submissionDB.hasSubmission(id) );
+   
+    cstMeta.id = id;
+    sMeta.setId(id);
+   }
+   
    for( ModMeta mm : cstMeta.incomeMods )
    {
     mm.module.setVersion(ts);
@@ -604,10 +594,16 @@ public class SubmissionManager
     
      mm.module.setId(id);
      
+    }
+    
+    if( mm.module != null )
+    {
      for( AgeObjectWritable obj : mm.module.getObjects() )
      {
       if( obj.getId() == null )
       {
+       String id=null;
+       
        do
        {
         id = Constants.localObjectIDPrefix+obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId(Constants.objectIDDomain)+"-"+obj.getOriginalId()+"@"+mm.module.getId();
@@ -619,6 +615,8 @@ public class SubmissionManager
      }
     }
    }
+   
+   for( FileAttachmentMeta fat : cstMeta.att4Upd.values() ) //XXX hello
     
    try
    {
@@ -669,6 +667,135 @@ public class SubmissionManager
  }
 
  
+ private boolean connectNewExternalRelations( ClustMeta cstMeta, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode rootNode )
+ {
+
+  LogNode extRelLog = rootNode.branch("Connecting external object relations");
+  boolean extRelRes = true;
+
+  int n = 0;
+  for(ModMeta mm : cstMeta.incomeMods)
+  {
+   n++;
+
+   if(mm.module == null)
+    continue;
+
+   LogNode extRelModLog = extRelLog.branch("Processing module: " + n);
+
+   boolean extModRelRes = true;
+
+   for(AgeExternalRelationWritable exr : mm.module.getExternalRelations())
+   {
+    String ref = exr.getTargetObjectId();
+
+    AgeObjectWritable tgObj = (AgeObjectWritable) stor.getObjectById(ref);
+
+    if(tgObj == null || cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()))
+    {
+     modloop: for(ModMeta refmm : cstMeta.incomeMods) // Old modules can't hold this ID due to obj ID  uniqueness
+     {
+      if(refmm == mm || refmm.module == null)
+       continue;
+
+      for(AgeObjectWritable candObj : refmm.module.getObjects())
+      {
+       if(candObj.getId() != null && candObj.getId().equals(ref))
+       {
+        tgObj = candObj;
+        break modloop;
+       }
+      }
+     }
+    }
+
+    if(tgObj == null)
+    {
+     extModRelRes = false;
+     extRelModLog.log(Level.ERROR, "Invalid external relation: '" + ref + "'. Target object not found." + " Module: " + n + " Source object: '"
+       + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: " + exr.getSourceObject().getOrder()
+       + "). Relation: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
+    }
+    else
+    {
+     if(!exr.getAgeElClass().isWithinRange(tgObj.getAgeElClass()))
+     {
+      extModRelRes = false;
+      extRelModLog.log(Level.ERROR,
+        "External relation target object's class is not within range. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass() + "'). Module: " + n
+          + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
+          + exr.getSourceObject().getOrder() + "). Relation: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
+     }
+     else
+     {
+      AgeRelationClass invRCls = exr.getAgeElClass().getInverseRelationClass();
+
+      boolean invClassOk = false;
+      if(invRCls != null)
+      {
+       if(invRCls.isCustom())
+       {
+        extModRelRes = false;
+        extRelModLog.log(Level.ERROR, "Class of external inverse relation can't be custom. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass()
+          + "'). Module: " + n + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
+          + exr.getSourceObject().getOrder() + "). Relation: '" + exr.getAgeElClass() + "' Order: " + exr.getOrder() + ". Inverse relation: " + invRCls);
+       }
+       else if(!invRCls.isWithinDomain(tgObj.getAgeElClass()))
+       {
+        extModRelRes = false;
+        extRelModLog.log(Level.ERROR,
+          "Target object's class is not within domain of inverse relation. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass() + "'). Module: "
+            + n + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
+            + exr.getSourceObject().getOrder() + "). Relation: '" + exr.getAgeElClass() + "' Order: " + exr.getOrder() + ". Inverse relation: " + invRCls);
+       }
+       else if(!invRCls.isWithinRange(exr.getSourceObject().getAgeElClass()))
+       {
+        extModRelRes = false;
+        extRelModLog.log(Level.ERROR,
+          "Source object's class is not within range of inverse relation. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass() + "'). Module: "
+            + n + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
+            + exr.getSourceObject().getOrder() + "). Relation: '" + exr.getAgeElClass() + "' Order: " + exr.getOrder() + ". Inverse relation: " + invRCls);
+       }
+       else
+        invClassOk = true;
+      }
+
+      if(invClassOk)
+      {
+       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
+       invRel.setTargetObject(exr.getSourceObject());
+       invRel.setInferred(true);
+
+       Set<AgeRelationWritable> rels = invRelMap.get(tgObj);
+
+       if(rels == null)
+       {
+        rels = new HashSet<AgeRelationWritable>();
+        invRelMap.put(tgObj, rels);
+       }
+
+       rels.add(invRel);
+      }
+
+      exr.setTargetObject(tgObj);
+     }
+    }
+
+   }
+
+   extRelRes = extRelRes && extModRelRes;
+
+  }
+
+  if(extRelRes)
+   extRelLog.log(Level.INFO, "Success");
+  else
+   extRelLog.log(Level.ERROR, "Failed");
+
+  return extRelRes;
+ }
+
+
  private boolean checkUniqObjects( ClustMeta  cstMeta, AgeStorageAdm stor, LogNode logRoot )
  {
   boolean res = true;
@@ -766,7 +893,7 @@ public class SubmissionManager
       AgeObject replObj = null;
       String tgObjId = invrsRel.getTargetObjectId();
       
-      lookup : for(ModMeta rfmm : cstMeta.incomeMods) // looking from alternative resolution among the new modules
+      lookup : for(ModMeta rfmm : cstMeta.incomeMods) // looking for alternative resolution among the new modules
       {
        if( rfmm.module != null ) // Skipping deleted modules
        {
@@ -1027,19 +1154,14 @@ public class SubmissionManager
   return res;
  }
  
- // Переписать бы.... проблема с присоединением аттрибутов
- private boolean connectDataModulesToGraph(ClustMeta cstMeta, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode logRoot)
+ private boolean connectNewObjectAttributes(ClustMeta cstMeta, AgeStorageAdm stor, LogNode logRoot)
  {
   
   LogNode connLog = logRoot.branch("Connecting data module"+(cstMeta.incomeMods.size()>1?"s":"")+" to the main graph");
 
-  boolean res = true;
-  
   LogNode extAttrLog = connLog.branch("Connecting external object attributes");
   boolean extAttrRes = true;
 
-//  LogNode uniqLog = connLog.branch("Verifing object Id uniqueness");
-//  boolean uniqRes = true;
   
   Stack<Attributed> attrStk = new Stack<Attributed>();
   
@@ -1067,7 +1189,7 @@ public class SubmissionManager
       attrStk.clear();
       attrStk.push(rl);
       
-      mdres = mdres && connectExternalAttrs( attrStk, stor, cstMeta.incomeMods, mm, extAttrModLog  );
+      mdres = mdres && connectExternalAttrs( attrStk, stor, cstMeta, mm, extAttrModLog  );
      }
     }
     
@@ -1087,149 +1209,12 @@ public class SubmissionManager
   else
    extAttrLog.log(Level.ERROR, "Failed");
 
-  
-  LogNode extRelLog = connLog.branch("Connecting external object relations");
-  boolean extRelRes = true;
-  
-  n=0;
-  for( ModMeta mm : cstMeta.incomeMods )
-  {
-   n++;
-   
-   if( mm.module == null )
-    continue;
-   
-   LogNode extRelModLog = extRelLog.branch("Processing module: "+n);
-   
-   boolean extModRelRes = true;
-   
-   for( AgeExternalRelationWritable exr : mm.module.getExternalRelations() )
-   {
-    String ref = exr.getTargetObjectId();
-    
-    AgeObjectWritable tgObj = (AgeObjectWritable)stor.getObjectById(ref); 
-    
-    if( tgObj == null || cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) )
-    {
-     modloop : for( ModMeta refmm : cstMeta.incomeMods ) //Old modules can't hold this ID due to obj ID uniqueness
-     {
-      if( refmm == mm || refmm.module == null )
-       continue;
-      
-      for( AgeObjectWritable candObj : refmm.module.getObjects() )
-      {
-       if( candObj.getId() != null && candObj.getId().equals(ref) )
-       {
-        tgObj = candObj;
-        break modloop;
-       }
-      }
-     }
-    }
-    
-    if( tgObj == null )
-    {
-     extModRelRes = false;
-     extRelModLog.log(Level.ERROR,"Invalid external relation: '"+ref+"'. Target object not found."
-       +" Module: "+n
-       +" Source object: '"+exr.getSourceObject().getId()
-       +"' (Class: "+exr.getSourceObject().getAgeElClass()
-       +", Order: "+exr.getSourceObject().getOrder()+"). Relation: "+exr.getAgeElClass()+" Order: "+exr.getOrder());
-    }
-    else
-    {
-      if( ! exr.getAgeElClass().isWithinRange(tgObj.getAgeElClass()) )
-      {
-       extModRelRes = false;
-       extRelModLog.log(Level.ERROR,"External relation target object's class is not within range. Target object: '"+ref
-         +"' (Class: "+tgObj.getAgeElClass()
-         +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
-         +"' (Class: "+exr.getSourceObject().getAgeElClass()
-         +", Order: "+exr.getSourceObject().getOrder()+"). Relation: "+exr.getAgeElClass()+" Order: "+exr.getOrder());
-      }
-      else
-      {
-       AgeRelationClass invRCls = exr.getAgeElClass().getInverseRelationClass();
-       
-       boolean invClassOk=false;
-       if( invRCls != null )
-       {
-        if(invRCls.isCustom())
-        {
-         extModRelRes = false;
-         extRelModLog.log(Level.ERROR,"Class of external inverse relation can't be custom. Target object: '"+ref
-           +"' (Class: "+tgObj.getAgeElClass()
-           +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
-           +"' (Class: "+exr.getSourceObject().getAgeElClass()
-           +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
-           +". Inverse relation: "+invRCls);
-        }
-        else if( ! invRCls.isWithinDomain(tgObj.getAgeElClass()) )
-        {
-         extModRelRes = false;
-         extRelModLog.log(Level.ERROR,"Target object's class is not within domain of inverse relation. Target object: '"+ref
-           +"' (Class: "+tgObj.getAgeElClass()
-           +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
-           +"' (Class: "+exr.getSourceObject().getAgeElClass()
-           +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
-           +". Inverse relation: "+invRCls);
-        }
-        else if( ! invRCls.isWithinRange(exr.getSourceObject().getAgeElClass()) )
-        {
-         extModRelRes = false;
-         extRelModLog.log(Level.ERROR,"Source object's class is not within range of inverse relation. Target object: '"+ref
-           +"' (Class: "+tgObj.getAgeElClass()
-           +"'). Module: "+n+" Source object: '"+exr.getSourceObject().getId()
-           +"' (Class: "+exr.getSourceObject().getAgeElClass()
-           +", Order: "+exr.getSourceObject().getOrder()+"). Relation: '"+exr.getAgeElClass()+"' Order: "+exr.getOrder()
-           +". Inverse relation: "+invRCls);
-        }
-        else
-         invClassOk=true;
-       }
-       
-       if( invClassOk )
-       {
-        AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
-        invRel.setTargetObject(exr.getSourceObject());
-        invRel.setInferred(true);
-        
-        Set<AgeRelationWritable> rels = invRelMap.get(tgObj);
-        
-        if( rels == null )
-        {
-         rels = new HashSet<AgeRelationWritable>();
-         invRelMap.put(tgObj, rels);
-        }
-        
-        rels.add(invRel);
-       }
-       
-       
-       exr.setTargetObject(tgObj);
-      }
-    }
-    
-   }
-   
-   extRelRes = extRelRes && extModRelRes;
-   
-  }
-  
-  if( extRelRes )
-   extRelLog.log(Level.INFO, "Success");
-  else
-   extRelLog.log(Level.ERROR, "Failed");
 
-
-  res = res && extRelRes;
-
-  
-  return res;
+  return extAttrRes;
  }
 
  
- private boolean connectExternalAttrs( Stack<Attributed> atStk, AgeStorageAdm stor, List<ModMeta> mods, ModMeta cmod, LogNode log )
+ private boolean connectExternalAttrs( Stack<Attributed> atStk, AgeStorageAdm stor, ClustMeta cstMeta , ModMeta cmod, LogNode log )
  {
   boolean res = true;
   
@@ -1246,12 +1231,14 @@ public class SubmissionManager
     
     String ref = extAttr.getTargetObjectId();
     
-    AgeObject tgObj = stor.getObjectById( ref );// А как же удаляемые объекты???
-  
+    AgeObject tgObj = stor.getObjectById( ref );
     
-    if( tgObj == null )
+    if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getId()) || cstMeta.mod4Upd.containsKey(tgObj.getId()) ) ) //We don't want to get dead objects 
+     tgObj = null;
+    
+    if( tgObj == null ) // Trying to resolve to the new objects
     {
-     for( ModMeta mm : mods )
+     for( ModMeta mm : cstMeta.incomeMods )
      {
       if( mm.module == cmod || mm.module == null )
        continue;
@@ -1320,7 +1307,7 @@ public class SubmissionManager
    }
    
    atStk.push(attr);
-   res = res && connectExternalAttrs(atStk,stor, mods, cmod, log);
+   res = res && connectExternalAttrs(atStk,stor, cstMeta, cmod, log);
    atStk.pop();
   }
  
