@@ -481,14 +481,29 @@ public class SubmissionManager
    if( ! checkUniqObjects(cstMeta, stor, logRoot) )
     return false;
 
+
+   Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
+   // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
+   
+   if( !connectNewExternalRelations(cstMeta, stor, invRelMap, logRoot) )
+   {
+    return false;
+   }
+   
+   if( !connectNewObjectAttributes(cstMeta, stor, logRoot) )
+   {
+    return false;
+   }
+ 
+   
    Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject> > extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable,AgeObject>>();
    Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable> > relConnections = null;
-   Map<AgeObject,Set<AgeRelationWritable> > relationDetachMap = null;
+   Map<AgeObjectWritable,Set<AgeRelationWritable> > relationDetachMap = null;
    
    if( cstMeta.mod4Upd.size() != 0 || ( cstMeta.mod4Ins.size() !=0 && cstMeta.mod4Del.size() != 0 ) )
    {
     relConnections = new ArrayList<Pair<AgeExternalRelationWritable,AgeObjectWritable>>();
-    relationDetachMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
+    relationDetachMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
     
     if( ! reconnectExternalObjectAttributes(cstMeta, extAttrConnector, stor, logRoot))
      return false;
@@ -504,20 +519,7 @@ public class SubmissionManager
      return false;
    }
 
-
-   Map<AgeObject,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObject, Set<AgeRelationWritable>>();
-   // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
-   
-   if( !connectNewExternalRelations(cstMeta, stor, invRelMap, logRoot) )
-   {
-    return false;
-   }
-   
-   if( !connectNewObjectAttributes(cstMeta, stor, logRoot) )
-   {
-    return false;
-   }
-   
+  
    
    LogNode semLog = logRoot.branch("Validating semantic");
 
@@ -823,11 +825,17 @@ public class SubmissionManager
    for( Pair<AgeFileAttributeWritable, String> fc :  fileConn ) 
     fc.getFirst().setFileId( fc.getSecond() );
    
-   for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  relationDetachMap.entrySet() )
-    stor.removeRelations(me.getKey().getId(),me.getValue());
+   for( Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me :  relationDetachMap.entrySet() )
+    for( AgeRelationWritable rel : me.getValue() )
+     me.getKey().removeRelation(rel);
+    
+    //    stor.removeRelations(me.getKey().getId(),me.getValue());
 
-   for( Map.Entry<AgeObject, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
-    stor.addRelations(me.getKey().getId(),me.getValue());
+   for( Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
+    for( AgeRelationWritable rel : me.getValue() )
+     me.getKey().addRelation(rel);
+    
+    //    stor.addRelations(me.getKey().getId(),me.getValue());
 
   }
   finally
@@ -841,7 +849,7 @@ public class SubmissionManager
  }
 
  
- private boolean connectNewExternalRelations( ClustMeta cstMeta, AgeStorageAdm stor, Map<AgeObject,Set<AgeRelationWritable>> invRelMap, LogNode rootNode )
+ private boolean connectNewExternalRelations( ClustMeta cstMeta, AgeStorageAdm stor, Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap, LogNode rootNode )
  {
 
   LogNode extRelLog = rootNode.branch("Connecting external object relations");
@@ -936,9 +944,14 @@ public class SubmissionManager
 
       if(invClassOk)
       {
-       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
-       invRel.setTargetObject(exr.getSourceObject());
-       invRel.setInferred(true);
+       AgeRelationWritable iRel = tgObj.getAgeElClass().getSemanticModel().createAgeRelation(tgObj, invRCls);
+       
+       iRel.setInferred(true);
+     
+      
+//       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
+//       invRel.setTargetObject(exr.getSourceObject()); //XXX Why external? Do we really need it?
+//       invRel.setInferred(true);
 
        Set<AgeRelationWritable> rels = invRelMap.get(tgObj);
 
@@ -948,7 +961,7 @@ public class SubmissionManager
         invRelMap.put(tgObj, rels);
        }
 
-       rels.add(invRel);
+       rels.add(iRel);
       }
 
       exr.setTargetObject(tgObj);
@@ -1032,7 +1045,7 @@ public class SubmissionManager
  }
  
  private boolean reconnectExternalRelations( ClustMeta  cstMeta, Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable>> relConn, 
-   Map<AgeObject,Set<AgeRelationWritable>> detachedRelMap, AgeStorageAdm stor, LogNode logRoot)
+   Map<AgeObjectWritable,Set<AgeRelationWritable>> detachedRelMap, AgeStorageAdm stor, LogNode logRoot)
  {
   LogNode logRecon = logRoot.branch("Reconnecting external relations");
   
@@ -1053,7 +1066,7 @@ public class SubmissionManager
      
      if( invrsRel.isInferred() )
      {
-      AgeObject target = extRel.getTargetObject();
+      AgeObjectWritable target = extRel.getTargetObject();
 
       Set<AgeRelationWritable> objectsRels = detachedRelMap.get(target);
 
@@ -1064,14 +1077,14 @@ public class SubmissionManager
      }
      else
      {
-      AgeObject replObj = null;
+      AgeObjectWritable replObj = null;
       String tgObjId = invrsRel.getTargetObjectId();
       
       lookup : for(ModMeta rfmm : cstMeta.incomeMods) // looking for alternative resolution among the new modules
       {
        if( rfmm.module != null ) // Skipping deleted modules
        {
-        for( AgeObject rfObj : rfmm.module.getObjects() )
+        for( AgeObjectWritable rfObj : rfmm.module.getObjects() )
         {
          if( tgObjId.equals(rfObj.getId())  )
          {
@@ -1104,7 +1117,7 @@ public class SubmissionManager
 
       }
       else
-       relConn.add( new Pair<AgeRelationWritable, AgeObject>(invrsRel, replObj) );
+       relConn.add( new Pair<AgeExternalRelationWritable, AgeObjectWritable>(invrsRel, replObj) );
      }
     
     }

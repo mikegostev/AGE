@@ -33,6 +33,7 @@ import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
+import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
@@ -411,7 +412,7 @@ public class SerializedStorage implements AgeStorageAdm
       
       for( AgeRelation rl : tgObj.getRelations() )
       {
-       if( ! rl.getAgeElClass().isClassOrSubclass(invRCls) )
+       if( ! rl.getAgeElClass().equals(invRCls) )
         continue;
        
        if( rl.getTargetObject() == exr.getSourceObject() )
@@ -434,18 +435,49 @@ public class SerializedStorage implements AgeStorageAdm
       
       if( ! hasInv )
       {
-       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
-       invRel.setTargetObject(exr.getSourceObject());
-       invRel.setInferred(true);
-       tgObj.addRelation(invRel);
+       AgeRelationWritable iRel = tgObj.getAgeElClass().getSemanticModel().createAgeRelation(tgObj, invRCls);
+       
+//       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
+//       invRel.setTargetObject(exr.getSourceObject());
+
+       iRel.setInferred(true);
+       
+       tgObj.addRelation(iRel);
       }
       
      }
     }
+   
+    for( AgeFileAttributeWritable fattr : smb.getFileAttributes() )
+    {
+     String fid = makeLocalFileID(fattr.getFileReference(), smb.getClusterId());
+     
+     if( fileDepot.getFilePath(fid).exists() )
+      fattr.setFileId(fid);
+     else
+     {
+      fid = makeGlobalFileID(fattr.getFileReference());
+
+      if( fileDepot.getFilePath(fid).exists() )
+       fattr.setFileId(fid);
+      else
+       log.error("Can't resolve file attribute: '"+fattr.getFileReference()+"'. Cluster: "+smb.getClusterId()
+         +" Module: "+smb.getId());
+     }
+    }
+   
    }
    
    for( AgeObjectWritable obj : mainIndexMap.values() )
+   {
+    if( obj.getRelations() != null )
+    {
+     for( AgeRelationWritable rel : obj.getRelations() )
+      connectObjectAttributes(rel);
+    }
+    
     connectObjectAttributes( obj );
+   }
   }
   catch(Exception e)
   {
