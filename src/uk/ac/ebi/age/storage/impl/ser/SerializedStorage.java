@@ -16,6 +16,7 @@ import java.util.TreeMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -42,6 +43,7 @@ import uk.ac.ebi.age.storage.DataModuleReaderWriter;
 import uk.ac.ebi.age.storage.IndexFactory;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.TextIndex;
+import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
 import uk.ac.ebi.age.storage.exeption.ModelStoreException;
 import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
@@ -234,37 +236,42 @@ public class SerializedStorage implements AgeStorageAdm
   return ti.count(query);
  }
 
-
- public void storeDataModule( Collection<DataModuleWritable> mods ) throws RelationResolveException, ModuleStoreException
+ @Override
+ public void update( Collection<DataModuleWritable> mods2Ins, Collection<String> mods2Del ) throws RelationResolveException, ModuleStoreException
  {
   if( ! master )
    throw new ModuleStoreException("Only the master instance can store data");
   
-  for( DataModuleWritable dm : mods )
-  {
-   if( dm.getId() == null )
-    throw new ModuleStoreException("Module ID is null");
-  }
-  
+
   try
   {
    dbLock.writeLock().lock();
 
    boolean changed = false;
 
-   for(DataModuleWritable dm : mods)
+   if( mods2Del != null )
    {
-    changed = changed || removeDataModule(dm.getId());
-
-    saveDataModule(dm);
-
-    moduleMap.put(dm.getId(), dm);
-
-    for(AgeObjectWritable obj : dm.getObjects())
-     mainIndexMap.put(obj.getId(), obj);
+    for(String dmId : mods2Del)
+     changed = changed || removeDataModule(dmId);
    }
-
-   updateIndices(mods, changed);
+   
+   if( mods2Ins != null )
+   {
+    for(DataModuleWritable dm : mods2Ins)
+    {
+     changed = changed || removeDataModule(dm.getId());
+     
+     saveDataModule(dm);
+     
+     moduleMap.put(dm.getId(), dm);
+     
+     for(AgeObjectWritable obj : dm.getObjects())
+      mainIndexMap.put(obj.getId(), obj);
+    }
+    
+   }
+   
+   updateIndices(mods2Ins, changed);
 
    for(DataChangeListener chls : chgListeners)
     chls.dataChanged();
@@ -705,7 +712,12 @@ public class SerializedStorage implements AgeStorageAdm
  @Override
  public File getAttachment(String id)
  {
-  return fileDepot.getFilePath(id);
+  File f = fileDepot.getFilePath(id);
+  
+  if( ! f.exists() )
+   return null;
+  
+  return f;
  }
 
  @Override
@@ -724,5 +736,44 @@ public class SerializedStorage implements AgeStorageAdm
  public boolean isFileIdGlobal(String fileID)
  {
   return fileID.charAt(0) == 'G';
+ }
+
+
+ @Override
+ public boolean deleteAttachment(String id)
+ {
+  File f = fileDepot.getFilePath(id);
+
+  return f.delete();
+ }
+
+ @Override
+ public void storeAttachment(String id, File aux) throws AttachmentIOException
+ {
+  File fDest = fileDepot.getFilePath(id);
+  fDest.delete();
+  
+  if( ! aux.renameTo(fDest) )
+  {
+   try
+   {
+    FileUtils.copyFile(aux, fDest);
+   }
+   catch(IOException e)
+   {
+    throw new AttachmentIOException("Store attachment error: "+e.getMessage(), e);
+   }
+  }
+ }
+
+
+ @Override
+ public void renameAttachment(String src, String dst) throws AttachmentIOException
+ {
+  File fSrc = fileDepot.getFilePath(src);
+  File fDest = fileDepot.getFilePath(dst);
+  
+  if( ! fSrc.renameTo(fDest) )
+   throw new AttachmentIOException("Can't rename file '"+fSrc.getAbsolutePath()+"' to '"+fDest.getAbsolutePath()+"'");
  }
 }
