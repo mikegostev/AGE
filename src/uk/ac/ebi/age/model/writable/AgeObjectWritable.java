@@ -4,7 +4,6 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
-import uk.ac.ebi.age.model.DataModule;
 
 
 
@@ -14,6 +13,8 @@ import uk.ac.ebi.age.model.DataModule;
 
 public interface AgeObjectWritable extends AgeObject, AttributedWritable
 {
+ DataModuleWritable getDataModule();
+ 
  Collection<? extends AgeRelationWritable> getRelations();
  
 // Collection< ? extends AgeRelationWritable> getRelationsByClassId(String cid);
@@ -33,7 +34,7 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
 
  void setOrder(int row);
 
- void setDataModule( DataModule s );
+ void setDataModule( DataModuleWritable s );
  
  void setId( String id );
 

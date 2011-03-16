@@ -35,6 +35,7 @@ import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
+import uk.ac.ebi.age.service.id.IdGenerator;
 
 public class ContextSemanticModelImpl implements ContextSemanticModel, Serializable
 {
@@ -114,6 +115,16 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   
   if( supCls != null )
    cls.addSuperClass( (AgeRelationClassWritable)supCls);
+  
+  
+  AgeRelationClassWritable invRelCls = masterModel.getModelFactory().createAgeRelationClass( "!"+name,
+    "InvImpRelClass-"+IdGenerator.getInstance().getStringId("classId"), null );
+  
+  invRelCls.setImplicit(true);
+  
+  cls.setInverseRelationClass( invRelCls );
+  invRelCls.setInverseRelationClass(cls);
+
   
   return cls;
  }

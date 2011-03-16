@@ -27,7 +27,6 @@ import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.mng.SubmissionManager;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
-import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.SemanticModel;
@@ -410,13 +409,16 @@ public class SerializedStorage implements AgeStorageAdm
       
       boolean hasInv = false;
       
-      for( AgeRelation rl : tgObj.getRelations() )
+      for( AgeRelationWritable rl : tgObj.getRelations() )
       {
        if( ! rl.getAgeElClass().equals(invRCls) )
         continue;
        
        if( rl.getTargetObject() == exr.getSourceObject() )
        {
+        exr.setInverseRelation(rl);
+        rl.setInverseRelation(exr);
+        
         hasInv=true;
         break;
        }
@@ -426,6 +428,9 @@ public class SerializedStorage implements AgeStorageAdm
         
         if( invExR.getTargetObjectId().equals(exr.getSourceObject().getId()) )
         {
+         exr.setInverseRelation(rl);
+         rl.setInverseRelation(exr);
+
          invExR.setTargetObject(exr.getSourceObject());
          hasInv=true;
          break;
@@ -435,14 +440,14 @@ public class SerializedStorage implements AgeStorageAdm
       
       if( ! hasInv )
       {
-       AgeRelationWritable iRel = tgObj.getAgeElClass().getSemanticModel().createAgeRelation(tgObj, invRCls);
+//       AgeRelationWritable iRel = tgObj.getAgeElClass().getSemanticModel().createAgeRelation(tgObj, invRCls);
        
-//       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
-//       invRel.setTargetObject(exr.getSourceObject());
+       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
+       invRel.setTargetObject(exr.getSourceObject());
 
-       iRel.setInferred(true);
+       invRel.setInferred(true);
        
-       tgObj.addRelation(iRel);
+       tgObj.addRelation(invRel);
       }
       
      }

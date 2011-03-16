@@ -15,11 +15,11 @@ import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributedClass;
-import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectWritable
 {
@@ -29,17 +29,12 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  
  private transient Map<AgeRelationClass, List<AgeRelationWritable>> relationMap;
  
-// private Map<String, List<AgeRelationWritable>> relations = new HashMap<String, List<AgeRelationWritable>>();
-
-// private Collection<AgeAttributeWritable> attributes = new ArrayList<AgeAttributeWritable>( 10 );
-// private Collection<Collection<AgeRelationWritable>> relations = new ArrayList<Collection<AgeRelationWritable>>(5);
-
  private AgeClassPlug ageClassPlug;
 
  private String id;
  private String origId;
 
- private DataModule subm;
+ private DataModuleWritable subm;
  
  private int order;
  
@@ -85,6 +80,9 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   
   if( relationMap != null )
    addRelToMap(rl);
+  
+  if( subm != null && rl instanceof AgeExternalRelationWritable )
+   subm.registerExternalRelation((AgeExternalRelationWritable)rl);
  }
  
  @Override
@@ -162,6 +160,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
 //  return map;
 // }
  
+ @Override
  public Collection<AgeRelationWritable> getRelations()
  {
   return relations;
@@ -230,22 +229,26 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   return rel;
  }
 
+ @Override
  public int getOrder()
  {
   return order;
  }
 
+ @Override
  public void setOrder(int order)
  {
   this.order = order;
  }
 
- public DataModule getDataModule()
+ @Override
+ public DataModuleWritable getDataModule()
  {
   return subm;
  }
 
- public void setDataModule(DataModule subm)
+ @Override
+ public void setDataModule(DataModuleWritable subm)
  {
   this.subm = subm;
  }

@@ -287,5 +287,14 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   }
  }
 
+ @Override
+ public void registerExternalRelation(AgeExternalRelationWritable rel)
+ {
+  if(extRels == null)
+   extRels = new ArrayList<AgeExternalRelationWritable>(10);
+
+  extRels.add((AgeExternalRelationWritable) rel);
+ }
+
 
 }

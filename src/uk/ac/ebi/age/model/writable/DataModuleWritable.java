@@ -24,4 +24,6 @@ public interface DataModuleWritable extends DataModule
 
  Collection<? extends AttributedWritable> getAttributed( AttributedSelector sel );
 
+ 
+ void registerExternalRelation( AgeExternalRelationWritable rel );
 }

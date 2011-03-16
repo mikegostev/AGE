@@ -223,4 +223,11 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  {
   throw new UnsupportedOperationException();
  }
+
+
+ @Override
+ public void registerExternalRelation(AgeExternalRelationWritable rel)
+ {
+  throw new UnsupportedOperationException();
+ }
 }

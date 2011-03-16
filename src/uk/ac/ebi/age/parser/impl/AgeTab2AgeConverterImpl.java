@@ -571,7 +571,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     {
      for(AgeRelationWritable irl : rl.getTargetObject().getRelations())
      {
-      if( irl.getTargetObject() == obj && irl.getAgeElClass().isClassOrSubclass(invClass) )
+      if( irl.getTargetObject() == obj && irl.getAgeElClass().equals(invClass) )
       {
        if( irl.getInverseRelation() == null )
         irl.setInverseRelation(rl);

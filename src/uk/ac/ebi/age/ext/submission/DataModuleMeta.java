@@ -8,7 +8,9 @@ public class DataModuleMeta implements Serializable
 
  private String id;
  private String description;
+ private long ctime;
  private long mtime;
+ private String submitter;
  private String modifier;
  private long version;
  
@@ -45,6 +47,16 @@ public class DataModuleMeta implements Serializable
  public long getModificationTime()
  {
   return mtime;
+ }
+ 
+ public String getSubmitter()
+ {
+  return submitter;
+ }
+
+ public void setSubmitter(String submitter)
+ {
+  this.submitter = submitter;
  }
 
  public String getModifier()
@@ -95,6 +107,16 @@ public class DataModuleMeta implements Serializable
  public Object getAux()
  {
   return aux;
+ }
+
+ public void setSubmissionTime(long time)
+ {
+  ctime = time;
+ }
+ 
+ public long getSubmissionTime()
+ {
+  return ctime;
  }
 
 }

@@ -192,7 +192,7 @@ public class SubmissionManager
 
     ModMeta mm = new ModMeta();
     mm.meta = dm;
-    mm.ord=n;
+    mm.ord = n;
 
     cstMeta.incomeMods.add(mm);
 
@@ -205,6 +205,9 @@ public class SubmissionManager
       continue;
      }
 
+     sMeta.setSubmitter(origSbm.getSubmitter());
+     sMeta.setSubmissionTime(origSbm.getSubmissionTime());
+     
      if( mm.meta.getId() == null  )
      {
       logRoot.log(Level.ERROR, "Module " + n + " is marked for update but no ID is provided");
@@ -266,8 +269,15 @@ public class SubmissionManager
    {
     String modID = odm.getId();
 
+    ModMeta updMod = cstMeta.mod4Upd.get(modID);
     
-    if( ! cstMeta.mod4Upd.containsKey(modID) && ! cstMeta.mod4Del.containsKey(modID) )
+    if( updMod != null )
+    {
+     updMod.meta.setSubmissionTime( odm.getSubmissionTime() );
+     updMod.meta.setSubmitter( odm.getSubmitter() );
+    }
+    
+    if( updMod == null && ! cstMeta.mod4Del.containsKey(modID) )
     {
      ModMeta mm = new ModMeta();
      mm.meta = odm;
@@ -278,6 +288,7 @@ public class SubmissionManager
      cstMeta.mod4Use.add(mm);
      cstMeta.mod4Hld.put(modID, mm);
     }
+    
    }
   }
   
@@ -482,18 +493,6 @@ public class SubmissionManager
     return false;
 
 
-   Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
-   // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
-   
-   if( !connectNewExternalRelations(cstMeta, stor, invRelMap, logRoot) )
-   {
-    return false;
-   }
-   
-   if( !connectNewObjectAttributes(cstMeta, stor, logRoot) )
-   {
-    return false;
-   }
  
    
    Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject> > extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable,AgeObject>>();
@@ -512,6 +511,20 @@ public class SubmissionManager
     if( ! reconnectExternalRelations(cstMeta, relConnections, relationDetachMap, stor, logRoot) )
      return false;
    }
+   
+   Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
+   // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
+   
+   if( !connectNewExternalRelations(cstMeta, stor, invRelMap, logRoot) )
+   {
+    return false;
+   }
+   
+   if( !connectNewObjectAttributes(cstMeta, stor, logRoot) )
+   {
+    return false;
+   }
+
    
    if( cstMeta.att4Del.size() != 0 ||  cstMeta.att4G2L.size() != 0 )
    {
@@ -623,6 +636,7 @@ public class SubmissionManager
      while( stor.hasDataModule(id) );
     
      mm.module.setId(id);
+     mm.meta.setId(id);
      
     }
     
@@ -636,7 +650,8 @@ public class SubmissionManager
        
        do
        {
-        id = Constants.localObjectIDPrefix+obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId(Constants.objectIDDomain)+"-"+obj.getOriginalId()+"@"+mm.module.getId();
+        id = Constants.localObjectIDPrefix+obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId(Constants.objectIDDomain)
+        +"-"+obj.getOriginalId()+"@"+mm.module.getId();
        }
        while( stor.hasObject(id) );
        
@@ -835,6 +850,14 @@ public class SubmissionManager
     for( AgeRelationWritable rel : me.getValue() )
      me.getKey().addRelation(rel);
     
+   for( ModMeta dm : cstMeta.incomeMods )
+   {
+    if( dm.module != null && dm.module.getExternalRelations() != null  )
+    {
+     for( AgeExternalRelationWritable rel : dm.module.getExternalRelations() )
+      rel.getInverseRelation().setInverseRelation(rel);
+    }
+   }
     //    stor.addRelations(me.getKey().getId(),me.getValue());
 
   }
@@ -869,11 +892,14 @@ public class SubmissionManager
 
    for(AgeExternalRelationWritable exr : mm.module.getExternalRelations())
    {
+    if( exr.getTargetObject() != null )
+     continue;
+    
     String ref = exr.getTargetObjectId();
 
     AgeObjectWritable tgObj = (AgeObjectWritable) stor.getObjectById(ref);
 
-    if(tgObj == null || cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()))
+    if(tgObj == null || cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4Upd.containsKey(tgObj.getDataModule().getId()) )
     {
      modloop: for(ModMeta refmm : cstMeta.incomeMods) // Old modules can't hold this ID due to obj ID  uniqueness
      {
@@ -944,14 +970,9 @@ public class SubmissionManager
 
       if(invClassOk)
       {
-       AgeRelationWritable iRel = tgObj.getAgeElClass().getSemanticModel().createAgeRelation(tgObj, invRCls);
-       
-       iRel.setInferred(true);
-     
-      
-//       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
-//       invRel.setTargetObject(exr.getSourceObject()); //XXX Why external? Do we really need it?
-//       invRel.setInferred(true);
+       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
+       invRel.setTargetObject(exr.getSourceObject());
+       invRel.setInferred(true);
 
        Set<AgeRelationWritable> rels = invRelMap.get(tgObj);
 
@@ -961,7 +982,10 @@ public class SubmissionManager
         invRelMap.put(tgObj, rels);
        }
 
-       rels.add(iRel);
+       rels.add(invRel);
+       
+       exr.setInverseRelation(invRel);
+       invRel.setInverseRelation(exr);
       }
 
       exr.setTargetObject(tgObj);
@@ -1063,11 +1087,10 @@ public class SubmissionManager
     for(AgeExternalRelationWritable extRel : origExtRels)
     {
      AgeExternalRelationWritable invrsRel = extRel.getInverseRelation();
+     AgeObjectWritable target = extRel.getTargetObject();
      
      if( invrsRel.isInferred() )
      {
-      AgeObjectWritable target = extRel.getTargetObject();
-
       Set<AgeRelationWritable> objectsRels = detachedRelMap.get(target);
 
       if(objectsRels == null)
@@ -1104,7 +1127,7 @@ public class SubmissionManager
           + "' with object '"  +invrsRel.getTargetObjectId() + "'");
        res = false;
       }
-      else if( ! invrsRel.getAgeElClass().isWithinRange(replObj.getAgeElClass()) ) // later we should also check range and domain of inverse relation
+      else if( ! invrsRel.getAgeElClass().isWithinRange(replObj.getAgeElClass()) )
       {
         res = false;
 
@@ -1116,8 +1139,64 @@ public class SubmissionManager
           +replObj.getAgeElClass()+") is not within realtion's class range");
 
       }
+      else if( ! invrsRel.getAgeElClass().getInverseRelationClass().isWithinRange(target.getAgeElClass()) ) 
+      {
+        res = false;
+
+        logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
+          +(mm.module == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
+          + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
+          +target.getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
+          + "' with object '"  +invrsRel.getTargetObjectId() + "' and reverse relation can't be establishes as source object's class (Class: "
+          +target.getAgeElClass()+") is not within inverse realtion's class range");
+
+      }
+      else if( ! invrsRel.getAgeElClass().getInverseRelationClass().isWithinDomain(replObj.getAgeElClass()) ) 
+      {
+        res = false;
+
+        logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
+          +(mm.module == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
+          + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
+          +target.getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
+          + "' with object '"  +invrsRel.getTargetObjectId() + "' and reverse relation can't be establishes as target object's class (Class: "
+          +replObj.getAgeElClass()+") is not within inverse realtion's class domain");
+
+      }
       else
+      {
+       AgeExternalRelationWritable dirRel = null;
+       
+       if( replObj.getDataModule().getExternalRelations() != null )
+       {
+        for( AgeExternalRelationWritable cndRel : replObj.getDataModule().getExternalRelations() )
+        {
+         if( cndRel.getAgeElClass().equals(extRel.getAgeElClass()) && cndRel.getTargetObjectId().equals(target.getId()) && invrsRel.getTargetObjectId().equals(replObj.getId()) )
+         {
+          dirRel=cndRel;
+          break;
+         }
+        }
+       }
+       
+       if( dirRel == null )
+       {
+        dirRel = replObj.getAgeElClass().getSemanticModel().createExternalRelation(replObj, target.getId(), invrsRel.getAgeElClass().getInverseRelationClass());
+
+        dirRel.setInferred(true);
+        
+        replObj.addRelation(dirRel);
+       }
+       
+       dirRel.setInverseRelation(invrsRel);
+       dirRel.setTargetObject(target);
+
+       
        relConn.add( new Pair<AgeExternalRelationWritable, AgeObjectWritable>(invrsRel, replObj) );
+       
+       if( ! detachedRelMap.containsKey(target) ) //This is to enforce semantic check on the target object
+        detachedRelMap.put(target, null);
+      }
      }
     
     }

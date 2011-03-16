@@ -13,6 +13,12 @@ public class FileAttachmentMeta implements Serializable
  private boolean global;
  private transient Object aux;
 
+ private long submissionTime;
+ private long modificationTime;
+ 
+ private String submitter;
+ private String modifier;
+ 
  public String getId()
  {
   return id;
@@ -61,5 +67,45 @@ public class FileAttachmentMeta implements Serializable
  public void setAux(Object aux)
  {
   this.aux = aux;
+ }
+
+ public long getSubmissionTime()
+ {
+  return submissionTime;
+ }
+
+ public void setSubmissionTime(long submissionTime)
+ {
+  this.submissionTime = submissionTime;
+ }
+
+ public long getModificationTime()
+ {
+  return modificationTime;
+ }
+
+ public void setModificationTime(long modificationTime)
+ {
+  this.modificationTime = modificationTime;
+ }
+
+ public String getSubmitter()
+ {
+  return submitter;
+ }
+
+ public void setSubmitter(String submitter)
+ {
+  this.submitter = submitter;
+ }
+
+ public String getModifier()
+ {
+  return modifier;
+ }
+
+ public void setModifier(String modifier)
+ {
+  this.modifier = modifier;
  }
 }
