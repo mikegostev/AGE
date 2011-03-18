@@ -12,7 +12,6 @@ public class DataModuleMeta implements Serializable
  private long mtime;
  private String submitter;
  private String modifier;
- private long version;
  
  private boolean forUpdate;
  
@@ -79,15 +78,6 @@ public class DataModuleMeta implements Serializable
   this.text = text;
  }
 
- public void setVersion(long v)
- {
-  version=v;
- }
-
- public long getVersion()
- {
-  return version;
- }
 
  public boolean isForUpdate()
  {

@@ -604,8 +604,6 @@ public class SubmissionManager
     return false;
    
    
-   long ts = System.currentTimeMillis();
-   
    if( cstMeta.id == null )
    {
     String id = null;
@@ -622,7 +620,6 @@ public class SubmissionManager
    
    for( ModMeta mm : cstMeta.incomeMods )
    {
-    mm.module.setVersion(ts);
     mm.module.setClusterId(cstMeta.id);
     
     if( mm.module.getId() == null )
@@ -675,7 +672,7 @@ public class SubmissionManager
 
    for( FileAttachmentMeta fam : cstMeta.att4Ins.values() )
    {
-    if( ! fam.isGlobal() ) // We generated IDs for the global files earlier
+    if( ! fam.isGlobal() ) // We generated IDs for the global files earlier 
      fam.setId(stor.makeLocalFileID(fam.getOriginalId(), cstMeta.id));
    }
    
@@ -702,7 +699,9 @@ public class SubmissionManager
      
      try
      {
-      stor.storeAttachment(fam.getId(), (File)fam.getAux());
+      File tagt = stor.storeAttachment(fam.getId(), (File)fam.getAux());
+      
+      submissionDB.storeAttachment(cstMeta.id, fam.getOriginalId(), fam.getModificationTime(), tagt);
      }
      catch(AttachmentIOException e)
      {
@@ -727,7 +726,9 @@ public class SubmissionManager
      
      try
      {
-      stor.storeAttachment(fam.origFile.getId(), (File)fam.newFile.getAux());
+      File tagt = stor.storeAttachment(fam.origFile.getId(), (File)fam.newFile.getAux());
+
+      submissionDB.storeAttachment(cstMeta.id, fam.newFile.getOriginalId(), fam.newFile.getModificationTime(), tagt);
      }
      catch(AttachmentIOException e)
      {
@@ -823,6 +824,16 @@ public class SubmissionManager
  
     return false;
    }
+   
+   
+   for( ModMeta mm : cstMeta.mod4Hld.values())
+    sMeta.addDataModule(mm.meta);
+   
+   for( FileAttachmentMeta fam : cstMeta.att4Hld.values() )
+    sMeta.addAttachment(fam);
+   
+   submissionDB.storeSubmission(sMeta, origSbm);
+   
    
    
    if( extAttrConnector != null )

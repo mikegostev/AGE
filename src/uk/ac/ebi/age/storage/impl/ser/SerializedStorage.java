@@ -16,7 +16,6 @@ import java.util.TreeMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -51,8 +50,11 @@ import uk.ac.ebi.age.storage.impl.AgeStorageIndex;
 import uk.ac.ebi.age.storage.impl.SerializedDataModuleReaderWriter;
 import uk.ac.ebi.age.storage.index.AgeIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
+import uk.ac.ebi.age.util.FileUtil;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.mg.filedepot.FileDepot;
+
+import com.pri.util.M2codec;
 
 public class SerializedStorage implements AgeStorageAdm
 {
@@ -566,7 +568,7 @@ public class SerializedStorage implements AgeStorageAdm
 
  private void saveDataModule(DataModuleWritable sm) throws ModuleStoreException
  {
-  File modFile = dataDepot.getFilePath(sm.getId(), sm.getVersion() );
+  File modFile = dataDepot.getFilePath( sm.getId() );
   
   try
   {
@@ -587,7 +589,7 @@ public class SerializedStorage implements AgeStorageAdm
   if( dm == null )
    return false;
   
-  File modFile = dataDepot.getFilePath(dm.getId(), dm.getVersion() );
+  File modFile = dataDepot.getFilePath( dm.getId() );
   
   if( ! modFile.delete() )
    throw new ModuleStoreException("Can't delete module file: "+modFile.getAbsolutePath());
@@ -760,13 +762,13 @@ public class SerializedStorage implements AgeStorageAdm
  @Override
  public String makeGlobalFileID(String id)
  {
-  return "G"+id;
+  return "G"+M2codec.encode(id);
  }
 
  @Override
  public String makeLocalFileID(String id, String clustID)
  {
-  return "L"+id+"-"+clustID;
+  return String.valueOf(id.length())+'_'+M2codec.encode(id+clustID);
  }
 
  @Override
@@ -785,22 +787,21 @@ public class SerializedStorage implements AgeStorageAdm
  }
 
  @Override
- public void storeAttachment(String id, File aux) throws AttachmentIOException
+ public File storeAttachment(String id, File aux) throws AttachmentIOException
  {
   File fDest = fileDepot.getFilePath(id);
   fDest.delete();
   
-  if( ! aux.renameTo(fDest) )
+  try
   {
-   try
-   {
-    FileUtils.copyFile(aux, fDest);
-   }
-   catch(IOException e)
-   {
-    throw new AttachmentIOException("Store attachment error: "+e.getMessage(), e);
-   }
+   FileUtil.linkOrCopyFile(aux, fDest);
   }
+  catch(IOException e)
+  {
+   throw new AttachmentIOException("Store attachment error: "+e.getMessage(), e);
+  }
+  
+  return fDest;
  }
 
 

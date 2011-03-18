@@ -37,7 +37,7 @@ public interface AgeStorageAdm extends AgeStorage
  String makeLocalFileID(String id, String clustID);
  
  boolean deleteAttachment(String id);
- void storeAttachment(String id, File aux) throws AttachmentIOException;
+ File storeAttachment(String id, File aux) throws AttachmentIOException;
  void renameAttachment(String id, String id2) throws AttachmentIOException;
 
 }

@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.service.submission;
 
+import java.io.File;
 import java.util.List;
 
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
@@ -22,7 +23,7 @@ public abstract class SubmissionDB
 
  public abstract void init();
 
- public abstract void storeSubmission(SubmissionMeta sMeta);
+ public abstract void storeSubmission(SubmissionMeta sMeta, SubmissionMeta origSbm);
 
  public abstract void shutdown();
 
@@ -31,6 +32,8 @@ public abstract class SubmissionDB
  public abstract SubmissionMeta getSubmission(String id);
 
  public abstract boolean hasSubmission(String id);
+
+ public abstract void storeAttachment(String submId, String fileId, long modificationTime, File aux);
 
 
 }

@@ -24,7 +24,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
 {
  private static final long serialVersionUID = 1L;
  
- private long version;
+// private long version;
  private Collection<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
  private ContextSemanticModel model;
  private Collection<AgeExternalRelationWritable> extRels ;
@@ -174,17 +174,17 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   }
  }
 
- @Override
- public long getVersion()
- {
-  return version;
- }
-
- @Override
- public void setVersion(long version)
- {
-  this.version = version;
- }
+// @Override
+// public long getVersion()
+// {
+//  return version;
+// }
+//
+// @Override
+// public void setVersion(long version)
+// {
+//  this.version = version;
+// }
 
 
  public String getClusterId()
@@ -217,6 +217,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
 
    private T nextEl;
    
+   @SuppressWarnings("unchecked")
    @Override
    public boolean hasNext()
    {

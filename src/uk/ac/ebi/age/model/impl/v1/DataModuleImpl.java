@@ -180,18 +180,6 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   }
  }
 
- @Override
- public long getVersion()
- {
-  return 0;
- }
-
- @Override
- public void setVersion(long version)
- {
- }
- 
-
  public String getClusterId()
  {
   throw new UnsupportedOperationException();
