@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.IdScope;
 
 
 
@@ -38,7 +39,8 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  
  void setId( String id );
 
- void setOriginalId(String nId);
+ void setIdScope( IdScope scp );
+// void setOriginalId(String nId);
 
 
  

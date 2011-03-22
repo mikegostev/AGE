@@ -18,11 +18,11 @@ import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeAttachmentRule;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.AttributedClass;
+import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.QualifierRule;
 import uk.ac.ebi.age.model.RelationRule;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
-import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 
 public class AgeSemanticValidatorImpl implements AgeSemanticValidator
@@ -47,7 +47,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   
   for( AgeObject obj : subm.getObjects() )
   {
-   LogNode ln = log.branch("Validating object ID="+obj.getId()+" (OrigId="+obj.getOriginalId()+") Class: '"+obj.getAgeElClass()+"' Order: "+obj.getOrder());
+   LogNode ln = log.branch("Validating object ID="+obj.getId()+" (Scope: "+obj.getIdScope()+") Class: '"+obj.getAgeElClass()+"' Order: "+obj.getOrder());
    
    if( !validateObject( obj, rslv, ln ) )
    {
@@ -239,7 +239,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
      continue;
     
     LogNode atln = ln.branch("Validating relation's qualifiers. Relation class: '" + rl.getAgeElClass()
-      + "' Target object: " + rl.getTargetObject().getOriginalId() + " Order: " + rl.getOrder());
+      + "' Target object: " + rl.getTargetObject().getId() + " Order: " + rl.getOrder());
 
     boolean res = validateAttributed(rl, 1, mod, atln);
 
@@ -783,7 +783,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   
   if( dupObj != null )
   {
-   log.log(Level.ERROR, "All target objects must be unique. Object ID: '"+dupObj.getId()+"' OrigID: '"+dupObj.getOriginalId()+"' is duplicated");
+   log.log(Level.ERROR, "All target objects must be unique. Object ID: '"+dupObj.getId()+"' (Scope: "+dupObj.getIdScope()+") is duplicated");
    return false;
   }
   else

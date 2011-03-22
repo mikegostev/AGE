@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import uk.ac.ebi.age.model.IdScope;
+
 public class AgeTabObject
 {
  private int row;
@@ -12,7 +14,7 @@ public class AgeTabObject
  private Map<ClassReference, List<AgeTabValue>> values = new HashMap<ClassReference, List<AgeTabValue>>();
  private boolean idIsDefined; // Whether some ID was defined in submission file
  private boolean isPrototype;
- private boolean isIdStable;
+ private IdScope scope;
 
  public AgeTabObject( int rw )
  {
@@ -69,13 +71,13 @@ public class AgeTabObject
   return isPrototype;
  }
 
- public boolean isIdStable()
+ public IdScope getIdScope()
  {
-  return isIdStable;
+  return scope;
  }
 
- public void setIdStable(boolean isIdStable)
+ public void setIdScope(IdScope s)
  {
-  this.isIdStable = isIdStable;
+  scope=s;
  }
 }

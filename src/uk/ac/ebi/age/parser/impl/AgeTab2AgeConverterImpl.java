@@ -109,7 +109,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     {
      String id = atObj.getId();
 
-     if( ! atObj.isIdStable() )
+     if( ! atObj.isIdDefined() )
      {
       id=null; //We will generate ID later. The commented code below is obsolete
 
@@ -121,7 +121,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      
      obj = sm.createAgeObject(id, cls);
      obj.setOrder( atObj.getRow() );
-     obj.setOriginalId(atObj.getId());
+     obj.setId(id);
+     obj.setIdScope(atObj.getIdScope());
      
      objectMap.put(atObj.getId(), obj);
     }

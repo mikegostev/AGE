@@ -3,6 +3,7 @@ package uk.ac.ebi.age.service.submission.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
@@ -17,9 +18,11 @@ import java.util.List;
 
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
 import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
+import uk.ac.ebi.age.ext.submission.SubmissionDBException;
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
 import uk.ac.ebi.age.ext.submission.SubmissionQuery;
 import uk.ac.ebi.age.service.submission.SubmissionDB;
+import uk.ac.ebi.age.util.FileUtil;
 import uk.ac.ebi.mg.filedepot.FileDepot;
 
 import com.pri.util.M2codec;
@@ -27,23 +30,36 @@ import com.pri.util.StringUtils;
 
 public class H2SubmissionDB extends SubmissionDB
 {
- private static final String submissionDB = "submissiondb";
- private static final String submissionTable = "submission";
- private static final String moduleTable = "module";
- private static final String attachmentTable = "attachment";
- private static final String historyTable = "history";
+ private static final String submissionDB = "SUBMISSIONDB";
+ private static final String submissionTable = "SUBMISSION";
+ private static final String moduleTable = "MODULE";
+ private static final String attachmentTable = "ATTACHMENT";
+ private static final String historyTable = "HISTORY";
 
- private static final String deleteSubmissionSQL = "DELETE FROM "+submissionDB+"."+submissionTable
+ private static final String selectSubmissionIDSQL = "SELECT id FROM "+submissionDB+"."+submissionTable
+ +" WHERE id=?";
+ 
+ private static final String selectSubmissionSQL = "SELECT * FROM "+submissionDB+"."+submissionTable
  +" WHERE id='";
+ 
+ private static final String selectModuleBySubmissionSQL = "SELECT * FROM "+submissionDB+"."+moduleTable
+ +" WHERE submid=?";
+ 
+ private static final String selectAttachmentBySubmissionSQL = "SELECT * FROM "+submissionDB+"."+attachmentTable
+ +" WHERE submid=?";
+
+ 
+ private static final String deleteSubmissionSQL = "DELETE FROM "+submissionDB+"."+submissionTable
+ +" WHERE id=?";
 
  private static final String insertSubmissionSQL = "INSERT INTO "+submissionDB+"."+submissionTable
  +" (id,desc,ctime,mtime,creator,modifier,ft_desc) VALUES (?,?,?,?,?,?,?)";
  
  private static final String insertModuleSQL = "INSERT INTO "+submissionDB+"."+moduleTable
- +" (id,subm,desc,ctime,mtime,creator,modifier) VALUES (?,?,?,?,?,?,?)";
+ +" (id,submid,desc,ctime,mtime,creator,modifier) VALUES (?,?,?,?,?,?,?)";
  
- private static final String insertAttachmentSQL = "INSERT INTO "+submissionDB+"."+moduleTable
- +" (id,subm,desc,ctime,mtime,creator,modifier,filename) VALUES (?,?,?,?,?,?,?,?)";
+ private static final String insertAttachmentSQL = "INSERT INTO "+submissionDB+"."+attachmentTable
+ +" (id,submid,desc,ctime,mtime,creator,modifier,filename) VALUES (?,?,?,?,?,?,?,?)";
  
  private static final String insertHistorySQL = "INSERT INTO "+submissionDB+"."+historyTable
  +" (id,mtime,modifier,data) VALUES (?,?,?,?)";
@@ -73,10 +89,12 @@ public class H2SubmissionDB extends SubmissionDB
    conn = DriverManager.getConnection("jdbc:h2:"+new File(sbmDbRoot,h2DbPath).getAbsolutePath(), "sa", "");
    conn.setAutoCommit(false);
    
+   System.out.println("DB URL: "+"jdbc:h2:"+new File(sbmDbRoot,h2DbPath).getAbsolutePath());
+   
    initSubmissionDb();
    
    docDepot = new FileDepot( new File(sbmDbRoot,docDepotPath) );
-   attachmentDepot = new FileDepot( new File(sbmDbRoot,attDepotPath) );
+   attachmentDepot = new FileDepot( new File(sbmDbRoot,attDepotPath), true );
   }
   catch(Exception e)
   {
@@ -110,10 +128,12 @@ public class H2SubmissionDB extends SubmissionDB
   {
    if( oldSbm != null )
    {
-    Statement stmt = conn.createStatement();
+    PreparedStatement pstsmt = conn.prepareStatement(deleteSubmissionSQL);
     
-    stmt.executeUpdate(deleteSubmissionSQL+oldSbm.getId()+'\'');
-    stmt.close();
+    pstsmt.setString(1, oldSbm.getId());
+    
+    pstsmt.executeUpdate();
+    pstsmt.close();
     
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oos = new ObjectOutputStream( baos );
@@ -121,7 +141,7 @@ public class H2SubmissionDB extends SubmissionDB
     oos.close();
     
     //(id,mtime,modifier,data)
-    PreparedStatement pstsmt = conn.prepareStatement(insertHistorySQL);
+    pstsmt = conn.prepareStatement(insertHistorySQL);
     pstsmt.setString(1, sMeta.getId());
     pstsmt.setLong(2, sMeta.getModificationTime());
     pstsmt.setString(3, sMeta.getModifier());
@@ -144,7 +164,7 @@ public class H2SubmissionDB extends SubmissionDB
 
    if(sMeta.getDataModules() != null)
    {
-    //(id,subm,desc,ctime,mtime,creator,modifier)
+    //(id,submid,desc,ctime,mtime,creator,modifier)
     pstsmt = conn.prepareStatement(insertModuleSQL);
     for(DataModuleMeta dmm : sMeta.getDataModules())
     {
@@ -171,9 +191,31 @@ public class H2SubmissionDB extends SubmissionDB
      
     }
 
+    pstsmt.close();
    }
 
-   pstsmt.close();
+   if( sMeta.getAttachments() != null )
+   {
+    //(id,submid,desc,ctime,mtime,creator,modifier,filename)
+    pstsmt = conn.prepareStatement(insertAttachmentSQL);
+    
+    for(FileAttachmentMeta fatm : sMeta.getAttachments())
+    {
+     pstsmt.setString(1, fatm.getOriginalId());
+     pstsmt.setString(2, sMeta.getId());
+     pstsmt.setString(3, fatm.getDescription());
+     pstsmt.setLong(4, fatm.getSubmissionTime());
+     pstsmt.setLong(5, fatm.getModificationTime());
+     pstsmt.setString(6, fatm.getSubmitter());
+     pstsmt.setString(7, fatm.getModifier());
+     pstsmt.setString(8, createFileId(sMeta.getId(), fatm.getOriginalId()));
+
+     pstsmt.executeUpdate();
+
+    }
+
+    pstsmt.close(); 
+   }
 
    conn.commit();
   }
@@ -200,7 +242,7 @@ public class H2SubmissionDB extends SubmissionDB
   stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS "+submissionDB);
 
   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+submissionTable+" ("+
-    "id VARCHAR PRIMARY KEY, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, ft_desc VARCHAR)");
+    "id VARCHAR PRIMARY KEY, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, FT_DESC VARCHAR)");
 
   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS ctimeIdx ON "+submissionDB+'.'+submissionTable+"(ctime)");
   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS mtimeIdx ON "+submissionDB+'.'+submissionTable+"(mtime)");
@@ -221,16 +263,18 @@ public class H2SubmissionDB extends SubmissionDB
     "id VARCHAR, mtime BIGINT, modifier VARCHAR, data BINARY," +
     " PRIMARY KEY (id,mtime) )");
 
+  conn.commit();
   
   stmt.executeUpdate("CREATE ALIAS IF NOT EXISTS FTL_INIT FOR \"org.h2.fulltext.FullTextLucene.init\"");
   stmt.executeUpdate("CALL FTL_INIT()");
 
   try
   {
-   stmt.executeUpdate("CALL FTL_CREATE_INDEX('"+submissionDB+"', '"+submissionTable+"', 'ft_desc')");
+   stmt.executeUpdate("CALL FTL_CREATE_INDEX('"+submissionDB+"', '"+submissionTable+"', 'FT_DESC')");
   }
   catch (Exception e)
   {
+   e.printStackTrace();
   }
   
   stmt.close();
@@ -259,7 +303,7 @@ public class H2SubmissionDB extends SubmissionDB
  }
 
  @Override
- public List<SubmissionMeta> getSubmissions(SubmissionQuery q)
+ public List<SubmissionMeta> getSubmissions(SubmissionQuery q) throws SubmissionDBException
  {
   String query = q.getQuery();
   
@@ -387,66 +431,20 @@ public class H2SubmissionDB extends SubmissionDB
   
   try
   {
-   Statement stmt = conn.createStatement();
-   PreparedStatement stmtMod = conn.prepareStatement("SELECT * FROM "+submissionDB+"."+moduleTable+" WHERE submid=?");
-   
-   ResultSet rst = stmt.executeQuery(sql.toString());
-   
-   List<SubmissionMeta> result = new ArrayList<SubmissionMeta>(q.getLimit());
-   
-   while( rst.next() )
-   {
-    SubmissionMeta simp = new SubmissionMeta();
-    
-    simp.setId(rst.getString("id"));
-    simp.setDescription(rst.getString("desc") );
-
-    simp.setSubmissionTime(rst.getLong("ctime"));
-    simp.setModificationTime(rst.getLong("mtime"));
-    
-    simp.setSubmitter( rst.getString("creator") );
-    simp.setModifier(rst.getString("modifier") );
-    
-    result.add(simp);
-    
-    stmtMod.setString(1, simp.getId());
-    ResultSet modRst = stmtMod.executeQuery();
-    
-    while( modRst.next() )
-    {
-     DataModuleMeta dimp = new DataModuleMeta();
-     
-     dimp.setId(rst.getString("id"));
-     dimp.setDescription(rst.getString("desc") );
-
-     dimp.setModificationTime(rst.getLong("mtime"));
-     
-     dimp.setModifier(rst.getString("modifier") );
-     
-     simp.addDataModule(dimp);
-    }
-    
-    modRst.close();
-   }
-   
-   rst.close();
-   
-   return result;
+   return extractSubmission(sql.toString(), null);
   }
   catch(SQLException e)
   {
-   // TODO Auto-generated catch block
    e.printStackTrace();
+   throw new SubmissionDBException("System error", e);
   }
-
+  
   
   
   //select * from FTL_SEARCH_DATA('Hello seva world', 0, 0) FT join tbl S ON  S.ID=FT.KEYS[0] left join stbl M on S.id=m.pid  where  FT.TABLE='TBL' and m.txt like '%va%';
   //select distinct S.id from  tbl S left join stbl M on S.id=M.pid join FTL_SEARCH_DATA('Seva world', 0, 0) FT ON ( FT.TABLE='TBL' AND S.ID=FT.KEYS[0] ) OR (  FT.TABLE='STBL' AND M.ID=FT.KEYS[0]) limit 1,1
   //SELECT T.*,S.* FROM FTL_SEARCH_DATA('Hello AND external', 0, 0) FT, AAA.TBL T, AAA.STBL S WHERE ( FT.TABLE='TBL' AND T.ID=FT.KEYS[0] ) OR (  FT.TABLE='STBL' AND S.ID=FT.KEYS[0] AND S.PID=T.ID)
 
-  
-  return null;
  }
  
  private void addWildcardedCondition(StringBuilder sb, String field, String value)
@@ -465,32 +463,194 @@ public class H2SubmissionDB extends SubmissionDB
   }
  }
 
- @Override
- public SubmissionMeta getSubmission(String id)
+ private List<SubmissionMeta> extractSubmission( String sql, SubmissionMeta sMeta ) throws SQLException
  {
-  // TODO Auto-generated method stub
-  throw new dev.NotImplementedYetException();
-  //return null;
+  Statement s = null;
+  PreparedStatement mstmt = null;
+  PreparedStatement fstmt = null;
+  List<SubmissionMeta> result = null;
+
+  
+  ResultSet rstS = null;;
+  try
+  {
+   s = conn.createStatement();
+   mstmt = conn.prepareStatement( selectModuleBySubmissionSQL );
+   fstmt = conn.prepareStatement( selectAttachmentBySubmissionSQL );
+
+   rstS = s.executeQuery(sql);
+
+   if(sMeta == null)
+    result = new ArrayList<SubmissionMeta>(30);
+
+   while(rstS.next())
+   {
+    SubmissionMeta simp = sMeta != null? sMeta : new SubmissionMeta();
+
+    simp.setId(rstS.getString("id"));
+    simp.setDescription(rstS.getString("desc") );
+
+    simp.setSubmissionTime(rstS.getLong("ctime"));
+    simp.setModificationTime(rstS.getLong("mtime"));
+    
+    simp.setSubmitter( rstS.getString("creator") );
+    simp.setModifier(rstS.getString("modifier") );
+
+    mstmt.setString(1, simp.getId());
+    
+    ResultSet rstMF = mstmt.executeQuery();
+
+    while( rstMF.next() )
+    {
+     DataModuleMeta dmm = new DataModuleMeta();
+     
+     dmm.setId(rstMF.getString("id"));
+     dmm.setDescription(rstMF.getString("desc") );
+
+     dmm.setSubmissionTime(rstMF.getLong("ctime"));
+     dmm.setModificationTime(rstMF.getLong("mtime"));
+     
+     dmm.setSubmitter( rstMF.getString("creator") );
+     dmm.setModifier(rstMF.getString("modifier") );
+
+     simp.addDataModule(dmm);
+    }
+
+    rstMF.close();
+    
+    fstmt.setString(1, simp.getId());
+    rstMF = fstmt.executeQuery();
+
+    
+    while( rstMF.next() )
+    {
+     FileAttachmentMeta fam = new FileAttachmentMeta();
+
+     fam.setId(rstMF.getString("id"));
+     fam.setDescription(rstMF.getString("desc") );
+
+     fam.setSubmissionTime(rstMF.getLong("ctime"));
+     fam.setModificationTime(rstMF.getLong("mtime"));
+     
+     fam.setSubmitter( rstMF.getString("creator") );
+     fam.setModifier(rstMF.getString("modifier") );
+
+     simp.addAttachment(fam);
+    }
+    
+    rstMF.close();
+   
+    if( sMeta != null )
+     return null;
+    
+    result.add(simp);
+   }
+
+  }
+  finally
+  {
+   if( s != null )
+    s.close();
+   
+   if( mstmt != null )
+    mstmt.close();
+   
+   if( fstmt != null )
+    fstmt.close();
+  }
+  
+  return result;
+ }
+ 
+ @Override
+ public SubmissionMeta getSubmission(String id) throws SubmissionDBException
+ {
+  StringBuilder sb = new StringBuilder();
+
+  sb.append(selectSubmissionSQL);
+  StringUtils.appendEscaped(sb, id, '\'', '\'');
+  sb.append('\'');
+
+  SubmissionMeta sm = new SubmissionMeta();
+  
+  try
+  {
+   extractSubmission(sb.toString(), sm);
+  }
+  catch(SQLException e)
+  {
+   e.printStackTrace();
+   throw new SubmissionDBException("System error", e);
+  }
+  
+  return sm;
  }
 
  @Override
- public boolean hasSubmission(String id)
+ public boolean hasSubmission(String id) throws SubmissionDBException
  {
-  // TODO Auto-generated method stub
-  throw new dev.NotImplementedYetException();
-  //return false;
+  PreparedStatement pstsmt = null;
+  ResultSet rst = null;
+  try
+  {
+   pstsmt = conn.prepareStatement(selectSubmissionIDSQL);
+   
+   pstsmt.setString(1, id);
+   
+   rst =pstsmt.executeQuery();
+   
+   if( rst.next() )
+    return true;
+
+   return false;
+  }
+  catch(SQLException e)
+  {
+   e.printStackTrace();
+   throw new SubmissionDBException("System error", e);
+  }
+  finally
+  {
+   try
+   {
+    if( rst != null )
+     rst.close();
+    
+    if( pstsmt != null )
+     pstsmt.close();
+   }
+   catch(SQLException e1)
+   {
+    e1.printStackTrace();
+   }
+  }
+  
  }
 
  @Override
- public void storeAttachment(String submId, String fileId, long modificationTime, File aux)
+ public void storeAttachment(String submId, String fileId, long modificationTime, File aux) throws SubmissionDBException
  {
-  // TODO Auto-generated method stub
-  throw new dev.NotImplementedYetException();
-  //
+  String id = createFileId(submId, fileId);
+
+  File dest = attachmentDepot.getFilePath(id, modificationTime);
+  
+  dest.delete();
+  
+  try
+  {
+   FileUtil.linkOrCopyFile(aux, dest);
+  }
+  catch(IOException e)
+  {
+   e.printStackTrace();
+   throw new SubmissionDBException("System error", e);
+  }
  }
  
  private String createFileId( String submId, String fileId )
  {
-  return String.valueOf(submId.length())+'_'+M2codec.encode(submId+fileId);
+  fileId = M2codec.encode(fileId);
+  
+  return String.valueOf(fileId.length())+'.'+fileId+'.'+M2codec.encode(submId);
  }
 }

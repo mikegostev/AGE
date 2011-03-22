@@ -53,8 +53,9 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, SemanticModel sm)
  {
-  throw new UnsupportedOperationException();
+  return new AgeObjectImpl(id, ageClass, sm);
  }
+
 
  @Override
  public AgeClassWritable createAgeClass(String name, String id, String pfx, SemanticModel sm)

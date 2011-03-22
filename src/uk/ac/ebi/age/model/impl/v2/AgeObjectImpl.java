@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v1;
+package uk.ac.ebi.age.model.impl.v2;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -17,6 +17,7 @@ import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.impl.v1.AttributedObject;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
@@ -33,7 +34,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  private AgeClassPlug ageClassPlug;
 
  private String id;
- private String origId;
+ private IdScope idScope;
 
  private DataModuleWritable subm;
  
@@ -44,32 +45,25 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   super(sm);
 
   this.id=id;
-  this.origId=id;
 
   ageClassPlug= sm.getAgeClassPlug(cls);
  }
 
+ @Override
  public String getId()
  {
   return id;
  }
  
- public String getOriginalId()
- {
-  return origId;
- }
-
+ @Override
  public void setId(String nId)
  {
   id=nId;
  }
- 
- public void setOriginalId(String nId)
- {
-  origId=nId;
- }
+
 
  
+ @Override
  public synchronized void addRelation(AgeRelationWritable rl)
  {
   
@@ -143,6 +137,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   }
  }
  
+ @Override
  public AgeClass getAgeElClass()
  {
   return ageClassPlug.getAgeClass();
@@ -307,12 +302,13 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  @Override
  public IdScope getIdScope()
  {
-  return IdScope.GLOBAL;
+  return idScope;
  }
 
  @Override
- public void setIdScope(IdScope scp)
+ public void setIdScope(IdScope idScope)
  {
+  this.idScope = idScope;
  }
  
 }

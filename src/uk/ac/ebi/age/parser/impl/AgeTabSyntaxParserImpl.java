@@ -4,19 +4,21 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import uk.ac.ebi.age.parser.AgeTabObject;
+import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.parser.AgeTabModule;
+import uk.ac.ebi.age.parser.AgeTabObject;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.BlockHeader;
 import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ParserException;
+import uk.ac.ebi.age.parser.SyntaxProfile;
 import uk.ac.ebi.age.service.id.IdGenerator;
 import uk.ac.ebi.age.util.StringUtil;
 
 public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 {
 
- public AgeTabModule parse( String txt ) throws ParserException
+ public AgeTabModule parse( String txt, SyntaxProfile profile ) throws ParserException
  {
   AgeTabModule data = new AgeTabModuleImpl( this );
   
@@ -151,7 +153,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    
    if( part.length() != 0 )
    {
-    if( part.equals(getAnonymousObjectId()) )
+    if( part.equals( profile.getAnonymousObjectId() ) )
     { 
      String id = "??"+IdGenerator.getInstance().getStringId("tempObjectId");
      cObj = data.createObject(id,header,ln);
@@ -160,31 +162,45 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     else
     {
      String id = part;
-     boolean defined = ! part.startsWith(getAnonymousObjectId());
-     boolean stable = isUnqualifiedIdsStable() && defined;
+     boolean defined = ! part.startsWith( profile.getAnonymousObjectId());
      
-     String stblIdPfx = getStableIdPrefix();
-     if( part.startsWith(stblIdPfx) )
+     IdScope scope = defined? profile.getDefaultIdScope() : IdScope.MODULE;
+
+     String pfx = profile.getGlobalIdPrefix();
+     
+     if( part.startsWith(pfx) )
      {
-      id = part.substring(stblIdPfx.length());
-      
-      if( !  id.startsWith(stblIdPfx) )
-       stable = true;
+      id = part.substring(pfx.length());
+      scope = IdScope.GLOBAL;
      }
-     else if( part.startsWith(getUnstableIdPrefix()) )
+     else
      {
-      id = part.substring(getUnstableIdPrefix().length());
+      pfx = profile.getClusterIdPrefix();
       
-      if( !  id.startsWith(getUnstableIdPrefix()) )
-       stable = false;
+      if( part.startsWith(pfx) )
+      {
+       id = part.substring(pfx.length());
+       scope = IdScope.CLUSTER;
+      }
+      else
+      {
+       pfx = profile.getModuleIdPrefix();
+       
+       if( part.startsWith(pfx) )
+       {
+        id = part.substring(pfx.length());
+        scope = IdScope.MODULE;
+       }
+      }
      }
      
+  
 
      cObj = data.getOrCreateObject(id,header,ln);
      
-     cObj.setIdStable(stable);
+     cObj.setIdScope(scope);
      cObj.setIdDefined( defined );
-     cObj.setPrototype( part.equals(getCommonObjectId()) );
+     cObj.setPrototype( part.equals( profile.getPrototypeObjectId() ) );
     }
    }
    else if( cObj == null )

@@ -23,7 +23,6 @@ import uk.ac.ebi.age.log.LogNode;
 import uk.ac.ebi.age.log.LogNode.Level;
 import uk.ac.ebi.age.log.impl.BufferLogger;
 import uk.ac.ebi.age.mng.SemanticManager;
-import uk.ac.ebi.age.mng.SubmissionManager;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -52,6 +51,7 @@ import uk.ac.ebi.age.storage.index.AgeIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
 import uk.ac.ebi.age.util.FileUtil;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
+import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
 import uk.ac.ebi.mg.filedepot.FileDepot;
 
 import com.pri.util.M2codec;
@@ -353,7 +353,7 @@ public class SerializedStorage implements AgeStorageAdm
  
   try
   {
-   fileDepot = new FileDepot(filesDir);
+   fileDepot = new FileDepot(filesDir, true);
   }
   catch(IOException e)
   {
@@ -627,7 +627,7 @@ public class SerializedStorage implements AgeStorageAdm
   {
    dbLock.writeLock().lock();
  
-   AgeSemanticValidator validator = SubmissionManager.getInstance().getAgeSemanticValidator();
+   AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
    
    boolean res = true;
    

@@ -1,11 +1,15 @@
 package uk.ac.ebi.age.model.impl.v2;
 
+import java.io.Serializable;
+
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
 
-public class AttrClassRef implements AttributeClassRef
+public class AttrClassRef implements AttributeClassRef, Serializable
 {
+ private static final long serialVersionUID = 2L;
+
  private int order;
  private String heading;
  private AgeAttributeClassPlug attrClassPlug;

@@ -49,7 +49,12 @@ public class Log2JSON
  private static void setLevels( LogNode ln )
  {
   if( ln.getSubNodes() == null )
+  {
+   if( ln.getLevel() == null )
+    ln.setLevel(Level.INFO);
+   
    return;
+  }
   
   LogNode.Level maxLevel = Level.getMinLevel();
   

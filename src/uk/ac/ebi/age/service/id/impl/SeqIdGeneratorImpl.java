@@ -12,8 +12,13 @@ import uk.ac.ebi.age.service.id.IdGenerator;
 
 public class SeqIdGeneratorImpl extends IdGenerator
 {
+ private static final String zeros = "000000000";
+ 
+ private final static int MIN_ID_DIGITS=4; 
  private final static int ID_BLOCK_LEN=10; 
 
+ 
+ 
  private static class Counter
  { 
   int nextId=1;
@@ -170,13 +175,23 @@ public class SeqIdGeneratorImpl extends IdGenerator
 
  }
  
+ private String makeID( String id )
+ {
+  int len = id.length();
+  
+  if( len >= MIN_ID_DIGITS )
+   return id;
+  
+  return zeros.substring(0,MIN_ID_DIGITS-len)+id;
+ }
+ 
  @Override
  public synchronized String getStringId()
  {
   if( defaultCounter.nextId == defaultCounter.maxId )
    update(ID_BLOCK_LEN);
   
-  return String.valueOf(defaultCounter.nextId++);
+  return makeID(String.valueOf(defaultCounter.nextId++));
  }
  
  @Override
@@ -193,7 +208,7 @@ public class SeqIdGeneratorImpl extends IdGenerator
   if( cnt.nextId == cnt.maxId )
    update(ID_BLOCK_LEN);
   
-  return String.valueOf(cnt.nextId++);
+  return makeID(String.valueOf(cnt.nextId++));
  }
 
 

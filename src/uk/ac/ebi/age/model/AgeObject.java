@@ -8,9 +8,11 @@ import java.util.Collection;
 
 public interface AgeObject extends AgeAbstractObject
 {
+
  /** @model */
  String getId();
- String getOriginalId();
+ IdScope getIdScope();
+// String getOriginalId();
 
  AgeClass getAgeElClass();
  

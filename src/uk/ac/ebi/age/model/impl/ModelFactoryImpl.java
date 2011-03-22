@@ -57,7 +57,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, SemanticModel sm)
  {
-  return v1factory.createAgeObject(id, ageClass, sm);
+  return v2factory.createAgeObject(id, ageClass, sm);
  }
 
  @Override

@@ -13,6 +13,7 @@ import java.util.Stack;
 import uk.ac.ebi.age.conf.Constants;
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
 import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
+import uk.ac.ebi.age.ext.submission.SubmissionDBException;
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
 import uk.ac.ebi.age.log.LogNode;
 import uk.ac.ebi.age.log.LogNode.Level;
@@ -49,29 +50,7 @@ import com.pri.util.collection.ExtractorCollection;
 
 public class SubmissionManager
 {
- private static SubmissionManager instance = new SubmissionManager();
- 
- private SubmissionDB submissionDB;
-
- /*
-  * submission algorithm
-  * 
-  * 0. Assumptions
-  *  0a. If subm wasn't marked "forUpdate" it assumes that this is a new submission
-  * 
-  * 1. Check whether the subm is for update
-  *  1a. Check for for the following errors:
-  *    1. Subm ID is provided but original subm doesn't exist
-  * 
-  * 2. Separate DMs into groups for insert Di, update Du, delete Dd
-  *  2a. Check for for the following errors:
-  *    1. Module ID provided but submission is not in UPDATE mode
-  *    2. Module ID provided but module is not in the storage
-  *    3. Original module exists in the storage but belongs to the other submission
-  *    4. Module has no body (assumed that it is for deletion) but ID is not provided
-  * 
-  * 
-  */
+// private static SubmissionManager instance = new SubmissionManager();
  
  
  private static class ModMeta
@@ -81,6 +60,8 @@ public class SubmissionManager
   DataModuleWritable module;
   DataModuleMeta meta;
   int ord;
+  
+  Map<String, AgeObjectWritable> idMap = new HashMap<String, AgeObjectWritable>();
  }
  
  private static Extractor<ModMeta, DataModuleWritable> modExtractor = new Extractor<ModMeta, DataModuleWritable>()
@@ -129,19 +110,32 @@ public class SubmissionManager
   Map<String,FileAttachmentMeta> att4Use = new HashMap<String, FileAttachmentMeta>();
 
   public String id;
+  
+  Map<String, AgeObjectWritable> clusterIdMap = new HashMap<String, AgeObjectWritable>();
+  Map<String, AgeObjectWritable> globalIdMap = new HashMap<String, AgeObjectWritable>();
  }
  
- public static SubmissionManager getInstance()
- {
-  return instance;
- }
+// public static SubmissionManager getInstance()
+// {
+//  return instance;
+// }
  
  private AgeTabSyntaxParser ageTabParser = new AgeTabSyntaxParserImpl();
  private AgeTab2AgeConverter converter = new AgeTab2AgeConverterImpl();
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
  
+ private SubmissionDB submissionDB;
+ private AgeStorageAdm ageStorage;
+ 
+ public SubmissionManager( AgeStorageAdm ageS, SubmissionDB sDB )
+ {
+  ageStorage = ageS;
+  submissionDB = sDB;
+ }
+
+ 
  @SuppressWarnings("unchecked")
- public boolean storeSubmission( SubmissionMeta sMeta,  SubmissionContext context, AgeStorageAdm stor, LogNode logRoot )
+ public boolean storeSubmission( SubmissionMeta sMeta,  SubmissionContext context, LogNode logRoot )
  {
   
   SubmissionMeta origSbm = null;
@@ -154,7 +148,16 @@ public class SubmissionManager
     return false;
    }
 
-   origSbm = submissionDB.getSubmission( sMeta.getId() );
+   try
+   {
+    origSbm = submissionDB.getSubmission( sMeta.getId() );
+   }
+   catch(SubmissionDBException e)
+   {
+    logRoot.log(Level.ERROR, "Method getSubmition error: "+e.getMessage());
+    
+    return false;
+   }
    
    if( origSbm == null )
    {
@@ -215,7 +218,7 @@ public class SubmissionManager
       continue;
      }
      
-     mm.origModule = stor.getDataModule(mm.meta.getId());
+     mm.origModule = ageStorage.getDataModule(mm.meta.getId());
 
      if(mm.origModule == null)
      {
@@ -245,7 +248,7 @@ public class SubmissionManager
     {
      if( mm.meta.getId() != null)
      {
-      DataModuleWritable clashMod = stor.getDataModule(mm.meta.getId());
+      DataModuleWritable clashMod = ageStorage.getDataModule(mm.meta.getId());
       
       if( clashMod != null )
       {
@@ -281,7 +284,7 @@ public class SubmissionManager
     {
      ModMeta mm = new ModMeta();
      mm.meta = odm;
-     mm.origModule = stor.getDataModule(modID);
+     mm.origModule = ageStorage.getDataModule(modID);
      mm.ord=-1;
 
      
@@ -373,9 +376,9 @@ public class SubmissionManager
     {
      if( origFm == null && fm.isGlobal() ) //this is a new file with a new global ID. We have to check its uniqueness
      {
-      String gid = stor.makeGlobalFileID( fm.getOriginalId() );
+      String gid = ageStorage.makeGlobalFileID( fm.getOriginalId() );
       
-      if( stor.getAttachment( gid ) != null )
+      if( ageStorage.getAttachment( gid ) != null )
       {
        fileNode.log(Level.ERROR, "File " + (n + 1) + " has global ID but this ID is already taken");
        res = false;
@@ -484,13 +487,16 @@ public class SubmissionManager
   
   try
   {
-   stor.lockWrite();
+   ageStorage.lockWrite();
 
    
    // XXX connection to main graph
    
-   if( ! checkUniqObjects(cstMeta, stor, logRoot) )
+   if( ! checkUniqObjects(cstMeta, ageStorage, logRoot) )
+   {
+    res = false;
     return false;
+   }
 
 
  
@@ -504,32 +510,43 @@ public class SubmissionManager
     relConnections = new ArrayList<Pair<AgeExternalRelationWritable,AgeObjectWritable>>();
     relationDetachMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
     
-    if( ! reconnectExternalObjectAttributes(cstMeta, extAttrConnector, stor, logRoot))
+    if( ! reconnectExternalObjectAttributes(cstMeta, extAttrConnector, ageStorage, logRoot))
+    {
+     res = false;
      return false;
+    }
     
     
-    if( ! reconnectExternalRelations(cstMeta, relConnections, relationDetachMap, stor, logRoot) )
+    if( ! reconnectExternalRelations(cstMeta, relConnections, relationDetachMap, ageStorage, logRoot) )
+    {
+     res = false;
      return false;
+    }
    }
    
    Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
    // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
    
-   if( !connectNewExternalRelations(cstMeta, stor, invRelMap, logRoot) )
+   if( !connectNewExternalRelations(cstMeta, ageStorage, invRelMap, logRoot) )
    {
+    res = false;
     return false;
    }
    
-   if( !connectNewObjectAttributes(cstMeta, stor, logRoot) )
+   if( !connectNewObjectAttributes(cstMeta, ageStorage, logRoot) )
    {
+    res = false;
     return false;
    }
 
    
    if( cstMeta.att4Del.size() != 0 ||  cstMeta.att4G2L.size() != 0 )
    {
-    if( ! checkRemovedDataFiles(cstMeta, stor, logRoot) )
+    if( ! checkRemovedDataFiles(cstMeta, ageStorage, logRoot) )
+    {
+     res = false;
      return false;
+    }
    }
 
   
@@ -594,7 +611,7 @@ public class SubmissionManager
     else
     {
      invRelLog.log(Level.ERROR, "Validation failed");
-     return false;
+     invRelRes =false;
     }
 
     res = res && invRelRes;
@@ -608,11 +625,22 @@ public class SubmissionManager
    {
     String id = null;
     
-    do
+    try
     {
-     id = Constants.submissionIDPrefix+IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
+     do
+     {
+      id = Constants.submissionIDPrefix+IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
+     }
+     while( submissionDB.hasSubmission(id) );
     }
-    while( submissionDB.hasSubmission(id) );
+    catch(SubmissionDBException e)
+    {
+     logRoot.log(Level.ERROR, "Method hasSubmission error: "+e.getMessage());
+
+     res = false;
+     
+     return false;
+    }
    
     cstMeta.id = id;
     sMeta.setId(id);
@@ -630,7 +658,7 @@ public class SubmissionManager
      {
       id = Constants.dataModuleIDPrefix+IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
      }
-     while( stor.hasDataModule(id) );
+     while( ageStorage.hasDataModule(id) );
     
      mm.module.setId(id);
      mm.meta.setId(id);
@@ -650,7 +678,7 @@ public class SubmissionManager
         id = Constants.localObjectIDPrefix+obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId(Constants.objectIDDomain)
         +"-"+obj.getOriginalId()+"@"+mm.module.getId();
        }
-       while( stor.hasObject(id) );
+       while( ageStorage.hasObject(id) );
        
        obj.setId(id);
       }
@@ -659,21 +687,21 @@ public class SubmissionManager
    }
    
    
-   connectIncomingModulesToFiles(cstMeta, stor, logRoot);
+   connectIncomingModulesToFiles(cstMeta, ageStorage, logRoot);
    
    Collection< Pair<AgeFileAttributeWritable,String> > fileConn = new ArrayList< Pair<AgeFileAttributeWritable,String> >();
-   reconnectLocalModulesToFiles(cstMeta, fileConn, stor, logRoot);
+   reconnectLocalModulesToFiles(cstMeta, fileConn, ageStorage, logRoot);
    
    for( FileMeta fatm : cstMeta.att4G2L.values() )
-    fatm.newFile.setId(stor.makeLocalFileID(fatm.origFile.getOriginalId(), cstMeta.id));
+    fatm.newFile.setId(ageStorage.makeLocalFileID(fatm.origFile.getOriginalId(), cstMeta.id));
     
    for( FileMeta fatm : cstMeta.att4L2G.values() )
-    fatm.newFile.setId(stor.makeGlobalFileID(fatm.origFile.getOriginalId()));
+    fatm.newFile.setId(ageStorage.makeGlobalFileID(fatm.origFile.getOriginalId()));
 
    for( FileAttachmentMeta fam : cstMeta.att4Ins.values() )
    {
     if( ! fam.isGlobal() ) // We generated IDs for the global files earlier 
-     fam.setId(stor.makeLocalFileID(fam.getOriginalId(), cstMeta.id));
+     fam.setId(ageStorage.makeLocalFileID(fam.getOriginalId(), cstMeta.id));
    }
    
    if( cstMeta.att4Del.size() > 0 )
@@ -684,7 +712,7 @@ public class SubmissionManager
     {
      fdelLog.log(Level.INFO, "Deleting file: '"+fam.getOriginalId()+"' (ID="+fam.getId()+")");
      
-     stor.deleteAttachment(fam.getId());
+     ageStorage.deleteAttachment(fam.getId());
      fdelLog.log(Level.INFO, "Success");
     }
    }
@@ -699,11 +727,11 @@ public class SubmissionManager
      
      try
      {
-      File tagt = stor.storeAttachment(fam.getId(), (File)fam.getAux());
+      File tagt = ageStorage.storeAttachment(fam.getId(), (File)fam.getAux());
       
       submissionDB.storeAttachment(cstMeta.id, fam.getOriginalId(), fam.getModificationTime(), tagt);
      }
-     catch(AttachmentIOException e)
+     catch(Exception e)
      {
       finsLog.log(Level.ERROR, e.getMessage());
       finsLog.log(Level.ERROR, "Failed");
@@ -711,6 +739,7 @@ public class SubmissionManager
       res = false;
       return false;
      }
+
      
      finsLog.log(Level.INFO, "Success");
     }
@@ -726,11 +755,11 @@ public class SubmissionManager
      
      try
      {
-      File tagt = stor.storeAttachment(fam.origFile.getId(), (File)fam.newFile.getAux());
+      File tagt = ageStorage.storeAttachment(fam.origFile.getId(), (File)fam.newFile.getAux());
 
       submissionDB.storeAttachment(cstMeta.id, fam.newFile.getOriginalId(), fam.newFile.getModificationTime(), tagt);
      }
-     catch(AttachmentIOException e)
+     catch(Exception e)
      {
       fupdLog.log(Level.ERROR, e.getMessage());
       fupdLog.log(Level.ERROR, "Failed");
@@ -753,7 +782,7 @@ public class SubmissionManager
      
      try
      {
-      stor.renameAttachment(fam.origFile.getId(), fam.newFile.getId());
+      ageStorage.renameAttachment(fam.origFile.getId(), fam.newFile.getId());
      }
      catch(AttachmentIOException e)
      {
@@ -778,7 +807,7 @@ public class SubmissionManager
      
      try
      {
-      stor.renameAttachment(fam.origFile.getId(), fam.newFile.getId());
+      ageStorage.renameAttachment(fam.origFile.getId(), fam.newFile.getId());
      }
      catch(AttachmentIOException e)
      {
@@ -798,10 +827,10 @@ public class SubmissionManager
 
    try
    {
-    if( cstMeta.mod4Upd.size() > 0 || cstMeta.mod4Del.size() > 0 )
+    if( cstMeta.mod4Upd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0 )
     {
      
-     stor.update( 
+     ageStorage.update( 
        new CollectionsUnion<DataModuleWritable>( 
         new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Upd.values(), modExtractor),
         new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Ins, modExtractor)
@@ -832,7 +861,18 @@ public class SubmissionManager
    for( FileAttachmentMeta fam : cstMeta.att4Hld.values() )
     sMeta.addAttachment(fam);
    
-   submissionDB.storeSubmission(sMeta, origSbm);
+   try
+   {
+    submissionDB.storeSubmission(sMeta, origSbm);
+   }
+   catch(SubmissionDBException e)
+   {
+    logRoot.log(Level.ERROR, "Method storeSubmission error: "+e.getMessage());
+
+    res = false;
+    
+    return false;
+   }
    
    
    
@@ -851,10 +891,12 @@ public class SubmissionManager
    for( Pair<AgeFileAttributeWritable, String> fc :  fileConn ) 
     fc.getFirst().setFileId( fc.getSecond() );
    
-   for( Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me :  relationDetachMap.entrySet() )
-    for( AgeRelationWritable rel : me.getValue() )
-     me.getKey().removeRelation(rel);
-    
+   if( relationDetachMap != null )
+   {
+    for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : relationDetachMap.entrySet())
+     for(AgeRelationWritable rel : me.getValue())
+      me.getKey().removeRelation(rel);
+   }
     //    stor.removeRelations(me.getKey().getId(),me.getValue());
 
    for( Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
@@ -874,7 +916,7 @@ public class SubmissionManager
   }
   finally
   {
-   stor.unlockWrite();
+   ageStorage.unlockWrite();
   }
 
   //Impute reverse relation and revalidate.
@@ -894,7 +936,7 @@ public class SubmissionManager
   {
    n++;
 
-   if(mm.module == null)
+   if(mm.module == null || mm.module.getExternalRelations() == null )
     continue;
 
    LogNode extRelModLog = extRelLog.branch("Processing module: " + n);
@@ -1597,5 +1639,10 @@ public class SubmissionManager
  public AgeSemanticValidator getAgeSemanticValidator()
  {
   return validator;
+ }
+
+ public SubmissionDB getSubmissionDB()
+ {
+  return submissionDB;
  }
 }
