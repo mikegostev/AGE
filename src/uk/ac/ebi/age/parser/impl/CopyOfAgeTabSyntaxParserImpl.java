@@ -19,7 +19,7 @@ public class CopyOfAgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 {
  interface BlockSupplier
  {
-  List<String> getHeaderLine();
+//  List<String> getHeaderLine();
 
   int getLineNum();
 
@@ -38,11 +38,11 @@ public class CopyOfAgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   }
   
 
-  @Override
-  public List<String> getHeaderLine()
-  {
-   return firstLine;
-  }
+//  @Override
+//  public List<String> getHeaderLine()
+//  {
+//   return firstLine;
+//  }
 
 
   @Override
@@ -55,6 +55,24 @@ public class CopyOfAgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   @Override
   public List<String> getLine(List<String> parts)
   {
+   if( firstLine != null )
+   {
+    
+    if( parts != null )
+    {
+     parts.clear();
+     
+     for( String s : firstLine )
+      parts.add(s);
+     
+     return parts;
+    }
+    
+    List<String> fl = firstLine;
+    firstLine = null;
+    return fl;
+   }
+   
    List<String> line = reader.readLine(parts);
    
    if( line == null )
@@ -72,15 +90,16 @@ public class CopyOfAgeTabSyntaxParserImpl extends AgeTabSyntaxParser
  {
   private List<List<String>> matrix = new ArrayList<List<String>>( 100 );
   
+  private int ptr = 0;
+  private List<List<String>> lines = new ArrayList<List<String>>( 50 );
+  private int maxDim = 0;
+ 
   VerticalBlockSupplier(LineReader reader, List<String> fstLine)
   {
-   List<List<String>> lines = new ArrayList<List<String>>( 100 );
-   
    lines.add(fstLine);
    
    List<String> line;
    
-   int maxDim = 0;
    
    while( ( line = reader.readLine(null) ) != null && ! isEmptyLine(line) )
    {
@@ -90,33 +109,40 @@ public class CopyOfAgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      maxDim = line.size();
    }
    
+   for( int i=0; i < maxDim; i++ )
+   {
+    line = new ArrayList<String>( lines.size() );
+    matrix.add(line);
+    
+    for( List<String> l : lines )
+     line.add( i >= l.size()?"":l.get(i));
+   }
+   
   }
   
 
   @Override
-  public List<String> getHeaderLine()
-  {
-   // TODO Auto-generated method stub
-   throw new dev.NotImplementedYetException();
-   //return null;
-  }
-
-
-  @Override
   public int getLineNum()
   {
-   // TODO Auto-generated method stub
-   throw new dev.NotImplementedYetException();
-   //return 0;
+   return ptr;
   }
 
 
   @Override
-  public List<String> getLine(List<String> parts)
+  public List<String> getLine(List<String> line)
   {
-   // TODO Auto-generated method stub
-   throw new dev.NotImplementedYetException();
-   //return null;
+   if( ptr >= maxDim )
+    return null;
+   
+   if( line == null )
+    line = new ArrayList<String>( lines.size() );
+   
+   for( List<String> l : lines )
+    line.add( ptr >= l.size()?"":l.get(ptr));
+   
+   ptr++;
+   
+   return line;
   }
   
  }
@@ -252,7 +278,7 @@ public class CopyOfAgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     block = new VerticalBlockSupplier( reader, parts );
   
    BlockHeader header = new BlockHeaderImpl(data);
-   analyzeHeader(header, parts, block.getLineNum() );
+   analyzeHeader(header, block.getLine(parts), block.getLineNum() );
    
    AgeTabObject cObj = null;
    
