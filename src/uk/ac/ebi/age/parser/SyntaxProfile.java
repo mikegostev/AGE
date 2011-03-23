@@ -27,4 +27,10 @@ public interface SyntaxProfile
  public String getModuleIdPrefix();
 
  public IdScope getDefaultIdScope();
+
+ public String getHorizontalBlockPrefix();
+ 
+ public String getVerticalBlockPrefix();
+ 
+ public boolean isHorizontalBlockDefault();
 }

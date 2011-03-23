@@ -16,6 +16,9 @@ public class DefaultSyntaxProfile implements SyntaxProfile
  public static final String globalIdPrefix="^";
  public static final String clusterIdPrefix="&";
  public static final String moduleIdPrefix="$";
+
+ public static final String horizontalBlockPrefix="-";
+ public static final String verticalBlockPrefix="|";
  
  public static final IdScope defaultScope=IdScope.CLUSTER;
  
@@ -84,6 +87,24 @@ public class DefaultSyntaxProfile implements SyntaxProfile
  public IdScope getDefaultIdScope()
  {
   return defaultScope;
+ }
+
+ @Override
+ public String getHorizontalBlockPrefix()
+ {
+  return horizontalBlockPrefix;
+ }
+
+ @Override
+ public String getVerticalBlockPrefix()
+ {
+  return verticalBlockPrefix;
+ }
+
+ @Override
+ public boolean isHorizontalBlockDefault()
+ {
+  return true;
  }
 
 }
