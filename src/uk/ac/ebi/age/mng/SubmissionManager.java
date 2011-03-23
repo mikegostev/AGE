@@ -23,6 +23,7 @@ import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.DataModule;
+import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
@@ -676,11 +677,12 @@ public class SubmissionManager
        do
        {
         id = Constants.localObjectIDPrefix+obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId(Constants.objectIDDomain)
-        +"-"+obj.getOriginalId()+"@"+mm.module.getId();
+        +"@"+mm.module.getId();
        }
-       while( ageStorage.hasObject(id) );
+       while( mm.idMap.containsKey(id) );
        
        obj.setId(id);
+       mm.idMap.put(id, obj);
       }
      }
     }
@@ -950,25 +952,29 @@ public class SubmissionManager
     
     String ref = exr.getTargetObjectId();
 
-    AgeObjectWritable tgObj = (AgeObjectWritable) stor.getObjectById(ref);
-
-    if(tgObj == null || cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4Upd.containsKey(tgObj.getDataModule().getId()) )
+    AgeObjectWritable tgObj = cstMeta.clusterIdMap.get(ref);
+    
+    // if there is no targer object within the cluster let's try to find global object but we have to keep in mind inverse relation!
+    if( tgObj == null )
     {
-     modloop: for(ModMeta refmm : cstMeta.incomeMods) // Old modules can't hold this ID due to obj ID  uniqueness
+     if( !exr.getAgeElClass().getInverseRelationClass().isImplicit() && exr.getSourceObject().getIdScope() != IdScope.GLOBAL )
      {
-      if(refmm == mm || refmm.module == null)
-       continue;
-
-      for(AgeObjectWritable candObj : refmm.module.getObjects())
-      {
-       if(candObj.getId() != null && candObj.getId().equals(ref))
-       {
-        tgObj = candObj;
-        break modloop;
-       }
-      }
+      extModRelRes = false;
+      extRelModLog.log(Level.ERROR, "Invalid external relation: '" + ref 
+        + "'. Target object found is not found within the cluster and the source object has not global identifier " +
+        		"but relation class has explicit inverse class so inverse relation is impossible. Module: " + n + " Source object: '"
+        + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: " + exr.getSourceObject().getOrder()
+        + "). Relation class: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
+      
+      continue;
      }
+
+     tgObj = (AgeObjectWritable) stor.getGlobalObject(ref);
+
+     if(tgObj == null || cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4Upd.containsKey(tgObj.getDataModule().getId()))
+      tgObj = null;
     }
+    
 
     if(tgObj == null)
     {
@@ -1044,9 +1050,14 @@ public class SubmissionManager
       exr.setTargetObject(tgObj);
      }
     }
-
    }
 
+   if(extModRelRes)
+    extRelModLog.log(Level.INFO, "Success");
+   else
+    extRelModLog.log(Level.ERROR, "Failed");
+
+   
    extRelRes = extRelRes && extModRelRes;
 
   }
@@ -1066,18 +1077,36 @@ public class SubmissionManager
   
   LogNode logUniq = logRoot.branch("Checking object identifiers uniquness");
   
-  Map<String,AgeObject> objIDs = new HashMap<String,AgeObject>();
   Map<DataModule,ModMeta> modMap = new HashMap<DataModule, SubmissionManager.ModMeta>();
   
   for( ModMeta mm : cstMeta.mod4Use )
   {
    modMap.put(mm.module, mm);
    
-   for( AgeObject obj : mm.module.getObjects() )
+   for( AgeObjectWritable obj : mm.module.getObjects() )
    {
-    if( obj.getId() != null )
+    if( obj.getId() == null )
+     continue;
+
+    AgeObject clashObj = mm.idMap.get(obj.getId());
+
+    if( clashObj != null )
     {
-     AgeObject clashObj = objIDs.get(obj.getId());
+     res = false;
+     
+     logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the same module: "
+       +( (mm.ord!=-1?mm.ord+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
+       +" and Row: " + clashObj.getOrder() 
+     );
+     
+     continue;
+    }
+    
+    mm.idMap.put(obj.getId(), obj);
+    
+    if( obj.getIdScope() == IdScope.CLUSTER )
+    {
+     clashObj = cstMeta.clusterIdMap.get(obj.getId());
      
      if( clashObj != null )
      {
@@ -1085,33 +1114,60 @@ public class SubmissionManager
       
       ModMeta clashMM = modMap.get(clashObj.getDataModule());
       
-      logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"'). Object 1: module "
+      logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the cluster. The first object: "
         +( (mm.ord!=-1?mm.ord+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
-        +" Object 2: module "
+        +". The second object: module "
         +( (clashMM.ord!=-1?clashMM.ord+" ":"(existing) ") + (clashMM.meta.getId()!=null?("ID='"+clashMM.meta.getId()+"' "):"") + "Row: " + clashObj.getOrder()  )
-        );
-     }
-     else
-     {
-      clashObj = stor.getObjectById(obj.getId());
+      );
       
-      if( clashObj != null )
-      {
-       res = false;
-       
-       logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"'). Object 1: module "
-         +( (mm.ord!=-1?mm.ord+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
-         +" Object 2: cluster ID='"
-         +( clashObj.getDataModule().getClusterId() + "' module ID='"+clashObj.getDataModule().getId()+"' " + "Row: " + clashObj.getOrder()  )
-         );
-      }
-      else
-       objIDs.put(obj.getId(), obj);
+      continue;
      }
+     
+     cstMeta.clusterIdMap.put(obj.getId(), obj);
     }
+    
+    if( obj.getIdScope() == IdScope.GLOBAL )
+    {
+     clashObj = cstMeta.globalIdMap.get(obj.getId());
+     
+     if( clashObj != null )
+     {
+      res = false;
+      
+      ModMeta clashMM = modMap.get(clashObj.getDataModule());
+      
+      logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the global scope. The first object: "
+        +( (mm.ord!=-1?mm.ord+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
+        +". The second object: module "
+        +( (clashMM.ord!=-1?clashMM.ord+" ":"(existing) ") + (clashMM.meta.getId()!=null?("ID='"+clashMM.meta.getId()+"' "):"") + "Row: " + clashObj.getOrder()  )
+      );
+      
+      continue;
+     }
+     
+     clashObj = stor.getGlobalObject(obj.getId());
+     
+     if( clashObj != null )
+     {
+      res = false;
+      
+     
+      logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the global scope. The first object: "
+        +( (mm.ord!=-1?mm.ord+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
+        +". The second object: cluster ID='"+clashObj.getDataModule().getClusterId()+"' module ID='"+clashObj.getDataModule().getId()+"' Row: " + clashObj.getOrder()
+      );
+      
+      continue;
+     }
+
+     
+     cstMeta.globalIdMap.put(obj.getId(), obj);
+    }
+
+
    }
-   
   }
+  
   
   if( res )
    logUniq.log(Level.INFO, "Success");
@@ -1156,21 +1212,11 @@ public class SubmissionManager
       AgeObjectWritable replObj = null;
       String tgObjId = invrsRel.getTargetObjectId();
       
-      lookup : for(ModMeta rfmm : cstMeta.incomeMods) // looking for alternative resolution among the new modules
-      {
-       if( rfmm.module != null ) // Skipping deleted modules
-       {
-        for( AgeObjectWritable rfObj : rfmm.module.getObjects() )
-        {
-         if( tgObjId.equals(rfObj.getId())  )
-         {
-          replObj = rfObj;
-          break lookup;
-         }
-        }
-       }
-      }
-    
+      replObj = target.getDataModule().getClusterId().equals(cstMeta.id)?
+        cstMeta.clusterIdMap.get(tgObjId) 
+      : cstMeta.globalIdMap.get(tgObjId);
+
+   
       if( replObj == null )
       {
         logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
@@ -1288,22 +1334,10 @@ public class SubmissionManager
   
     if( cstMeta.mod4Del.containsKey(refModId) || cstMeta.mod4Upd.containsKey(refModId) )
     {
-     AgeObject replObj = null;
+     AgeObject replObj = extDM.getClusterId().equals(cstMeta.id)?
+         cstMeta.clusterIdMap.get(extObjAttr.getTargetObjectId()) 
+       : cstMeta.globalIdMap.get(extObjAttr.getTargetObjectId());
      
-     lookup : for(ModMeta rfmm : cstMeta.incomeMods) // looking from alternative resolution among the new modules
-     {
-      if( rfmm.module != null ) // Skipping deleted modules
-      {
-       for( AgeObject rfObj : rfmm.module.getObjects() )
-       {
-        if( extObjAttr.getTargetObjectId().equals(rfObj.getId())  )
-        {
-         replObj = rfObj;
-         break lookup;
-        }
-       }
-      }
-     }
    
      if( replObj == null )
      {
@@ -1542,31 +1576,17 @@ public class SubmissionManager
     AgeExternalObjectAttributeWritable extAttr = (AgeExternalObjectAttributeWritable)attr;
     
     String ref = extAttr.getTargetObjectId();
-    
-    AgeObject tgObj = stor.getObjectById( ref );
-    
-    if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getId()) || cstMeta.mod4Upd.containsKey(tgObj.getId()) ) ) //We don't want to get dead objects 
-     tgObj = null;
-    
-    if( tgObj == null ) // Trying to resolve to the new objects
-    {
-     for( ModMeta mm : cstMeta.incomeMods )
-     {
-      if( mm.module == cmod || mm.module == null )
-       continue;
-      
-      for( AgeObjectWritable candObj : mm.module.getObjects() )
-      {
-       if( candObj.getId() != null && candObj.getId().equals(ref) )
-       {
-        tgObj = candObj;
-        break;
-       }
-      }
-     }
-    }
 
+    AgeObject tgObj = cstMeta.clusterIdMap.get( ref );
+
+    if( tgObj == null )
+    {
+     tgObj = stor.getGlobalObject( ref );
     
+     if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4Upd.containsKey(tgObj.getDataModule().getId()) ) ) //We don't want to get dead objects 
+      tgObj = null;
+    }
+   
     if( tgObj == null )
     {
      AgeObject obj  = (AgeObject)atStk.get(0);

@@ -25,9 +25,13 @@ public interface AgeStorage
  
  void shutdown();
 
- AgeObject getObjectById(String grpID);
+ public Collection<? extends AgeObject> getAllObjects();
+ public AgeObject getGlobalObject(String objID);
+ public AgeObject getClusterObject(String clustId, String objID);
 
- boolean hasObject(String id);
+// AgeObject getObjectById(String grpID);
+
+// boolean hasObject(String id);
  boolean hasDataModule(String id);
 
  void addDataChangeListener(DataChangeListener dataChangeListener);

@@ -27,6 +27,7 @@ import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
+import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
@@ -54,10 +55,22 @@ import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
 import uk.ac.ebi.mg.filedepot.FileDepot;
 
+import com.pri.util.Extractor;
 import com.pri.util.M2codec;
+import com.pri.util.collection.CollectionsUnion;
+import com.pri.util.collection.ExtractorCollection;
 
 public class SerializedStorage implements AgeStorageAdm
 {
+ private static Extractor<DataModuleWritable, Collection<AgeObjectWritable>> objExtractor = new Extractor<DataModuleWritable, Collection<AgeObjectWritable>>()
+ {
+  @Override
+  public Collection<AgeObjectWritable> extract(DataModuleWritable dm)
+  {
+   return dm.getObjects();
+  }
+ };
+ 
  private Log log = LogFactory.getLog(this.getClass());
  
  private static final String modelPath = "model";
@@ -69,7 +82,9 @@ public class SerializedStorage implements AgeStorageAdm
  private File dataDir;
  private File filesDir;
  
- private Map<String, AgeObjectWritable> mainIndexMap = new HashMap<String, AgeObjectWritable>();
+ private Map<String, AgeObjectWritable> globalIndexMap = new HashMap<String, AgeObjectWritable>();
+ private Map<String, Map<String,AgeObjectWritable>> clusterIndexMap = new HashMap<String, Map<String,AgeObjectWritable>>();
+ 
  private Map<String, DataModuleWritable> moduleMap = new TreeMap<String, DataModuleWritable>();
 
  private Map<AgeIndex,AgeStorageIndex> indexMap = new HashMap<AgeIndex,AgeStorageIndex>();
@@ -267,8 +282,21 @@ public class SerializedStorage implements AgeStorageAdm
      
      moduleMap.put(dm.getId(), dm);
      
+     Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
+     
      for(AgeObjectWritable obj : dm.getObjects())
-      mainIndexMap.put(obj.getId(), obj);
+     {
+      if( obj.getIdScope() == IdScope.MODULE )
+       continue;
+      
+      if( clustMap == null )
+       clusterIndexMap.put(dm.getClusterId(),clustMap = new HashMap<String, AgeObjectWritable>());
+      
+      clustMap.put(obj.getId(), obj);
+
+      if( obj.getIdScope() == IdScope.GLOBAL )
+       globalIndexMap.put(obj.getId(), obj);
+     }
     }
     
    }
@@ -286,29 +314,42 @@ public class SerializedStorage implements AgeStorageAdm
 
  }
  
- public void storeDataModule(DataModuleWritable sbm) throws RelationResolveException, ModuleStoreException
+ public void storeDataModule(DataModuleWritable dm) throws RelationResolveException, ModuleStoreException
  {
   if( ! master )
    throw new ModuleStoreException("Only the master instance can store data");
   
-  if( sbm.getId() == null )
+  if( dm.getId() == null )
    throw new ModuleStoreException("Module ID is null");
   
   try
   {
    dbLock.writeLock().lock();
 
-   boolean changed = removeDataModule( sbm.getId() );
+   boolean changed = removeDataModule( dm.getId() );
  
-   saveDataModule(sbm);
+   saveDataModule(dm);
    
-   moduleMap.put(sbm.getId(), sbm);
+   moduleMap.put(dm.getId(), dm);
 
+   Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
    
-   for( AgeObjectWritable obj : sbm.getObjects() )
-    mainIndexMap.put(obj.getId(), obj);
+   for(AgeObjectWritable obj : dm.getObjects())
+   {
+    if( obj.getIdScope() == IdScope.MODULE )
+     continue;
+    
+    if( clustMap == null )
+     clusterIndexMap.put(dm.getClusterId(),clustMap = new HashMap<String, AgeObjectWritable>());
+    
+    clustMap.put(obj.getId(), obj);
+
+    if( obj.getIdScope() == IdScope.GLOBAL )
+     globalIndexMap.put(obj.getId(), obj);
+   }
    
-   updateIndices( Collections.singletonList(sbm), changed );
+ 
+   updateIndices( Collections.singletonList(dm), changed );
    
    for(DataChangeListener chls : chgListeners )
     chls.dataChanged();
@@ -321,6 +362,11 @@ public class SerializedStorage implements AgeStorageAdm
 
  }
 
+ @Override
+ public Collection<? extends AgeObjectWritable> getAllObjects()
+ {
+  return new CollectionsUnion<AgeObjectWritable>( new ExtractorCollection<DataModuleWritable, Collection<AgeObjectWritable>>( moduleMap.values(), objExtractor) );
+ }
 
  public void init(String initStr) throws StorageInstantiationException
  {
@@ -382,14 +428,32 @@ public class SerializedStorage implements AgeStorageAdm
     
     moduleMap.put(dm.getId(), dm);
     
-    for( AgeObjectWritable obj : dm.getObjects() )
-     mainIndexMap.put(obj.getId(), obj);
+    Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
+
+    for(AgeObjectWritable obj : dm.getObjects())
+    {
+     if( obj.getIdScope() == IdScope.MODULE )
+      continue;
+     
+     if( clustMap == null )
+      clusterIndexMap.put(dm.getClusterId(),clustMap = new HashMap<String, AgeObjectWritable>());
+     
+     clustMap.put(obj.getId(), obj);
+
+     if( obj.getIdScope() == IdScope.GLOBAL )
+      globalIndexMap.put(obj.getId(), obj);
+
+    }    
+
     
     dm.setMasterModel(model);
    }
    
    for( DataModuleWritable smb : moduleMap.values() )
    {
+    Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(smb.getClusterId());
+
+    
     if( smb.getExternalRelations() != null )
     {
      for( AgeExternalRelationWritable exr : smb.getExternalRelations() )
@@ -397,7 +461,13 @@ public class SerializedStorage implements AgeStorageAdm
       if( exr.getTargetObject() != null )
        continue;
       
-      AgeObjectWritable tgObj = mainIndexMap.get(exr.getTargetObjectId());
+      AgeObjectWritable tgObj = null;
+      
+      if( clustMap != null )
+       tgObj = clustMap.get(exr.getTargetObjectId());
+      
+      if( tgObj == null )
+       tgObj = globalIndexMap.get(exr.getTargetObjectId());
       
       if( tgObj == null )
        log.warn("Can't resolve external relation. "+exr.getTargetObjectId());
@@ -455,35 +525,48 @@ public class SerializedStorage implements AgeStorageAdm
      }
     }
    
-    for( AgeFileAttributeWritable fattr : smb.getFileAttributes() )
+    if( smb.getFileAttributes() != null )
     {
-     String fid = makeLocalFileID(fattr.getFileReference(), smb.getClusterId());
-     
-     if( fileDepot.getFilePath(fid).exists() )
-      fattr.setFileId(fid);
-     else
+     for(AgeFileAttributeWritable fattr : smb.getFileAttributes())
      {
-      fid = makeGlobalFileID(fattr.getFileReference());
+      String fid = makeLocalFileID(fattr.getFileReference(), smb.getClusterId());
 
-      if( fileDepot.getFilePath(fid).exists() )
+      if(fileDepot.getFilePath(fid).exists())
        fattr.setFileId(fid);
       else
-       log.error("Can't resolve file attribute: '"+fattr.getFileReference()+"'. Cluster: "+smb.getClusterId()
-         +" Module: "+smb.getId());
+      {
+       fid = makeGlobalFileID(fattr.getFileReference());
+
+       if(fileDepot.getFilePath(fid).exists())
+        fattr.setFileId(fid);
+       else
+        log.error("Can't resolve file attribute: '" + fattr.getFileReference() + "'. Cluster: " + smb.getClusterId()
+          + " Module: " + smb.getId());
+      }
      }
     }
-   
    }
    
-   for( AgeObjectWritable obj : mainIndexMap.values() )
+   String cClustID = null;
+   Map<String, AgeObjectWritable> clustMap = null;
+   for( AgeObjectWritable obj : getAllObjects() )
    {
+    String clstId = obj.getDataModule().getClusterId();
+    
+    if( !clstId.equals(cClustID) )
+    {
+     clustMap = clusterIndexMap.get(obj.getDataModule().getClusterId());
+     cClustID=clstId;
+    }
+    
+    
     if( obj.getRelations() != null )
     {
      for( AgeRelationWritable rel : obj.getRelations() )
-      connectObjectAttributes(rel);
+      connectObjectAttributes(rel, clustMap);
     }
     
-    connectObjectAttributes( obj );
+    connectObjectAttributes( obj, clustMap );
    }
   }
   catch(Exception e)
@@ -496,7 +579,7 @@ public class SerializedStorage implements AgeStorageAdm
   }
  }
  
- private void connectObjectAttributes( Attributed host )
+ private void connectObjectAttributes( Attributed host, Map<String, AgeObjectWritable> clustMap )
  {
   if( host.getAttributes() == null )
    return;
@@ -507,7 +590,10 @@ public class SerializedStorage implements AgeStorageAdm
    {
     AgeExternalObjectAttributeWritable obAttr = (AgeExternalObjectAttributeWritable)attr;
     
-    AgeObject targObj = mainIndexMap.get(obAttr.getTargetObjectId());
+    AgeObjectWritable targObj = clustMap.get(obAttr.getTargetObjectId());
+    
+    if( targObj == null )
+     targObj = globalIndexMap.get( obAttr.getTargetObjectId() );
     
     if( targObj == null )
      log.warn("Can't resolve object attribute: "+obAttr.getTargetObjectId());
@@ -515,7 +601,7 @@ public class SerializedStorage implements AgeStorageAdm
      obAttr.setTargetObject(targObj);
    }
    
-   connectObjectAttributes(attr);
+   connectObjectAttributes(attr, clustMap);
   }
  }
  
@@ -600,9 +686,19 @@ public class SerializedStorage implements AgeStorageAdm
     rel.getTargetObject().removeRelation(rel.getInverseRelation());
   }
   
+  Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
+  
   for( AgeObjectWritable obj : dm.getObjects() )
-   mainIndexMap.remove(obj.getId());
+  {
+   if( obj.getIdScope() == IdScope.MODULE )
+    continue;
    
+   clustMap.remove(obj.getId());
+   
+   if( obj.getIdScope() == IdScope.GLOBAL )
+    globalIndexMap.remove(obj.getId());
+  }
+  
   moduleMap.remove(modId);
  
   return true;
@@ -694,16 +790,28 @@ public class SerializedStorage implements AgeStorageAdm
 
 
  @Override
- public AgeObject getObjectById(String objID)
+ public AgeObjectWritable getGlobalObject(String objID)
  {
-  return mainIndexMap.get( objID );
+  return globalIndexMap.get( objID );
  }
  
  @Override
- public boolean hasObject(String objID)
+ public AgeObjectWritable getClusterObject(String clustId, String objID)
  {
-  return mainIndexMap.containsKey( objID );
+  Map<String,AgeObjectWritable> clstMap = clusterIndexMap.get(clustId);
+  
+  if( clstMap == null )
+   return null;
+  
+  return clstMap.get( objID );
  }
+
+ 
+// @Override
+// public boolean hasObject(String objID)
+// {
+//  return mainIndexMap.containsKey( objID );
+// }
 
  @Override
  public boolean hasDataModule(String dmID)
@@ -730,23 +838,23 @@ public class SerializedStorage implements AgeStorageAdm
   dbLock.writeLock().unlock();
  }
 
- @Override
- public void addRelations(String key, Collection<AgeRelationWritable> rels)
- {
-  AgeObjectWritable obj = mainIndexMap.get(key);
-  
-  for( AgeRelationWritable r : rels )
-   obj.addRelation(r);
- }
- 
- @Override
- public void removeRelations(String key, Collection<AgeRelationWritable> rels)
- {
-  AgeObjectWritable obj = mainIndexMap.get(key);
-  
-  for( AgeRelationWritable r : rels )
-   obj.removeRelation(r);
- }
+// @Override
+// public void addRelations(String key, Collection<AgeRelationWritable> rels)
+// {
+//  AgeObjectWritable obj = mainIndexMap.get(key);
+//  
+//  for( AgeRelationWritable r : rels )
+//   obj.addRelation(r);
+// }
+// 
+// @Override
+// public void removeRelations(String key, Collection<AgeRelationWritable> rels)
+// {
+//  AgeObjectWritable obj = mainIndexMap.get(key);
+//  
+//  for( AgeRelationWritable r : rels )
+//   obj.removeRelation(r);
+// }
 
  @Override
  public File getAttachment(String id)
