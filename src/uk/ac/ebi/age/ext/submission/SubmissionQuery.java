@@ -21,6 +21,8 @@ public class SubmissionQuery implements Serializable
  private int limit;
  private int offset;
  
+ private int total=0;
+ 
  public String getQuery()
  {
   return query;
@@ -129,6 +131,16 @@ public class SubmissionQuery implements Serializable
  public void setOffset(int offset)
  {
   this.offset = offset;
+ }
+
+ public int getTotal()
+ {
+  return total;
+ }
+
+ public void setTotal(int total)
+ {
+  this.total = total;
  }
 
 }

@@ -1,11 +1,11 @@
 package uk.ac.ebi.age.service.submission;
 
 import java.io.File;
-import java.util.List;
 
 import uk.ac.ebi.age.ext.submission.SubmissionDBException;
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
 import uk.ac.ebi.age.ext.submission.SubmissionQuery;
+import uk.ac.ebi.age.ext.submission.SubmissionReport;
 
 public abstract class SubmissionDB
 {
@@ -28,7 +28,7 @@ public abstract class SubmissionDB
 
  public abstract void shutdown();
 
- public abstract List<SubmissionMeta> getSubmissions(SubmissionQuery q) throws SubmissionDBException;
+ public abstract SubmissionReport getSubmissions(SubmissionQuery q) throws SubmissionDBException;
 
  public abstract SubmissionMeta getSubmission(String id) throws SubmissionDBException;
 

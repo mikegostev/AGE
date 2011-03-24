@@ -21,6 +21,7 @@ import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
 import uk.ac.ebi.age.ext.submission.SubmissionDBException;
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
 import uk.ac.ebi.age.ext.submission.SubmissionQuery;
+import uk.ac.ebi.age.ext.submission.SubmissionReport;
 import uk.ac.ebi.age.service.submission.SubmissionDB;
 import uk.ac.ebi.age.util.FileUtil;
 import uk.ac.ebi.mg.filedepot.FileDepot;
@@ -303,7 +304,7 @@ public class H2SubmissionDB extends SubmissionDB
  }
 
  @Override
- public List<SubmissionMeta> getSubmissions(SubmissionQuery q) throws SubmissionDBException
+ public SubmissionReport getSubmissions(SubmissionQuery q) throws SubmissionDBException
  {
   String query = q.getQuery();
   
@@ -317,69 +318,82 @@ public class H2SubmissionDB extends SubmissionDB
   boolean needJoin = q.getModuleID() != null || q.getModifiedFrom() != -1 || q.getModifiedTo() != -1 || q.getModifier() != null;
   
   
-  StringBuilder sql = new StringBuilder(800);
+  StringBuilder condExpr = new StringBuilder(800);
   
-  if( q.getQuery() != null && q.getQuery().length() > 0 )
+  int pos=0;
+  if( q.getTotal() <= 0 )
   {
-   sql.append("SELECT S.* FROM FTL_SEARCH_DATA('");
-   StringUtils.appendEscaped(sql, q.getQuery(), '\'', '\'');
-   sql.append("', 0, 0) FT JOIN "+submissionDB+'.'+submissionTable+" S ON  S.ID=FT.KEYS[0]");
+   condExpr.append("SELECT COUNT( DISTINCT S.ID) AS SC");
+   
+   if( needJoin )
+    condExpr.append(", COUNT( DISTINCT M.ID )");
+  
+   pos = condExpr.length();
   }
   else
-   sql.append("SELECT S.* FROM "+submissionDB+'.'+submissionTable+" S");
+   condExpr.append("SELECT S.*");
+  
+  if( query != null )
+  {
+   condExpr.append(" FROM FTL_SEARCH_DATA('");
+   StringUtils.appendEscaped(condExpr, q.getQuery(), '\'', '\'');
+   condExpr.append("', 0, 0) FT JOIN "+submissionDB+'.'+submissionTable+" S ON  S.ID=FT.KEYS[0]");
+  }
+  else
+   condExpr.append(" FROM "+submissionDB+'.'+submissionTable+" S");
 
   if( needJoin )
-   sql.append(" LEFT JOIN "+submissionDB+'.'+moduleTable+" M ON S.id=M.submid");
+   condExpr.append(" LEFT JOIN "+submissionDB+'.'+moduleTable+" M ON S.id=M.submid");
 
   boolean hasCond = false;
   
   if( q.getCreatedFrom() != -1 )
   {
-   sql.append(" WHERE S.ctime >= "+ q.getCreatedFrom());
+   condExpr.append(" WHERE S.ctime >= "+ q.getCreatedFrom());
    hasCond=true;
   }
   
   if( q.getCreatedTo() != -1 )
   {
    if(hasCond)
-    sql.append(" AND");
+    condExpr.append(" AND");
    else
-    sql.append(" WHERE");
+    condExpr.append(" WHERE");
    
-   sql.append(" S.ctime <= ").append(q.getCreatedTo());
+   condExpr.append(" S.ctime <= ").append(q.getCreatedTo());
    hasCond=true;
   }
 
   if( q.getModifiedFrom() != -1 )
   {
    if(hasCond)
-    sql.append(" AND");
+    condExpr.append(" AND");
    else
-    sql.append(" WHERE");
+    condExpr.append(" WHERE");
    
-   sql.append(" (S.mtime >= ").append(q.getModifiedFrom()).append(" OR M.mtime >= ").append(q.getModifiedFrom()).append(")");
+   condExpr.append(" (S.mtime >= ").append(q.getModifiedFrom()).append(" OR M.mtime >= ").append(q.getModifiedFrom()).append(")");
    hasCond=true;
   }
 
   if( q.getModifiedTo() != -1 )
   {
    if(hasCond)
-    sql.append(" AND");
+    condExpr.append(" AND");
    else
-    sql.append(" WHERE");
+    condExpr.append(" WHERE");
    
-   sql.append(" (S.mtime <= ").append(q.getModifiedTo()).append(" OR M.mtime <= ").append(q.getModifiedTo()).append(")");
+   condExpr.append(" (S.mtime <= ").append(q.getModifiedTo()).append(" OR M.mtime <= ").append(q.getModifiedTo()).append(")");
    hasCond=true;
   }
 
   if( q.getSubmitter() != null )
   {
    if(hasCond)
-    sql.append(" AND ");
+    condExpr.append(" AND ");
    else
-    sql.append(" WHERE ");
+    condExpr.append(" WHERE ");
    
-   addWildcardedCondition(sql, "S.creator", q.getSubmitter());
+   addWildcardedCondition(condExpr, "S.creator", q.getSubmitter());
    
    hasCond=true;
   }
@@ -387,17 +401,17 @@ public class H2SubmissionDB extends SubmissionDB
   if( q.getModifier() != null )
   {
    if(hasCond)
-    sql.append(" AND (");
+    condExpr.append(" AND (");
    else
-    sql.append(" WHERE (");
+    condExpr.append(" WHERE (");
 
-   addWildcardedCondition(sql, "S.modifier", q.getModifier() );
+   addWildcardedCondition(condExpr, "S.modifier", q.getModifier() );
 
-   sql.append(" OR ");
+   condExpr.append(" OR ");
 
-   addWildcardedCondition(sql, "M.modifier", q.getModifier() );
+   addWildcardedCondition(condExpr, "M.modifier", q.getModifier() );
    
-   sql.append(")");
+   condExpr.append(")");
    
    hasCond=true;
   }
@@ -405,11 +419,11 @@ public class H2SubmissionDB extends SubmissionDB
   if( q.getSubmissionID() != null )
   {
    if(hasCond)
-    sql.append(" AND ");
+    condExpr.append(" AND ");
    else
-    sql.append(" WHERE ");
+    condExpr.append(" WHERE ");
    
-   addWildcardedCondition(sql, "S.id", q.getSubmissionID());
+   addWildcardedCondition(condExpr, "S.id", q.getSubmissionID());
    
    hasCond=true;
   }
@@ -417,21 +431,51 @@ public class H2SubmissionDB extends SubmissionDB
   if( q.getModuleID() != null )
   {
    if(hasCond)
-    sql.append(" AND ");
+    condExpr.append(" AND ");
    else
-    sql.append(" WHERE ");
+    condExpr.append(" WHERE ");
    
-   addWildcardedCondition(sql, "M.id", q.getSubmissionID());
+   addWildcardedCondition(condExpr, "M.id", q.getSubmissionID());
 
    hasCond=true;
   }
-
-  sql.append(" LIMIT ").append(q.getLimit());
-  sql.append(" OFFSET ").append(q.getOffset());
+  
   
   try
   {
-   return extractSubmission(sql.toString(), null);
+   SubmissionReport rep = new SubmissionReport();
+
+   if( q.getTotal() <= 0 )
+   {
+    Statement stmt = conn.createStatement();
+    
+    ResultSet rst = stmt.executeQuery(condExpr.toString());
+    
+    rst.next();
+    
+    rep.setTotalSubmissions(rst.getInt(1));
+    
+    if( needJoin )
+     rep.setTotalMatchedModules(rst.getInt(2));
+    
+    rst.close();
+    stmt.close();
+    
+    String repStr = "SELECT S.*";
+    
+    for( int i=0; i < pos; i++ )
+     condExpr.setCharAt(i, i>=repStr.length()?' ':repStr.charAt(i));
+   }
+   else
+    rep.setTotalSubmissions( q.getTotal() );
+
+   condExpr.append(" LIMIT ").append(q.getLimit());
+   condExpr.append(" OFFSET ").append(q.getOffset());
+   
+   
+   rep.setSubmissions( extractSubmission(condExpr.toString(), null) );
+   
+   return rep;
   }
   catch(SQLException e)
   {
