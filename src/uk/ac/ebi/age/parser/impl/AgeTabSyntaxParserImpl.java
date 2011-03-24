@@ -17,216 +17,364 @@ import uk.ac.ebi.age.util.StringUtil;
 
 public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 {
-
- public AgeTabModule parse( String txt, SyntaxProfile profile ) throws ParserException
+ interface BlockSupplier
  {
-  AgeTabModule data = new AgeTabModuleImpl( this );
-  
-  
-  int cpos = 0;
-  int len = txt.length();
-  int ln = 0;
-  char colSep='\t';
-  
-//  String eol = "\r\n";
-//  
-//  if( txt.indexOf(eol) == -1)
-//   eol="\n";
-//
-//  if( txt.indexOf(eol) == -1)
-//   throw new ParserException(1,1,"File must contains at least 2 lines separated by either \\n or \\r\\n "); 
-// 
-//  int eolLength = eol.length();
-  
-//  while( txt.startsWith(eol, cpos) )
-//  {
-//   cpos+=eolLength;
-//   ln++;
-//  }
-  
-  while( cpos < len )
-  {
-   if( txt.charAt(cpos) == '\r' )
-    cpos++;
-   else if( txt.charAt(cpos) == '\n' )
-   {
-    ln++;
-    cpos++;
-   }
-   else
-    break;
-  }
-  
-  {  // looking for column separator
-   int commaPos = txt.indexOf(',',cpos);
-   int tabPos = txt.indexOf('\t',cpos);
-   
-   commaPos = commaPos==-1?Integer.MAX_VALUE:commaPos;
-   tabPos = tabPos==-1?Integer.MAX_VALUE:tabPos;
-   
-   if( commaPos < tabPos )
-    colSep = ',';
-  }
-  
-  String sep = ""+colSep;
+//  List<String> getHeaderLine();
 
-  List<String> parts = new ArrayList<String>(100);
-  boolean newContext = true;
-  BlockHeader header = null;
+  int getLineNum();
+
+  List<String> getLine(List<String> parts);
+ }
+ 
+ static class HorizontalBlockSupplier implements BlockSupplier
+ {
+  private List<String> firstLine;
+  private LineReader reader;
   
-//  AgeObject cObj=null;
-//  
-//  ModelFactory fact=ModelFactory.getInstance();
-//  
-//  Map<String,AgeObject> classMap = null;
-//  Map<AgeClass,Map<String,AgeObject>> objMap = new TreeMap<AgeClass,Map<String,AgeObject>>();
-  
-  AgeTabObject cObj=null;
-  
-  while(cpos < len)
+  HorizontalBlockSupplier(LineReader r, List<String> fstLine)
   {
+   reader = r;
+   firstLine = new ArrayList<String>( fstLine.size() );
+   
+   for( String s : fstLine )
+    firstLine.add(s);
+  }
+  
+
+//  @Override
+//  public List<String> getHeaderLine()
+//  {
+//   return firstLine;
+//  }
+
+
+  @Override
+  public int getLineNum()
+  {
+   return reader.getLineNumber();
+  }
+
+
+  @Override
+  public List<String> getLine(List<String> parts)
+  {
+   if( firstLine != null )
+   {
+    
+    if( parts != null )
+    {
+     parts.clear();
+     
+     for( String s : firstLine )
+      parts.add(s);
+     
+     firstLine=null;
+     
+     return parts;
+    }
+    
+    List<String> fl = firstLine;
+    firstLine = null;
+    return fl;
+   }
+   
+   List<String> line = reader.readLine(parts);
+   
+   if( line == null )
+    return null;
+   
+   if( isEmptyLine(line) )
+    return null;
+   
+   return line;
+  }
+  
+ }
+ 
+ static class VerticalBlockSupplier implements BlockSupplier
+ {
+//  private List<List<String>> matrix = new ArrayList<List<String>>( 100 );
+  
+  private int ptr = 0;
+  private List<List<String>> lines = new ArrayList<List<String>>( 50 );
+  private int maxDim = 0;
+ 
+  VerticalBlockSupplier(LineReader reader, List<String> fstLine)
+  {
+   List<String> line = new ArrayList<String>( fstLine.size() );
+   
+   for( String s : fstLine )
+    line.add(s);
+
+   lines.add(line);
+   
+   while( ( line = reader.readLine(null) ) != null && ! isEmptyLine(line) )
+   {
+    lines.add(line);
+   
+    if( maxDim < line.size() )
+     maxDim = line.size();
+   }
+   
+//   for( int i=0; i < maxDim; i++ )
+//   {
+//    line = new ArrayList<String>( lines.size() );
+//    matrix.add(line);
+//    
+//    for( List<String> l : lines )
+//     line.add( i >= l.size()?"":l.get(i));
+//   }
+   
+  }
+  
+
+  @Override
+  public int getLineNum()
+  {
+   return ptr;
+  }
+
+
+  @Override
+  public List<String> getLine(List<String> line)
+  {
+   if( ptr >= maxDim )
+    return null;
+   
+   if( line == null )
+    line = new ArrayList<String>( lines.size() );
+   else
+    line.clear();
+   
+   for( List<String> l : lines )
+    line.add( ptr >= l.size()?"":l.get(ptr));
+   
+   ptr++;
+   
+   return line;
+  }
+  
+ }
+
+ 
+ private static class LineReader
+ {
+  String text;
+  String columnSep="\t";
+  
+  int cpos=0;
+  int lpos;
+  int ln=0;
+  
+  int textLen;
+  
+  LineReader( String text )
+  {
+   textLen = text.length();
+   
+   while( cpos < textLen )
+   {
+    if( text.charAt(cpos) == '\r' )
+     cpos++;
+    else if( text.charAt(cpos) == '\n' )
+    {
+     ln++;
+     cpos++;
+    }
+    else
+     break;
+   }
+   
+   {  // looking for column separator
+    int commaPos = text.indexOf(',',cpos);
+    int tabPos = text.indexOf('\t',cpos);
+    
+    commaPos = commaPos==-1?Integer.MAX_VALUE:commaPos;
+    tabPos = tabPos==-1?Integer.MAX_VALUE:tabPos;
+    
+    if( commaPos < tabPos )
+     columnSep = ",";
+   }
+   
+   this.text = text;
+  }
+  
+  int getLineNumber()
+  {
+   return ln;
+  }
+  
+  int getCurrentPosition()
+  {
+   return cpos;
+  }
+  
+  int getLineBeginPosition()
+  {
+   return lpos;
+  }
+  
+  List<String> readLine( List<String> accum )
+  {
+   if( cpos >= textLen )
+    return null;
+   
+   lpos = cpos;
+   
    ln++;
 
-   int pos = txt.indexOf('\n', cpos);
+   if( accum == null )
+    accum = new ArrayList<String>(50);
+   else
+    accum.clear();
+   
+   int pos = text.indexOf('\n', cpos);
 
    String line = null;
    
    if(pos == -1)
    {
-    line=txt.substring(cpos);
-    cpos=len;
+    line=text.substring(cpos);
+    cpos=text.length();
    }
    else
    {
     int tpos = cpos;   
     cpos = pos + 1;
 
-    if( txt.charAt( pos-1 ) == '\r')
+    if( text.charAt( pos-1 ) == '\r')
      pos--;
     
-    line=txt.substring(tpos,pos);
+    line=text.substring(tpos,pos);
    }
 
-   parts.clear();
-   StringUtil.splitExcelString(line, sep, parts);
-   
+   StringUtil.splitExcelString(line, columnSep, accum);
+  
+   return accum;
+  }
+ }
+ 
+ public AgeTabModule parse( String txt, SyntaxProfile profile ) throws ParserException
+ {
+  AgeTabModule data = new AgeTabModuleImpl( this );
+  
+  List<String> parts = new ArrayList<String>(100);
+
+  LineReader reader = new LineReader(txt);
+ 
+  BlockSupplier block;
+  
+  while( reader.readLine(parts) != null )
+  {
    if( isEmptyLine(parts) )
-   {
-    newContext=true;
     continue;
-   }
-   
-   
-   if( newContext )
-   {
-//    int endSz=-1;
-//    int i=-1;
-//    for( String pt : parts )
-//    {
-//     i++;
-//     
-//     if( pt.length() == 0 )
-//     {
-//      if( endSz == -1 )
-//       endSz=i;
-//     }
-//     else if( endSz != -1 )
-//      throw new ParserException(ln,i,"Invalid cell contetns. Must be empty");
-//    }
-//    
-//    
-//    List<String> hdrParts = endSz != -1?parts=parts.subList(0, endSz):parts;
 
-    newContext = false;
-
-    header = new BlockHeaderImpl(data);
-    analyzeHeader(header, parts, ln);
-    
-    cObj = null;
-    
-    continue;
-   }
+   String classRef = parts.get(0);
    
-   Iterator<String> partIter = parts.iterator();
-   
-   String part = partIter.next();
-   
-   if( part.length() != 0 )
+   if( classRef.startsWith(profile.getHorizontalBlockPrefix()) )
    {
-    if( part.equals( profile.getAnonymousObjectId() ) )
-    { 
-     String id = "??"+IdGenerator.getInstance().getStringId("tempObjectId");
-     cObj = data.createObject(id,header,ln);
-     cObj.setIdDefined(false);
-    }
-    else
+    parts.set(0, classRef.substring(profile.getHorizontalBlockPrefix().length()));
+    block = new HorizontalBlockSupplier( reader, parts );
+   }
+   else if( classRef.startsWith(profile.getVerticalBlockPrefix()) )
+   {
+    parts.set(0, classRef.substring(profile.getVerticalBlockPrefix().length()));
+    block = new VerticalBlockSupplier( reader, parts );
+   }
+   else if( profile.isHorizontalBlockDefault() )
+    block = new HorizontalBlockSupplier( reader, parts );
+   else
+    block = new VerticalBlockSupplier( reader, parts );
+  
+   BlockHeader header = new BlockHeaderImpl(data);
+   analyzeHeader(header, block.getLine(parts), block.getLineNum() );
+   
+   AgeTabObject cObj = null;
+   
+   parts.clear();
+   while( block.getLine(parts) != null )
+   {
+    Iterator<String> partIter = parts.iterator();
+    
+    String part = partIter.next();
+    
+    if( part.length() != 0 )
     {
-     String id = part;
-     boolean defined = ! part.startsWith( profile.getAnonymousObjectId());
-     
-     IdScope scope = defined? profile.getDefaultIdScope() : IdScope.MODULE;
-
-     String pfx = profile.getGlobalIdPrefix();
-     
-     if( part.startsWith(pfx) )
-     {
-      id = part.substring(pfx.length());
-      scope = IdScope.GLOBAL;
+     if( part.equals( profile.getAnonymousObjectId() ) )
+     { 
+      String id = "??"+IdGenerator.getInstance().getStringId("tempObjectId");
+      cObj = data.createObject(id,header,block.getLineNum());
+      cObj.setIdDefined(false);
+      cObj.setIdScope(IdScope.MODULE);
      }
      else
      {
-      pfx = profile.getClusterIdPrefix();
+      String id = part;
+      boolean defined = ! part.startsWith( profile.getAnonymousObjectId());
+      
+      IdScope scope = defined? profile.getDefaultIdScope() : IdScope.MODULE;
+
+      String pfx = profile.getGlobalIdPrefix();
       
       if( part.startsWith(pfx) )
       {
        id = part.substring(pfx.length());
-       scope = IdScope.CLUSTER;
+       scope = IdScope.GLOBAL;
       }
       else
       {
-       pfx = profile.getModuleIdPrefix();
+       pfx = profile.getClusterIdPrefix();
        
        if( part.startsWith(pfx) )
        {
         id = part.substring(pfx.length());
-        scope = IdScope.MODULE;
+        scope = IdScope.CLUSTER;
+       }
+       else
+       {
+        pfx = profile.getModuleIdPrefix();
+        
+        if( part.startsWith(pfx) )
+        {
+         id = part.substring(pfx.length());
+         scope = IdScope.MODULE;
+        }
        }
       }
+      
+   
+
+      cObj = data.getOrCreateObject(id,header, block.getLineNum() );
+      
+      cObj.setIdScope(scope);
+      cObj.setIdDefined( defined );
+      cObj.setPrototype( part.equals( profile.getPrototypeObjectId() ) );
+     }
+    }
+    else if( cObj == null )
+     throw new ParserException(block.getLineNum(), 1, "Object identifier is expected"); // TODO provide correct coords here
+   
+    int col=1; 
+    for( ClassReference prop : header.getColumnHeaders() )
+    {
+     col++;
+     
+     if(!partIter.hasNext())
+      break;
+     
+     String val = partIter.next();
+
+     if( prop != null )
+     {
+      if( val.length() > 0 )
+       cObj.addValue(block.getLineNum(),col,val,prop);
+     }
+     else if( val.length() > 0 )
+     {
+      throw new ParserException(block.getLineNum(),col,"Not empty value in the empty-headed column");
      }
      
-  
-
-     cObj = data.getOrCreateObject(id,header,ln);
-     
-     cObj.setIdScope(scope);
-     cObj.setIdDefined( defined );
-     cObj.setPrototype( part.equals( profile.getPrototypeObjectId() ) );
     }
-   }
-   else if( cObj == null )
-    throw new ParserException(ln, 1, "Object identifier is expected");
-   
-   int col=1; 
-   for( ClassReference prop : header.getColumnHeaders() )
-   {
-    col++;
-    
-    if(!partIter.hasNext())
-     break;
-    
-    String val = partIter.next();
-
-    if( prop != null )
-    {
-     if( val.length() > 0 )
-      cObj.addValue(ln,col,val,prop);
-    }
-    else if( val.length() > 0 )
-    {
-     throw new ParserException(ln,col,"Not empty value in the empty-headed column");
-    }
-    
-    
    }
    
   }
@@ -303,7 +451,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
  }
 
  
- private boolean isEmptyLine( List<String> parts )
+ private static boolean isEmptyLine( List<String> parts )
  {
   for(String pt : parts )
    if( pt.length() != 0 )

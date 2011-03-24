@@ -565,7 +565,7 @@ public class SubmissionManager
     
     LogNode vldLog = semLog.branch("Processing module: "+n);
     
-    boolean modRes = validator.validate(mm.module, semLog);
+    boolean modRes = validator.validate(mm.module, vldLog);
     
     if(modRes)
      vldLog.log(Level.INFO, "Success");
