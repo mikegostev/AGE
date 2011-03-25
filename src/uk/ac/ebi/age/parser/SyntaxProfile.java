@@ -14,8 +14,6 @@ public interface SyntaxProfile
  
  public String getFlagsEqualSign();
  
- public String getParentClassPrefixSeparator();
-
  public String getPrototypeObjectId();
  
  public String getAnonymousObjectId();

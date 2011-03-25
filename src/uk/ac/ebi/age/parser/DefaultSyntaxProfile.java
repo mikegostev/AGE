@@ -9,7 +9,6 @@ public class DefaultSyntaxProfile implements SyntaxProfile
  public static final String qualifierTokenBrackets="[]";
  public static final String flagsSeparatorSign=";";
  public static final String flagsEqualSign="=";
- public static final String parentClassPrefixSeparator=".";
  public static final String prototypeObjectId="*";
  public static final String anonymousObjectId="?";
  
@@ -21,6 +20,7 @@ public class DefaultSyntaxProfile implements SyntaxProfile
  public static final String verticalBlockPrefix="|";
  
  public static final IdScope defaultScope=IdScope.CLUSTER;
+ public static final boolean defaultHorizontal = true;
  
  @Override
  public String getCustomTokenBrackets()
@@ -52,12 +52,6 @@ public class DefaultSyntaxProfile implements SyntaxProfile
   return flagsEqualSign;
  }
  
- @Override
- public String getParentClassPrefixSeparator()
- {
-  return parentClassPrefixSeparator;
- }
-
  @Override
  public String getPrototypeObjectId()
  {
@@ -104,7 +98,7 @@ public class DefaultSyntaxProfile implements SyntaxProfile
  @Override
  public boolean isHorizontalBlockDefault()
  {
-  return true;
+  return defaultHorizontal;
  }
 
 }
