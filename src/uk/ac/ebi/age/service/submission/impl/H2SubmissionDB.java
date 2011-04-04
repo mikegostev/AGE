@@ -26,7 +26,7 @@ import uk.ac.ebi.age.service.submission.SubmissionDB;
 import uk.ac.ebi.age.util.FileUtil;
 import uk.ac.ebi.mg.filedepot.FileDepot;
 
-import com.pri.util.M2codec;
+import com.pri.util.M2Pcodec;
 import com.pri.util.StringUtils;
 
 public class H2SubmissionDB extends SubmissionDB
@@ -693,8 +693,20 @@ public class H2SubmissionDB extends SubmissionDB
  
  private String createFileId( String submId, String fileId )
  {
-  fileId = M2codec.encode(fileId);
+  submId = M2Pcodec.encode(submId);
   
-  return String.valueOf(fileId.length())+'.'+fileId+'.'+M2codec.encode(submId);
+  return String.valueOf(submId.length())+'.'+submId+'.'+M2Pcodec.encode(fileId);
+ }
+
+ @Override
+ public File getAttachment( String clustId, String fileId, long ver )
+ {
+  return attachmentDepot.getFilePath(createFileId(clustId, fileId), ver);
+ }
+
+ @Override
+ public File getDocument(String clustId, String docId, long ver)
+ {
+  return docDepot.getFilePath(docId, ver);
  }
 }

@@ -36,5 +36,8 @@ public abstract class SubmissionDB
 
  public abstract void storeAttachment(String submId, String fileId, long modificationTime, File aux)  throws SubmissionDBException;
 
+ public abstract File getAttachment(String clustId, String fileId, long ver);
+
+ public abstract File getDocument(String clustId, String fileId, long ts);
 
 }
