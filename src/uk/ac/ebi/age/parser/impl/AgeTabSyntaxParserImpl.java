@@ -288,6 +288,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   
    BlockHeader header = new BlockHeaderImpl(data);
    analyzeHeader(header, block.getLine(parts), block.getLineNum() );
+   data.addBlock(header);
    
    AgeTabObject cObj = null;
    

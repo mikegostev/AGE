@@ -8,6 +8,7 @@ public interface AgeTabModule
 
  AgeTabObject getOrCreateObject(String part, BlockHeader classColumnHeader, int ln);
 
+ void addBlock( BlockHeader blkHdr );
  Collection<BlockHeader> getBlocks();
 
  Collection<AgeTabObject> getObjects(BlockHeader hdr);

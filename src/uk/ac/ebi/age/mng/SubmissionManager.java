@@ -465,7 +465,6 @@ public class SubmissionManager
    {
     convLog.log(Level.ERROR, "Conversion failed");
     modRes = false;
-    continue;
    }
    
    

@@ -20,6 +20,14 @@ public class AgeTabModuleImpl implements AgeTabModule
   parser = p;
  }
  
+ @Override
+ public void addBlock( BlockHeader blkHdr )
+ {
+  blockObjectMap.put(blkHdr,null);
+ }
+
+ 
+ @Override
  public AgeTabObject getObject(String part, BlockHeader classColumnHeader)
  {
   Map<String,AgeTabObject> objMap = blockObjectMap.get(classColumnHeader);
@@ -31,6 +39,7 @@ public class AgeTabModuleImpl implements AgeTabModule
  }
 
 
+ @Override
  public AgeTabObject getOrCreateObject(String objId, BlockHeader hdr, int ln)
  {
   Map<String,AgeTabObject> objMap = blockObjectMap.get(hdr);
@@ -57,12 +66,14 @@ public class AgeTabModuleImpl implements AgeTabModule
  }
 
 
+ @Override
  public Collection<BlockHeader> getBlocks()
  {
   return blockObjectMap.keySet();
  }
 
 
+ @Override
  public Collection<AgeTabObject> getObjects(BlockHeader hdr)
  {
   Map<String, AgeTabObject> mp = blockObjectMap.get(hdr);
@@ -74,6 +85,7 @@ public class AgeTabModuleImpl implements AgeTabModule
  }
 
 
+ @Override
  public AgeTabObject createObject(String objId, BlockHeader hdr, int ln)
  {
   Map<String,AgeTabObject> objMap = blockObjectMap.get(hdr);
