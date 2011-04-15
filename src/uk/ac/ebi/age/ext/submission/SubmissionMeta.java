@@ -11,8 +11,6 @@ public class SubmissionMeta implements Serializable
 
  private String id;
  
- private boolean forUpdate;
- 
  private String description;
  private String submitter;
  private String modifier;
@@ -22,6 +20,10 @@ public class SubmissionMeta implements Serializable
  
  private List<DataModuleMeta> mods = new ArrayList<DataModuleMeta>(3);
  private List<FileAttachmentMeta> atts ;
+
+ private String updateDescription;
+
+ private Status status;
  
  public String getSubmitter()
  {
@@ -107,14 +109,24 @@ public class SubmissionMeta implements Serializable
   return atts;
  }
 
- public void setForUpdate(boolean forUpdate)
+ public void setUpdateDescription(String string)
  {
-  this.forUpdate = forUpdate;
+  updateDescription = string;
  }
 
- public boolean isForUpdate()
+ public String getUpdateDescription()
  {
-  return forUpdate;
+  return updateDescription;
+ }
+
+ public void setStatus(Status st)
+ {
+  status = st;
+ }
+
+ public Status getStatus()
+ {
+  return status;
  }
 
 }

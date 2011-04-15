@@ -13,10 +13,10 @@ public class DataModuleMeta implements Serializable
  private String submitter;
  private String modifier;
  
- private boolean forUpdate;
- 
  private transient String text;
  private transient Object aux;
+ 
+ private Status status;
 
  public void setId(String stringId)
  {
@@ -79,16 +79,6 @@ public class DataModuleMeta implements Serializable
  }
 
 
- public boolean isForUpdate()
- {
-  return forUpdate;
- }
-
- public void setForUpdate(boolean forUpdate)
- {
-  this.forUpdate = forUpdate;
- }
-
  public void setAux(Object aux)
  {
   this.aux = aux;
@@ -107,6 +97,16 @@ public class DataModuleMeta implements Serializable
  public long getSubmissionTime()
  {
   return ctime;
+ }
+ 
+ public Status getStatus()
+ {
+  return status;
+ }
+
+ public void setStatus(Status blkSts)
+ {
+  status = blkSts;
  }
 
 }
