@@ -16,8 +16,6 @@ public class DataModuleMeta implements Serializable
  private transient String text;
  private transient Object aux;
  
- private Status status;
-
  public void setId(String stringId)
  {
   id = stringId;
@@ -99,14 +97,6 @@ public class DataModuleMeta implements Serializable
   return ctime;
  }
  
- public Status getStatus()
- {
-  return status;
- }
 
- public void setStatus(Status blkSts)
- {
-  status = blkSts;
- }
 
 }

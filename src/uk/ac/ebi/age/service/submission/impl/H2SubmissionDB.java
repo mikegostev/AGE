@@ -202,14 +202,14 @@ public class H2SubmissionDB extends SubmissionDB
     
     for(FileAttachmentMeta fatm : sMeta.getAttachments())
     {
-     pstsmt.setString(1, fatm.getOriginalId());
+     pstsmt.setString(1, fatm.getId());
      pstsmt.setString(2, sMeta.getId());
      pstsmt.setString(3, fatm.getDescription());
      pstsmt.setLong(4, fatm.getSubmissionTime());
      pstsmt.setLong(5, fatm.getModificationTime());
      pstsmt.setString(6, fatm.getSubmitter());
      pstsmt.setString(7, fatm.getModifier());
-     pstsmt.setString(8, createFileId(sMeta.getId(), fatm.getOriginalId()));
+     pstsmt.setString(8, createFileId(sMeta.getId(), fatm.getId()));
 
      pstsmt.executeUpdate();
 

@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.mng;
+package uk.ac.ebi.age.mng.submission;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -13,10 +13,12 @@ import java.util.Stack;
 import uk.ac.ebi.age.conf.Constants;
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
 import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
+import uk.ac.ebi.age.ext.submission.Status;
 import uk.ac.ebi.age.ext.submission.SubmissionDBException;
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
 import uk.ac.ebi.age.log.LogNode;
 import uk.ac.ebi.age.log.LogNode.Level;
+import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -141,7 +143,7 @@ public class SubmissionManager
   
   SubmissionMeta origSbm = null;
   
-  if( sMeta.isForUpdate() )
+  if( sMeta.getStatus() == Status.UPDATE )
   {
    if(  sMeta.getId() == null  )
    {
@@ -200,7 +202,7 @@ public class SubmissionManager
 
     cstMeta.incomeMods.add(mm);
 
-    if(dm.isForUpdate())
+    if( ((ModuleAux)dm.getAux()).getStatus() == Status.UPDATE )
     {
      if(origSbm == null)
      {

@@ -8,7 +8,7 @@ public class FileAttachmentMeta implements Serializable
  private static final long serialVersionUID = 470378715679227484L;
 
  private String id;
- private String originalId;
+// private String originalId;
  private String description;
  private boolean global;
  private transient Object aux;
@@ -49,15 +49,15 @@ public class FileAttachmentMeta implements Serializable
   return global;
  }
 
- public String getOriginalId()
- {
-  return originalId;
- }
-
- public void setOriginalId(String originalId)
- {
-  this.originalId = originalId;
- }
+// public String getOriginalId()
+// {
+//  return originalId;
+// }
+//
+// public void setOriginalId(String originalId)
+// {
+//  this.originalId = originalId;
+// }
 
  public Object getAux()
  {
@@ -108,4 +108,6 @@ public class FileAttachmentMeta implements Serializable
  {
   this.modifier = modifier;
  }
+
+
 }
