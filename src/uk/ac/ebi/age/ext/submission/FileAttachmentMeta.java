@@ -5,7 +5,7 @@ import java.io.Serializable;
 
 public class FileAttachmentMeta implements Serializable
 {
- private static final long serialVersionUID = 470378715679227484L;
+ private static final long serialVersionUID = 1L;
 
  private String id;
 // private String originalId;
@@ -20,6 +20,8 @@ public class FileAttachmentMeta implements Serializable
  private String modifier;
 
  private String systemId;
+
+ private long fileVersion;
  
  public String getId()
  {
@@ -119,6 +121,16 @@ public class FileAttachmentMeta implements Serializable
  public String getSystemId()
  {
   return systemId;
+ }
+
+ public long getFileVersion()
+ {
+  return fileVersion;
+ }
+
+ public void setFileVersion(long fileVersion)
+ {
+  this.fileVersion = fileVersion;
  }
 
 

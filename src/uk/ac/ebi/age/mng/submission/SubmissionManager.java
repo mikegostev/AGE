@@ -404,6 +404,9 @@ public class SubmissionManager
      if( fm.getDescription() == null )
       fm.setDescription(origFm.getDescription());
 
+     fm.setSubmitter( origFm.getSubmitter() );
+     fm.setSubmissionTime( origFm.getSubmissionTime() );
+     
      if(atax.getStatus() == Status.DELETE)
       cstMeta.att4Del.put(fm.getId(), fm);
      else
@@ -457,7 +460,10 @@ public class SubmissionManager
        if( atax.getFile() != null )
         cstMeta.att4Upd.put(fm.getId(), fmeta);
        else
+       {
         cstMeta.att4MetaUpd.put(fm.getId(), fmeta);
+        fm.setFileVersion(origFm.getFileVersion());
+       }
        
        cstMeta.att4Use.put(fm.getId(), fm);
 
@@ -821,9 +827,11 @@ public class SubmissionManager
      
      try
      {
+      fam.setFileVersion(fam.getModificationTime());
+      
       File tagt = ageStorage.storeAttachment(fam.getSystemId(), ((AttachmentAux)fam.getAux()).getFile());
       
-      submissionDB.storeAttachment(cstMeta.id, fam.getId(), fam.getModificationTime(), tagt);
+      submissionDB.storeAttachment(cstMeta.id, fam.getId(), fam.getFileVersion(), tagt);
      }
      catch(Exception e)
      {
@@ -862,9 +870,11 @@ public class SubmissionManager
      
      try
      {
+      fam.newFile.setFileVersion(fam.newFile.getModificationTime());
+
       File tagt = ageStorage.storeAttachment(fam.origFile.getSystemId(), ((AttachmentAux)fam.newFile.getAux()).getFile());
 
-      submissionDB.storeAttachment(cstMeta.id, fam.newFile.getId(), fam.newFile.getModificationTime(), tagt);
+      submissionDB.storeAttachment(cstMeta.id, fam.newFile.getId(), fam.newFile.getFileVersion(), tagt);
      }
      catch(Exception e)
      {
@@ -929,12 +939,6 @@ public class SubmissionManager
     }
    }
  
-   if( cstMeta.att4MetaUpd.size() > 0 )
-   {
-    for( FileMeta fam : cstMeta.att4MetaUpd.values() )
-    {
-    }
-   }
    
    LogNode updtLog = logRoot.branch("Updating storage");
 
@@ -1044,15 +1048,15 @@ public class SubmissionManager
   LogNode extRelLog = rootNode.branch("Connecting external object relations");
   boolean extRelRes = true;
 
-  int n = 0;
+//  int n = 0;
   for(ModMeta mm : cstMeta.incomingMods)
   {
-   n++;
+//   n++;
 
    if(mm.newModule == null || mm.newModule.getExternalRelations() == null )
     continue;
 
-   LogNode extRelModLog = extRelLog.branch("Processing module: " + n);
+   LogNode extRelModLog = extRelLog.branch("Processing module: " + mm.aux.getOrder());
 
    boolean extModRelRes = true;
 
@@ -1073,7 +1077,7 @@ public class SubmissionManager
       extModRelRes = false;
       extRelModLog.log(Level.ERROR, "Invalid external relation: '" + ref 
         + "'. Target object found is not found within the cluster and the source object has not global identifier " +
-        		"but relation class has explicit inverse class so inverse relation is impossible. Module: " + n + " Source object: '"
+        		"but relation class has explicit inverse class so inverse relation is impossible. Module: " + mm.aux.getOrder() + " Source object: '"
         + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: " + exr.getSourceObject().getOrder()
         + "). Relation class: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
       
@@ -1090,7 +1094,7 @@ public class SubmissionManager
     if(tgObj == null)
     {
      extModRelRes = false;
-     extRelModLog.log(Level.ERROR, "Invalid external relation: '" + ref + "'. Target object not found." + " Module: " + n + " Source object: '"
+     extRelModLog.log(Level.ERROR, "Invalid external relation: '" + ref + "'. Target object not found." + " Module: " + mm.aux.getOrder() + " Source object: '"
        + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: " + exr.getSourceObject().getOrder()
        + "). Relation: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
     }
@@ -1100,7 +1104,7 @@ public class SubmissionManager
      {
       extModRelRes = false;
       extRelModLog.log(Level.ERROR,
-        "External relation target object's class is not within range. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass() + "'). Module: " + n
+        "External relation target object's class is not within range. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass() + "'). Module: " + mm.aux.getOrder()
           + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
           + exr.getSourceObject().getOrder() + "). Relation: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
      }
@@ -1115,7 +1119,7 @@ public class SubmissionManager
        {
         extModRelRes = false;
         extRelModLog.log(Level.ERROR, "Class of external inverse relation can't be custom. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass()
-          + "'). Module: " + n + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
+          + "'). Module: " + mm.aux.getOrder() + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
           + exr.getSourceObject().getOrder() + "). Relation: '" + exr.getAgeElClass() + "' Order: " + exr.getOrder() + ". Inverse relation: " + invRCls);
        }
        else if(!invRCls.isWithinDomain(tgObj.getAgeElClass()))
@@ -1123,7 +1127,7 @@ public class SubmissionManager
         extModRelRes = false;
         extRelModLog.log(Level.ERROR,
           "Target object's class is not within domain of inverse relation. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass() + "'). Module: "
-            + n + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
+            + mm.aux.getOrder() + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
             + exr.getSourceObject().getOrder() + "). Relation: '" + exr.getAgeElClass() + "' Order: " + exr.getOrder() + ". Inverse relation: " + invRCls);
        }
        else if(!invRCls.isWithinRange(exr.getSourceObject().getAgeElClass()))
@@ -1131,7 +1135,7 @@ public class SubmissionManager
         extModRelRes = false;
         extRelModLog.log(Level.ERROR,
           "Source object's class is not within range of inverse relation. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass() + "'). Module: "
-            + n + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
+            + mm.aux.getOrder() + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
             + exr.getSourceObject().getOrder() + "). Relation: '" + exr.getAgeElClass() + "' Order: " + exr.getOrder() + ". Inverse relation: " + invRCls);
        }
        else
@@ -1206,7 +1210,7 @@ public class SubmissionManager
      res = false;
      
      logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the same module: "
-       +( (mm.ord!=-1?mm.ord+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
+       +( (mm.aux!=null?mm.aux.getOrder()+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
        +" and Row: " + clashObj.getOrder() 
      );
      
@@ -1226,9 +1230,9 @@ public class SubmissionManager
       ModMeta clashMM = modMap.get(clashObj.getDataModule());
       
       logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the cluster. The first object: "
-        +( (mm.ord!=-1?mm.ord+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
+        +( (mm.aux!=null?mm.aux.getOrder()+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
         +". The second object: module "
-        +( (clashMM.ord!=-1?clashMM.ord+" ":"(existing) ") + (clashMM.meta.getId()!=null?("ID='"+clashMM.meta.getId()+"' "):"") + "Row: " + clashObj.getOrder()  )
+        +( (clashMM.aux!=null?clashMM.aux.getOrder()+" ":"(existing) ") + (clashMM.meta.getId()!=null?("ID='"+clashMM.meta.getId()+"' "):"") + "Row: " + clashObj.getOrder()  )
       );
       
       continue;
@@ -1248,9 +1252,9 @@ public class SubmissionManager
       ModMeta clashMM = modMap.get(clashObj.getDataModule());
       
       logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the global scope. The first object: "
-        +( (mm.ord!=-1?mm.ord+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
+        +( (mm.aux!=null?mm.aux.getOrder()+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
         +". The second object: module "
-        +( (clashMM.ord!=-1?clashMM.ord+" ":"(existing) ") + (clashMM.meta.getId()!=null?("ID='"+clashMM.meta.getId()+"' "):"") + "Row: " + clashObj.getOrder()  )
+        +( (clashMM.aux!=null?clashMM.aux.getOrder()+" ":"(existing) ") + (clashMM.meta.getId()!=null?("ID='"+clashMM.meta.getId()+"' "):"") + "Row: " + clashObj.getOrder()  )
       );
       
       continue;
@@ -1264,7 +1268,7 @@ public class SubmissionManager
       
      
       logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the global scope. The first object: "
-        +( (mm.ord!=-1?mm.ord+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
+        +( (mm.aux!=null?mm.aux.getOrder()+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
         +". The second object: cluster ID='"+clashObj.getDataModule().getClusterId()+"' module ID='"+clashObj.getDataModule().getId()+"' Row: " + clashObj.getOrder()
       );
       
@@ -1330,7 +1334,7 @@ public class SubmissionManager
    
       if( replObj == null )
       {
-        logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
+        logRecon.log(Level.ERROR, "Module " + mm.aux.getOrder() + " (ID='" + mm.meta.getId() + "') is marked for "
           +(mm.newModule == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
           + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
           +extRel.getTargetObject().getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
@@ -1341,7 +1345,7 @@ public class SubmissionManager
       {
         res = false;
 
-        logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
+        logRecon.log(Level.ERROR, "Module " + mm.aux.getOrder() + " (ID='" + mm.meta.getId() + "') is marked for "
           +(mm.newModule == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
           + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
           +extRel.getTargetObject().getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
@@ -1353,7 +1357,7 @@ public class SubmissionManager
       {
         res = false;
 
-        logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
+        logRecon.log(Level.ERROR, "Module " + mm.aux.getOrder() + " (ID='" + mm.meta.getId() + "') is marked for "
           +(mm.newModule == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
           + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
           +target.getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
@@ -1365,7 +1369,7 @@ public class SubmissionManager
       {
         res = false;
 
-        logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
+        logRecon.log(Level.ERROR, "Module " + mm.aux.getOrder() + " (ID='" + mm.meta.getId() + "') is marked for "
           +(mm.newModule == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
           + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
           +target.getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
@@ -1455,12 +1459,12 @@ public class SubmissionManager
       ModMeta errMod = null;
       
       if( (errMod = cstMeta.mod4Del.get(refModId)) != null )
-       logRecon.log(Level.ERROR, "Module " + errMod.ord + " (ID='" + errMod.meta.getId() + "') is marked for deletion but some object (ID='" + extObjAttr.getValue().getId()
+       logRecon.log(Level.ERROR, "Module " + errMod.aux.getOrder() + " (ID='" + errMod.meta.getId() + "') is marked for deletion but some object (ID='" + extObjAttr.getValue().getId()
          + "') is referred by object attribute from the module '" + extDM.getId() + "' of the cluster '" + extDM.getClusterId() + "'");
       else
       {
        errMod = cstMeta.mod4Upd.get(refModId);
-       logRecon.log(Level.ERROR, "Module " + errMod.ord + " (ID='" + errMod.meta.getId() + "') is marked for update but some object (ID='" + extObjAttr.getValue().getId()
+       logRecon.log(Level.ERROR, "Module " + errMod.aux.getOrder() + " (ID='" + errMod.meta.getId() + "') is marked for update but some object (ID='" + extObjAttr.getValue().getId()
          + "') is referred by object attribute from module '" + extDM.getId() + "' of cluster '" + extDM.getClusterId() + "' and the reference can't be resolved anymore");
       }
       

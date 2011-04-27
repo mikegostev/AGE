@@ -197,7 +197,7 @@ public class H2SubmissionDB extends SubmissionDB
 
    if( sMeta.getAttachments() != null )
    {
-    //(id,submid,desc,ctime,mtime,creator,modifier,filename)
+    //(id,submid,desc,ctime,mtime,creator,modifier,filever)
     pstsmt = conn.prepareStatement(insertAttachmentSQL);
     
     for(FileAttachmentMeta fatm : sMeta.getAttachments())
@@ -209,7 +209,7 @@ public class H2SubmissionDB extends SubmissionDB
      pstsmt.setLong(5, fatm.getModificationTime());
      pstsmt.setString(6, fatm.getSubmitter());
      pstsmt.setString(7, fatm.getModifier());
-     pstsmt.setString(8, createFileId(sMeta.getId(), fatm.getId()));
+     pstsmt.setLong(8, fatm.getFileVersion());
 
      pstsmt.executeUpdate();
 
@@ -256,7 +256,7 @@ public class H2SubmissionDB extends SubmissionDB
     +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
 
   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+attachmentTable+" ("+
-    "id VARCHAR, submid VARCHAR, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, filename VARCHAR," +
+    "id VARCHAR, submid VARCHAR, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, filever BIGINT," +
     " PRIMARY KEY (id,submid), FOREIGN KEY (submid) REFERENCES "
     +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
 
@@ -435,7 +435,7 @@ public class H2SubmissionDB extends SubmissionDB
    else
     condExpr.append(" WHERE ");
    
-   addWildcardedCondition(condExpr, "M.id", q.getSubmissionID());
+   addWildcardedCondition(condExpr, "M.id", q.getModuleID());
 
    hasCond=true;
   }
@@ -578,6 +578,8 @@ public class H2SubmissionDB extends SubmissionDB
      
      fam.setSubmitter( rstMF.getString("creator") );
      fam.setModifier(rstMF.getString("modifier") );
+
+     fam.setFileVersion(rstMF.getLong("filever") );
 
      simp.addAttachment(fam);
     }
