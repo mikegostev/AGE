@@ -18,6 +18,8 @@ public class FileAttachmentMeta implements Serializable
  
  private String submitter;
  private String modifier;
+
+ private String systemId;
  
  public String getId()
  {
@@ -107,6 +109,16 @@ public class FileAttachmentMeta implements Serializable
  public void setModifier(String modifier)
  {
   this.modifier = modifier;
+ }
+
+ public void setSystemId(String gid)
+ {
+  systemId = gid;
+ }
+
+ public String getSystemId()
+ {
+  return systemId;
  }
 
 

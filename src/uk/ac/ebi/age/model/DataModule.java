@@ -18,7 +18,7 @@ public interface DataModule
 
  Collection<? extends AgeObject> getObjects();
  
- String getDescription();
+// String getDescription();
  
  ContextSemanticModel getContextSemanticModel();
  

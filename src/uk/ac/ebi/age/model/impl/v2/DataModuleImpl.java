@@ -32,7 +32,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  private Collection<AgeFileAttributeWritable> fileRefs ;
 
  private String id;
- private String descr;
+// private String descr;
  
  private String clusterId;
 
@@ -42,15 +42,15 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  }
 
 
- public String getDescription()
- {
-  return descr;
- }
-
- public void setDescription( String dsc )
- {
-  descr=dsc;
- }
+// public String getDescription()
+// {
+//  return descr;
+// }
+//
+// public void setDescription( String dsc )
+// {
+//  descr=dsc;
+// }
 
  public void addObject(AgeObjectWritable obj)
  {

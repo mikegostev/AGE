@@ -60,7 +60,7 @@ public class SubmissionManager
  {
   AgeTabModule atMod;
   DataModuleWritable origModule;
-  DataModuleWritable module;
+  DataModuleWritable newModule;
   DataModuleMeta meta;
   ModuleAux aux;
   
@@ -72,7 +72,7 @@ public class SubmissionManager
   @Override
   public DataModuleWritable extract(ModMeta obj)
   {
-   return obj.module;
+   return obj.newModule;
   }
  };
  
@@ -90,22 +90,25 @@ public class SubmissionManager
  {
   FileAttachmentMeta origFile;
   FileAttachmentMeta newFile;
+  AttachmentAux aux;
  }
  
  private static class ClustMeta
  {
-  List<ModMeta> incomeMods = new ArrayList<SubmissionManager.ModMeta>();  //New modules and modules with data update (Ins+Upd)
+  List<ModMeta> incomingMods = new ArrayList<SubmissionManager.ModMeta>();  //New modules and modules with data update (Ins+Upd) but in original order
  
-  List<ModMeta> mod4Use = new ArrayList<SubmissionManager.ModMeta>(); //Ins+Upd+Hld
+  List<ModMeta> mod4Use = new ArrayList<SubmissionManager.ModMeta>(); //Ins+Upd+Hld convenience map
  
   List<ModMeta> mod4Ins = new ArrayList<SubmissionManager.ModMeta>();
   
+  Map<String,ModMeta> mod4MetaUpd = new HashMap<String, SubmissionManager.ModMeta>(); //Modules with meta (description) update only
   Map<String,ModMeta> mod4Upd = new HashMap<String, SubmissionManager.ModMeta>(); //Modules with data update
   Map<String,ModMeta> mod4Del = new HashMap<String, SubmissionManager.ModMeta>();
   Map<String,ModMeta> mod4Hld = new HashMap<String, SubmissionManager.ModMeta>();
 
   Map<String,FileAttachmentMeta> att4Ins = new HashMap<String, FileAttachmentMeta>(); //New files
   Map<String,FileMeta> att4Upd = new HashMap<String, FileMeta>();                     //Files with content update   
+  Map<String,FileMeta> att4MetaUpd = new HashMap<String, FileMeta>();                 //Files with meta update only  
   Map<String,FileAttachmentMeta> att4Del = new HashMap<String, FileAttachmentMeta>();
   Map<String,FileMeta> att4G2L = new HashMap<String, FileMeta>();                     //Files that reduce visibility
   Map<String,FileMeta> att4L2G = new HashMap<String, FileMeta>();                     //Files that increase visibility
@@ -230,7 +233,6 @@ public class SubmissionManager
      mm.meta = dm;
      mm.aux = modAux;
 
-     mm.origModule = ageStorage.getDataModule(mm.meta.getId());
 
      if(mm.origModule == null)
      {
@@ -244,15 +246,16 @@ public class SubmissionManager
      }
      else if( mm.aux.getStatus() == Status.DELETE )
       cstMeta.mod4Del.put(mm.meta.getId(),mm);
+     else if( dm.getText() != null )
+     {
+      cstMeta.mod4Upd.put(mm.meta.getId(), mm);
+      cstMeta.mod4Use.add(mm);
+      cstMeta.incomingMods.add(mm);
+     }
      else
      {
-      if( dm.getDescription() == null )
-       dm.setDescription(mm.origModule.getDescription());
-      
-      cstMeta.mod4Upd.put(mm.meta.getId(),mm);
+      cstMeta.mod4MetaUpd.put(mm.meta.getId(), mm);
       cstMeta.mod4Use.add(mm);
-      
-      cstMeta.incomeMods.add(mm);
      }
     }
     else if( modAux.getStatus() == Status.NEW )
@@ -263,8 +266,7 @@ public class SubmissionManager
       res = false;
       continue;
      }
-     else
-     {
+
       if( dm.getId() != null )
       {
        DataModuleWritable clashMod = ageStorage.getDataModule(dm.getId());
@@ -285,8 +287,7 @@ public class SubmissionManager
       cstMeta.mod4Ins.add(mm);
       cstMeta.mod4Use.add(mm);
 
-      cstMeta.incomeMods.add(mm);
-     }
+      cstMeta.incomingMods.add(mm);
     }
 
    }
@@ -300,13 +301,19 @@ public class SubmissionManager
 
     ModMeta updMod = cstMeta.mod4Upd.get(modID);
     
+    if( updMod == null )
+     updMod = cstMeta.mod4MetaUpd.get(modID);
+    
     if( updMod != null )
     {
+     if( updMod.meta.getDescription() == null )
+      updMod.meta.setDescription(odm.getDescription());
+
+     
      updMod.meta.setSubmissionTime( odm.getSubmissionTime() );
      updMod.meta.setSubmitter( odm.getSubmitter() );
     }
-    
-    if( updMod == null && ! cstMeta.mod4Del.containsKey(modID) )
+    else if( ! cstMeta.mod4Del.containsKey(modID) )
     {
      ModMeta mm = new ModMeta();
      mm.meta = odm;
@@ -325,7 +332,7 @@ public class SubmissionManager
 
   if( files != null && files.size() > 0 )
   {
-   LogNode fileNode = logRoot.branch("Checking file ID uniqueness");
+   LogNode fileNode = logRoot.branch("Preparing attachments");
 
    for(n = 0; n < files.size(); n++)
    {
@@ -341,24 +348,10 @@ public class SubmissionManager
      continue;
     }
 
-    FileAttachmentMeta origFm = null;
-
-    if(origSbm != null && origSbm.getAttachments() != null)
-    {
-     for(FileAttachmentMeta ofa : origSbm.getAttachments())
-     {
-      if(cAtId.equals(ofa.getId()))
-      {
-       origFm = ofa;
-       break;
-      }
-     }
-    }
 
     if(atax.getStatus() != Status.DELETE)
     {
-     for(int k = n + 1; k < files.size(); k++) // All IDs must be unique within
-                                               // the submission
+     for(int k = n + 1; k < files.size(); k++) // All IDs must be unique within the submission
      {
       FileAttachmentMeta ofa = files.get(k);
 
@@ -374,6 +367,20 @@ public class SubmissionManager
        fileNode.log(Level.ERROR, "File ID (" + cmpAtId + ") conflict. Files: " + atax.getOrder() + " and " + cmpax.getOrder());
        res = false;
        continue;
+      }
+     }
+    }
+    
+    FileAttachmentMeta origFm = null;
+
+    if( origSbm != null && origSbm.getAttachments() != null )
+    {
+     for(FileAttachmentMeta ofa : origSbm.getAttachments())
+     {
+      if(cAtId.equals(ofa.getId()))
+      {
+       origFm = ofa;
+       break;
       }
      }
     }
@@ -445,9 +452,12 @@ public class SubmissionManager
 
        fmeta.newFile = fm;
        fmeta.origFile = origFm;
+       fmeta.aux = atax;
 
        if( atax.getFile() != null )
         cstMeta.att4Upd.put(fm.getId(), fmeta);
+       else
+        cstMeta.att4MetaUpd.put(fm.getId(), fmeta);
        
        cstMeta.att4Use.put(fm.getId(), fm);
 
@@ -465,8 +475,14 @@ public class SubmissionManager
     }
     else if(atax.getStatus() == Status.NEW)
     {
-     if(origFm == null && fm.isGlobal()) // this is a new file with a new global
-     // ID. We have to check its uniqueness
+     if( atax.getFile() == null )
+     {
+      fileNode.log(Level.ERROR, "File " + atax.getOrder() + " is marked as NEW but contains no data");
+      res = false;
+      continue;
+     }
+     
+     if(fm.isGlobal()) // this is a new file with a new global ID. We have to check its uniqueness
      {
       String gid = ageStorage.makeGlobalFileID(fm.getId());
 
@@ -491,83 +507,13 @@ public class SubmissionManager
      cstMeta.att4Use.put(fm.getId(), fm);
 
     }
-
-    if(fm.getAux() == null) // File for deletion or visibility change without
-                            // update
-    {
-     if(origSbm == null) // No original submission. This means a new submission
-     {
-      fileNode.log(Level.ERROR, "File " + (n + 1) + " is marked for deletion or visibility change but submission is not in UPDATE mode");
-      res = false;
-      continue;
-     }
-
-     if(origFm == null)
-     {
-      fileNode.log(Level.ERROR, "File " + (n + 1) + " is marked for deletion or visibility change but it doesn't exist within the submission");
-      res = false;
-      continue;
-     }
-
-     if(fm.isGlobal() != origFm.isGlobal())
-     {
-      FileMeta fmeta = new FileMeta();
-
-      fmeta.newFile = fm;
-      fmeta.origFile = origFm;
-
-      if(fm.isGlobal())
-       cstMeta.att4L2G.put(fm.getOriginalId(), fmeta);
-      else
-       cstMeta.att4G2L.put(fm.getOriginalId(), fmeta);
-
-     }
-     else
-      cstMeta.att4Del.put(fm.getOriginalId(), fm);
-
-    }
-    else
-    // Files for insert, update and for update+visibility change
-    {
-     if(origFm == null && fm.isGlobal()) // this is a new file with a new global
-                                         // ID. We have to check its uniqueness
-     {
-      String gid = ageStorage.makeGlobalFileID(fm.getOriginalId());
-
-      if(ageStorage.getAttachment(gid) != null)
-      {
-       fileNode.log(Level.ERROR, "File " + (n + 1) + " has global ID but this ID is already taken");
-       res = false;
-       continue;
-      }
-
-      fm.setId(gid);
-     }
-
-     if(origFm == null)
-     {
-      cstMeta.att4Ins.put(fm.getOriginalId(), fm);
-      cstMeta.att4Use.put(fm.getOriginalId(), fm);
-     }
-     else
-     {
-      FileMeta fmeta = new FileMeta();
-
-      fmeta.newFile = fm;
-      fmeta.origFile = origFm;
-
-      cstMeta.att4Upd.put(fm.getOriginalId(), fmeta);
-
-      if(fm.isGlobal() != origFm.isGlobal())
-      {
-       if(fm.isGlobal())
-        cstMeta.att4L2G.put(fm.getOriginalId(), fmeta);
-       else
-        cstMeta.att4G2L.put(fm.getOriginalId(), fmeta);
-      }
-     }
-    }
+   
    }
+  
+   if( res )
+    fileNode.log(Level.INFO, "Success");
+   else
+    fileNode.log(Level.ERROR, "Failed");
   }
   
   
@@ -577,20 +523,23 @@ public class SubmissionManager
    {
     if(! cstMeta.att4Del.containsKey(fm.getId()) )
     {
-     cstMeta.att4Use.put(fm.getId(), fm);
 
-     if( ! cstMeta.att4Upd.containsKey(fm.getId()) )
+     if( ! cstMeta.att4Upd.containsKey(fm.getId()) && ! cstMeta.att4MetaUpd.containsKey(fm.getId()) )
+     {
       cstMeta.att4Hld.put(fm.getDescription(), fm);
+      cstMeta.att4Use.put(fm.getId(), fm);
+     }
+     
     }
    }
   }
   
-  for( n=0; n < cstMeta.incomeMods.size(); n++)
+  for( n=0; n < cstMeta.incomingMods.size(); n++)
   {
-   ModMeta mm = cstMeta.incomeMods.get(n);
+   ModMeta mm = cstMeta.incomingMods.get(n);
    
    boolean modRes = true;
-   LogNode modNode = logRoot.branch("Processing module: " + (n+1) );
+   LogNode modNode = logRoot.branch("Processing module: " + mm.aux.getOrder() );
    
    if( mm.meta.getText() == null )
    {
@@ -612,9 +561,9 @@ public class SubmissionManager
    }
    
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.module = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(context), convLog );
+   mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(context), convLog );
    
-   if( mm.module != null )
+   if( mm.newModule != null )
     convLog.log(Level.INFO, "Success");
    else
    {
@@ -629,7 +578,7 @@ public class SubmissionManager
    else
    {
     modNode.log(Level.ERROR, "Failed");
-    mm.module = null;
+    mm.newModule = null;
    }
    
    res = res && modRes;
@@ -710,16 +659,16 @@ public class SubmissionManager
 
    boolean vldRes = true;
    n=0;
-   for( ModMeta mm : cstMeta.incomeMods )
+   for( ModMeta mm : cstMeta.incomingMods )
    {
     n++;
     
-    if( mm.module == null )
+    if( mm.newModule == null )
      continue;
     
     LogNode vldLog = semLog.branch("Processing module: "+n);
     
-    boolean modRes = validator.validate(mm.module, vldLog);
+    boolean modRes = validator.validate(mm.newModule, vldLog);
     
     if(modRes)
      vldLog.log(Level.INFO, "Success");
@@ -801,11 +750,11 @@ public class SubmissionManager
     sMeta.setId(id);
    }
    
-   for( ModMeta mm : cstMeta.incomeMods )
+   for( ModMeta mm : cstMeta.incomingMods )
    {
-    mm.module.setClusterId(cstMeta.id);
+    mm.newModule.setClusterId(cstMeta.id);
     
-    if( mm.module.getId() == null )
+    if( mm.newModule.getId() == null )
     {
      String id = null;
      
@@ -815,14 +764,14 @@ public class SubmissionManager
      }
      while( ageStorage.hasDataModule(id) );
     
-     mm.module.setId(id);
+     mm.newModule.setId(id);
      mm.meta.setId(id);
      
     }
     
-    if( mm.module != null )
+    if( mm.newModule != null )
     {
-     for( AgeObjectWritable obj : mm.module.getObjects() )
+     for( AgeObjectWritable obj : mm.newModule.getObjects() )
      {
       if( obj.getId() == null )
       {
@@ -831,7 +780,7 @@ public class SubmissionManager
        do
        {
         id = Constants.localObjectIDPrefix+obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId(Constants.objectIDDomain)
-        +"@"+mm.module.getId();
+        +"@"+mm.newModule.getId();
        }
        while( mm.idMap.containsKey(id) );
        
@@ -849,15 +798,15 @@ public class SubmissionManager
    reconnectLocalModulesToFiles(cstMeta, fileConn, ageStorage, logRoot);
    
    for( FileMeta fatm : cstMeta.att4G2L.values() )
-    fatm.newFile.setId(ageStorage.makeLocalFileID(fatm.origFile.getOriginalId(), cstMeta.id));
+    fatm.newFile.setId(ageStorage.makeLocalFileID(fatm.origFile.getId(), cstMeta.id));
     
    for( FileMeta fatm : cstMeta.att4L2G.values() )
-    fatm.newFile.setId(ageStorage.makeGlobalFileID(fatm.origFile.getOriginalId()));
+    fatm.newFile.setId(ageStorage.makeGlobalFileID(fatm.origFile.getId()));
 
    for( FileAttachmentMeta fam : cstMeta.att4Ins.values() )
    {
     if( ! fam.isGlobal() ) // We generated IDs for the global files earlier 
-     fam.setSystemId(ageStorage.makeLocalFileID(fam.getOriginalId(), cstMeta.id));
+     fam.setSystemId(ageStorage.makeLocalFileID(fam.getId(), cstMeta.id));
    }
    
 
@@ -868,13 +817,13 @@ public class SubmissionManager
     
     for( FileAttachmentMeta fam : cstMeta.att4Ins.values() )
     {
-     finsLog.log(Level.INFO, "Storing file: '"+fam.getOriginalId()+"' (ID="+fam.getId()+")");
+     finsLog.log(Level.INFO, "Storing file: '"+fam.getId()+"' (ID="+fam.getSystemId()+")");
      
      try
      {
-      File tagt = ageStorage.storeAttachment(fam.getSystemId(), fam.getAux());
+      File tagt = ageStorage.storeAttachment(fam.getSystemId(), ((AttachmentAux)fam.getAux()).getFile());
       
-      submissionDB.storeAttachment(cstMeta.id, fam.getOriginalId(), fam.getModificationTime(), tagt);
+      submissionDB.storeAttachment(cstMeta.id, fam.getId(), fam.getModificationTime(), tagt);
      }
      catch(Exception e)
      {
@@ -896,7 +845,7 @@ public class SubmissionManager
     
     for( FileAttachmentMeta fam : cstMeta.att4Del.values() )
     {
-     fdelLog.log(Level.INFO, "Deleting file: '"+fam.getOriginalId()+"' (ID="+fam.getId()+")");
+     fdelLog.log(Level.INFO, "Deleting file: '"+fam.getId()+"' (ID="+fam.getSystemId()+")");
      
      ageStorage.deleteAttachment(fam.getId());
      fdelLog.log(Level.INFO, "Success");
@@ -909,13 +858,13 @@ public class SubmissionManager
     
     for( FileMeta fam : cstMeta.att4Upd.values() )
     {
-     fupdLog.log(Level.INFO, "Updating file: '"+fam.origFile.getOriginalId()+"' (ID="+fam.origFile.getSystemId()+")");
+     fupdLog.log(Level.INFO, "Updating file: '"+fam.origFile.getId()+"' (ID="+fam.origFile.getSystemId()+")");
      
      try
      {
-      File tagt = ageStorage.storeAttachment(fam.origFile.getSystemId(), (File)fam.newFile.getAux());
+      File tagt = ageStorage.storeAttachment(fam.origFile.getSystemId(), ((AttachmentAux)fam.newFile.getAux()).getFile());
 
-      submissionDB.storeAttachment(cstMeta.id, fam.newFile.getOriginalId(), fam.newFile.getModificationTime(), tagt);
+      submissionDB.storeAttachment(cstMeta.id, fam.newFile.getId(), fam.newFile.getModificationTime(), tagt);
      }
      catch(Exception e)
      {
@@ -936,11 +885,11 @@ public class SubmissionManager
     
     for( FileMeta fam : cstMeta.att4G2L.values() )
     {
-     fupdLog.log(Level.INFO, "Renaming file: '"+fam.origFile.getOriginalId()+"' old ID="+fam.origFile.getId()+", new ID="+fam.newFile.getId());
+     fupdLog.log(Level.INFO, "Renaming file: '"+fam.origFile.getId()+"' old ID="+fam.origFile.getSystemId()+", new ID="+fam.newFile.getSystemId());
      
      try
      {
-      ageStorage.renameAttachment(fam.origFile.getId(), fam.newFile.getId());
+      ageStorage.renameAttachment(fam.origFile.getSystemId(), fam.newFile.getSystemId());
      }
      catch(AttachmentIOException e)
      {
@@ -961,11 +910,11 @@ public class SubmissionManager
     
     for( FileMeta fam : cstMeta.att4L2G.values() )
     {
-     fupdLog.log(Level.INFO, "Renaming file: '"+fam.origFile.getOriginalId()+"' old ID="+fam.origFile.getId()+", new ID="+fam.newFile.getId());
+     fupdLog.log(Level.INFO, "Renaming file: '"+fam.origFile.getId()+"' old ID="+fam.origFile.getSystemId()+", new ID="+fam.newFile.getSystemId());
      
      try
      {
-      ageStorage.renameAttachment(fam.origFile.getId(), fam.newFile.getId());
+      ageStorage.renameAttachment(fam.origFile.getSystemId(), fam.newFile.getSystemId());
      }
      catch(AttachmentIOException e)
      {
@@ -980,6 +929,12 @@ public class SubmissionManager
     }
    }
  
+   if( cstMeta.att4MetaUpd.size() > 0 )
+   {
+    for( FileMeta fam : cstMeta.att4MetaUpd.values() )
+    {
+    }
+   }
    
    LogNode updtLog = logRoot.branch("Updating storage");
 
@@ -1061,11 +1016,11 @@ public class SubmissionManager
     for( AgeRelationWritable rel : me.getValue() )
      me.getKey().addRelation(rel);
     
-   for( ModMeta dm : cstMeta.incomeMods )
+   for( ModMeta dm : cstMeta.incomingMods )
    {
-    if( dm.module != null && dm.module.getExternalRelations() != null  )
+    if( dm.newModule != null && dm.newModule.getExternalRelations() != null  )
     {
-     for( AgeExternalRelationWritable rel : dm.module.getExternalRelations() )
+     for( AgeExternalRelationWritable rel : dm.newModule.getExternalRelations() )
       rel.getInverseRelation().setInverseRelation(rel);
     }
    }
@@ -1090,18 +1045,18 @@ public class SubmissionManager
   boolean extRelRes = true;
 
   int n = 0;
-  for(ModMeta mm : cstMeta.incomeMods)
+  for(ModMeta mm : cstMeta.incomingMods)
   {
    n++;
 
-   if(mm.module == null || mm.module.getExternalRelations() == null )
+   if(mm.newModule == null || mm.newModule.getExternalRelations() == null )
     continue;
 
    LogNode extRelModLog = extRelLog.branch("Processing module: " + n);
 
    boolean extModRelRes = true;
 
-   for(AgeExternalRelationWritable exr : mm.module.getExternalRelations())
+   for(AgeExternalRelationWritable exr : mm.newModule.getExternalRelations())
    {
     if( exr.getTargetObject() != null )
      continue;
@@ -1237,9 +1192,9 @@ public class SubmissionManager
   
   for( ModMeta mm : cstMeta.mod4Use )
   {
-   modMap.put(mm.module, mm);
+   modMap.put(mm.newModule, mm);
    
-   for( AgeObjectWritable obj : mm.module.getObjects() )
+   for( AgeObjectWritable obj : mm.newModule.getObjects() )
    {
     if( obj.getId() == null )
      continue;
@@ -1340,7 +1295,7 @@ public class SubmissionManager
   
   boolean res = true; 
   
-  for( ModMeta mm : cstMeta.incomeMods )
+  for( ModMeta mm : cstMeta.incomingMods )
   {
    if( mm.origModule == null ) //Skipping new modules, processing only update/delete modules (where original data are going away)
     continue;
@@ -1376,7 +1331,7 @@ public class SubmissionManager
       if( replObj == null )
       {
         logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
-          +(mm.module == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
+          +(mm.newModule == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
           + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
           +extRel.getTargetObject().getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
           + "' with object '"  +invrsRel.getTargetObjectId() + "'");
@@ -1387,7 +1342,7 @@ public class SubmissionManager
         res = false;
 
         logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
-          +(mm.module == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
+          +(mm.newModule == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
           + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
           +extRel.getTargetObject().getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
           + "' with object '"  +invrsRel.getTargetObjectId() + "' and the replacement object (Class: "
@@ -1399,7 +1354,7 @@ public class SubmissionManager
         res = false;
 
         logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
-          +(mm.module == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
+          +(mm.newModule == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
           + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
           +target.getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
           + "' with object '"  +invrsRel.getTargetObjectId() + "' and reverse relation can't be establishes as source object's class (Class: "
@@ -1411,7 +1366,7 @@ public class SubmissionManager
         res = false;
 
         logRecon.log(Level.ERROR, "Module " + mm.ord + " (ID='" + mm.meta.getId() + "') is marked for "
-          +(mm.module == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
+          +(mm.newModule == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
           + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
           +target.getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
           + "' with object '"  +invrsRel.getTargetObjectId() + "' and reverse relation can't be establishes as target object's class (Class: "
@@ -1538,7 +1493,7 @@ public class SubmissionManager
   
   for(ModMeta mm : new CollectionsUnion<ModMeta>( cMeta.mod4Ins, cMeta.mod4Upd.values() ))
   {
-   for(AgeFileAttributeWritable fattr : mm.module.getFileAttributes())
+   for(AgeFileAttributeWritable fattr : mm.newModule.getFileAttributes())
    {
     FileAttachmentMeta fmt = cMeta.att4Use.get(fattr.getFileReference());
 
@@ -1594,12 +1549,18 @@ public class SubmissionManager
 
      FileAttachmentMeta meta = cMeta.att4Del.get(fileAttr.getFileReference());
 
-     if(meta != null && meta.isGlobal())
+     if(meta != null && meta.isGlobal() )
      {
-      res = false;
-      logRecon.log(Level.ERROR, "File with ID '" + fileAttr.getFileReference() + "' is referred by the module '"
-        + extDM.getId() + "' cluster '" + extDM.getClusterId() + "' and can't be deleted");
-      continue;
+      FileAttachmentMeta fm = cMeta.att4Ins.get(fileAttr.getFileReference());
+      
+      
+      if( fm == null || !fm.isGlobal() )
+      {
+       res = false;
+       logRecon.log(Level.ERROR, "File with ID '" + fileAttr.getFileReference() + "' is referred by the module '"
+         + extDM.getId() + "' cluster '" + extDM.getClusterId() + "' and can't be deleted");
+       continue;
+      }
      }
 
      FileMeta fm = cMeta.att4G2L.get(fileAttr.getFileReference());
@@ -1642,8 +1603,8 @@ public class SubmissionManager
       fileConn.add(new Pair<AgeFileAttributeWritable, String>(fattr,gid));
      else
      {
-      reconnLog.log(Level.ERROR, "Can't connect file attribute: '"+fattr.getFileReference()+"'. Module: "+mm.ord+" (ID='"+mm.meta.getId()
-        +"') Row: "+fattr.getOrder()+" Col: "+fattr.getClassRef().getOrder());
+      reconnLog.log(Level.ERROR, "Can't connect file attribute: '"+fattr.getFileReference()+"'. Module: ID='"+mm.meta.getId()
+        +"' Row: "+fattr.getOrder()+" Col: "+fattr.getClassRef().getOrder());
       res = false;
      }
       
@@ -1659,7 +1620,7 @@ public class SubmissionManager
  private boolean connectNewObjectAttributes(ClustMeta cstMeta, AgeStorageAdm stor, LogNode logRoot)
  {
   
-  LogNode connLog = logRoot.branch("Connecting data module"+(cstMeta.incomeMods.size()>1?"s":"")+" to the main graph");
+  LogNode connLog = logRoot.branch("Connecting data module"+(cstMeta.incomingMods.size()>1?"s":"")+" to the main graph");
 
   LogNode extAttrLog = connLog.branch("Connecting external object attributes");
   boolean extAttrRes = true;
@@ -1668,16 +1629,16 @@ public class SubmissionManager
   Stack<Attributed> attrStk = new Stack<Attributed>();
   
   int n=0;
-  for( ModMeta mm : cstMeta.incomeMods )
+  for( ModMeta mm : cstMeta.incomingMods )
   {
    n++;
    
-   if( mm.module == null )
+   if( mm.newModule == null )
     continue;
    
-   LogNode extAttrModLog = extAttrLog.branch("Processing module: "+n);
+   LogNode extAttrModLog = extAttrLog.branch("Processing module: "+mm.aux.getOrder());
    
-   for( AgeObjectWritable obj : mm.module.getObjects() )
+   for( AgeObjectWritable obj : mm.newModule.getObjects() )
    {
     attrStk.clear();
     attrStk.push(obj);

@@ -60,7 +60,7 @@ public class H2SubmissionDB extends SubmissionDB
  +" (id,submid,desc,ctime,mtime,creator,modifier) VALUES (?,?,?,?,?,?,?)";
  
  private static final String insertAttachmentSQL = "INSERT INTO "+submissionDB+"."+attachmentTable
- +" (id,submid,desc,ctime,mtime,creator,modifier,filename) VALUES (?,?,?,?,?,?,?,?)";
+ +" (id,submid,desc,ctime,mtime,creator,modifier,filever) VALUES (?,?,?,?,?,?,?,?)";
  
  private static final String insertHistorySQL = "INSERT INTO "+submissionDB+"."+historyTable
  +" (id,mtime,modifier,data) VALUES (?,?,?,?)";
