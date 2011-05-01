@@ -3,6 +3,7 @@ package uk.ac.ebi.age.ext.submission;
 import java.io.Serializable;
 import java.util.List;
 
+
 public class SubmissionReport implements Serializable
 {
 

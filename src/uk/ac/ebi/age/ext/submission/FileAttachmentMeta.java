@@ -1,137 +1,46 @@
 package uk.ac.ebi.age.ext.submission;
 
-import java.io.Serializable;
-
-
-public class FileAttachmentMeta implements Serializable
+public interface FileAttachmentMeta
 {
- private static final long serialVersionUID = 1L;
 
- private String id;
-// private String originalId;
- private String description;
- private boolean global;
- private transient Object aux;
+ String getId();
 
- private long submissionTime;
- private long modificationTime;
- 
- private String submitter;
- private String modifier;
+ void setId(String id);
 
- private String systemId;
+ String getDescription();
 
- private long fileVersion;
- 
- public String getId()
- {
-  return id;
- }
+ void setDescription(String description);
 
- public void setId(String id)
- {
-  this.id = id;
- }
+ void setGlobal(boolean b);
 
- public String getDescription()
- {
-  return description;
- }
+ boolean isGlobal();
 
- public void setDescription(String description)
- {
-  this.description = description;
- }
+ Object getAux();
 
- public void setGlobal(boolean b)
- {
-  global=b;
- }
+ void setAux(Object aux);
 
- public boolean isGlobal()
- {
-  return global;
- }
+ long getSubmissionTime();
 
-// public String getOriginalId()
-// {
-//  return originalId;
-// }
-//
-// public void setOriginalId(String originalId)
-// {
-//  this.originalId = originalId;
-// }
+ void setSubmissionTime(long submissionTime);
 
- public Object getAux()
- {
-  return aux;
- }
+ long getModificationTime();
 
- public void setAux(Object aux)
- {
-  this.aux = aux;
- }
+ void setModificationTime(long modificationTime);
 
- public long getSubmissionTime()
- {
-  return submissionTime;
- }
+ String getSubmitter();
 
- public void setSubmissionTime(long submissionTime)
- {
-  this.submissionTime = submissionTime;
- }
+ void setSubmitter(String submitter);
 
- public long getModificationTime()
- {
-  return modificationTime;
- }
+ String getModifier();
 
- public void setModificationTime(long modificationTime)
- {
-  this.modificationTime = modificationTime;
- }
+ void setModifier(String modifier);
 
- public String getSubmitter()
- {
-  return submitter;
- }
+ void setSystemId(String gid);
 
- public void setSubmitter(String submitter)
- {
-  this.submitter = submitter;
- }
+ String getSystemId();
 
- public String getModifier()
- {
-  return modifier;
- }
+ long getFileVersion();
 
- public void setModifier(String modifier)
- {
-  this.modifier = modifier;
- }
-
- public void setSystemId(String gid)
- {
-  systemId = gid;
- }
-
- public String getSystemId()
- {
-  return systemId;
- }
-
- public long getFileVersion()
- {
-  return fileVersion;
- }
-
- public void setFileVersion(long fileVersion)
- {
-  this.fileVersion = fileVersion;
- }
-
+ void setFileVersion(long fileVersion);
 
 }

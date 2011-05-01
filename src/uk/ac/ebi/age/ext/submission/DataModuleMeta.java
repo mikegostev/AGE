@@ -1,102 +1,42 @@
 package uk.ac.ebi.age.ext.submission;
 
-import java.io.Serializable;
-
-public class DataModuleMeta implements Serializable
+public interface DataModuleMeta
 {
- private static final long serialVersionUID = 1L;
 
- private String id;
- private String description;
- private long ctime;
- private long mtime;
- private String submitter;
- private String modifier;
- 
- private transient String text;
- private transient Object aux;
- 
- public void setId(String stringId)
- {
-  id = stringId;
- }
+ void setId(String stringId);
 
- public String getDescription()
- {
-  return description;
- }
+ String getDescription();
 
- public void setDescription(String description)
- {
-  this.description = description;
- }
+ void setDescription(String description);
 
- public String getId()
- {
-  return id;
- }
+ String getId();
 
- public void setModificationTime(long time)
- {
-  mtime = time;
- }
- 
- public long getModificationTime()
- {
-  return mtime;
- }
- 
- public String getSubmitter()
- {
-  return submitter;
- }
+ void setModificationTime(long time);
 
- public void setSubmitter(String submitter)
- {
-  this.submitter = submitter;
- }
+ long getModificationTime();
 
- public String getModifier()
- {
-  return modifier;
- }
+ String getSubmitter();
 
- public void setModifier(String modifier)
- {
-  this.modifier = modifier;
- }
+ void setSubmitter(String submitter);
 
- public String getText()
- {
-  return text;
- }
+ String getModifier();
 
- public void setText(String text)
- {
-  this.text = text;
- }
+ void setModifier(String modifier);
 
+ String getText();
 
- public void setAux(Object aux)
- {
-  this.aux = aux;
- }
+ void setText(String text);
 
- public Object getAux()
- {
-  return aux;
- }
+ void setAux(Object aux);
 
- public void setSubmissionTime(long time)
- {
-  ctime = time;
- }
- 
- public long getSubmissionTime()
- {
-  return ctime;
- }
- 
+ Object getAux();
 
+ void setSubmissionTime(long time);
+
+ long getSubmissionTime();
+
+ long getDocVersion();
+
+ void setDocVersion(long docVersion);
 
 }

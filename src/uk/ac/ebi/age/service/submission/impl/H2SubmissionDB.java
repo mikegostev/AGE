@@ -4,6 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
@@ -13,12 +15,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.ac.ebi.age.ext.submission.AttachmentDiff;
+import uk.ac.ebi.age.ext.submission.DataModuleDiff;
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
+import uk.ac.ebi.age.ext.submission.Factory;
 import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
+import uk.ac.ebi.age.ext.submission.HistoryEntry;
+import uk.ac.ebi.age.ext.submission.Status;
 import uk.ac.ebi.age.ext.submission.SubmissionDBException;
+import uk.ac.ebi.age.ext.submission.SubmissionDiff;
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
 import uk.ac.ebi.age.ext.submission.SubmissionQuery;
 import uk.ac.ebi.age.ext.submission.SubmissionReport;
@@ -49,6 +58,8 @@ public class H2SubmissionDB extends SubmissionDB
  private static final String selectAttachmentBySubmissionSQL = "SELECT * FROM "+submissionDB+"."+attachmentTable
  +" WHERE submid=?";
 
+ private static final String selectHistoryBySubmissionSQL = "SELECT * FROM "+submissionDB+"."+historyTable
+ +" WHERE id=? ORDER BY mtime";
  
  private static final String deleteSubmissionSQL = "DELETE FROM "+submissionDB+"."+submissionTable
  +" WHERE id=?";
@@ -57,13 +68,13 @@ public class H2SubmissionDB extends SubmissionDB
  +" (id,desc,ctime,mtime,creator,modifier,ft_desc) VALUES (?,?,?,?,?,?,?)";
  
  private static final String insertModuleSQL = "INSERT INTO "+submissionDB+"."+moduleTable
- +" (id,submid,desc,ctime,mtime,creator,modifier) VALUES (?,?,?,?,?,?,?)";
+ +" (id,submid,desc,ctime,mtime,creator,modifier,docver) VALUES (?,?,?,?,?,?,?,?)";
  
  private static final String insertAttachmentSQL = "INSERT INTO "+submissionDB+"."+attachmentTable
  +" (id,submid,desc,ctime,mtime,creator,modifier,filever) VALUES (?,?,?,?,?,?,?,?)";
  
  private static final String insertHistorySQL = "INSERT INTO "+submissionDB+"."+historyTable
- +" (id,mtime,modifier,data) VALUES (?,?,?,?)";
+ +" (id,mtime,modifier,descr,diff,data) VALUES (?,?,?,?,?,?)";
 
  
  private static final String h2DbPath = "h2db";
@@ -105,10 +116,59 @@ public class H2SubmissionDB extends SubmissionDB
   }
 
  }
-
- @Override
- public void storeSubmission(SubmissionMeta sMeta, SubmissionMeta oldSbm)
+ 
+ private void initSubmissionDb() throws SQLException
  {
+  Statement stmt = conn.createStatement();
+  
+  stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS "+submissionDB);
+
+  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+submissionTable+" ("+
+    "id VARCHAR PRIMARY KEY, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, FT_DESC VARCHAR)");
+
+  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS ctimeIdx ON "+submissionDB+'.'+submissionTable+"(ctime)");
+  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS mtimeIdx ON "+submissionDB+'.'+submissionTable+"(mtime)");
+  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS creatorIdx ON "+submissionDB+'.'+submissionTable+"(creator)");
+  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS modifierIdx ON "+submissionDB+'.'+submissionTable+"(modifier)");
+
+  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+moduleTable+" ("+
+    "id VARCHAR PRIMARY KEY, submid VARCHAR, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, docver BIGINT," +
+    " FOREIGN KEY(submid) REFERENCES "
+    +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
+
+  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+attachmentTable+" ("+
+    "id VARCHAR, submid VARCHAR, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, filever BIGINT," +
+    " PRIMARY KEY (id,submid), FOREIGN KEY (submid) REFERENCES "
+    +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
+
+  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+historyTable+" ("+
+    "id VARCHAR, mtime BIGINT, modifier VARCHAR, descr VARCHAR, diff BINARY, data BINARY," +
+    " PRIMARY KEY (id,mtime) )");
+
+  conn.commit();
+  
+  stmt.executeUpdate("CREATE ALIAS IF NOT EXISTS FTL_INIT FOR \"org.h2.fulltext.FullTextLucene.init\"");
+  stmt.executeUpdate("CALL FTL_INIT()");
+
+  try
+  {
+   stmt.executeUpdate("CALL FTL_CREATE_INDEX('"+submissionDB+"', '"+submissionTable+"', 'FT_DESC')");
+  }
+  catch (Exception e)
+  {
+   e.printStackTrace();
+  }
+  
+  stmt.close();
+ }
+ @Override
+ public void storeSubmission(SubmissionMeta sMeta, SubmissionMeta oldSbm, String updateDescr) throws SubmissionDBException
+ {
+  SubmissionDiff diff = null;
+  
+  if( oldSbm != null )
+   diff = calculateDiff(sMeta,oldSbm);
+  
   StringBuilder sb = new StringBuilder(1000);
 
   sb.append(sMeta.getDescription());
@@ -136,17 +196,32 @@ public class H2SubmissionDB extends SubmissionDB
     pstsmt.executeUpdate();
     pstsmt.close();
     
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    ObjectOutputStream oos = new ObjectOutputStream( baos );
+    ByteArrayOutputStream baosData = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream( baosData );
     oos.writeObject(oldSbm);
     oos.close();
+
     
     //(id,mtime,modifier,data)
     pstsmt = conn.prepareStatement(insertHistorySQL);
     pstsmt.setString(1, sMeta.getId());
     pstsmt.setLong(2, sMeta.getModificationTime());
     pstsmt.setString(3, sMeta.getModifier());
-    pstsmt.setBytes(4, baos.toByteArray());
+    pstsmt.setString(4, updateDescr);
+    
+    if( diff != null )
+    {
+     ByteArrayOutputStream baosDiff = new ByteArrayOutputStream();
+     oos = new ObjectOutputStream( baosDiff );
+     oos.writeObject(diff);
+     oos.close();
+     
+     pstsmt.setBytes(5, baosDiff.toByteArray());
+    }
+    else
+     pstsmt.setNull(5, Types.BINARY);
+    
+    pstsmt.setBytes(6, baosData.toByteArray());
 
    }
    
@@ -165,7 +240,7 @@ public class H2SubmissionDB extends SubmissionDB
 
    if(sMeta.getDataModules() != null)
    {
-    //(id,submid,desc,ctime,mtime,creator,modifier)
+    //(id,submid,desc,ctime,mtime,creator,modifier,docver)
     pstsmt = conn.prepareStatement(insertModuleSQL);
     for(DataModuleMeta dmm : sMeta.getDataModules())
     {
@@ -176,12 +251,13 @@ public class H2SubmissionDB extends SubmissionDB
      pstsmt.setLong(5, dmm.getModificationTime());
      pstsmt.setString(6, dmm.getSubmitter());
      pstsmt.setString(7, dmm.getModifier());
+     pstsmt.setLong(8, dmm.getDocVersion());
 
      pstsmt.executeUpdate();
 
      if( dmm.getText() != null )
      {
-      File outPFile = docDepot.getFilePath(dmm.getId(), dmm.getModificationTime());
+      File outPFile = docDepot.getFilePath(dmm.getId(), dmm.getDocVersion());
       
       OutputStreamWriter wrtr = new OutputStreamWriter(new FileOutputStream(outPFile), docCharset);
       
@@ -232,54 +308,259 @@ public class H2SubmissionDB extends SubmissionDB
    }
 
    e.printStackTrace();
+   
+   throw new SubmissionDBException("System error", e);
   }
 
  }
 
- private void initSubmissionDb() throws SQLException
+ @Override
+ public List<HistoryEntry> getHistory( String sbmId ) throws SubmissionDBException
  {
-  Statement stmt = conn.createStatement();
-  
-  stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS "+submissionDB);
-
-  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+submissionTable+" ("+
-    "id VARCHAR PRIMARY KEY, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, FT_DESC VARCHAR)");
-
-  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS ctimeIdx ON "+submissionDB+'.'+submissionTable+"(ctime)");
-  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS mtimeIdx ON "+submissionDB+'.'+submissionTable+"(mtime)");
-  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS creatorIdx ON "+submissionDB+'.'+submissionTable+"(creator)");
-  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS modifierIdx ON "+submissionDB+'.'+submissionTable+"(modifier)");
-
-  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+moduleTable+" ("+
-    "id VARCHAR PRIMARY KEY, submid VARCHAR, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR," +
-    " FOREIGN KEY(submid) REFERENCES "
-    +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
-
-  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+attachmentTable+" ("+
-    "id VARCHAR, submid VARCHAR, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, filever BIGINT," +
-    " PRIMARY KEY (id,submid), FOREIGN KEY (submid) REFERENCES "
-    +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
-
-  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+historyTable+" ("+
-    "id VARCHAR, mtime BIGINT, modifier VARCHAR, data BINARY," +
-    " PRIMARY KEY (id,mtime) )");
-
-  conn.commit();
-  
-  stmt.executeUpdate("CREATE ALIAS IF NOT EXISTS FTL_INIT FOR \"org.h2.fulltext.FullTextLucene.init\"");
-  stmt.executeUpdate("CALL FTL_INIT()");
-
   try
   {
-   stmt.executeUpdate("CALL FTL_CREATE_INDEX('"+submissionDB+"', '"+submissionTable+"', 'FT_DESC')");
+   List<HistoryEntry> res = new ArrayList<HistoryEntry>();
+   
+   
+   PreparedStatement pstmt = conn.prepareStatement( selectHistoryBySubmissionSQL );
+   
+   pstmt.setString(1, sbmId);
+   
+   ResultSet rst = pstmt.executeQuery();
+   
+   //id VARCHAR, mtime BIGINT, modifier VARCHAR, descr VARCHAR, diff BINARY, data BINARY
+   
+   while( rst.next() )
+   {
+    HistoryEntry ent = Factory.createHistoryEntry();
+    
+    ent.setModificationTime( rst.getLong("mtime") );
+    ent.setModifier( rst.getString("modifier") );
+    ent.setDescription( rst.getString("descr") );
+    
+    InputStream dfis = rst.getBinaryStream("diff");
+    
+    if( ! rst.wasNull() )
+    {
+     ObjectInputStream ois = new ObjectInputStream(dfis);
+     ent.setDiff( (SubmissionDiff)ois.readObject() );
+     dfis.close();
+    }
+    
+    res.add(ent);
+   }
+
+   return res;
   }
-  catch (Exception e)
+  catch( Exception e )
   {
-   e.printStackTrace();
+   throw new SubmissionDBException("System error", e);
+  }
+
+ }
+ 
+ private SubmissionDiff calculateDiff(SubmissionMeta sMeta, SubmissionMeta oldSbm)
+ {
+  SubmissionDiff sDif = Factory.createSubmissionDiff();
+  
+  sDif.setId( sMeta.getId() );
+  
+  sDif.setModifier( sMeta.getModifier() );
+  sDif.setModificationTime( sMeta.getModificationTime() );
+  
+  boolean chngd = false;
+  
+  if( sMeta.getDescription() != null )
+  {
+   if( oldSbm.getDescription() == null || ! sMeta.getDescription().equals(oldSbm.getDescription())  )
+    chngd = true;
+  }
+  else if( oldSbm.getDescription() != null )
+   chngd = true;
+  
+  sDif.setDescriptionChanged( chngd );
+  
+  if( sMeta.getDataModules() != null )
+  {
+   for(DataModuleMeta dmm : sMeta.getDataModules())
+   {
+    DataModuleMeta oldDm = null;
+    
+    if( oldSbm.getDataModules() != null )
+    {
+     for(DataModuleMeta odmm : oldSbm.getDataModules())
+     {
+      if(odmm.getId().equals(dmm.getId()))
+      {
+       oldDm = odmm;
+       break;
+      }
+     }
+    }
+    
+    if( oldDm == null  )
+    {
+     DataModuleDiff mdif = Factory.createDataModuleDiff();
+     
+     mdif.setId( dmm.getId() );
+     mdif.setStatus( Status.NEW );
+     
+     sDif.addDataModuleDiff( mdif );
+    }
+    else
+    {
+     boolean dscChngd = false;
+     
+     if( dmm.getDescription() != null )
+     {
+      if( oldDm.getDescription() == null || ! dmm.getDescription().equals(oldDm.getDescription())  )
+       dscChngd = true;
+     }
+     else if( oldDm.getDescription() != null )
+      dscChngd = true;    
+    
+     if( dscChngd || dmm.getDocVersion() != oldDm.getDocVersion() )
+     {
+      DataModuleDiff mdif = Factory.createDataModuleDiff();
+      
+      mdif.setId( dmm.getId() );
+      mdif.setStatus( Status.UPDATE );
+      
+      mdif.setMetaChanged( dscChngd );
+      mdif.setDataChanged( dmm.getDocVersion() != oldDm.getDocVersion() );
+      
+      sDif.addDataModuleDiff( mdif );
+     }
+    }
+
+   }
   }
   
-  stmt.close();
+  if( oldSbm.getDataModules() != null )
+  {
+   for(DataModuleMeta odmm : oldSbm.getDataModules())
+   {
+    DataModuleMeta updDm = null;
+    
+    if( sMeta.getDataModules() != null )
+    {
+     for(DataModuleMeta ndmm : sMeta.getDataModules() )
+     {
+      if(odmm.getId().equals(ndmm.getId()))
+      {
+       updDm = ndmm;
+       break;
+      }
+     }
+    }
+
+    if( updDm == null )
+    {
+     DataModuleDiff mdif = Factory.createDataModuleDiff();
+     
+     mdif.setId( odmm.getId() );
+     mdif.setStatus( Status.DELETE );
+     
+     sDif.addDataModuleDiff( mdif );
+    }
+    
+   }
+  }
+  
+  
+  
+  if( sMeta.getAttachments() != null )
+  {
+   for(FileAttachmentMeta attm : sMeta.getAttachments())
+   {
+    FileAttachmentMeta oldAttm = null;
+    
+    if( oldSbm.getAttachments() != null )
+    {
+     for(FileAttachmentMeta oattm : oldSbm.getAttachments())
+     {
+      if(oattm.getId().equals(attm.getId()))
+      {
+       oldAttm = oattm;
+       break;
+      }
+     }
+    }
+    
+    if( oldAttm == null  )
+    {
+     AttachmentDiff adif = Factory.createAttachmentDiff();
+     
+     adif.setId( attm.getId() );
+     adif.setStatus( Status.NEW );
+     
+     sDif.addAttachmentDiff( adif );
+    }
+    else
+    {
+     boolean dscChngd = false;
+     
+     if( attm.getDescription() != null )
+     {
+      if( oldAttm.getDescription() == null || ! attm.getDescription().equals(oldAttm.getDescription())  )
+       dscChngd = true;
+     }
+     else if( oldAttm.getDescription() != null )
+      dscChngd = true;    
+    
+     if( dscChngd || attm.getFileVersion() != oldAttm.getFileVersion() || attm.isGlobal() != oldAttm.isGlobal() )
+     {
+      AttachmentDiff adif = Factory.createAttachmentDiff();
+      
+      adif.setId( attm.getId() );
+      adif.setStatus( Status.UPDATE );
+      
+      adif.setMetaChanged( dscChngd );
+      adif.setVisibilityChanged( attm.isGlobal() != oldAttm.isGlobal() );
+      adif.setDataChanged( attm.getFileVersion() != oldAttm.getFileVersion() );
+      
+      sDif.addAttachmentDiff( adif );
+     }
+    }
+
+   }
+  }
+  
+  if( oldSbm.getAttachments() != null )
+  {
+   for(FileAttachmentMeta oattm : oldSbm.getAttachments())
+   {
+    FileAttachmentMeta updAttm = null;
+    
+    if( sMeta.getDataModules() != null )
+    {
+     for(FileAttachmentMeta ndmm : sMeta.getAttachments() )
+     {
+      if(oattm.getId().equals(ndmm.getId()))
+      {
+       updAttm = ndmm;
+       break;
+      }
+     }
+    }
+
+    if( updAttm == null )
+    {
+     AttachmentDiff adif = Factory.createAttachmentDiff();
+     
+     adif.setId( oattm.getId() );
+     adif.setStatus( Status.DELETE );
+     
+     sDif.addAttachmentDiff( adif );
+    }
+    
+   }
+  }
+
+  
+  return sDif;
  }
+
 
  @Override
  public void shutdown()
@@ -529,7 +810,7 @@ public class H2SubmissionDB extends SubmissionDB
 
    while(rstS.next())
    {
-    SubmissionMeta simp = sMeta != null? sMeta : new SubmissionMeta();
+    SubmissionMeta simp = sMeta != null? sMeta : Factory.createSubmissionMeta();
 
     simp.setId(rstS.getString("id"));
     simp.setDescription(rstS.getString("desc") );
@@ -546,7 +827,7 @@ public class H2SubmissionDB extends SubmissionDB
 
     while( rstMF.next() )
     {
-     DataModuleMeta dmm = new DataModuleMeta();
+     DataModuleMeta dmm = Factory.createDataModuleMeta();
      
      dmm.setId(rstMF.getString("id"));
      dmm.setDescription(rstMF.getString("desc") );
@@ -557,6 +838,8 @@ public class H2SubmissionDB extends SubmissionDB
      dmm.setSubmitter( rstMF.getString("creator") );
      dmm.setModifier(rstMF.getString("modifier") );
 
+     dmm.setDocVersion(rstMF.getLong("docver"));
+     
      simp.addDataModule(dmm);
     }
 
@@ -568,7 +851,7 @@ public class H2SubmissionDB extends SubmissionDB
     
     while( rstMF.next() )
     {
-     FileAttachmentMeta fam = new FileAttachmentMeta();
+     FileAttachmentMeta fam = Factory.createFileAttachmentMeta();
 
      fam.setId(rstMF.getString("id"));
      fam.setDescription(rstMF.getString("desc") );
@@ -617,7 +900,7 @@ public class H2SubmissionDB extends SubmissionDB
   StringUtils.appendEscaped(sb, id, '\'', '\'');
   sb.append('\'');
 
-  SubmissionMeta sm = new SubmissionMeta();
+  SubmissionMeta sm = Factory.createSubmissionMeta();
   
   try
   {

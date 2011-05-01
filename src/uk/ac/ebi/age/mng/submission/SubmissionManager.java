@@ -12,6 +12,7 @@ import java.util.Stack;
 
 import uk.ac.ebi.age.conf.Constants;
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
+import uk.ac.ebi.age.ext.submission.Factory;
 import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
 import uk.ac.ebi.age.ext.submission.Status;
 import uk.ac.ebi.age.ext.submission.SubmissionDBException;
@@ -141,7 +142,7 @@ public class SubmissionManager
 
  
  @SuppressWarnings("unchecked")
- public boolean storeSubmission( SubmissionMeta sMeta,  SubmissionContext context, LogNode logRoot )
+ public boolean storeSubmission( SubmissionMeta sMeta,  String updateDescr, SubmissionContext context, LogNode logRoot )
  {
   
   SubmissionMeta origSbm = null;
@@ -233,7 +234,8 @@ public class SubmissionManager
      mm.meta = dm;
      mm.aux = modAux;
 
-
+     mm.origModule = ageStorage.getDataModule(mm.meta.getId());
+     
      if(mm.origModule == null)
      {
       logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + mm.meta.getId() + "' to be updated/deleted");
@@ -254,40 +256,45 @@ public class SubmissionManager
      }
      else
      {
+      
+      
       cstMeta.mod4MetaUpd.put(mm.meta.getId(), mm);
       cstMeta.mod4Use.add(mm);
      }
     }
     else if( modAux.getStatus() == Status.NEW )
     {
-     if(dm == null)
+     if(dm.getText() == null)
      {
-      logRoot.log(Level.ERROR, "Module "+modAux.getOrder()+" is marked for insertion but no data were provided");
+      logRoot.log(Level.ERROR, "Module " + modAux.getOrder() + " is marked for insertion but no data were provided");
       res = false;
       continue;
      }
 
-      if( dm.getId() != null )
+     if(dm.getId() != null)
+     {
+      DataModuleWritable clashMod = ageStorage.getDataModule(dm.getId());
+
+      if(clashMod != null)
       {
-       DataModuleWritable clashMod = ageStorage.getDataModule(dm.getId());
-
-       if(clashMod != null)
-       {
-        logRoot.log(Level.ERROR, "Module " + modAux.getOrder() + " is marked for insertion and has it's own ID (" + dm.getId()
-          + ") but this ID it already taken by module of cluster '" + clashMod.getClusterId() + "'");
-        res = false;
-        continue;
-       }
+       logRoot.log(Level.ERROR,
+         "Module " + modAux.getOrder() + " is marked for insertion and has it's own ID (" + dm.getId()
+           + ") but this ID it already taken by module of cluster '" + clashMod.getClusterId() + "'");
+       res = false;
+       continue;
       }
+     }
 
-      ModMeta mm = new ModMeta();
-      mm.meta = dm;
-      mm.aux = modAux;
+     ModMeta mm = new ModMeta();
+     mm.meta = dm;
+     mm.aux = modAux;
 
-      cstMeta.mod4Ins.add(mm);
-      cstMeta.mod4Use.add(mm);
+     mm.meta.setDocVersion( mm.meta.getModificationTime() );
 
-      cstMeta.incomingMods.add(mm);
+     cstMeta.mod4Ins.add(mm);
+     cstMeta.mod4Use.add(mm);
+
+     cstMeta.incomingMods.add(mm);
     }
 
    }
@@ -312,6 +319,12 @@ public class SubmissionManager
      
      updMod.meta.setSubmissionTime( odm.getSubmissionTime() );
      updMod.meta.setSubmitter( odm.getSubmitter() );
+     
+     if( updMod.meta.getText() != null )
+      updMod.meta.setDocVersion( updMod.meta.getModificationTime() );
+     else
+      updMod.meta.setDocVersion( odm.getDocVersion() );
+
     }
     else if( ! cstMeta.mod4Del.containsKey(modID) )
     {
@@ -425,7 +438,7 @@ public class SubmissionManager
         }
        }
        
-       FileAttachmentMeta nfm = new FileAttachmentMeta();
+       FileAttachmentMeta nfm = Factory.createFileAttachmentMeta();
        AttachmentAux nax = new AttachmentAux();
 
        nfm.setAux(nax);
@@ -547,11 +560,8 @@ public class SubmissionManager
    boolean modRes = true;
    LogNode modNode = logRoot.branch("Processing module: " + mm.aux.getOrder() );
    
-   if( mm.meta.getText() == null )
-   {
-    modNode.log(Level.INFO, "Module is marked for deletion. Skiping");
+   if( mm.meta.getText() == null ) //Modules to be deleted or meta update
     continue;
-   }
    
    LogNode atLog = modNode.branch("Parsing AgeTab");
    try
@@ -980,7 +990,7 @@ public class SubmissionManager
    
    try
    {
-    submissionDB.storeSubmission(sMeta, origSbm);
+    submissionDB.storeSubmission(sMeta, origSbm, updateDescr);
    }
    catch(SubmissionDBException e)
    {
@@ -1196,6 +1206,9 @@ public class SubmissionManager
   
   for( ModMeta mm : cstMeta.mod4Use )
   {
+   if( mm.newModule == null )
+    continue;
+   
    modMap.put(mm.newModule, mm);
    
    for( AgeObjectWritable obj : mm.newModule.getObjects() )

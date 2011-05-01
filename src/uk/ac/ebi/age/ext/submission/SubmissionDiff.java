@@ -1,18 +1,26 @@
 package uk.ac.ebi.age.ext.submission;
 
-import java.io.Serializable;
-import java.util.List;
-
-public class SubmissionDiff implements Serializable
+public interface SubmissionDiff
 {
- private static final long serialVersionUID = 1L;
 
- private long modTime;
- private long lastModTime;
- private String id;
- 
- private String updateDescription;
- 
- private List<DataModuleDiff> moduleDiffs;
- private List<AttachmentDiff> attachmentDiffs;
+ void setId(String id2);
+
+ String getId();
+
+ long getModificationTime();
+
+ void setModificationTime(long modificationTime);
+
+ String getModifier();
+
+ void setModifier(String modifier);
+
+ boolean isDescriptionChanged();
+
+ void setDescriptionChanged(boolean descriptionChanged);
+
+ void addDataModuleDiff(DataModuleDiff mdif);
+
+ void addAttachmentDiff(AttachmentDiff adif);
+
 }

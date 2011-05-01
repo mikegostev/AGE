@@ -1,132 +1,45 @@
 package uk.ac.ebi.age.ext.submission;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 
-public class SubmissionMeta implements Serializable
+public interface SubmissionMeta
 {
- private static final long serialVersionUID = 1L;
 
- private String id;
- 
- private String description;
- private String submitter;
- private String modifier;
- 
- private long submissionTime;
- private long modificationTime;
- 
- private List<DataModuleMeta> mods = new ArrayList<DataModuleMeta>(3);
- private List<FileAttachmentMeta> atts ;
+ String getSubmitter();
 
- private String updateDescription;
+ void setSubmitter(String submitter);
 
- private Status status;
- 
- public String getSubmitter()
- {
-  return submitter;
- }
+ String getModifier();
 
- public void setSubmitter(String submitter)
- {
-  this.submitter = submitter;
- }
+ void setModifier(String modifier);
 
- public String getModifier()
- {
-  return modifier;
- }
+ long getSubmissionTime();
 
- public void setModifier(String modifier)
- {
-  this.modifier = modifier;
- }
+ void setSubmissionTime(long submissionTime);
 
- public long getSubmissionTime()
- {
-  return submissionTime;
- }
+ long getModificationTime();
 
- public void setSubmissionTime(long submissionTime)
- {
-  this.submissionTime = submissionTime;
- }
+ void setModificationTime(long modificationTime);
 
- public long getModificationTime()
- {
-  return modificationTime;
- }
+ String getDescription();
 
- public void setModificationTime(long modificationTime)
- {
-  this.modificationTime = modificationTime;
- }
+ void setDescription(String string);
 
+ String getId();
 
- public String getDescription()
- {
-  return description;
- }
+ void setId(String id);
 
- public void setDescription(String string)
- {
-  description = string;
- }
+ void addDataModule(DataModuleMeta dmMeta);
 
- public String getId()
- {
-  return id;
- }
+ List<DataModuleMeta> getDataModules();
 
- public void setId(String id)
- {
-  this.id = id;
- }
+ void addAttachment(FileAttachmentMeta fAtMeta);
 
- public void addDataModule(DataModuleMeta dmMeta)
- {
-  mods.add(dmMeta);
- }
+ List<FileAttachmentMeta> getAttachments();
 
- public List<DataModuleMeta> getDataModules()
- {
-  return mods;
- }
+ void setStatus(Status st);
 
- public void addAttachment(FileAttachmentMeta fAtMeta)
- {
-  if( atts == null )
-   atts = new ArrayList<FileAttachmentMeta>(3);
-
-  atts.add( fAtMeta );
- }
-
- public List<FileAttachmentMeta> getAttachments()
- {
-  return atts;
- }
-
- public void setUpdateDescription(String string)
- {
-  updateDescription = string;
- }
-
- public String getUpdateDescription()
- {
-  return updateDescription;
- }
-
- public void setStatus(Status st)
- {
-  status = st;
- }
-
- public Status getStatus()
- {
-  return status;
- }
+ Status getStatus();
 
 }

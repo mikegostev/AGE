@@ -1,7 +1,9 @@
 package uk.ac.ebi.age.service.submission;
 
 import java.io.File;
+import java.util.List;
 
+import uk.ac.ebi.age.ext.submission.HistoryEntry;
 import uk.ac.ebi.age.ext.submission.SubmissionDBException;
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
 import uk.ac.ebi.age.ext.submission.SubmissionQuery;
@@ -24,7 +26,7 @@ public abstract class SubmissionDB
 
  public abstract void init();
 
- public abstract void storeSubmission(SubmissionMeta sMeta, SubmissionMeta origSbm) throws SubmissionDBException;
+ public abstract void storeSubmission(SubmissionMeta sMeta, SubmissionMeta origSbm, String updateDescr) throws SubmissionDBException;
 
  public abstract void shutdown();
 
@@ -39,5 +41,8 @@ public abstract class SubmissionDB
  public abstract File getAttachment(String clustId, String fileId, long ver);
 
  public abstract File getDocument(String clustId, String fileId, long ts);
+
+ public abstract List<HistoryEntry> getHistory(String sbmId) throws SubmissionDBException;
+
 
 }
