@@ -1052,6 +1052,423 @@ public class SubmissionManager
  }
 
  
+ public boolean removeSubmission( String sbmID, SubmissionContext context, LogNode logRoot )
+ {
+  SubmissionMeta sMeta = null;
+  
+  try
+  {
+   sMeta = submissionDB.getSubmission( sbmID );
+  }
+  catch(SubmissionDBException e)
+  {
+   logRoot.log(Level.ERROR, "Method removeSubmission error: "+e.getMessage());
+   
+   return false;
+  }
+  
+  if( sMeta == null )
+  {
+   logRoot.log(Level.ERROR, "Submission with ID='"+sMeta.getId()+"' is not found to be removed");
+   return false;
+  }
+  
+  
+  List<FileAttachmentMeta> files = sMeta.getAttachments();
+  
+  
+  boolean res = true;
+  
+  
+  if( ! res )  
+   return false;
+
+  
+  try
+  {
+   ageStorage.lockWrite();
+
+   
+   // XXX connection to main graph
+   
+   
+   Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject> > extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable,AgeObject>>();
+   Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable> > relConnections = null;
+   Map<AgeObjectWritable,Set<AgeRelationWritable> > relationDetachMap = null;
+   
+   if( cstMeta.mod4Upd.size() != 0 || ( cstMeta.mod4Ins.size() !=0 && cstMeta.mod4Del.size() != 0 ) )
+   {
+    relConnections = new ArrayList<Pair<AgeExternalRelationWritable,AgeObjectWritable>>();
+    relationDetachMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
+    
+    if( ! reconnectExternalObjectAttributes(cstMeta, extAttrConnector, ageStorage, logRoot))
+    {
+     res = false;
+     return false;
+    }
+    
+    
+    if( ! reconnectExternalRelations(cstMeta, relConnections, relationDetachMap, ageStorage, logRoot) )
+    {
+     res = false;
+     return false;
+    }
+   }
+   
+
+   if( cstMeta.att4Del.size() != 0 ||  cstMeta.att4G2L.size() != 0 )
+   {
+    if( ! checkRemovedDataFiles(cstMeta, ageStorage, logRoot) )
+    {
+     res = false;
+     return false;
+    }
+   }
+
+  
+   
+   if( relationDetachMap != null )
+   {
+    boolean invRelRes = true;
+    LogNode invRelLog = logRoot.branch("Validating externaly related object semantic");
+    
+    for( AgeObject obj :  relationDetachMap.keySet() )
+    {
+     LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
+     
+     if( validator.validateRelations(obj, invRelMap.get(obj), relationDetachMap.get(obj), objLogNode) )
+      objLogNode.log(Level.INFO, "Success");
+     else
+      invRelRes = false;
+    }
+    
+    if(invRelRes)
+     invRelLog.log(Level.INFO, "Success");
+    else
+    {
+     invRelLog.log(Level.ERROR, "Validation failed");
+     invRelRes =false;
+    }
+
+    res = res && invRelRes;
+   }
+   
+   if( ! res )
+    return false;
+   
+   
+   if( cstMeta.id == null )
+   {
+    String id = null;
+    
+    try
+    {
+     do
+     {
+      id = Constants.submissionIDPrefix+IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
+     }
+     while( submissionDB.hasSubmission(id) );
+    }
+    catch(SubmissionDBException e)
+    {
+     logRoot.log(Level.ERROR, "Method hasSubmission error: "+e.getMessage());
+
+     res = false;
+     
+     return false;
+    }
+   
+    cstMeta.id = id;
+    sMeta.setId(id);
+   }
+   
+   for( ModMeta mm : cstMeta.incomingMods )
+   {
+    mm.newModule.setClusterId(cstMeta.id);
+    
+    if( mm.newModule.getId() == null )
+    {
+     String id = null;
+     
+     do
+     {
+      id = Constants.dataModuleIDPrefix+IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
+     }
+     while( ageStorage.hasDataModule(id) );
+    
+     mm.newModule.setId(id);
+     mm.meta.setId(id);
+     
+    }
+    
+    if( mm.newModule != null )
+    {
+     for( AgeObjectWritable obj : mm.newModule.getObjects() )
+     {
+      if( obj.getId() == null )
+      {
+       String id=null;
+       
+       do
+       {
+        id = Constants.localObjectIDPrefix+obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId(Constants.objectIDDomain)
+        +"@"+mm.newModule.getId();
+       }
+       while( mm.idMap.containsKey(id) );
+       
+       obj.setId(id);
+       mm.idMap.put(id, obj);
+      }
+     }
+    }
+   }
+   
+   
+   connectIncomingModulesToFiles(cstMeta, ageStorage, logRoot);
+   
+   Collection< Pair<AgeFileAttributeWritable,String> > fileConn = new ArrayList< Pair<AgeFileAttributeWritable,String> >();
+   reconnectLocalModulesToFiles(cstMeta, fileConn, ageStorage, logRoot);
+   
+   for( FileMeta fatm : cstMeta.att4G2L.values() )
+    fatm.newFile.setId(ageStorage.makeLocalFileID(fatm.origFile.getId(), cstMeta.id));
+    
+   for( FileMeta fatm : cstMeta.att4L2G.values() )
+    fatm.newFile.setId(ageStorage.makeGlobalFileID(fatm.origFile.getId()));
+
+   for( FileAttachmentMeta fam : cstMeta.att4Ins.values() )
+   {
+    if( ! fam.isGlobal() ) // We generated IDs for the global files earlier 
+     fam.setSystemId(ageStorage.makeLocalFileID(fam.getId(), cstMeta.id));
+   }
+   
+
+   
+   if( cstMeta.att4Ins.size() > 0 )
+   {
+    LogNode finsLog = logRoot.branch("Storing files");
+    
+    for( FileAttachmentMeta fam : cstMeta.att4Ins.values() )
+    {
+     finsLog.log(Level.INFO, "Storing file: '"+fam.getId()+"' (ID="+fam.getSystemId()+")");
+     
+     try
+     {
+      fam.setFileVersion(fam.getModificationTime());
+      
+      File tagt = ageStorage.storeAttachment(fam.getSystemId(), ((AttachmentAux)fam.getAux()).getFile());
+      
+      submissionDB.storeAttachment(cstMeta.id, fam.getId(), fam.getFileVersion(), tagt);
+     }
+     catch(Exception e)
+     {
+      finsLog.log(Level.ERROR, e.getMessage());
+      finsLog.log(Level.ERROR, "Failed");
+
+      res = false;
+      return false;
+     }
+
+     
+     finsLog.log(Level.INFO, "Success");
+    }
+   }
+   
+   if( cstMeta.att4Del.size() > 0 )
+   {
+    LogNode fdelLog = logRoot.branch("Deleting files");
+    
+    for( FileAttachmentMeta fam : cstMeta.att4Del.values() )
+    {
+     fdelLog.log(Level.INFO, "Deleting file: '"+fam.getId()+"' (ID="+fam.getSystemId()+")");
+     
+     ageStorage.deleteAttachment(fam.getId());
+     fdelLog.log(Level.INFO, "Success");
+    }
+   }
+   
+   if( cstMeta.att4Upd.size() > 0 )
+   {
+    LogNode fupdLog = logRoot.branch("Updating files");
+    
+    for( FileMeta fam : cstMeta.att4Upd.values() )
+    {
+     fupdLog.log(Level.INFO, "Updating file: '"+fam.origFile.getId()+"' (ID="+fam.origFile.getSystemId()+")");
+     
+     try
+     {
+      fam.newFile.setFileVersion(fam.newFile.getModificationTime());
+
+      File tagt = ageStorage.storeAttachment(fam.origFile.getSystemId(), ((AttachmentAux)fam.newFile.getAux()).getFile());
+
+      submissionDB.storeAttachment(cstMeta.id, fam.newFile.getId(), fam.newFile.getFileVersion(), tagt);
+     }
+     catch(Exception e)
+     {
+      fupdLog.log(Level.ERROR, e.getMessage());
+      fupdLog.log(Level.ERROR, "Failed");
+
+      res = false;
+      return false;
+     }
+     
+     fupdLog.log(Level.INFO, "Success");
+    }
+   }
+
+   if( cstMeta.att4G2L.size() > 0 )
+   {
+    LogNode fupdLog = logRoot.branch("Changing file visibility (global to local)");
+    
+    for( FileMeta fam : cstMeta.att4G2L.values() )
+    {
+     fupdLog.log(Level.INFO, "Renaming file: '"+fam.origFile.getId()+"' old ID="+fam.origFile.getSystemId()+", new ID="+fam.newFile.getSystemId());
+     
+     try
+     {
+      ageStorage.renameAttachment(fam.origFile.getSystemId(), fam.newFile.getSystemId());
+     }
+     catch(AttachmentIOException e)
+     {
+      fupdLog.log(Level.ERROR, e.getMessage());
+      fupdLog.log(Level.ERROR, "Failed");
+
+      res = false;
+      return false;
+     }
+     
+     fupdLog.log(Level.INFO, "Success");
+    }
+   }
+
+   if( cstMeta.att4L2G.size() > 0 )
+   {
+    LogNode fupdLog = logRoot.branch("Changing file visibility (local to global)");
+    
+    for( FileMeta fam : cstMeta.att4L2G.values() )
+    {
+     fupdLog.log(Level.INFO, "Renaming file: '"+fam.origFile.getId()+"' old ID="+fam.origFile.getSystemId()+", new ID="+fam.newFile.getSystemId());
+     
+     try
+     {
+      ageStorage.renameAttachment(fam.origFile.getSystemId(), fam.newFile.getSystemId());
+     }
+     catch(AttachmentIOException e)
+     {
+      fupdLog.log(Level.ERROR, e.getMessage());
+      fupdLog.log(Level.ERROR, "Failed");
+
+      res = false;
+      return false;
+     }
+     
+     fupdLog.log(Level.INFO, "Success");
+    }
+   }
+ 
+   
+   LogNode updtLog = logRoot.branch("Updating storage");
+
+   try
+   {
+    if( cstMeta.mod4Upd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0 )
+    {
+     
+     ageStorage.update( 
+       new CollectionsUnion<DataModuleWritable>( 
+        new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Upd.values(), modExtractor),
+        new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Ins, modExtractor)
+       ),
+       
+       new CollectionsUnion<String>( 
+        new ExtractorCollection<ModMeta, String>(cstMeta.mod4Upd.values(), idExtractor),
+        new ExtractorCollection<ModMeta, String>(cstMeta.mod4Del.values(), idExtractor)
+       ) );
+     
+     updtLog.log(Level.INFO, "Success");
+    }
+   }
+   catch (Exception e)
+   {
+    updtLog.log(Level.ERROR, e.getMessage());
+    updtLog.log(Level.ERROR, "Failed");
+    
+    res = false;
+ 
+    return false;
+   }
+   
+   
+   for( ModMeta mm : cstMeta.mod4Hld.values())
+    sMeta.addDataModule(mm.meta);
+   
+   for( FileAttachmentMeta fam : cstMeta.att4Hld.values() )
+    sMeta.addAttachment(fam);
+   
+   try
+   {
+    submissionDB.storeSubmission(sMeta, origSbm, updateDescr);
+   }
+   catch(SubmissionDBException e)
+   {
+    logRoot.log(Level.ERROR, "Method storeSubmission error: "+e.getMessage());
+
+    res = false;
+    
+    return false;
+   }
+   
+   
+   
+   if( extAttrConnector != null )
+   {
+    for( Pair<AgeExternalObjectAttributeWritable, AgeObject> cn : extAttrConnector )
+     cn.getFirst().setTargetObject( cn.getSecond() );
+   }
+   
+   if( relConnections != null )
+   {
+    for( Pair<AgeExternalRelationWritable, AgeObjectWritable> cn : relConnections )
+     cn.getFirst().setTargetObject(cn.getSecond());
+   }
+   
+   for( Pair<AgeFileAttributeWritable, String> fc :  fileConn ) 
+    fc.getFirst().setFileId( fc.getSecond() );
+   
+   if( relationDetachMap != null )
+   {
+    for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : relationDetachMap.entrySet())
+     for(AgeRelationWritable rel : me.getValue())
+      me.getKey().removeRelation(rel);
+   }
+    //    stor.removeRelations(me.getKey().getId(),me.getValue());
+
+   for( Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
+    for( AgeRelationWritable rel : me.getValue() )
+     me.getKey().addRelation(rel);
+    
+   for( ModMeta dm : cstMeta.incomingMods )
+   {
+    if( dm.newModule != null && dm.newModule.getExternalRelations() != null  )
+    {
+     for( AgeExternalRelationWritable rel : dm.newModule.getExternalRelations() )
+      rel.getInverseRelation().setInverseRelation(rel);
+    }
+   }
+    //    stor.addRelations(me.getKey().getId(),me.getValue());
+
+  }
+  finally
+  {
+   ageStorage.unlockWrite();
+  }
+
+  //Impute reverse relation and revalidate.
+
+  return res;
+ }
+
+ 
+ 
  private boolean connectNewExternalRelations( ClustMeta cstMeta, AgeStorageAdm stor, Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap, LogNode rootNode )
  {
 
