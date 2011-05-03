@@ -44,5 +44,6 @@ public abstract class SubmissionDB
 
  public abstract List<HistoryEntry> getHistory(String sbmId) throws SubmissionDBException;
 
+ public abstract boolean removeSubmission(String sbmID) throws SubmissionDBException;
 
 }

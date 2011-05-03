@@ -25,6 +25,8 @@ public class SubmissionMetaImpl implements Serializable, SubmissionMeta
  
  private List<DataModuleMeta> mods = new ArrayList<DataModuleMeta>(3);
  private List<FileAttachmentMeta> atts ;
+ 
+ private boolean removed;
 
  SubmissionMetaImpl()
  {}
@@ -151,6 +153,18 @@ public class SubmissionMetaImpl implements Serializable, SubmissionMeta
  public Status getStatus()
  {
   return status;
+ }
+
+ @Override
+ public boolean isRemoved()
+ {
+  return removed;
+ }
+
+ @Override
+ public void setRemoved(boolean removed)
+ {
+  this.removed = removed;
  }
 
 }

@@ -5,6 +5,13 @@ import java.io.Serializable;
 
 public class SubmissionQuery implements Serializable
 {
+ public static enum Selector
+ {
+  ACTIVE,
+  REMOVED,
+  BOTH
+ }
+ 
  private static final long serialVersionUID = 8294154958731342639L;
  
  private String query;
@@ -13,13 +20,15 @@ public class SubmissionQuery implements Serializable
  private String submitter;
  private String modifier;
 
- private long createedFrom;
+ private long createdFrom;
  private long modifiedFrom;
  private long createdTo;
  private long modifiedTo;
  
  private int limit;
  private int offset;
+ 
+ private Selector remSelector=Selector.ACTIVE;
  
  private int total=0;
  
@@ -75,12 +84,12 @@ public class SubmissionQuery implements Serializable
 
  public long getCreatedFrom()
  {
-  return createedFrom;
+  return createdFrom;
  }
 
  public void setCreatedFrom(long createedFrom)
  {
-  this.createedFrom = createedFrom;
+  this.createdFrom = createedFrom;
  }
 
  public long getModifiedFrom()
@@ -141,6 +150,16 @@ public class SubmissionQuery implements Serializable
  public void setTotal(int total)
  {
   this.total = total;
+ }
+
+ public Selector getStateSelector()
+ {
+  return remSelector;
+ }
+
+ public void setStateSelector(Selector sel)
+ {
+  remSelector = sel;
  }
 
 }

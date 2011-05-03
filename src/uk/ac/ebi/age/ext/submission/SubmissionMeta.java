@@ -42,4 +42,7 @@ public interface SubmissionMeta
 
  Status getStatus();
 
+ void setRemoved(boolean rm);
+ boolean isRemoved();
+
 }

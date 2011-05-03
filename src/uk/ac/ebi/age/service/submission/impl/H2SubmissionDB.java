@@ -30,6 +30,7 @@ import uk.ac.ebi.age.ext.submission.SubmissionDBException;
 import uk.ac.ebi.age.ext.submission.SubmissionDiff;
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
 import uk.ac.ebi.age.ext.submission.SubmissionQuery;
+import uk.ac.ebi.age.ext.submission.SubmissionQuery.Selector;
 import uk.ac.ebi.age.ext.submission.SubmissionReport;
 import uk.ac.ebi.age.service.submission.SubmissionDB;
 import uk.ac.ebi.age.util.FileUtil;
@@ -76,6 +77,8 @@ public class H2SubmissionDB extends SubmissionDB
  private static final String insertHistorySQL = "INSERT INTO "+submissionDB+"."+historyTable
  +" (id,mtime,modifier,descr,diff,data) VALUES (?,?,?,?,?,?)";
 
+ private static final String switchSubmissionRemovedSQL = 
+ "UPDATE "+submissionDB+"."+submissionTable+" SET removed=? WHERE id=?";
  
  private static final String h2DbPath = "h2db";
  private static final String docDepotPath = "docs";
@@ -124,7 +127,8 @@ public class H2SubmissionDB extends SubmissionDB
   stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS "+submissionDB);
 
   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+submissionTable+" ("+
-    "id VARCHAR PRIMARY KEY, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, FT_DESC VARCHAR)");
+    "id VARCHAR PRIMARY KEY, desc VARCHAR, ctime BIGIN NOT NULLT, mtime BIGINT NOT NULL, creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL," +
+    " removed BOOLEAN NOT NULL DEFAULT FALSE, FT_DESC VARCHAR)");
 
   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS ctimeIdx ON "+submissionDB+'.'+submissionTable+"(ctime)");
   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS mtimeIdx ON "+submissionDB+'.'+submissionTable+"(mtime)");
@@ -132,17 +136,19 @@ public class H2SubmissionDB extends SubmissionDB
   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS modifierIdx ON "+submissionDB+'.'+submissionTable+"(modifier)");
 
   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+moduleTable+" ("+
-    "id VARCHAR PRIMARY KEY, submid VARCHAR, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, docver BIGINT," +
+    "id VARCHAR PRIMARY KEY, submid VARCHAR NOT NULL, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL," +
+    " creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL, docver BIGINT NOT NULL," +
     " FOREIGN KEY(submid) REFERENCES "
     +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
 
   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+attachmentTable+" ("+
-    "id VARCHAR, submid VARCHAR, desc VARCHAR, ctime BIGINT, mtime BIGINT, creator VARCHAR, modifier VARCHAR, filever BIGINT," +
+    "id VARCHAR, submid VARCHAR NOT NULL, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL," +
+    " creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL, filever BIGINT NOT NULL," +
     " PRIMARY KEY (id,submid), FOREIGN KEY (submid) REFERENCES "
     +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
 
   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+historyTable+" ("+
-    "id VARCHAR, mtime BIGINT, modifier VARCHAR, descr VARCHAR, diff BINARY, data BINARY," +
+    "id VARCHAR NOT NULL, mtime BIGINT NOT NULL, modifier VARCHAR NOT NULL, descr VARCHAR, diff BINARY, data BINARY," +
     " PRIMARY KEY (id,mtime) )");
 
   conn.commit();
@@ -161,6 +167,9 @@ public class H2SubmissionDB extends SubmissionDB
   
   stmt.close();
  }
+ 
+ 
+ 
  @Override
  public void storeSubmission(SubmissionMeta sMeta, SubmissionMeta oldSbm, String updateDescr) throws SubmissionDBException
  {
@@ -314,6 +323,45 @@ public class H2SubmissionDB extends SubmissionDB
 
  }
 
+ @Override
+ public boolean removeSubmission(String sbmID) throws SubmissionDBException
+ {
+  return setSubmissionRemoved( sbmID, true );
+ }
+ 
+ private boolean setSubmissionRemoved(String sbmID, boolean rem) throws SubmissionDBException
+ {
+  try
+  {
+   PreparedStatement stmt = conn.prepareStatement(switchSubmissionRemovedSQL);
+   
+   stmt.setBoolean(1, rem);
+   stmt.setString(2, sbmID);
+   
+   int nUp = stmt.executeUpdate();
+   
+   conn.commit();
+   
+   return nUp==1;
+  }
+  catch(Exception e)
+  {
+   try
+   {
+    conn.rollback();
+   }
+   catch(SQLException e1)
+   {
+    e1.printStackTrace();
+   }
+
+   e.printStackTrace();
+   
+   throw new SubmissionDBException("System error", e);
+  }
+  
+ }
+ 
  @Override
  public List<HistoryEntry> getHistory( String sbmId ) throws SubmissionDBException
  {
@@ -628,6 +676,12 @@ public class H2SubmissionDB extends SubmissionDB
 
   boolean hasCond = false;
   
+  if( q.getStateSelector() != Selector.BOTH )
+  {
+   condExpr.append(" WHERE removed="+( q.getStateSelector() == Selector.REMOVED?"true":"false" ) );
+   hasCond = true;
+  }
+  
   if( q.getCreatedFrom() != -1 )
   {
    condExpr.append(" WHERE S.ctime >= "+ q.getCreatedFrom());
@@ -820,7 +874,9 @@ public class H2SubmissionDB extends SubmissionDB
     
     simp.setSubmitter( rstS.getString("creator") );
     simp.setModifier(rstS.getString("modifier") );
-
+ 
+    simp.setRemoved( rstS.getBoolean("removed") );
+    
     mstmt.setString(1, simp.getId());
     
     ResultSet rstMF = mstmt.executeQuery();
@@ -994,4 +1050,6 @@ public class H2SubmissionDB extends SubmissionDB
  {
   return docDepot.getFilePath(docId, ver);
  }
+
+
 }
