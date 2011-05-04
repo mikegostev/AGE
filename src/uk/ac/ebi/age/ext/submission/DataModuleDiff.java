@@ -20,4 +20,12 @@ public interface DataModuleDiff
 
  void setDataChanged(boolean dataChanged);
 
+ void setOldDocumentVersion(long oldDocumentVersion);
+
+ long getOldDocumentVersion();
+
+ long getNewDocumentVersion();
+
+ void setNewDocumentVersion(long newDocumentVersion);
+
 }

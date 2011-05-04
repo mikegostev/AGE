@@ -467,18 +467,24 @@ public class H2SubmissionDB extends SubmissionDB
      else if( oldDm.getDescription() != null )
       dscChngd = true;    
     
+     DataModuleDiff mdif = Factory.createDataModuleDiff();
+     
+     mdif.setId( dmm.getId() );
+     mdif.setNewDocumentVersion(dmm.getDocVersion());
+
      if( dscChngd || dmm.getDocVersion() != oldDm.getDocVersion() )
      {
-      DataModuleDiff mdif = Factory.createDataModuleDiff();
-      
-      mdif.setId( dmm.getId() );
       mdif.setStatus( Status.UPDATE );
       
       mdif.setMetaChanged( dscChngd );
       mdif.setDataChanged( dmm.getDocVersion() != oldDm.getDocVersion() );
       
-      sDif.addDataModuleDiff( mdif );
+      mdif.setOldDocumentVersion(oldDm.getDocVersion());
      }
+     else
+      mdif.setStatus( Status.KEEP );
+      
+     sDif.addDataModuleDiff( mdif );
     }
 
    }
@@ -556,19 +562,25 @@ public class H2SubmissionDB extends SubmissionDB
      else if( oldAttm.getDescription() != null )
       dscChngd = true;    
     
+     AttachmentDiff adif = Factory.createAttachmentDiff();
+     
+     adif.setId( attm.getId() );
+     adif.setNewFileVersion( attm.getFileVersion() );
+
      if( dscChngd || attm.getFileVersion() != oldAttm.getFileVersion() || attm.isGlobal() != oldAttm.isGlobal() )
      {
-      AttachmentDiff adif = Factory.createAttachmentDiff();
-      
-      adif.setId( attm.getId() );
       adif.setStatus( Status.UPDATE );
       
       adif.setMetaChanged( dscChngd );
       adif.setVisibilityChanged( attm.isGlobal() != oldAttm.isGlobal() );
       adif.setDataChanged( attm.getFileVersion() != oldAttm.getFileVersion() );
       
-      sDif.addAttachmentDiff( adif );
+      adif.setOldFileVersion( oldAttm.getFileVersion() );
      }
+     else
+      adif.setStatus(Status.KEEP);
+     
+     sDif.addAttachmentDiff( adif );
     }
 
    }

@@ -16,6 +16,9 @@ public class AttachmentDiffImpl implements Serializable, AttachmentDiff
  private boolean metaChanged;
  private boolean dataChanged;
  private boolean visibilityChanged;
+ 
+ private long oldFileVersion;
+ private long newFileVersion;
 
  AttachmentDiffImpl()
  {}
@@ -108,6 +111,30 @@ public class AttachmentDiffImpl implements Serializable, AttachmentDiff
  public void setVisibilityChanged(boolean visibilityChanged)
  {
   this.visibilityChanged = visibilityChanged;
+ }
+
+ @Override
+ public long getOldFileVersion()
+ {
+  return oldFileVersion;
+ }
+
+ @Override
+ public void setOldFileVersion(long oldFileVersion)
+ {
+  this.oldFileVersion = oldFileVersion;
+ }
+
+ @Override
+ public long getNewFileVersion()
+ {
+  return newFileVersion;
+ }
+
+ @Override
+ public void setNewFileVersion(long newFileVersion)
+ {
+  this.newFileVersion = newFileVersion;
  }
 
 }

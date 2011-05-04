@@ -16,6 +16,8 @@ public class DataModuleDiffImpl implements Serializable, DataModuleDiff
  private boolean metaChanged;
  private boolean dataChanged;
  
+ private long oldDocumentVersion;
+ private long newDocumentVersion;
  
  DataModuleDiffImpl()
  {}
@@ -90,5 +92,29 @@ public class DataModuleDiffImpl implements Serializable, DataModuleDiff
  public void setDataChanged(boolean dataChanged)
  {
   this.dataChanged = dataChanged;
+ }
+
+ @Override
+ public void setOldDocumentVersion(long oldDocumentVersion)
+ {
+  this.oldDocumentVersion = oldDocumentVersion;
+ }
+
+ @Override
+ public long getOldDocumentVersion()
+ {
+  return oldDocumentVersion;
+ }
+
+ @Override
+ public long getNewDocumentVersion()
+ {
+  return newDocumentVersion;
+ }
+
+ @Override
+ public void setNewDocumentVersion(long newDocumentVersion)
+ {
+  this.newDocumentVersion = newDocumentVersion;
  }
 }

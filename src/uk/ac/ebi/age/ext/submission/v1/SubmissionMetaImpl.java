@@ -133,16 +133,6 @@ public class SubmissionMetaImpl implements Serializable, SubmissionMeta
   return atts;
  }
 
-// public void setUpdateDescription(String string)
-// {
-//  updateDescription = string;
-// }
-//
-// public String getUpdateDescription()
-// {
-//  return updateDescription;
-// }
-
  @Override
  public void setStatus(Status st)
  {

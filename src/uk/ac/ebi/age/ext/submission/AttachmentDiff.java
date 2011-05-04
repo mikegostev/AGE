@@ -24,4 +24,12 @@ public interface AttachmentDiff
 
  void setVisibilityChanged(boolean visibilityChanged);
 
+ long getOldFileVersion();
+
+ void setOldFileVersion(long oldFileVersion);
+
+ long getNewFileVersion();
+
+ void setNewFileVersion(long newFileVersion);
+
 }
