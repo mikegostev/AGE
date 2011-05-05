@@ -28,4 +28,19 @@ public interface DataModuleDiff
 
  void setNewDocumentVersion(long newDocumentVersion);
 
+ String getDescription();
+ void setDescription(String s);
+
+ long getCreationTime();
+ void setCreationTime(long t);
+
+ long getModificationTime();
+ void setModificationTime(long t);
+
+ String getCreator();
+ void setCreator(String s);
+
+ String getModifier();
+ void setModifier(String s);
+
 }

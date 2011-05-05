@@ -19,7 +19,14 @@ public class AttachmentDiffImpl implements Serializable, AttachmentDiff
  
  private long oldFileVersion;
  private long newFileVersion;
-
+ 
+ private String description;
+ private long creationTime;
+ private long modificationTime;
+ private String creator;
+ private String modifier;
+ private boolean global;
+ 
  AttachmentDiffImpl()
  {}
  
@@ -135,6 +142,66 @@ public class AttachmentDiffImpl implements Serializable, AttachmentDiff
  public void setNewFileVersion(long newFileVersion)
  {
   this.newFileVersion = newFileVersion;
+ }
+
+ public String getDescription()
+ {
+  return description;
+ }
+
+ public void setDescription(String description)
+ {
+  this.description = description;
+ }
+
+ public long getCreationTime()
+ {
+  return creationTime;
+ }
+
+ public void setCreationTime(long creationTime)
+ {
+  this.creationTime = creationTime;
+ }
+
+ public long getModificationTime()
+ {
+  return modificationTime;
+ }
+
+ public void setModificationTime(long modificationTime)
+ {
+  this.modificationTime = modificationTime;
+ }
+
+ public String getCreator()
+ {
+  return creator;
+ }
+
+ public void setCreator(String creator)
+ {
+  this.creator = creator;
+ }
+
+ public String getModifier()
+ {
+  return modifier;
+ }
+
+ public void setModifier(String modifier)
+ {
+  this.modifier = modifier;
+ }
+
+ public boolean isGlobal()
+ {
+  return global;
+ }
+
+ public void setGlobal(boolean global)
+ {
+  this.global = global;
  }
 
 }

@@ -127,7 +127,7 @@ public class H2SubmissionDB extends SubmissionDB
   stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS "+submissionDB);
 
   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+submissionTable+" ("+
-    "id VARCHAR PRIMARY KEY, desc VARCHAR, ctime BIGIN NOT NULLT, mtime BIGINT NOT NULL, creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL," +
+    "id VARCHAR PRIMARY KEY, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL, creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL," +
     " removed BOOLEAN NOT NULL DEFAULT FALSE, FT_DESC VARCHAR)");
 
   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS ctimeIdx ON "+submissionDB+'.'+submissionTable+"(ctime)");
@@ -413,8 +413,11 @@ public class H2SubmissionDB extends SubmissionDB
   
   sDif.setId( sMeta.getId() );
   
+  sDif.setCreator( sMeta.getSubmitter() );
+  sDif.setCreationTime( sMeta.getSubmissionTime() );
   sDif.setModifier( sMeta.getModifier() );
   sDif.setModificationTime( sMeta.getModificationTime() );
+  sDif.setDescription(sMeta.getDescription());
   
   boolean chngd = false;
   

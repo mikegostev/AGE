@@ -19,6 +19,12 @@ public class DataModuleDiffImpl implements Serializable, DataModuleDiff
  private long oldDocumentVersion;
  private long newDocumentVersion;
  
+ private String description;
+ private long creationTime;
+ private long modificationTime;
+ private String creator;
+ private String modifier;
+ 
  DataModuleDiffImpl()
  {}
  
@@ -116,5 +122,55 @@ public class DataModuleDiffImpl implements Serializable, DataModuleDiff
  public void setNewDocumentVersion(long newDocumentVersion)
  {
   this.newDocumentVersion = newDocumentVersion;
+ }
+
+ public String getDescription()
+ {
+  return description;
+ }
+
+ public void setDescription(String description)
+ {
+  this.description = description;
+ }
+
+ public long getCreationTime()
+ {
+  return creationTime;
+ }
+
+ public void setCreationTime(long creationTime)
+ {
+  this.creationTime = creationTime;
+ }
+
+ public long getModificationTime()
+ {
+  return modificationTime;
+ }
+
+ public void setModificationTime(long modificationTime)
+ {
+  this.modificationTime = modificationTime;
+ }
+
+ public String getCreator()
+ {
+  return creator;
+ }
+
+ public void setCreator(String creator)
+ {
+  this.creator = creator;
+ }
+
+ public String getModifier()
+ {
+  return modifier;
+ }
+
+ public void setModifier(String modifier)
+ {
+  this.modifier = modifier;
  }
 }

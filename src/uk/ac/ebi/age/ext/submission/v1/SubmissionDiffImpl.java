@@ -2,6 +2,7 @@ package uk.ac.ebi.age.ext.submission.v1;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import uk.ac.ebi.age.ext.submission.AttachmentDiff;
@@ -12,14 +13,20 @@ public class SubmissionDiffImpl implements Serializable, SubmissionDiff
 {
  private static final long serialVersionUID = 1L;
 
- private long modificationTime;
- private String modifier;
  private String id;
+ private String description;
+
+ private String creator;
+ private long creationTime;
+
+ private String modifier;
+ private long modificationTime;
  
  private boolean descriptionChanged;
  
  private List<DataModuleDiff> moduleDiffs;
  private List<AttachmentDiff> attachmentDiffs;
+ 
  
  
  SubmissionDiffImpl()
@@ -89,6 +96,48 @@ public class SubmissionDiffImpl implements Serializable, SubmissionDiff
    attachmentDiffs = new ArrayList<AttachmentDiff>();
   
   attachmentDiffs.add(adif);
+ }
+
+ public String getDescription()
+ {
+  return description;
+ }
+
+ public void setDescription(String description)
+ {
+  this.description = description;
+ }
+
+ public String getCreator()
+ {
+  return creator;
+ }
+
+ public void setCreator(String creator)
+ {
+  this.creator = creator;
+ }
+
+ public long getCreationTime()
+ {
+  return creationTime;
+ }
+
+ public void setCreationTime(long creationTime)
+ {
+  this.creationTime = creationTime;
+ }
+
+ @Override
+ public Collection<DataModuleDiff> getDataModuleDiffs()
+ {
+  return moduleDiffs;
+ }
+
+ @Override
+ public Collection<AttachmentDiff> getAttachmentDiffs()
+ {
+  return attachmentDiffs;
  }
 
 }

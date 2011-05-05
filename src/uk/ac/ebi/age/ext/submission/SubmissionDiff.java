@@ -1,5 +1,7 @@
 package uk.ac.ebi.age.ext.submission;
 
+import java.util.Collection;
+
 public interface SubmissionDiff
 {
 
@@ -11,8 +13,10 @@ public interface SubmissionDiff
 
  void setModificationTime(long modificationTime);
 
+ String getCreator();
+ void setCreator(String crtr);
+ 
  String getModifier();
-
  void setModifier(String modifier);
 
  boolean isDescriptionChanged();
@@ -20,7 +24,15 @@ public interface SubmissionDiff
  void setDescriptionChanged(boolean descriptionChanged);
 
  void addDataModuleDiff(DataModuleDiff mdif);
+ Collection<DataModuleDiff> getDataModuleDiffs();
 
  void addAttachmentDiff(AttachmentDiff adif);
+ Collection<AttachmentDiff> getAttachmentDiffs();
+
+ String getDescription();
+ void setDescription( String d);
+
+ long getCreationTime();
+ void setCreationTime( long t );
 
 }
