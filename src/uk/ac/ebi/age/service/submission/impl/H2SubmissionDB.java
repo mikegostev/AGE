@@ -232,7 +232,11 @@ public class H2SubmissionDB extends SubmissionDB
     
     pstsmt.setBytes(6, baosData.toByteArray());
 
+    pstsmt.executeUpdate();
+    pstsmt.close();
    }
+   
+
    
    // (id,desc,ctime,mtime,creator,modifier,ft_desc)
    PreparedStatement pstsmt = conn.prepareStatement(insertSubmissionSQL);
