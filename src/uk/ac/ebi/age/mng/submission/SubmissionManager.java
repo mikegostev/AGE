@@ -769,40 +769,37 @@ public class SubmissionManager
    for( ModMeta mm : cstMeta.incomingMods )
    {
     mm.newModule.setClusterId(cstMeta.id);
-    
-    if( mm.newModule.getId() == null )
+
+    if( mm.origModule != null )
+     mm.newModule.setId( mm.origModule.getId() ); 
+    else
     {
      String id = null;
-     
+
      do
      {
-      id = Constants.dataModuleIDPrefix+IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
-     }
-     while( ageStorage.hasDataModule(id) );
-    
+      id = Constants.dataModuleIDPrefix + IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
+     } while(ageStorage.hasDataModule(id));
+
      mm.newModule.setId(id);
      mm.meta.setId(id);
-     
+
     }
-    
-    if( mm.newModule != null )
+
+    for(AgeObjectWritable obj : mm.newModule.getObjects())
     {
-     for( AgeObjectWritable obj : mm.newModule.getObjects() )
+     if(obj.getId() == null)
      {
-      if( obj.getId() == null )
+      String id = null;
+
+      do
       {
-       String id=null;
-       
-       do
-       {
-        id = Constants.localObjectIDPrefix+obj.getAgeElClass().getIdPrefix()+IdGenerator.getInstance().getStringId(Constants.objectIDDomain)
-        +"@"+mm.newModule.getId();
-       }
-       while( mm.idMap.containsKey(id) );
-       
-       obj.setId(id);
-       mm.idMap.put(id, obj);
-      }
+       id = Constants.localObjectIDPrefix + obj.getAgeElClass().getIdPrefix()
+         + IdGenerator.getInstance().getStringId(Constants.objectIDDomain) + "@" + mm.newModule.getId();
+      } while(mm.idMap.containsKey(id));
+
+      obj.setId(id);
+      mm.idMap.put(id, obj);
      }
     }
    }

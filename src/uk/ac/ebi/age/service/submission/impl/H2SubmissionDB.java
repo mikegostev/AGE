@@ -453,11 +453,17 @@ public class H2SubmissionDB extends SubmissionDB
      }
     }
     
+    DataModuleDiff mdif = Factory.createDataModuleDiff();
+    mdif.setId( dmm.getId() );
+    mdif.setCreator(dmm.getSubmitter());
+    mdif.setModifier(dmm.getModifier());
+    mdif.setCreationTime( dmm.getSubmissionTime() );
+    mdif.setModificationTime( dmm.getModificationTime() );
+    mdif.setDescription( dmm.getDescription() );
+    mdif.setNewDocumentVersion(dmm.getDocVersion());
+
     if( oldDm == null  )
     {
-     DataModuleDiff mdif = Factory.createDataModuleDiff();
-     
-     mdif.setId( dmm.getId() );
      mdif.setStatus( Status.NEW );
      
      sDif.addDataModuleDiff( mdif );
@@ -474,10 +480,6 @@ public class H2SubmissionDB extends SubmissionDB
      else if( oldDm.getDescription() != null )
       dscChngd = true;    
     
-     DataModuleDiff mdif = Factory.createDataModuleDiff();
-     
-     mdif.setId( dmm.getId() );
-     mdif.setNewDocumentVersion(dmm.getDocVersion());
 
      if( dscChngd || dmm.getDocVersion() != oldDm.getDocVersion() )
      {
@@ -521,6 +523,12 @@ public class H2SubmissionDB extends SubmissionDB
      
      mdif.setId( odmm.getId() );
      mdif.setStatus( Status.DELETE );
+     mdif.setCreator(odmm.getSubmitter());
+     mdif.setModifier(odmm.getModifier());
+     mdif.setCreationTime( odmm.getSubmissionTime() );
+     mdif.setModificationTime( odmm.getModificationTime() );
+     mdif.setDescription( odmm.getDescription() );
+     mdif.setNewDocumentVersion(odmm.getDocVersion());
      
      sDif.addDataModuleDiff( mdif );
     }
@@ -548,11 +556,18 @@ public class H2SubmissionDB extends SubmissionDB
      }
     }
     
+    AttachmentDiff adif = Factory.createAttachmentDiff();
+    adif.setId( attm.getId() );
+    adif.setCreator(attm.getSubmitter());
+    adif.setModifier(attm.getModifier());
+    adif.setCreationTime( attm.getSubmissionTime() );
+    adif.setModificationTime( attm.getModificationTime() );
+    adif.setDescription( attm.getDescription() );
+    adif.setNewFileVersion(attm.getFileVersion());
+    
+    
     if( oldAttm == null  )
     {
-     AttachmentDiff adif = Factory.createAttachmentDiff();
-     
-     adif.setId( attm.getId() );
      adif.setStatus( Status.NEW );
      
      sDif.addAttachmentDiff( adif );
@@ -569,10 +584,6 @@ public class H2SubmissionDB extends SubmissionDB
      else if( oldAttm.getDescription() != null )
       dscChngd = true;    
     
-     AttachmentDiff adif = Factory.createAttachmentDiff();
-     
-     adif.setId( attm.getId() );
-     adif.setNewFileVersion( attm.getFileVersion() );
 
      if( dscChngd || attm.getFileVersion() != oldAttm.getFileVersion() || attm.isGlobal() != oldAttm.isGlobal() )
      {
@@ -617,6 +628,12 @@ public class H2SubmissionDB extends SubmissionDB
      
      adif.setId( oattm.getId() );
      adif.setStatus( Status.DELETE );
+     adif.setCreator(oattm.getSubmitter());
+     adif.setModifier(oattm.getModifier());
+     adif.setCreationTime( oattm.getSubmissionTime() );
+     adif.setModificationTime( oattm.getModificationTime() );
+     adif.setDescription( oattm.getDescription() );
+     adif.setNewFileVersion(oattm.getFileVersion());
      
      sDif.addAttachmentDiff( adif );
     }
