@@ -6,10 +6,11 @@ public interface LogNode
 {
  static enum Level
  {
-  ERROR (4),
-  WARN  (3),
-  INFO  (2),
-  DEBUG (1);
+  ERROR   (5),
+  WARN    (4),
+  SUCCESS (3),
+  INFO    (2),
+  DEBUG   (1);
   
   private int level;
   Level( int l )

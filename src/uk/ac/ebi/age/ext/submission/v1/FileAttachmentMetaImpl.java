@@ -21,8 +21,6 @@ public class FileAttachmentMetaImpl implements Serializable, FileAttachmentMeta
  private String submitter;
  private String modifier;
 
- private String systemId;
-
  private long fileVersion;
  
  FileAttachmentMetaImpl()
@@ -182,23 +180,6 @@ public class FileAttachmentMetaImpl implements Serializable, FileAttachmentMeta
   this.modifier = modifier;
  }
 
- /* (non-Javadoc)
-  * @see uk.ac.ebi.age.ext.submission.v1.FileAttachmentMeta#setSystemId(java.lang.String)
-  */
- @Override
- public void setSystemId(String gid)
- {
-  systemId = gid;
- }
-
- /* (non-Javadoc)
-  * @see uk.ac.ebi.age.ext.submission.v1.FileAttachmentMeta#getSystemId()
-  */
- @Override
- public String getSystemId()
- {
-  return systemId;
- }
 
  /* (non-Javadoc)
   * @see uk.ac.ebi.age.ext.submission.v1.FileAttachmentMeta#getFileVersion()

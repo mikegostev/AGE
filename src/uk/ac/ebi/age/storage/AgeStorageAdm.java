@@ -38,11 +38,17 @@ public interface AgeStorageAdm extends AgeStorage
 
  void setMaster(boolean master);
 
- String makeGlobalFileID(String id);
- String makeLocalFileID(String id, String clustID);
+// String makeGlobalFileID(String id);
+// String makeLocalFileID(String id, String clustID);
  
- boolean deleteAttachment(String id);
- File storeAttachment(String id, File aux) throws AttachmentIOException;
- void renameAttachment(String id, String id2) throws AttachmentIOException;
+ boolean deleteAttachment(String id, String clusterId, boolean global);
+ File storeAttachment(String id, String clusterId, boolean global, File aux) throws AttachmentIOException;
+ void changeAttachmentScope(String id, String clusterId, boolean global) throws AttachmentIOException;
+
+ String makeFileSysRef(String id);
+ String makeFileSysRef(String id, String clustID);
+
+ 
+ //void renameAttachment(String id, String id2) throws AttachmentIOException;
 
 }

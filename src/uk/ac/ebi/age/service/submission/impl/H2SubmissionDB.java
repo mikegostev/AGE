@@ -72,10 +72,10 @@ public class H2SubmissionDB extends SubmissionDB
  +" (id,submid,desc,ctime,mtime,creator,modifier,docver) VALUES (?,?,?,?,?,?,?,?)";
  
  private static final String insertAttachmentSQL = "INSERT INTO "+submissionDB+"."+attachmentTable
- +" (id,submid,desc,ctime,mtime,creator,modifier,filever) VALUES (?,?,?,?,?,?,?,?)";
+ +" (id,submid,desc,ctime,mtime,creator,modifier,filever,isglobal) VALUES (?,?,?,?,?,?,?,?,?)";
  
  private static final String insertHistorySQL = "INSERT INTO "+submissionDB+"."+historyTable
- +" (id,mtime,modifier,descr,diff,data) VALUES (?,?,?,?,?,?)";
+ +" (id,mtime,modifier,descr,diff) VALUES (?,?,?,?,?)";
 
  private static final String switchSubmissionRemovedSQL = 
  "UPDATE "+submissionDB+"."+submissionTable+" SET removed=? WHERE id=?";
@@ -143,7 +143,7 @@ public class H2SubmissionDB extends SubmissionDB
 
   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+attachmentTable+" ("+
     "id VARCHAR, submid VARCHAR NOT NULL, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL," +
-    " creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL, filever BIGINT NOT NULL," +
+    " creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL, filever BIGINT NOT NULL, isglobal BOOL NOT NULL," +
     " PRIMARY KEY (id,submid), FOREIGN KEY (submid) REFERENCES "
     +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
 
@@ -175,8 +175,10 @@ public class H2SubmissionDB extends SubmissionDB
  {
   SubmissionDiff diff = null;
   
-  if( oldSbm != null )
-   diff = calculateDiff(sMeta,oldSbm);
+  diff = calculateDiff(sMeta,oldSbm);
+  
+  if( oldSbm == null )
+   updateDescr = "Initial submission";
   
   StringBuilder sb = new StringBuilder(1000);
 
@@ -196,50 +198,49 @@ public class H2SubmissionDB extends SubmissionDB
 
   try
   {
+   PreparedStatement pstsmt = null;
+
    if( oldSbm != null )
    {
-    PreparedStatement pstsmt = conn.prepareStatement(deleteSubmissionSQL);
+    pstsmt = conn.prepareStatement(deleteSubmissionSQL);
     
     pstsmt.setString(1, oldSbm.getId());
     
     pstsmt.executeUpdate();
     pstsmt.close();
-    
-    ByteArrayOutputStream baosData = new ByteArrayOutputStream();
-    ObjectOutputStream oos = new ObjectOutputStream( baosData );
-    oos.writeObject(oldSbm);
-    oos.close();
-
-    
-    //(id,mtime,modifier,data)
-    pstsmt = conn.prepareStatement(insertHistorySQL);
-    pstsmt.setString(1, sMeta.getId());
-    pstsmt.setLong(2, sMeta.getModificationTime());
-    pstsmt.setString(3, sMeta.getModifier());
-    pstsmt.setString(4, updateDescr);
-    
-    if( diff != null )
-    {
-     ByteArrayOutputStream baosDiff = new ByteArrayOutputStream();
-     oos = new ObjectOutputStream( baosDiff );
-     oos.writeObject(diff);
-     oos.close();
-     
-     pstsmt.setBytes(5, baosDiff.toByteArray());
-    }
-    else
-     pstsmt.setNull(5, Types.BINARY);
-    
-    pstsmt.setBytes(6, baosData.toByteArray());
-
-    pstsmt.executeUpdate();
-    pstsmt.close();
    }
+
+//   ByteArrayOutputStream baosData = new ByteArrayOutputStream();
+//   ObjectOutputStream oos = new ObjectOutputStream( baosData );
+//   oos.writeObject(oldSbm);
+//   oos.close();
+
    
+   //(id,mtime,modifier,data)
+   pstsmt = conn.prepareStatement(insertHistorySQL);
+   pstsmt.setString(1, sMeta.getId());
+   pstsmt.setLong(2, sMeta.getModificationTime());
+   pstsmt.setString(3, sMeta.getModifier());
+   pstsmt.setString(4, updateDescr);
+   
+   if( diff != null )
+   {
+    ByteArrayOutputStream baosDiff = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream( baosDiff );
+    oos.writeObject(diff);
+    oos.close();
+    
+    pstsmt.setBytes(5, baosDiff.toByteArray());
+   }
+   else
+    pstsmt.setNull(5, Types.BINARY);
+   
+   pstsmt.executeUpdate();
+   pstsmt.close();
 
    
    // (id,desc,ctime,mtime,creator,modifier,ft_desc)
-   PreparedStatement pstsmt = conn.prepareStatement(insertSubmissionSQL);
+   pstsmt = conn.prepareStatement(insertSubmissionSQL);
    pstsmt.setString(1, sMeta.getId());
    pstsmt.setString(2, sMeta.getDescription());
    pstsmt.setLong(3, sMeta.getSubmissionTime());
@@ -299,6 +300,7 @@ public class H2SubmissionDB extends SubmissionDB
      pstsmt.setString(6, fatm.getSubmitter());
      pstsmt.setString(7, fatm.getModifier());
      pstsmt.setLong(8, fatm.getFileVersion());
+     pstsmt.setBoolean(9, fatm.isGlobal());
 
      pstsmt.executeUpdate();
 
@@ -425,13 +427,16 @@ public class H2SubmissionDB extends SubmissionDB
   
   boolean chngd = false;
   
-  if( sMeta.getDescription() != null )
+  if( oldSbm != null )
   {
-   if( oldSbm.getDescription() == null || ! sMeta.getDescription().equals(oldSbm.getDescription())  )
+   if(sMeta.getDescription() != null)
+   {
+    if(oldSbm.getDescription() == null || !sMeta.getDescription().equals(oldSbm.getDescription()))
+     chngd = true;
+   }
+   else if(oldSbm.getDescription() != null)
     chngd = true;
   }
-  else if( oldSbm.getDescription() != null )
-   chngd = true;
   
   sDif.setDescriptionChanged( chngd );
   
@@ -441,7 +446,7 @@ public class H2SubmissionDB extends SubmissionDB
    {
     DataModuleMeta oldDm = null;
     
-    if( oldSbm.getDataModules() != null )
+    if( oldSbm != null && oldSbm.getDataModules() != null )
     {
      for(DataModuleMeta odmm : oldSbm.getDataModules())
      {
@@ -499,7 +504,7 @@ public class H2SubmissionDB extends SubmissionDB
    }
   }
   
-  if( oldSbm.getDataModules() != null )
+  if( oldSbm != null && oldSbm.getDataModules() != null )
   {
    for(DataModuleMeta odmm : oldSbm.getDataModules())
    {
@@ -544,7 +549,7 @@ public class H2SubmissionDB extends SubmissionDB
    {
     FileAttachmentMeta oldAttm = null;
     
-    if( oldSbm.getAttachments() != null )
+    if( oldSbm != null && oldSbm.getAttachments() != null )
     {
      for(FileAttachmentMeta oattm : oldSbm.getAttachments())
      {
@@ -564,6 +569,7 @@ public class H2SubmissionDB extends SubmissionDB
     adif.setModificationTime( attm.getModificationTime() );
     adif.setDescription( attm.getDescription() );
     adif.setNewFileVersion(attm.getFileVersion());
+    adif.setGlobal(attm.isGlobal());
     
     
     if( oldAttm == null  )
@@ -604,7 +610,7 @@ public class H2SubmissionDB extends SubmissionDB
    }
   }
   
-  if( oldSbm.getAttachments() != null )
+  if( oldSbm != null && oldSbm.getAttachments() != null )
   {
    for(FileAttachmentMeta oattm : oldSbm.getAttachments())
    {
@@ -634,6 +640,7 @@ public class H2SubmissionDB extends SubmissionDB
      adif.setModificationTime( oattm.getModificationTime() );
      adif.setDescription( oattm.getDescription() );
      adif.setNewFileVersion(oattm.getFileVersion());
+     adif.setGlobal(oattm.isGlobal());
      
      sDif.addAttachmentDiff( adif );
     }
@@ -954,6 +961,8 @@ public class H2SubmissionDB extends SubmissionDB
      fam.setSubmitter( rstMF.getString("creator") );
      fam.setModifier(rstMF.getString("modifier") );
 
+     fam.setGlobal(rstMF.getBoolean("isglobal"));
+     
      fam.setFileVersion(rstMF.getLong("filever") );
 
      simp.addAttachment(fam);

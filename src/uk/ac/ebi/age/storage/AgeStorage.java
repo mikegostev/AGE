@@ -36,7 +36,8 @@ public interface AgeStorage
 
  void addDataChangeListener(DataChangeListener dataChangeListener);
  
- File getAttachment(String id);
+ File getAttachment(String id, String clustId, boolean global);
+ File getAttachmentBySysRef(String sysid);
  
  DataModule getDataModule(String name);
 

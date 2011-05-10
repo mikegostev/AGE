@@ -56,7 +56,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     res = false;
    }
    else
-    ln.log(Level.INFO, "Object validation successful");
+    ln.log(Level.SUCCESS, "Object validation successful");
   }
   
   return res;
@@ -86,7 +86,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   if( res )
    ln.log(Level.INFO, "Attributes validation successful");
   else
-   ln.log(Level.ERROR, "Attributes validation failed");
+   ln.log(Level.INFO, "Attributes validation failed");
   
   
   ln = log.branch("Validating object's relations");
@@ -97,7 +97,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   if( res )
    ln.log(Level.INFO, "Relations validation successful");
   else
-   ln.log(Level.ERROR, "Relations validation failed");
+   ln.log(Level.INFO, "Relations validation failed");
 
   
   return valid;
@@ -195,7 +195,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    if( res )
     ln.log(Level.INFO, "Validation successful");
    else
-    ln.log(Level.ERROR, "Validation failed");
+    ln.log(Level.INFO, "Validation failed");
    
    objectOk = res && objectOk; 
   }
@@ -214,7 +214,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     if( res )
      rlln.log(Level.INFO, "Rule satisfied");
     else
-     rlln.log(Level.ERROR, "Rule failed");
+     rlln.log(Level.INFO, "Rule failed");
     
     rrulOk = res && rrulOk;
    }
@@ -222,7 +222,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    if( rrulOk )
     ln.log(Level.INFO, "Validation successful" );
    else
-    ln.log(Level.ERROR, "Validation failed" );
+    ln.log(Level.INFO, "Validation failed" );
    
    objectOk = objectOk && rrulOk;
   }
@@ -246,7 +246,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     if(res)
      atln.log(Level.INFO, "Validation successful");
     else
-     atln.log(Level.ERROR, "Validation failed");
+     atln.log(Level.INFO, "Validation failed");
 
     qres = res && qres;
    }
@@ -255,7 +255,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   if( qres )
    ln.log(Level.INFO, "Validation successful" );
   else
-   ln.log(Level.ERROR, "Validation failed" );
+   ln.log(Level.INFO, "Validation failed" );
 
   objectOk = objectOk && qres;
   
@@ -306,7 +306,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    if( res )
     ln.log(Level.INFO, "Validation successful");
    else
-    ln.log(Level.ERROR, "Validation failed. No correspondent rule that allows this attribute.");
+    ln.log(Level.INFO, "Validation failed. No correspondent rule that allows this attribute.");
    
    valid = res && valid;
   }
@@ -325,7 +325,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     if( res )
      sln.log(Level.INFO, "Validation successful");
     else
-     sln.log(Level.ERROR, "Validation failed");
+     sln.log(Level.INFO, "Validation failed");
     
     rlres = res && rlres;
    }
@@ -333,7 +333,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    if( rlres )
     ln.log(Level.INFO, "Validation successful");
    else
-    ln.log(Level.ERROR, "Validation failed");
+    ln.log(Level.INFO, "Validation failed");
   
    valid = rlres && valid;
   }

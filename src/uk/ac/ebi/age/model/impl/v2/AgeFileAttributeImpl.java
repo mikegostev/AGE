@@ -8,7 +8,7 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
 {
  private static final long serialVersionUID = 2L;
 
- private transient String fileId;
+ private transient String fileSysRef;
 
  public AgeFileAttributeImpl(AttributeClassRef attrClass, SemanticModel sm)
  {
@@ -16,27 +16,27 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
  }
 
  @Override
- public String getFileReference()
+ public String getFileId()
  {
   return (String)super.getValue();
  }
 
  @Override
- public String getFileID()
+ public String getFileSysRef()
  {
-  return fileId;
+  return fileSysRef;
  }
 
  @Override
- public void setFileReference(String fRef)
+ public void setFileId(String fRef)
  {
   super.setValue(fRef);
  }
 
  @Override
- public void setFileId(String fId)
+ public void setFileSysRef(String fId)
  {
-  fileId = fId;
+  fileSysRef = fId;
  }
 
 }

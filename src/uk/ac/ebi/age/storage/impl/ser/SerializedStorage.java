@@ -529,18 +529,18 @@ public class SerializedStorage implements AgeStorageAdm
     {
      for(AgeFileAttributeWritable fattr : smb.getFileAttributes())
      {
-      String fid = makeLocalFileID(fattr.getFileReference(), smb.getClusterId());
+      String fid = makeFileSysRef(fattr.getFileId(), smb.getClusterId());
 
       if(fileDepot.getFilePath(fid).exists())
-       fattr.setFileId(fid);
+       fattr.setFileSysRef(fid);
       else
       {
-       fid = makeGlobalFileID(fattr.getFileReference());
+       fid = makeFileSysRef(fattr.getFileId());
 
        if(fileDepot.getFilePath(fid).exists())
-        fattr.setFileId(fid);
+        fattr.setFileSysRef(fid);
        else
-        log.error("Can't resolve file attribute: '" + fattr.getFileReference() + "'. Cluster: " + smb.getClusterId()
+        log.error("Can't resolve file attribute: '" + fattr.getFileId() + "'. Cluster: " + smb.getClusterId()
           + " Module: " + smb.getId());
       }
      }
@@ -751,7 +751,7 @@ public class SerializedStorage implements AgeStorageAdm
     return false;
    }
    else
-    vldBranch.log(Level.INFO,"Success");    
+    vldBranch.log(Level.SUCCESS,"Success");    
 
    
    LogNode saveBranch = bfLog.branch("Saving model"); 
@@ -766,7 +766,7 @@ public class SerializedStorage implements AgeStorageAdm
     return false;
    }
 
-   saveBranch.log(Level.INFO, "Success");
+   saveBranch.log(Level.SUCCESS, "Success");
 
    LogNode setupBranch = bfLog.branch("Installing model"); 
 
@@ -778,7 +778,7 @@ public class SerializedStorage implements AgeStorageAdm
 
    SemanticManager.getInstance().setMasterModel(model);
    
-   setupBranch.log(Level.INFO, "Success");
+   setupBranch.log(Level.SUCCESS, "Success");
   }
   finally
   {
@@ -857,9 +857,15 @@ public class SerializedStorage implements AgeStorageAdm
 // }
 
  @Override
- public File getAttachment(String id)
+ public File getAttachment(String id, String clusterId, boolean global)
  {
-  File f = fileDepot.getFilePath(id);
+  return getAttachmentBySysRef(global?makeFileSysRef(id):makeFileSysRef(id, clusterId));
+ }
+ 
+ @Override
+ public File getAttachmentBySysRef(String ref)
+ {
+  File f = fileDepot.getFilePath(ref);
   
   if( ! f.exists() )
    return null;
@@ -867,14 +873,16 @@ public class SerializedStorage implements AgeStorageAdm
   return f;
  }
 
+
+
  @Override
- public String makeGlobalFileID(String id)
+ public String makeFileSysRef(String id)
  {
   return "G"+M2codec.encode(id);
  }
 
  @Override
- public String makeLocalFileID(String id, String clustID)
+ public String makeFileSysRef(String id, String clustID)
  {
   return String.valueOf(id.length())+'_'+M2codec.encode(id+clustID);
  }
@@ -887,17 +895,17 @@ public class SerializedStorage implements AgeStorageAdm
 
 
  @Override
- public boolean deleteAttachment(String id)
+ public boolean deleteAttachment(String id, String clusterId, boolean global)
  {
-  File f = fileDepot.getFilePath(id);
+  File f = fileDepot.getFilePath(global?makeFileSysRef(id):makeFileSysRef(id, clusterId));
 
   return f.delete();
  }
 
  @Override
- public File storeAttachment(String id, File aux) throws AttachmentIOException
+ public File storeAttachment(String id, String clusterId, boolean global, File aux) throws AttachmentIOException
  {
-  File fDest = fileDepot.getFilePath(id);
+  File fDest = fileDepot.getFilePath(global?makeFileSysRef(id):makeFileSysRef(id, clusterId));
   fDest.delete();
   
   try
@@ -913,13 +921,14 @@ public class SerializedStorage implements AgeStorageAdm
  }
 
 
- @Override
- public void renameAttachment(String src, String dst) throws AttachmentIOException
+ public void changeAttachmentScope( String id, String clusterId, boolean global ) throws AttachmentIOException
  {
-  File fSrc = fileDepot.getFilePath(src);
-  File fDest = fileDepot.getFilePath(dst);
+  File fSrc = fileDepot.getFilePath(global?makeFileSysRef(id, clusterId):makeFileSysRef(id));
+  File fDest = fileDepot.getFilePath(global?makeFileSysRef(id):makeFileSysRef(id, clusterId));
+  fDest.delete();
   
   if( ! fSrc.renameTo(fDest) )
    throw new AttachmentIOException("Can't rename file '"+fSrc.getAbsolutePath()+"' to '"+fDest.getAbsolutePath()+"'");
  }
+ 
 }
