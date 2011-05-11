@@ -46,4 +46,6 @@ public abstract class SubmissionDB
 
  public abstract boolean removeSubmission(String sbmID) throws SubmissionDBException;
 
+ public abstract boolean  restoreSubmission(String id) throws SubmissionDBException;
+
 }

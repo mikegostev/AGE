@@ -335,6 +335,13 @@ public class H2SubmissionDB extends SubmissionDB
   return setSubmissionRemoved( sbmID, true );
  }
  
+ @Override
+ public boolean restoreSubmission(String sbmID) throws SubmissionDBException
+ {
+  return setSubmissionRemoved( sbmID, false );
+ }
+
+ 
  private boolean setSubmissionRemoved(String sbmID, boolean rem) throws SubmissionDBException
  {
   try
@@ -668,6 +675,9 @@ public class H2SubmissionDB extends SubmissionDB
   
   if( docDepot != null )
    docDepot.shutdown();  
+
+  if( attachmentDepot != null )
+   attachmentDepot.shutdown();  
  }
 
  @Override

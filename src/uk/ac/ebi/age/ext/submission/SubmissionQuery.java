@@ -7,9 +7,23 @@ public class SubmissionQuery implements Serializable
 {
  public static enum Selector
  {
-  ACTIVE,
-  REMOVED,
-  BOTH
+  ACTIVE("Active"),
+  REMOVED("Removed"),
+  BOTH("All");
+  
+  Selector(String s)
+  {
+   title=s;
+  }
+  
+  private String title;
+  
+  public String title()
+  {
+   return title;
+  }
+  
+
  }
  
  private static final long serialVersionUID = 8294154958731342639L;

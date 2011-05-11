@@ -54,6 +54,7 @@ import uk.ac.ebi.age.util.FileUtil;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
 import uk.ac.ebi.mg.filedepot.FileDepot;
+import uk.ac.ebi.mg.time.UniqTime;
 
 import com.pri.util.Extractor;
 import com.pri.util.M2codec;
@@ -628,7 +629,7 @@ public class SerializedStorage implements AgeStorageAdm
  {
   File modelFile2 = new File( modelFile.getAbsolutePath() );
   File tmpModelFile = new File(modelFile.getAbsolutePath()+".tmp");
-  File oldModelFile = new File( modelFile.getAbsolutePath()+"."+System.currentTimeMillis() );
+  File oldModelFile = new File( modelFile.getAbsolutePath()+"."+UniqTime.getTime() );
   
   try
   {
