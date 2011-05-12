@@ -1138,8 +1138,6 @@ public class SubmissionManager
   }
 
   
-  List<FileAttachmentMeta> files = sMeta.getAttachments();
-  
   boolean res = true;
   
 
@@ -1149,7 +1147,7 @@ public class SubmissionManager
    ModMeta mm = cstMeta.incomingMods.get(n);
    
    boolean modRes = true;
-   LogNode modNode = logRoot.branch("Processing module: " + mm.aux.getOrder() );
+   LogNode modNode = logRoot.branch("Processing module: " + mm.meta.getId() );
    
    File modFile = submissionDB.getDocument(cstMeta.id, mm.meta.getId(), mm.meta.getDocVersion());
    
@@ -1279,7 +1277,7 @@ public class SubmissionManager
     if( mm.newModule == null )
      continue;
     
-    LogNode vldLog = semLog.branch("Processing module: "+n);
+    LogNode vldLog = semLog.branch("Processing module: "+mm.meta.getId());
     
     boolean modRes = validator.validate(mm.newModule, vldLog);
     
