@@ -340,6 +340,15 @@ public class SubmissionManager
      mm.meta = odm;
      mm.origModule = ageStorage.getDataModule(modID);
      
+     if( mm.origModule == null )
+     {
+      logRoot.log(Level.ERROR,
+        "Module '" + modID + "' is in the submission db but not in the graph. It means data inconsistency. Please contact system administrator");
+      
+      res = false;
+      continue;
+     }
+     
      cstMeta.mod4Use.add(mm);
      cstMeta.mod4Hld.put(modID, mm);
     }

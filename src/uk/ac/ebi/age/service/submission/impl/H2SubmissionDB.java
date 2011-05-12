@@ -623,7 +623,7 @@ public class H2SubmissionDB extends SubmissionDB
    {
     FileAttachmentMeta updAttm = null;
     
-    if( sMeta.getDataModules() != null )
+    if( sMeta.getAttachments() != null )
     {
      for(FileAttachmentMeta ndmm : sMeta.getAttachments() )
      {
