@@ -2,8 +2,8 @@ package uk.ac.ebi.age.log.impl;
 
 import java.io.Serializable;
 
-import uk.ac.ebi.age.log.LogNode;
-import uk.ac.ebi.age.log.LogNode.Level;
+import uk.ac.ebi.age.ext.log.LogNode;
+import uk.ac.ebi.age.ext.log.LogNode.Level;
 
 public class LogMessageBean implements Serializable
 {

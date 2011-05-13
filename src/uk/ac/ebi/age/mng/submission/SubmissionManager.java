@@ -15,14 +15,14 @@ import java.util.Set;
 import java.util.Stack;
 
 import uk.ac.ebi.age.conf.Constants;
+import uk.ac.ebi.age.ext.log.LogNode;
+import uk.ac.ebi.age.ext.log.LogNode.Level;
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
 import uk.ac.ebi.age.ext.submission.Factory;
 import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
 import uk.ac.ebi.age.ext.submission.Status;
 import uk.ac.ebi.age.ext.submission.SubmissionDBException;
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
-import uk.ac.ebi.age.log.LogNode;
-import uk.ac.ebi.age.log.LogNode.Level;
 import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
@@ -1086,7 +1086,6 @@ public class SubmissionManager
  
  
  
- @SuppressWarnings("unchecked")
  public boolean restoreSubmission( String sbmID, SubmissionContext context, LogNode logRoot )
  {
   
@@ -1109,17 +1108,23 @@ public class SubmissionManager
    return false;
   }
   
-  
   ClustMeta cstMeta = new ClustMeta();
   cstMeta.id = sbmID;
 
+  int n=0;
   if( sMeta.getDataModules() != null )
   {
    for( DataModuleMeta dmm : sMeta.getDataModules() )
    {
+    n++;
+    
     ModMeta mm = new ModMeta();
+    ModuleAux maux = new ModuleAux();
+    maux.setOrder(n);
     
     mm.meta = dmm;
+    mm.aux=maux;
+    dmm.setAux(maux);
     
     cstMeta.mod4Ins.add(mm);
     cstMeta.mod4Use.add(mm);
@@ -1141,7 +1146,6 @@ public class SubmissionManager
   boolean res = true;
   
 
-  int n;
   for( n=0; n < cstMeta.incomingMods.size(); n++)
   {
    ModMeta mm = cstMeta.incomingMods.get(n);

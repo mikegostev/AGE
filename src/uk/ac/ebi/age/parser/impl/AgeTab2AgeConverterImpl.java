@@ -9,8 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import uk.ac.ebi.age.log.LogNode;
-import uk.ac.ebi.age.log.LogNode.Level;
+import uk.ac.ebi.age.ext.log.LogNode;
+import uk.ac.ebi.age.ext.log.LogNode.Level;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;

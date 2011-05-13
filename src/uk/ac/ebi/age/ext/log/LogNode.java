@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.log;
+package uk.ac.ebi.age.ext.log;
 
 import java.util.List;
 
@@ -29,12 +29,13 @@ public interface LogNode
   }
  }
  
+ 
  void log(Level lvl, String msg);
  LogNode branch(String msg);
  void setLevel( Level lvl );
  
  String getMessage();
  Level getLevel();
- List<LogNode> getSubNodes();
+ List<? extends LogNode> getSubNodes();
  void append(LogNode rootNode);
 }

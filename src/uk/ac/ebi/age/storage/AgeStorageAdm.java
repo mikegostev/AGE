@@ -3,7 +3,7 @@ package uk.ac.ebi.age.storage;
 import java.io.File;
 import java.util.Collection;
 
-import uk.ac.ebi.age.log.LogNode;
+import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;

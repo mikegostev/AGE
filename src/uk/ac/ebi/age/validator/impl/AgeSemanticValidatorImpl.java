@@ -7,8 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import uk.ac.ebi.age.log.LogNode;
-import uk.ac.ebi.age.log.LogNode.Level;
+import uk.ac.ebi.age.ext.log.LogNode;
+import uk.ac.ebi.age.ext.log.LogNode.Level;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;

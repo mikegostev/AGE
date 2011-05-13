@@ -19,8 +19,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import uk.ac.ebi.age.log.LogNode;
-import uk.ac.ebi.age.log.LogNode.Level;
+import uk.ac.ebi.age.ext.log.LogNode;
+import uk.ac.ebi.age.ext.log.LogNode.Level;
 import uk.ac.ebi.age.log.impl.BufferLogger;
 import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeAttribute;

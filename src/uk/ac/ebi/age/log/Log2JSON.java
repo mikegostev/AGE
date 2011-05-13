@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.log;
 
-import uk.ac.ebi.age.log.LogNode.Level;
+import uk.ac.ebi.age.ext.log.LogNode;
+import uk.ac.ebi.age.ext.log.SimpleLogNode;
 
 import com.pri.util.StringUtils;
 
@@ -11,7 +12,7 @@ public class Log2JSON
  {
   StringBuilder sb = new StringBuilder();
   
-  setLevels( nd );
+  SimpleLogNode.setLevels( nd );
   
   convertNode(nd, sb, 0);
   
@@ -46,27 +47,5 @@ public class Log2JSON
   sb.append("}");
  }
  
- private static void setLevels( LogNode ln )
- {
-  if( ln.getSubNodes() == null )
-  {
-   if( ln.getLevel() == null )
-    ln.setLevel(Level.INFO);
-   
-   return;
-  }
-  
-  LogNode.Level maxLevel = Level.getMinLevel();
-  
-  for( LogNode snd : ln.getSubNodes() )
-  {
-   setLevels(snd);
-   
-   if( snd.getLevel().getPriority() > maxLevel.getPriority() )
-    maxLevel = snd.getLevel();
-  }
-  
-  ln.setLevel(maxLevel);
- }
- 
+
 }

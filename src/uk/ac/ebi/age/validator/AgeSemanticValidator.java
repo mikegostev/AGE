@@ -2,7 +2,7 @@ package uk.ac.ebi.age.validator;
 
 import java.util.Set;
 
-import uk.ac.ebi.age.log.LogNode;
+import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.SemanticModel;
