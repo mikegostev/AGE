@@ -1,6 +1,8 @@
 package uk.ac.ebi.age.ext.authz;
 
-public class AccessRule
+import java.io.Serializable;
+
+public class AccessRule implements Serializable
 {
  private PermissionUnit permissionUnit;
  private PermissionSubject permissionSubject;
