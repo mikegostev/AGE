@@ -7,8 +7,23 @@ public class AccessRule implements Serializable
  private PermissionUnit permissionUnit;
  private PermissionSubject permissionSubject;
  
- public boolean ckeckPermission( SystemAction act, User user )
+ public PermissionUnit getPermissonUnit()
  {
-  return permissionSubject.isCompatible(user) && permissionUnit.isAllowed(act) ; 
+  return permissionUnit;
+ }
+ 
+ public boolean isCompatible( User user )
+ {
+  return permissionSubject.isCompatible(user);
+ }
+
+ public boolean isDenied(SystemAction act)
+ {
+  return permissionUnit.isDenied(act);
+ }
+
+ public boolean isAllowed(SystemAction act)
+ {
+  return permissionUnit.isAllowed(act);
  }
 }
