@@ -5,19 +5,21 @@ import java.util.List;
 
 import uk.ac.ebi.age.authz.AuthDB;
 import uk.ac.ebi.age.authz.AuthDBSession;
+import uk.ac.ebi.age.authz.AuthException;
 import uk.ac.ebi.age.authz.User;
+import uk.ac.ebi.age.authz.UserNotFoundException;
 
 import com.pri.util.collection.ListFragment;
 
 public class H2AuthDBImpl implements AuthDB
 {
- private List<User> userList;
+ private List<UserBean> userList;
  
  public H2AuthDBImpl()
  {
-  userList = new ArrayList<User>(200);
+  userList = new ArrayList<UserBean>(200);
   
-  for( int i=1; i < 150; i++ )
+  for( int i=1; i <= 130; i++ )
   {
    UserBean u = new UserBean();
    
@@ -38,9 +40,9 @@ public class H2AuthDBImpl implements AuthDB
  }
 
  @Override
- public List<User> getUsers(int begin, int end)
+ public List<? extends User> getUsers(int begin, int end)
  {
-  int to = end != -1?end:userList.size();
+  int to = end!=-1 && end <= userList.size() ?end:userList.size();
   
   return userList.subList(begin, to);
  }
@@ -50,7 +52,7 @@ public class H2AuthDBImpl implements AuthDB
  {
   int pos=0;
   
-  int to = end != -1?end:userList.size();
+  int to = end!=-1 && end <= userList.size() ?end:userList.size();
 
   
   ListFragment<User> res = new ListFragment<User>();
@@ -67,7 +69,7 @@ public class H2AuthDBImpl implements AuthDB
    if( namePat != null && u.getName().indexOf(namePat) == -1 )
     continue;
 
-   if( pos >= begin && pos <= to )
+   if( pos >= begin && pos < to )
     sel.add(u);
   
    pos++;
@@ -82,6 +84,26 @@ public class H2AuthDBImpl implements AuthDB
  public int getUsersTotal()
  {
   return userList.size();
+ }
+
+ @Override
+ public void updateUser(String userId, String userName, String userPass) throws AuthException
+ {
+  for( UserBean u : userList )
+  {
+   if( u.getId().equals(userId) )
+   {
+    if( userName != null )
+     u.setName(userName);
+
+    if( userPass != null )
+     u.setPass(userPass);
+   
+    return;
+   }
+  }
+  
+  throw new UserNotFoundException();
  }
 
 }

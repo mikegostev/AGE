@@ -6,6 +6,7 @@ public class UserBean implements User
 {
  private String id;
  private String name;
+ private String pass;
 
  public String getId()
  {
@@ -26,5 +27,17 @@ public class UserBean implements User
  {
   this.name = name;
  }
+
+ public String getPass()
+ {
+  return pass;
+ }
+
+ public void setPass(String pass)
+ {
+  this.pass = pass;
+ }
+
+
 
 }

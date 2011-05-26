@@ -8,8 +8,10 @@ public interface AuthDB
 {
  AuthDBSession createSession();
 
- List<User> getUsers(int begin, int end);
+ List< ? extends User> getUsers(int begin, int end);
  ListFragment<User> getUsers(String idPat, String namePat, int begin, int end);
 
  int getUsersTotal();
- }
+
+ void updateUser(String userId, String userName, String userPass) throws AuthException;
+}
