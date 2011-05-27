@@ -14,4 +14,8 @@ public interface AuthDB
  int getUsersTotal();
 
  void updateUser(String userId, String userName, String userPass) throws AuthException;
+
+ void addUser(String userId, String userName, String userPass) throws AuthException;
+
+ void deleteUser(String userId) throws AuthException;
 }

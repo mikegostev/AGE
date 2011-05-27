@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.authz.impl;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import uk.ac.ebi.age.authz.AuthDB;
@@ -99,6 +100,43 @@ public class H2AuthDBImpl implements AuthDB
     if( userPass != null )
      u.setPass(userPass);
    
+    return;
+   }
+  }
+  
+  throw new UserNotFoundException();
+ }
+
+ @Override
+ public void addUser(String userId, String userName, String userPass) throws AuthException
+ {
+  for( UserBean u : userList )
+  {
+   if( userId.equals(u.getId()) )
+    throw new AuthException();
+  }
+  
+  UserBean u = new UserBean();
+  
+  u.setId(userId);
+  u.setName(userName);
+  u.setPass(userPass);
+  
+  userList.add( u );
+ }
+
+ @Override
+ public void deleteUser(String userId) throws AuthException
+ {
+  Iterator<UserBean> iter = userList.iterator();
+  
+  while( iter.hasNext() )
+  {
+   UserBean u = iter.next();
+   
+   if( u.getId().equals(userId) )
+   {
+    iter.remove();   
     return;
    }
   }
