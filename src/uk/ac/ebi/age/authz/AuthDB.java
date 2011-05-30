@@ -18,4 +18,16 @@ public interface AuthDB
  void addUser(String userId, String userName, String userPass) throws AuthException;
 
  void deleteUser(String userId) throws AuthException;
+
+ 
+ List< ? extends UserGroup> getGroups(int begin, int end);
+ ListFragment<UserGroup> getGroups(String idPat, String namePat, int begin, int end);
+
+ int getGroupsTotal();
+
+ void deleteGroup(String grpId) throws AuthException;
+
+ void addGroup(String grpId, String grpDesc) throws AuthException;
+
+ void updateGroup(String grpId, String grpDesc) throws AuthException;
 }

@@ -7,7 +7,9 @@ import java.util.List;
 import uk.ac.ebi.age.authz.AuthDB;
 import uk.ac.ebi.age.authz.AuthDBSession;
 import uk.ac.ebi.age.authz.AuthException;
+import uk.ac.ebi.age.authz.GroupNotFoundException;
 import uk.ac.ebi.age.authz.User;
+import uk.ac.ebi.age.authz.UserGroup;
 import uk.ac.ebi.age.authz.UserNotFoundException;
 
 import com.pri.util.collection.ListFragment;
@@ -15,6 +17,7 @@ import com.pri.util.collection.ListFragment;
 public class H2AuthDBImpl implements AuthDB
 {
  private List<UserBean> userList;
+ private List<GroupBean> groupList;
  
  public H2AuthDBImpl()
  {
@@ -30,6 +33,18 @@ public class H2AuthDBImpl implements AuthDB
    userList.add(u);
   }
   
+  groupList = new ArrayList<GroupBean>(20);
+  
+  for( int i=1; i <= 13; i++ )
+  {
+   GroupBean u = new GroupBean();
+   
+   u.setId("Group"+i);
+   u.setDescription("Test Group №"+i);
+   
+   groupList.add(u);
+  }
+
  }
 
  @Override
@@ -142,6 +157,106 @@ public class H2AuthDBImpl implements AuthDB
   }
   
   throw new UserNotFoundException();
+ }
+
+ @Override
+ public List< ? extends UserGroup> getGroups(int begin, int end)
+ {
+  int to = end!=-1 && end <= groupList.size() ?end:groupList.size();
+  
+  return groupList.subList(begin, to);
+ }
+
+ @Override
+ public ListFragment<UserGroup> getGroups(String idPat, String namePat, int begin, int end)
+ {
+  int pos=0;
+  
+  int to = end!=-1 && end <= groupList.size() ?end:groupList.size();
+
+  
+  ListFragment<UserGroup> res = new ListFragment<UserGroup>();
+  
+  List<UserGroup> sel = new ArrayList<UserGroup>();
+  
+  res.setList(sel);
+  
+  for( UserGroup u : groupList )
+  {
+   if( idPat != null && u.getId().indexOf(idPat) == -1 )
+    continue;
+
+   if( namePat != null && u.getDescription().indexOf(namePat) == -1 )
+    continue;
+
+   if( pos >= begin && pos < to )
+    sel.add(u);
+  
+   pos++;
+  }
+  
+  res.setTotalLength(pos);
+  
+  return res;
+ }
+
+ @Override
+ public int getGroupsTotal()
+ {
+  return groupList.size();
+ }
+
+ @Override
+ public void deleteGroup(String grpId) throws AuthException
+ {
+  Iterator<GroupBean> iter = groupList.iterator();
+  
+  while( iter.hasNext() )
+  {
+   GroupBean u = iter.next();
+   
+   if( u.getId().equals(grpId) )
+   {
+    iter.remove();   
+    return;
+   }
+  }
+  
+  throw new GroupNotFoundException();
+ }
+
+ @Override
+ public void addGroup(String grpId, String grpDesc) throws AuthException
+ {
+  for( GroupBean u : groupList )
+  {
+   if( grpId.equals(u.getId()) )
+    throw new AuthException();
+  }
+  
+  GroupBean u = new GroupBean();
+  
+  u.setId(grpId);
+  u.setDescription(grpDesc);
+  
+  groupList.add( u );
+ }
+
+ @Override
+ public void updateGroup(String grpId, String grpDesc) throws AuthException
+ {
+  for( GroupBean u : groupList )
+  {
+   if( u.getId().equals(grpId) )
+   {
+    if( grpDesc != null )
+     u.setDescription(grpDesc);
+
+    return;
+   }
+  }
+  
+  throw new GroupNotFoundException();
  }
 
 }
