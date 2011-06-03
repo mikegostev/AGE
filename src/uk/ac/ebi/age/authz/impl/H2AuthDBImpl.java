@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.authz.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.authz.UserGroup;
 import uk.ac.ebi.age.authz.UserNotFoundException;
 
+import com.pri.util.Random;
 import com.pri.util.collection.ListFragment;
 
 public class H2AuthDBImpl implements AuthDB
@@ -21,18 +23,6 @@ public class H2AuthDBImpl implements AuthDB
  
  public H2AuthDBImpl()
  {
-  userList = new ArrayList<UserBean>(200);
-  
-  for( int i=1; i <= 130; i++ )
-  {
-   UserBean u = new UserBean();
-   
-   u.setId("User"+i);
-   u.setName("Test User №"+i);
-   
-   userList.add(u);
-  }
-  
   groupList = new ArrayList<GroupBean>(20);
   
   for( int i=1; i <= 13; i++ )
@@ -43,6 +33,26 @@ public class H2AuthDBImpl implements AuthDB
    u.setDescription("Test Group №"+i);
    
    groupList.add(u);
+
+  }
+
+  userList = new ArrayList<UserBean>(200);
+  for( int i=1; i <= 130; i++ )
+  {
+   UserBean u = new UserBean();
+   
+   u.setId("User"+i);
+   u.setName("Test User №"+i);
+   
+   int n = Random.randInt(1, 8);
+   for( int j=0; j < n; j++ )
+   {
+    GroupBean grp = groupList.get( Random.randInt(0, groupList.size()-1) );
+    u.addGroup( grp );
+    grp.addUser( u );
+   }
+   
+   userList.add(u);
   }
 
  }
@@ -257,6 +267,53 @@ public class H2AuthDBImpl implements AuthDB
   }
   
   throw new GroupNotFoundException();
+ }
+
+ @Override
+ public Collection< ? extends UserGroup> getGroupsOfUser(String userId) throws AuthException
+ {
+  for( UserBean u : userList )
+  {
+   if( userId.equals(u.getId()) )
+    return u.getGroups();
+  }
+  
+  throw new AuthException();
+ }
+
+ @Override
+ public void removeUserFromGroup(String grpId, String userId) throws AuthException
+ {
+  GroupBean gb = null;
+  
+  for( GroupBean g : groupList )
+  {
+   if( grpId.equals(g.getId()) )
+   {
+    gb = g;
+    break;
+   }
+  }
+  
+  if( gb == null )
+   throw new AuthException();
+  
+  UserBean ub = null;
+  
+  for( UserBean u : gb.getUsers() )
+  {
+   if( u.getId().equals(userId) )
+   {
+    ub = u;
+    break;
+   }
+  }
+  
+  if( ub == null )
+   throw new AuthException();
+  
+  gb.removeUser( ub );
+  ub.removeGroup( gb );
  }
 
 }

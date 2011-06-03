@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.authz;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.pri.util.collection.ListFragment;
@@ -30,4 +31,8 @@ public interface AuthDB
  void addGroup(String grpId, String grpDesc) throws AuthException;
 
  void updateGroup(String grpId, String grpDesc) throws AuthException;
+
+ Collection< ? extends UserGroup> getGroupsOfUser(String userId) throws AuthException;
+
+ void removeUserFromGroup(String grpId, String userId) throws AuthException;
 }
