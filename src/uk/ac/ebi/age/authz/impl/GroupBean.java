@@ -11,6 +11,7 @@ public class GroupBean implements UserGroup
  private String id;
  private String description;
  private Set<UserBean> users = new HashSet<UserBean>();
+ private Set<GroupBean> groups = new HashSet<GroupBean>();
 
  public String getId()
  {
@@ -45,6 +46,11 @@ public class GroupBean implements UserGroup
  public void removeUser(UserBean ub)
  {
   users.remove(ub);
+ }
+
+ public Collection< ? extends UserGroup> getGroups()
+ {
+  return groups;
  }
 
 }

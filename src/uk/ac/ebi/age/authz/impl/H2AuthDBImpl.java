@@ -316,4 +316,63 @@ public class H2AuthDBImpl implements AuthDB
   ub.removeGroup( gb );
  }
 
+ @Override
+ public void addUserToGroup(String grpId, String userId) throws AuthException
+ {
+  GroupBean gb = null;
+  
+  for( GroupBean g : groupList )
+  {
+   if( grpId.equals(g.getId()) )
+   {
+    gb = g;
+    break;
+   }
+  }
+  
+  if( gb == null )
+   throw new AuthException();
+  
+  UserBean ub = null;
+  
+  for( UserBean u : userList )
+  {
+   if( u.getId().equals(userId) )
+   {
+    ub = u;
+    break;
+   }
+  }
+  
+  if( ub == null )
+   throw new AuthException();
+  
+  gb.addUser( ub );
+  ub.addGroup( gb );
+ }
+
+ @Override
+ public Collection< ? extends User> getUsersOfGroup(String groupId) throws AuthException
+ {
+  for( GroupBean g : groupList )
+  {
+   if( groupId.equals(g.getId()) )
+    return g.getUsers();
+  }
+  
+  throw new AuthException();
+ }
+
+ @Override
+ public Collection< ? extends UserGroup> getGroupsOfGroup(String groupId) throws AuthException
+ {
+  for( GroupBean g : groupList )
+  {
+   if( groupId.equals(g.getId()) )
+    return g.getGroups();
+  }
+  
+  throw new AuthException();
+ }
+
 }
