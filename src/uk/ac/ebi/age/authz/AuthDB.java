@@ -35,10 +35,14 @@ public interface AuthDB
  Collection< ? extends UserGroup> getGroupsOfUser(String userId) throws AuthException;
 
  void removeUserFromGroup(String grpId, String userId) throws AuthException;
+ void removeGroupFromGroup(String grpId, String partId) throws AuthException;
 
  void addUserToGroup(String userId, String grpId) throws AuthException;
+ void addGroupToGroup(String grpId, String partId) throws AuthException;
 
  Collection< ? extends User> getUsersOfGroup(String groupId) throws AuthException;
  Collection< ? extends UserGroup> getGroupsOfGroup(String groupId) throws AuthException;
+
+
 
 }

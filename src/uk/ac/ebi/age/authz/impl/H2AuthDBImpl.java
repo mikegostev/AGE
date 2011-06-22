@@ -8,6 +8,7 @@ import java.util.List;
 import uk.ac.ebi.age.authz.AuthDB;
 import uk.ac.ebi.age.authz.AuthDBSession;
 import uk.ac.ebi.age.authz.AuthException;
+import uk.ac.ebi.age.authz.GroupCycleException;
 import uk.ac.ebi.age.authz.GroupNotFoundException;
 import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.authz.UserGroup;
@@ -317,6 +318,41 @@ public class H2AuthDBImpl implements AuthDB
  }
 
  @Override
+ public void removeGroupFromGroup(String grpId, String partId) throws AuthException
+ {
+  GroupBean gb = null;
+  
+  for( GroupBean g : groupList )
+  {
+   if( grpId.equals(g.getId()) )
+   {
+    gb = g;
+    break;
+   }
+  }
+  
+  if( gb == null )
+   throw new AuthException();
+  
+  UserGroup gp = null;
+  
+  for( UserGroup g : gb.getGroups() )
+  {
+   if( g.getId().equals(partId) )
+   {
+    gp = g;
+    break;
+   }
+  }
+  
+  if( gp == null )
+   throw new AuthException();
+  
+  gb.removeGroup( gp );
+ }
+
+ 
+ @Override
  public void addUserToGroup(String grpId, String userId) throws AuthException
  {
   GroupBean gb = null;
@@ -373,6 +409,41 @@ public class H2AuthDBImpl implements AuthDB
   }
   
   throw new AuthException();
+ }
+
+ @Override
+ public void addGroupToGroup(String grpId, String partId) throws AuthException
+ {
+  GroupBean gb = null;
+  
+  for( GroupBean g : groupList )
+  {
+   if( grpId.equals(g.getId()) )
+   {
+    gb = g;
+    break;
+   }
+  }
+  
+  GroupBean pb = null;
+  
+  for( GroupBean g : groupList )
+  {
+   if( partId.equals(g.getId()) )
+   {
+    pb = g;
+    break;
+   }
+  }
+  
+  if( pb == null )
+   throw new AuthException();
+
+  if( grpId.equals(partId) || gb.isPartOf(pb) )
+   throw new GroupCycleException();
+  
+  
+  gb.addGroup( pb );
  }
 
 }

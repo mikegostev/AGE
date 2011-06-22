@@ -1,5 +1,7 @@
 package uk.ac.ebi.age.authz;
 
+import java.util.Collection;
+
 public interface UserGroup
 {
 
@@ -7,4 +9,5 @@ public interface UserGroup
 
  String getDescription();
 
+ public Collection< ? extends UserGroup> getGroups();
 }

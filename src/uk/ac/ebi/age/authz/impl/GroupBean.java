@@ -38,6 +38,11 @@ public class GroupBean implements UserGroup
   users.add(u);
  }
 
+ public void addGroup(GroupBean g)
+ {
+  groups.add(g);
+ }
+
  public Collection<UserBean> getUsers()
  {
   return users;
@@ -47,10 +52,34 @@ public class GroupBean implements UserGroup
  {
   users.remove(ub);
  }
+ 
+ public void removeGroup(UserGroup gp)
+ {
+  groups.remove(gp);
+ }
 
  public Collection< ? extends UserGroup> getGroups()
  {
   return groups;
  }
+
+ public boolean isPartOf(UserGroup pb)
+ {
+  if( pb.getGroups() == null )
+   return false;
+  
+  for( UserGroup gb : pb.getGroups() )
+  {
+   if( equals(gb) )
+    return true;
+   
+   if( isPartOf(gb) )
+    return true;
+  }
+  
+  return false;
+ }
+
+
 
 }
