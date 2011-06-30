@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.authz.impl;
 
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -21,18 +22,28 @@ import uk.ac.ebi.age.authz.exception.ProfileExistsException;
 import uk.ac.ebi.age.authz.exception.ProfileNotFoundException;
 import uk.ac.ebi.age.authz.exception.UserExistsException;
 import uk.ac.ebi.age.authz.exception.UserNotFoundException;
+import uk.ac.ebi.age.classif.Classifier;
+import uk.ac.ebi.age.classif.ClassifierDB;
+import uk.ac.ebi.age.classif.Tag;
+import uk.ac.ebi.age.classif.exception.ClassifierExistsException;
+import uk.ac.ebi.age.classif.exception.ClassifierNotFoundException;
+import uk.ac.ebi.age.classif.exception.TagException;
+import uk.ac.ebi.age.classif.exception.TagNotFoundException;
+import uk.ac.ebi.age.classif.impl.ClassifierBean;
+import uk.ac.ebi.age.classif.impl.TagBean;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 
 import com.pri.util.Random;
 import com.pri.util.collection.ListFragment;
 
-public class H2AuthDBImpl implements AuthDB
+public class TestAuthDBImpl implements AuthDB, ClassifierDB
 {
  private List<UserBean> userList;
  private List<GroupBean> groupList;
  private List<ProfileBean> profileList;
+ private List<ClassifierBean> classifierList = new ArrayList<ClassifierBean>();
  
- public H2AuthDBImpl()
+ public TestAuthDBImpl()
  {
   groupList = new ArrayList<GroupBean>(20);
   
@@ -48,14 +59,14 @@ public class H2AuthDBImpl implements AuthDB
   }
 
   userList = new ArrayList<UserBean>(200);
-  for( int i=1; i <= 130; i++ )
+  for( int i=1; i <= 13; i++ )
   {
    UserBean u = new UserBean();
    
    u.setId("User"+i);
    u.setName("Test User №"+i);
    
-   int n = Random.randInt(1, 8);
+   int n = Random.randInt(1, 5);
    for( int j=0; j < n; j++ )
    {
     GroupBean grp = groupList.get( Random.randInt(0, groupList.size()-1) );
@@ -95,6 +106,38 @@ public class H2AuthDBImpl implements AuthDB
 
    profileList.add(pb);
   }
+
+  
+  ClassifierBean cb = new ClassifierBean();
+  
+  cb.setId("Test clssf");
+  cb.setDescription("Test clssifier No1");
+  
+  TagBean a = new TagBean();
+  a.setId("A");
+  a.setDescription("Test tag A");
+  
+  TagBean b = new TagBean();
+  b.setId("B");
+  b.setDescription("Test tag B");
+  
+  TagBean a1 = new TagBean();
+  a1.setId("A1");
+  a1.setDescription("Test tag A1");
+  a1.setParent(a);
+  
+  TagBean a2 = new TagBean();
+  a2.setId("A2");
+  a2.setDescription("Test tag A2");
+  a2.setParent(a);
+  
+  cb.addTag(a);
+  cb.addTag(a1);
+  cb.addTag(a2);
+  cb.addTag(b);
+  
+  
+  classifierList.add(cb);
  }
 
  @Override
@@ -105,6 +148,65 @@ public class H2AuthDBImpl implements AuthDB
   //return null;
  }
 
+ @Override
+ public ClassifierBean getClassifier(String id)
+ {
+  for( ClassifierBean u : classifierList )
+  {
+   if( id.equals(u.getId()) )
+    return u;
+  }
+  
+  return null;
+ }
+
+ @Override
+ public Tag getTag(String clsfId, String tagId) throws TagException
+ {
+  Classifier c = getClassifier(clsfId);
+  
+  if( c == null )
+   throw new ClassifierNotFoundException();
+   
+  return c.getTag(tagId);
+ }
+
+ @Override
+ public User getUser(String id)
+ {
+  for( UserBean u : userList )
+  {
+   if( id.equals(u.getId()) )
+    return u;
+  }
+  
+  return null;
+ }
+
+ @Override
+ public GroupBean getUserGroup(String id)
+ {
+  for( GroupBean u : groupList )
+  {
+   if( id.equals(u.getId()) )
+    return u;
+  }
+  
+  return null;
+ }
+
+ @Override
+ public ProfileBean getProfile(String id)
+ {
+  for( ProfileBean u : profileList )
+  {
+   if( id.equals(u.getId()) )
+    return u;
+  }
+  
+  return null;
+ }
+ 
  @Override
  public List<? extends User> getUsers(int begin, int end)
  {
@@ -175,11 +277,8 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public void addUser(String userId, String userName, String userPass) throws AuthException
  {
-  for( UserBean u : userList )
-  {
-   if( userId.equals(u.getId()) )
-    throw new UserExistsException();
-  }
+  if( getUser(userId) != null )
+   throw new UserExistsException();
   
   UserBean u = new UserBean();
   
@@ -278,11 +377,9 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public void addGroup(String grpId, String grpDesc) throws AuthException
  {
-  for( GroupBean u : groupList )
-  {
-   if( grpId.equals(u.getId()) )
-    throw new GroupExistsException();
-  }
+
+  if( getUserGroup(grpId) != null  )
+   throw new GroupExistsException();
   
   GroupBean u = new GroupBean();
   
@@ -295,45 +392,30 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public void updateGroup(String grpId, String grpDesc) throws AuthException
  {
-  for( GroupBean u : groupList )
-  {
-   if( u.getId().equals(grpId) )
-   {
-    if( grpDesc != null )
-     u.setDescription(grpDesc);
-
-    return;
-   }
-  }
+  GroupBean u = getUserGroup(grpId);
   
-  throw new GroupNotFoundException();
+  if( u == null  )
+   throw new GroupNotFoundException();
+
+  u.setDescription(grpDesc);
+  
  }
 
  @Override
  public Collection< ? extends UserGroup> getGroupsOfUser(String userId) throws AuthException
  {
-  for( UserBean u : userList )
-  {
-   if( userId.equals(u.getId()) )
-    return u.getGroups();
-  }
+  User u = getUser(userId);
   
-  throw new UserNotFoundException();
+  if( u == null  )
+   throw new UserNotFoundException();
+  
+  return u.getGroups();
  }
 
  @Override
  public void removeUserFromGroup(String grpId, String userId) throws AuthException
  {
-  GroupBean gb = null;
-  
-  for( GroupBean g : groupList )
-  {
-   if( grpId.equals(g.getId()) )
-   {
-    gb = g;
-    break;
-   }
-  }
+  GroupBean gb = getUserGroup(grpId);
   
   if( gb == null )
    throw new GroupNotFoundException();
@@ -359,16 +441,7 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public void removeGroupFromGroup(String grpId, String partId) throws AuthException
  {
-  GroupBean gb = null;
-  
-  for( GroupBean g : groupList )
-  {
-   if( grpId.equals(g.getId()) )
-   {
-    gb = g;
-    break;
-   }
-  }
+  GroupBean gb = getUserGroup(grpId);
   
   if( gb == null )
    throw new GroupNotFoundException();
@@ -394,16 +467,7 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public void addUserToGroup(String grpId, String userId) throws AuthException
  {
-  GroupBean gb = null;
-  
-  for( GroupBean g : groupList )
-  {
-   if( grpId.equals(g.getId()) )
-   {
-    gb = g;
-    break;
-   }
-  }
+  GroupBean gb = getUserGroup(grpId);
   
   if( gb == null )
    throw new GroupNotFoundException();
@@ -429,58 +493,38 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public Collection< ? extends User> getUsersOfGroup(String groupId) throws AuthException
  {
-  for( GroupBean g : groupList )
-  {
-   if( groupId.equals(g.getId()) )
-    return g.getUsers();
-  }
+  GroupBean gb = getUserGroup(groupId);
   
-  throw new GroupNotFoundException();
+  if( gb == null )
+   throw new GroupNotFoundException();
+
+  return gb.getUsers();
  }
 
  @Override
  public Collection< ? extends UserGroup> getGroupsOfGroup(String groupId) throws AuthException
  {
-  for( GroupBean g : groupList )
-  {
-   if( groupId.equals(g.getId()) )
-    return g.getGroups();
-  }
+  GroupBean gb = getUserGroup(groupId);
   
-  throw new GroupNotFoundException();
+  if( gb == null )
+   throw new GroupNotFoundException();
+
+  return gb.getGroups();
  }
 
  @Override
  public void addGroupToGroup(String grpId, String partId) throws AuthException
  {
-  GroupBean gb = null;
+  GroupBean gb = getUserGroup(grpId);
   
-  for( GroupBean g : groupList )
-  {
-   if( grpId.equals(g.getId()) )
-   {
-    gb = g;
-    break;
-   }
-  }
- 
   if( gb == null )
    throw new GroupNotFoundException();
- 
-  GroupBean pb = null;
-  
-  for( GroupBean g : groupList )
-  {
-   if( partId.equals(g.getId()) )
-   {
-    pb = g;
-    break;
-   }
-  }
+
+  GroupBean pb = getUserGroup(partId);
   
   if( pb == null )
    throw new GroupNotFoundException();
-
+ 
   if( grpId.equals(partId) || gb.isPartOf(pb) )
    throw new GroupCycleException();
   
@@ -491,11 +535,8 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public void addProfile(String profId, String dsc) throws AuthException
  {
-  for( ProfileBean pb : profileList )
-  {
-   if( profId.equals(pb.getId()) )
-    throw new ProfileExistsException();
-  }
+  if( getProfile(profId) != null )
+   throw new ProfileExistsException();
   
   ProfileBean pb = new ProfileBean();
   
@@ -508,17 +549,12 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public void updateProfile(String profId, String dsc) throws AuthException
  {
-  for( ProfileBean pf : profileList )
-  {
-   if( pf.getId().equals(profId) )
-   {
-    pf.setDescription(dsc);
-   
-    return;
-   }
-  }
+  ProfileBean pf =getProfile(profId);
   
-  throw new ProfileNotFoundException();
+  if( pf == null )
+   throw new ProfileNotFoundException();
+  
+  pf.setDescription(dsc);
  }
 
  @Override
@@ -590,20 +626,11 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public void addPermissionToProfile(String profId, SystemAction actn, boolean allow) throws AuthException
  {
-  ProfileBean prof = null;
-  
-  for( ProfileBean pf : profileList )
-  {
-   if( pf.getId().equals(profId) )
-   {
-    prof=pf;
-   
-    break;
-   }
-  }
+  ProfileBean prof =getProfile(profId);
   
   if( prof == null )
    throw new ProfileNotFoundException();
+
   
   if( prof.getPermissions() != null )
   {
@@ -624,20 +651,11 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public Collection< ? extends Permission> getPermissionsOfProfile(String profId) throws AuthException
  {
-  ProfileBean prof = null;
-  
-  for( ProfileBean pf : profileList )
-  {
-   if( pf.getId().equals(profId) )
-   {
-    prof=pf;
-   
-    break;
-   }
-  }
+  ProfileBean prof =getProfile(profId);
   
   if( prof == null )
    throw new ProfileNotFoundException();
+
 
   return prof.getPermissions();
  }
@@ -645,20 +663,11 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public Collection< ? extends PermissionProfile> getProfilesOfProfile(String profId) throws AuthException
  {
-  ProfileBean prof = null;
-  
-  for( ProfileBean pf : profileList )
-  {
-   if( pf.getId().equals(profId) )
-   {
-    prof=pf;
-   
-    break;
-   }
-  }
+  ProfileBean prof =getProfile(profId);
   
   if( prof == null )
    throw new ProfileNotFoundException();
+
 
   return prof.getProfiles();
  }
@@ -667,20 +676,11 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public void removePermissionFromProfile(String profId, SystemAction actn, boolean allow) throws AuthException
  {
-  ProfileBean prof = null;
-  
-  for( ProfileBean pf : profileList )
-  {
-   if( pf.getId().equals(profId) )
-   {
-    prof=pf;
-   
-    break;
-   }
-  }
+  ProfileBean prof =getProfile(profId);
   
   if( prof == null )
    throw new ProfileNotFoundException();
+
 
   Permission perm = null;
   for( Permission pm : prof.getPermissions() )
@@ -701,35 +701,12 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public void removeProfileFromProfile(String profId, String toRemProf) throws AuthException
  {
-  ProfileBean prof = null;
-  
-  for( ProfileBean pf : profileList )
-  {
-   if( pf.getId().equals(profId) )
-   {
-    prof=pf;
-   
-    break;
-   }
-  }
+  ProfileBean prof =getProfile(profId);
   
   if( prof == null )
    throw new ProfileNotFoundException();
 
-  PermissionProfile rmProf = null;
-  
-  if( prof.getProfiles() != null )
-  {
-   for( PermissionProfile pm : prof.getProfiles() )
-   {
-    if( toRemProf.equals(pm.getId()) )
-    {
-     rmProf=pm;
-     break;
-    }
-   }
-   
-  }
+  PermissionProfile rmProf = getProfile(toRemProf);
   
   if( rmProf == null )
    throw new ProfileNotFoundException();
@@ -741,60 +718,292 @@ public class H2AuthDBImpl implements AuthDB
  @Override
  public void addProfileToProfile(String profId, String toAdd) throws AuthException
  {
-  ProfileBean pb = null;
+  ProfileBean prof =getProfile(profId);
   
-  for( ProfileBean p : profileList )
-  {
-   if( profId.equals(p.getId()) )
-   {
-    pb = p;
-    break;
-   }
-  }
- 
-  if( pb == null )
+  if( prof == null )
    throw new ProfileNotFoundException();
+
  
-  ProfileBean npb = null;
-  
-  for( ProfileBean g : profileList )
-  {
-   if( toAdd.equals(g.getId()) )
-   {
-    npb = g;
-    break;
-   }
-  }
+  ProfileBean npb = getProfile(toAdd);
   
   if( npb == null )
    throw new ProfileNotFoundException();
 
-  if( profId.equals(toAdd) || pb.isPartOf(pb) )
+  if( profId.equals(toAdd) || prof.isPartOf(npb) )
    throw new ProfileCycleException();
   
   
-  pb.addProfile( npb );
+  prof.addProfile( npb );
  }
 
  @Override
- public User getUser(String id)
+ public void deleteClassifier(String csfId) throws TagException
  {
-  // TODO Auto-generated method stub
-  return null;
+  Iterator<ClassifierBean> iter = classifierList.iterator();
+  
+  while( iter.hasNext() )
+  {
+   ClassifierBean u = iter.next();
+   
+   if( u.getId().equals(csfId) )
+   {
+    iter.remove();   
+    return;
+   }
+  }
+  
+  throw new ClassifierNotFoundException();
  }
 
  @Override
- public UserGroup getUserGroup(String id)
+ public void addClassifier(String csfId, String csfDesc) throws TagException
  {
-  // TODO Auto-generated method stub
-  return null;
+  if( getClassifier(csfId) != null )
+   throw new ClassifierExistsException();
+  
+  ClassifierBean cb = new ClassifierBean();
+  
+  cb.setId( csfId );
+  cb.setDescription(csfDesc);
+  
+  classifierList.add(cb);
  }
 
  @Override
- public PermissionProfile getProfile(String id)
+ public void updateClassifier(String csfId, String csfDesc) throws TagException
  {
-  // TODO Auto-generated method stub
-  return null;
+  ClassifierBean cb = getClassifier(csfId);
+  
+  if( cb == null )
+   throw new ClassifierNotFoundException();
+
+  cb.setDescription(csfDesc);
+  
  }
+
+ @Override
+ public List< ? extends Classifier> getClassifiers(int begin, int end)
+ {
+  return classifierList;
+ }
+
+ @Override
+ public int getClassifiersTotal()
+ {
+  return classifierList.size();
+ }
+
+ @Override
+ public ListFragment<Classifier> getClassifiers(String idPat, String namePat, int begin, int end)
+ {
+  int pos=0;
+  
+  int to = end!=-1 && end <= classifierList.size() ?end:classifierList.size();
+
+  
+  ListFragment<Classifier> res = new ListFragment<Classifier>();
+  
+  List<Classifier> sel = new ArrayList<Classifier>();
+  
+  res.setList(sel);
+  
+  for( Classifier u : classifierList )
+  {
+   if( idPat != null && u.getId().indexOf(idPat) == -1 )
+    continue;
+
+   if( namePat != null && u.getDescription().indexOf(namePat) == -1 )
+    continue;
+
+   if( pos >= begin && pos < to )
+    sel.add(u);
+  
+   pos++;
+  }
+  
+  res.setTotalLength(pos);
+  
+  return res;
+ }
+
+ @Override
+ public void removeTagFromClassifier(String clsId, String tagId) throws TagException
+ {
+  ClassifierBean cb = getClassifier(clsId);
+  
+  if( cb == null )
+   throw new ClassifierNotFoundException(); 
+  
+  Iterator<? extends Tag> tgItr = cb.getTags().iterator();
+  
+  while( tgItr.hasNext() )
+  {
+   Tag t = tgItr.next();
+   
+   if( t.getId().equals(tagId) )
+   {
+    tgItr.remove();
+    continue;
+   }
+   
+   Tag pt = t.getParent();
+   
+   while( pt != null )
+   {
+    if( pt.getId().equals(tagId) )
+    {
+     tgItr.remove();
+     break;
+    }
+    
+    pt = pt.getParent();
+   }
+   
+  }
+ }
+
+ @Override
+ public void addTagToClassifier(String clsId, String tagId, String description, String parentTagId) throws TagException
+ {
+  ClassifierBean clsb = getClassifier(clsId);
+  
+  if( clsb == null )
+   throw new ClassifierNotFoundException();
+  
+  Tag pTag = null;
+  
+  if( parentTagId != null )
+  {
+   pTag = clsb.getTag(parentTagId);
+   
+   if( pTag == null )
+    throw new TagNotFoundException();
+  }
+  
+
+  if( clsb.getTag(tagId) != null )
+   throw new ClassifierExistsException();
+  
+  TagBean tb = new TagBean();
+  
+  tb.setId(tagId);
+  tb.setDescription(description);
+  tb.setParent(pTag);
+ 
+  clsb.addTag( tb );
+ }
+
+ @Override
+ public void updateTag(String clsId, String tagId, String desc, String parentTagId) throws TagException
+ {
+  ClassifierBean clsb = getClassifier(clsId);
+  
+  if( clsb == null )
+   throw new ClassifierNotFoundException();
+  
+  Tag pTag = null;
+  
+  if( parentTagId != null )
+  {
+   pTag = clsb.getTag(parentTagId);
+   
+   if( pTag == null )
+    throw new TagNotFoundException();
+  }
+  
+  TagBean tb = clsb.getTag(tagId);
+
+  if( tb == null )
+   throw new ClassifierNotFoundException();
+  
+  tb.setDescription(desc);
+  tb.setParent(pTag);
+ }
+
+ @Override
+ public Collection< ? extends Tag> getTagsOfClassifier(String clsId) throws TagException
+ {
+  ClassifierBean clsb = getClassifier(clsId);
+  
+  if( clsb == null )
+   throw new ClassifierNotFoundException();
+  
+  return clsb.getTags();
+ }
+
+ @Override
+ public Collection< ? extends Tag> getTagsOfClassifier(String clsId, final String parentTagId) throws TagException
+ {
+  final ClassifierBean clsb = getClassifier(clsId);
+  
+  if( clsb == null )
+   throw new ClassifierNotFoundException();
+  
+  return new AbstractCollection<TagBean>()
+  {
+
+   @Override
+   public Iterator<TagBean> iterator()
+   {
+    return new Iterator<TagBean>()
+    {
+     private TagBean next;
+     private Iterator<TagBean> iter = clsb.getTags().iterator();
+
+     @Override
+     public boolean hasNext()
+     {
+      if( next != null )
+       return true;
+      
+      if( ! iter.hasNext() )
+       return false;
+      
+      do
+      {
+       next = iter.next();
+       
+       if( parentTagId == null )
+       {
+        if( next.getParent() == null )
+         return true;
+       }
+       else if( parentTagId.equals(next.getParent()) )
+        return true;
+       
+      }while( iter.hasNext() );
+      
+      return false;
+     }
+
+     @Override
+     public TagBean next()
+     {
+      if( ! hasNext() )
+       return null;
+      
+      TagBean nxt = next;
+      next = null;
+      
+      return nxt;
+     }
+
+     @Override
+     public void remove()
+     {
+     }
+    };
+   }
+
+   @Override
+   public int size()
+   {
+    // TODO Auto-generated method stub
+    return 0;
+   }
+  };
+ }
+
+
 
 }

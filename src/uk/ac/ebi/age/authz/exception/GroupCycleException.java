@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.authz;
+package uk.ac.ebi.age.authz.exception;
 
 public class GroupCycleException extends AuthException
 {
