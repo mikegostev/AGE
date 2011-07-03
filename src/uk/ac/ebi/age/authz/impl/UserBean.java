@@ -58,6 +58,12 @@ public class UserBean implements User
  {
   groups.remove(gb);
  }
+
+ @Override
+ public boolean isUserCompatible(User u)
+ {
+  return u == this;
+ }
  
 
 }

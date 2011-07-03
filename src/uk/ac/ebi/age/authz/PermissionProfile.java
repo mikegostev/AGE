@@ -2,7 +2,7 @@ package uk.ac.ebi.age.authz;
 
 import java.util.Collection;
 
-public interface PermissionProfile
+public interface PermissionProfile extends PermissionUnit
 {
 
  String getId();

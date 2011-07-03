@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.authz.impl;
 
+import uk.ac.ebi.age.authz.ACR.Permit;
 import uk.ac.ebi.age.authz.Permission;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 
@@ -41,6 +42,15 @@ public class PermissionBean implements Permission
  public void setAllow(boolean allow)
  {
   this.allow = allow;
+ }
+
+ @Override
+ public Permit checkPermission(SystemAction act)
+ {
+  if( act != action )
+   return Permit.UNDEFINED;
+  
+  return allow?Permit.ALLOW:Permit.DENY;
  }
 
 }

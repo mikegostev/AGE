@@ -6,10 +6,15 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import uk.ac.ebi.age.authz.ACR;
 import uk.ac.ebi.age.authz.AuthDB;
 import uk.ac.ebi.age.authz.AuthDBSession;
 import uk.ac.ebi.age.authz.Permission;
+import uk.ac.ebi.age.authz.PermissionForGroupACR;
+import uk.ac.ebi.age.authz.PermissionForUserACR;
 import uk.ac.ebi.age.authz.PermissionProfile;
+import uk.ac.ebi.age.authz.ProfileForGroupACR;
+import uk.ac.ebi.age.authz.ProfileForUserACR;
 import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.authz.UserGroup;
 import uk.ac.ebi.age.authz.exception.AuthException;
@@ -34,6 +39,7 @@ import uk.ac.ebi.age.classif.impl.TagBean;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 
 import com.pri.util.Random;
+import com.pri.util.collection.CollectionsUnion;
 import com.pri.util.collection.ListFragment;
 
 public class TestAuthDBImpl implements AuthDB, ClassifierDB
@@ -161,9 +167,9 @@ public class TestAuthDBImpl implements AuthDB, ClassifierDB
  }
 
  @Override
- public Tag getTag(String clsfId, String tagId) throws TagException
+ public TagBean getTag(String clsfId, String tagId) throws TagException
  {
-  Classifier c = getClassifier(clsfId);
+  ClassifierBean c = getClassifier(clsfId);
   
   if( c == null )
    throw new ClassifierNotFoundException();
@@ -172,7 +178,7 @@ public class TestAuthDBImpl implements AuthDB, ClassifierDB
  }
 
  @Override
- public User getUser(String id)
+ public UserBean getUser(String id)
  {
   for( UserBean u : userList )
   {
@@ -1004,6 +1010,227 @@ public class TestAuthDBImpl implements AuthDB, ClassifierDB
   };
  }
 
+ @Override
+ public boolean removeProfileForGroupACR(String clsfId, String tagId, String subjId, String profileId) throws TagException
+ {
+  TagBean tb = getTag(clsfId, tagId);
+  
+  if( tb == null )
+   throw new TagNotFoundException();
+  
+  Collection<? extends ProfileForGroupACR> acrs = tb.getProfileForGroupACRs();
+  
+  Iterator<? extends ProfileForGroupACR> iter = acrs.iterator();
+  
+  while( iter.hasNext() )
+  {
+   ProfileForGroupACR acr = iter.next();
+   
+   if(acr.getPermissionUnit().getId().equals(profileId) && acr.getSubject().getId().equals(subjId) )
+   {
+    iter.remove();
+    return true;
+   }
+  }
+  
+  return false;
+ }
+
+ @Override
+ public boolean removeProfileForUserACR(String clsfId, String tagId, String subjId, String profileId) throws TagException
+ {
+  TagBean tb = getTag(clsfId, tagId);
+  
+  if( tb == null )
+   throw new TagNotFoundException();
+  
+  Collection<? extends ProfileForUserACR> acrs = tb.getProfileForUserACRs();
+  
+  Iterator<? extends ProfileForUserACR> iter = acrs.iterator();
+  
+  while( iter.hasNext() )
+  {
+   ProfileForUserACR acr = iter.next();
+   
+   if(acr.getPermissionUnit().getId().equals(profileId) && acr.getSubject().getId().equals(subjId) )
+   {
+    iter.remove();
+    return true;
+   }
+  }
+
+  return false;
+ }
+
+ @Override
+ public boolean removePermissionForUserACR(String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException
+ {
+  TagBean tb = getTag(clsfId, tagId);
+  
+  if( tb == null )
+   throw new TagNotFoundException();
+  
+  Collection<? extends PermissionForUserACR> acrs = tb.getPermissionForUserACRs();
+  
+  Iterator<? extends PermissionForUserACR> iter = acrs.iterator();
+  
+  while( iter.hasNext() )
+  {
+   PermissionForUserACR acr = iter.next();
+   
+   if(acr.getPermissionUnit().getAction() == act && acr.getPermissionUnit().isAllow() == allow && acr.getSubject().getId().equals(subjId) )
+   {
+    iter.remove();
+    return true;
+   }
+  }
+
+  return false;
+ }
+
+ @Override
+ public boolean removePermissionForGroupACR(String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException
+ {
+  TagBean tb = getTag(clsfId, tagId);
+  
+  if( tb == null )
+   throw new TagNotFoundException();
+  
+  Collection<? extends PermissionForGroupACR> acrs = tb.getPermissionForGroupACRs();
+  
+  Iterator<? extends PermissionForGroupACR> iter = acrs.iterator();
+  
+  while( iter.hasNext() )
+  {
+   PermissionForGroupACR acr = iter.next();
+   
+   if(acr.getPermissionUnit().getAction() == act && acr.getPermissionUnit().isAllow() == allow && acr.getSubject().getId().equals(subjId) )
+   {
+    iter.remove();
+    return true;
+   }
+  }
+
+  return false;
+ }
+
+ @Override
+ public void addProfileForGroupACR(String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthException
+ {
+  TagBean tb = getTag(clsfId, tagId);
+  
+  if( tb == null )
+   throw new TagNotFoundException();
+
+  ProfileForGroupACRBean acr = new ProfileForGroupACRBean();
+  
+  ProfileBean pb = getProfile(profileId);
+  
+  if( pb == null )
+   throw new ProfileNotFoundException();
+  
+  GroupBean gb = getUserGroup(subjId);
+  
+  if( gb == null )
+   throw new GroupNotFoundException();
+
+  acr.setPermissionUnit(pb);
+  acr.setSubject(gb);
+  
+  tb.addProfileForGroupACR( acr );
+ }
+
+ @Override
+ public void addProfileForUserACR(String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthException
+ {
+  TagBean tb = getTag(clsfId, tagId);
+  
+  if( tb == null )
+   throw new TagNotFoundException();
+
+  ProfileForUserACRBean acr = new ProfileForUserACRBean();
+  
+  ProfileBean pb = getProfile(profileId);
+  
+  if( pb == null )
+   throw new ProfileNotFoundException();
+  
+  UserBean gb = getUser(subjId);
+  
+  if( gb == null )
+   throw new UserNotFoundException();
+
+  acr.setPermissionUnit(pb);
+  acr.setSubject(gb);
+  
+  tb.addProfileForUserACR( acr );
+ }
+
+ @Override
+ public void addActionForUserACR(String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthException
+ {
+  TagBean tb = getTag(clsfId, tagId);
+  
+  if( tb == null )
+   throw new TagNotFoundException();
+
+  PermissionForUserACRBean acr = new PermissionForUserACRBean();
+  
+  UserBean gb = getUser(subjId);
+  
+  if( gb == null )
+   throw new UserNotFoundException();
+
+  PermissionBean pb = new PermissionBean();
+  pb.setAction(act);
+  pb.setAllow(allow);
+  
+  acr.setPermissionUnit(pb);
+  acr.setSubject(gb);
+  
+  tb.addPermissionForUserACR( acr );
+ }
+
+ @Override
+ public void addActionForGroupACR(String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthException
+ {
+  TagBean tb = getTag(clsfId, tagId);
+  
+  if( tb == null )
+   throw new TagNotFoundException();
+
+  PermissionForGroupACRBean acr = new PermissionForGroupACRBean();
+  
+  GroupBean gb = getUserGroup(subjId);
+  
+  if( gb == null )
+   throw new GroupNotFoundException();
+
+  PermissionBean pb = new PermissionBean();
+  pb.setAction(act);
+  pb.setAllow(allow);
+  
+  acr.setPermissionUnit(pb);
+  acr.setSubject(gb);
+  
+  tb.addPermissionForGroupACR( acr );
+ }
+
+ @SuppressWarnings("unchecked")
+ @Override
+ public Collection<? extends ACR> getACL(String clsfId, String tagId) throws TagException
+ {
+  TagBean tb = getTag(clsfId, tagId);
+  
+  if( tb == null )
+   throw new TagNotFoundException();
+  
+  return new CollectionsUnion<ACR>( new Collection[] {
+    tb.getPermissionForUserACRs(),
+    tb.getPermissionForGroupACRs(),
+    tb.getProfileForUserACRs(),
+    tb.getProfileForGroupACRs()});
+ }
 
 
 }

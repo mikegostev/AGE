@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.authz.UserGroup;
 
 public class GroupBean implements UserGroup
@@ -76,6 +77,20 @@ public class GroupBean implements UserGroup
    if( isPartOf(gb) )
     return true;
   }
+  
+  return false;
+ }
+
+ @Override
+ public boolean isUserCompatible(User u)
+ {
+  for( User mu : users )
+   if( u == mu )
+    return true;
+  
+  for( GroupBean gb : groups )
+   if( gb.isUserCompatible(u) )
+    return true;
   
   return false;
  }

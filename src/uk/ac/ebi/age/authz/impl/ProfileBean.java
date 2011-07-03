@@ -4,8 +4,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import uk.ac.ebi.age.authz.ACR.Permit;
 import uk.ac.ebi.age.authz.Permission;
 import uk.ac.ebi.age.authz.PermissionProfile;
+import uk.ac.ebi.age.ext.authz.SystemAction;
 
 public class ProfileBean implements PermissionProfile
 {
@@ -80,4 +82,34 @@ public class ProfileBean implements PermissionProfile
   
   return false;
  }
+
+ public Permit checkPermission( SystemAction act )
+ {
+  boolean allw = false;
+  
+  for( Permission p : permissions )
+  {
+   if( act == p.getAction() )
+   {
+    if( p.isAllow() )
+     allw = true;
+    else
+     return Permit.DENY;
+   }
+  }
+   
+  for( ProfileBean pp : profiles )
+  {
+   Permit r = pp.checkPermission(act);
+   
+   if( r == Permit.DENY )
+    return Permit.DENY;
+   else if( r == Permit.ALLOW )
+    allw = true;
+  }
+  
+  return allw?Permit.ALLOW:Permit.UNDEFINED;
+  
+ }
+
 }

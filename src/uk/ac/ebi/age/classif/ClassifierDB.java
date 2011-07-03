@@ -3,7 +3,10 @@ package uk.ac.ebi.age.classif;
 import java.util.Collection;
 import java.util.List;
 
+import uk.ac.ebi.age.authz.ACR;
+import uk.ac.ebi.age.authz.exception.AuthException;
 import uk.ac.ebi.age.classif.exception.TagException;
+import uk.ac.ebi.age.ext.authz.SystemAction;
 
 import com.pri.util.collection.ListFragment;
 
@@ -33,5 +36,17 @@ public interface ClassifierDB
 
  Collection< ? extends Tag> getTagsOfClassifier(String clsId, String parentTagId) throws TagException;
  Collection< ? extends Tag> getTagsOfClassifier(String clsId) throws TagException;
+
+ boolean removeProfileForGroupACR(String clsfId, String tagId, String subjId, String profileId) throws TagException;
+ boolean removeProfileForUserACR(String clsfId, String tagId, String subjId, String profileId) throws TagException;
+ boolean removePermissionForUserACR(String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException;
+ boolean removePermissionForGroupACR(String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException;
+
+ void addProfileForGroupACR(String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthException;
+ void addProfileForUserACR(String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthException;
+ void addActionForUserACR(String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthException;
+ void addActionForGroupACR(String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthException;
+
+ Collection< ? extends ACR> getACL(String clsfId, String tagId) throws TagException;
 
 }
