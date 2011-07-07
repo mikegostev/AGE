@@ -1,7 +1,6 @@
-package uk.ac.ebi.age.classif;
+package uk.ac.ebi.age.authz;
 
 import uk.ac.ebi.age.authz.ACR.Permit;
-import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 
 public interface Tag

@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.classif.impl;
+package uk.ac.ebi.age.authz.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,12 +9,8 @@ import uk.ac.ebi.age.authz.PermissionForGroupACR;
 import uk.ac.ebi.age.authz.PermissionForUserACR;
 import uk.ac.ebi.age.authz.ProfileForGroupACR;
 import uk.ac.ebi.age.authz.ProfileForUserACR;
+import uk.ac.ebi.age.authz.Tag;
 import uk.ac.ebi.age.authz.User;
-import uk.ac.ebi.age.authz.impl.PermissionForGroupACRBean;
-import uk.ac.ebi.age.authz.impl.PermissionForUserACRBean;
-import uk.ac.ebi.age.authz.impl.ProfileForGroupACRBean;
-import uk.ac.ebi.age.authz.impl.ProfileForUserACRBean;
-import uk.ac.ebi.age.classif.Tag;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 
 public class TagBean implements Tag

@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.classif;
+package uk.ac.ebi.age.authz;
 
 public interface Classifier
 {

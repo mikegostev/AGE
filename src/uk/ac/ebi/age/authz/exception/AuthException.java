@@ -13,4 +13,9 @@ public class AuthException extends Exception
   super( string );
  }
 
+ public AuthException(String string, Exception e)
+ {
+  super( string, e );
+ }
+
 }

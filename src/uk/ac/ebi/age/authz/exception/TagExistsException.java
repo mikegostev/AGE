@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.classif.exception;
+package uk.ac.ebi.age.authz.exception;
 
 public class TagExistsException extends TagException
 {

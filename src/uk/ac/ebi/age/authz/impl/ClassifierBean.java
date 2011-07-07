@@ -1,9 +1,9 @@
-package uk.ac.ebi.age.classif.impl;
+package uk.ac.ebi.age.authz.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-import uk.ac.ebi.age.classif.Classifier;
+import uk.ac.ebi.age.authz.Classifier;
 
 public class ClassifierBean implements Classifier
 {
