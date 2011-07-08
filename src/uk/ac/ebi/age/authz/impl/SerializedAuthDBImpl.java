@@ -48,12 +48,12 @@ import uk.ac.ebi.age.authz.exception.TagNotFoundException;
 import uk.ac.ebi.age.authz.exception.UserExistsException;
 import uk.ac.ebi.age.authz.exception.UserNotFoundException;
 import uk.ac.ebi.age.ext.authz.SystemAction;
+import uk.ac.ebi.age.transaction.InconsistentStateException;
 import uk.ac.ebi.age.transaction.InvalidStateException;
 import uk.ac.ebi.age.transaction.ReadLock;
 import uk.ac.ebi.age.transaction.Transaction;
 import uk.ac.ebi.age.transaction.TransactionException;
 import uk.ac.ebi.age.transaction.TransactionalDB;
-import uk.ac.ebi.age.transaction.UndefinedStateException;
 
 import com.pri.util.collection.CollectionsUnion;
 import com.pri.util.collection.ListFragment;
@@ -371,6 +371,15 @@ public class SerializedAuthDBImpl implements AuthDB
   }
   catch(Exception e)
   {
+   try
+   {
+    readData();
+   }
+   catch(IOException e1)
+   {
+    throw new InconsistentStateException("System is in undefined state due to IO error",e1);
+   }
+   
    throw new TransactionException("Transaction IO exception", e);
   }
   finally
@@ -412,7 +421,7 @@ public class SerializedAuthDBImpl implements AuthDB
   }
   catch(IOException e)
   {
-   throw new UndefinedStateException("System is in undefined state due to IO error",e);
+   throw new InconsistentStateException("System is in undefined state due to IO error",e);
   }
   finally
   {
