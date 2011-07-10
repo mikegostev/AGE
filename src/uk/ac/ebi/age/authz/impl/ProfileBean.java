@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.authz.impl;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -8,14 +9,20 @@ import uk.ac.ebi.age.authz.ACR.Permit;
 import uk.ac.ebi.age.authz.Permission;
 import uk.ac.ebi.age.authz.PermissionProfile;
 import uk.ac.ebi.age.ext.authz.SystemAction;
+import uk.ac.ebi.mg.collection.Named;
 
-public class ProfileBean implements PermissionProfile
+public class ProfileBean implements PermissionProfile, Named<String>, Serializable
 {
+
+ private static final long serialVersionUID = 1L;
+
+
  private String id;
  private String description;
  private Collection<PermissionBean> permissions = new HashSet<PermissionBean>();
  private Set<ProfileBean> profiles = new HashSet<ProfileBean>();
 
+ @Override
  public String getId()
  {
   return id;
@@ -26,6 +33,7 @@ public class ProfileBean implements PermissionProfile
   this.id = id;
  }
 
+ @Override
  public String getDescription()
  {
   return description;
@@ -36,7 +44,8 @@ public class ProfileBean implements PermissionProfile
   this.description = description;
  }
 
- public Collection<? extends Permission> getPermissions()
+ @Override
+ public Collection<PermissionBean> getPermissions()
  {
   return permissions;
  }
@@ -83,6 +92,7 @@ public class ProfileBean implements PermissionProfile
   return false;
  }
 
+ @Override
  public Permit checkPermission( SystemAction act )
  {
   boolean allw = false;

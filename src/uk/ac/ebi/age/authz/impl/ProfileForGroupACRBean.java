@@ -1,11 +1,17 @@
 package uk.ac.ebi.age.authz.impl;
 
+import java.io.Serializable;
+
 import uk.ac.ebi.age.authz.ProfileForGroupACR;
 import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 
-public class ProfileForGroupACRBean implements ProfileForGroupACR
+public class ProfileForGroupACRBean implements ProfileForGroupACR, Serializable
 {
+
+ private static final long serialVersionUID = 1L;
+
+
  private GroupBean group; 
  private ProfileBean profile; 
  

@@ -1,18 +1,22 @@
 package uk.ac.ebi.age.authz.impl;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import uk.ac.ebi.age.authz.User;
-import uk.ac.ebi.age.authz.UserGroup;
+import uk.ac.ebi.mg.collection.Named;
 
-public class UserBean implements User
+public class UserBean implements User, Named<String>, Serializable
 {
+
+ private static final long serialVersionUID = 1L;
+
  private String id;
  private String name;
  private String pass;
- private Set<UserGroup> groups = new HashSet<UserGroup>();
+ private Set<GroupBean> groups = new HashSet<GroupBean>();
 
  public String getId()
  {
@@ -44,12 +48,12 @@ public class UserBean implements User
   this.pass = pass;
  }
 
- public Collection< ? extends UserGroup> getGroups()
+ public Collection<GroupBean> getGroups()
  {
   return groups;
  }
 
- public void addGroup( UserGroup grp )
+ public void addGroup( GroupBean grp )
  {
   groups.add(grp);
  }

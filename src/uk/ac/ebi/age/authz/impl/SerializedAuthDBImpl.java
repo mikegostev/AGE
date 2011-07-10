@@ -10,10 +10,9 @@ import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -21,7 +20,10 @@ import org.apache.commons.transaction.file.FileResourceManager;
 import org.apache.commons.transaction.file.ResourceManagerException;
 
 import uk.ac.ebi.age.authz.ACR;
+import uk.ac.ebi.age.authz.ACR.Permit;
 import uk.ac.ebi.age.authz.AuthDB;
+import uk.ac.ebi.age.authz.BuiltInGroups;
+import uk.ac.ebi.age.authz.BuiltInUsers;
 import uk.ac.ebi.age.authz.Classifier;
 import uk.ac.ebi.age.authz.Permission;
 import uk.ac.ebi.age.authz.PermissionForGroupACR;
@@ -32,7 +34,8 @@ import uk.ac.ebi.age.authz.ProfileForUserACR;
 import uk.ac.ebi.age.authz.Tag;
 import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.authz.UserGroup;
-import uk.ac.ebi.age.authz.exception.AuthException;
+import uk.ac.ebi.age.authz.exception.AuthDBException;
+import uk.ac.ebi.age.authz.exception.BuiltInChangeException;
 import uk.ac.ebi.age.authz.exception.ClassifierExistsException;
 import uk.ac.ebi.age.authz.exception.ClassifierNotFoundException;
 import uk.ac.ebi.age.authz.exception.DBInitException;
@@ -54,13 +57,25 @@ import uk.ac.ebi.age.transaction.ReadLock;
 import uk.ac.ebi.age.transaction.Transaction;
 import uk.ac.ebi.age.transaction.TransactionException;
 import uk.ac.ebi.age.transaction.TransactionalDB;
+import uk.ac.ebi.mg.collection.IndexList;
 
+import com.pri.util.NaturalStringComparator;
+import com.pri.util.StringUtils;
 import com.pri.util.collection.CollectionsUnion;
 import com.pri.util.collection.ListFragment;
 
 public class SerializedAuthDBImpl implements AuthDB
 {
  private static final String serialFileName = "authdb.ser";
+ 
+ private Comparator<String> naturStrCmp = new Comparator<String>()
+ {
+  @Override
+  public int compare(String o1, String o2)
+  {
+   return StringUtils.naturalCompare(o1, o2);
+  }
+ };
  
  private class RLock implements ReadLock
  {
@@ -98,47 +113,50 @@ public class SerializedAuthDBImpl implements AuthDB
 
  }
  
- private List<UserBean> userList;
- private List<GroupBean> groupList;
- private List<ProfileBean> profileList;
- private List<ClassifierBean> classifierList;
+ private IndexList<String, UserBean> userList;
+ private IndexList<String, GroupBean> groupList;
+ private IndexList<String, ProfileBean> profileList;
+ private IndexList<String, ClassifierBean> classifierList;
+ private TagBean sysTag;
  
- private Map<String, UserBean> userMap;
- private Map<String,GroupBean> groupMap;
- private Map<String,ProfileBean> profileMap;
- private Map<String,ClassifierBean> classifierMap;
+// private List<UserBean> userList;
+// private List<GroupBean> groupList;
+// private List<ProfileBean> profileList;
+// private List<ClassifierBean> classifierList;
+// 
+// private Map<String, UserBean> userMap;
+// private Map<String,GroupBean> groupMap;
+// private Map<String,ProfileBean> profileMap;
+// private Map<String,ClassifierBean> classifierMap;
 
  private static class DataPacket implements Serializable
  {
   private static final long serialVersionUID = 1L;
   
-  List<UserBean> userList;
-  List<GroupBean> groupList;
-  List<ProfileBean> profileList;
-  List<ClassifierBean> classifierList;
-  
-  Map<String, UserBean> userMap;
-  Map<String,GroupBean> groupMap;
-  Map<String,ProfileBean> profileMap;
-  Map<String,ClassifierBean> classifierMap;
+  IndexList<String, UserBean> userList;
+  IndexList<String, GroupBean> groupList;
+  IndexList<String, ProfileBean> profileList;
+  IndexList<String, ClassifierBean> classifierList;
+  TagBean sysTag;
  }
  
  private DataPacket dataPacket;
  
  private ReadWriteLock lock = new ReentrantReadWriteLock();
  
- private String relPath;
  private FileResourceManager txManager;
- private String serialFile;
+ private String serialFileRelPath;
+ private File serialFile;
  
  public SerializedAuthDBImpl(FileResourceManager frm, String authRelPath) throws DBInitException
  {
   txManager=frm;
-  relPath=authRelPath;
  
-  serialFile = authRelPath+"/"+serialFileName;
+  serialFileRelPath = authRelPath+"/"+serialFileName;
   
-  if( new File(frm.getStoreDir(),serialFile).exists() )
+  serialFile = new File(frm.getStoreDir(),serialFileRelPath);
+  
+  if( serialFile.exists() )
   {
    try
    {
@@ -153,43 +171,44 @@ public class SerializedAuthDBImpl implements AuthDB
   {
    dataPacket = new DataPacket();
 
-   userList = dataPacket.userList = new ArrayList<UserBean>();
-   groupList = dataPacket.groupList = new ArrayList<GroupBean>();
-   profileList = dataPacket.profileList = new ArrayList<ProfileBean>();
-   classifierList = dataPacket.classifierList = new ArrayList<ClassifierBean>();
+   userList = dataPacket.userList = new IndexList<String, UserBean>( NaturalStringComparator.getInstance() );
+   groupList = dataPacket.groupList = new IndexList<String, GroupBean>( NaturalStringComparator.getInstance() );
+   profileList = dataPacket.profileList = new IndexList<String, ProfileBean>( NaturalStringComparator.getInstance() );
+   classifierList = dataPacket.classifierList = new IndexList<String, ClassifierBean>( NaturalStringComparator.getInstance() );
+   sysTag=dataPacket.sysTag = new TagBean();
 
-   userMap = dataPacket.userMap = new HashMap<String, UserBean>();
-   groupMap = dataPacket.groupMap = new HashMap<String, GroupBean>();
-   profileMap = dataPacket.profileMap = new HashMap<String, ProfileBean>();
-   classifierMap = dataPacket.classifierMap = new HashMap<String, ClassifierBean>();
-
-   UserBean ub = new UserBean();
-   ub.setName(anonymousUser);
-   ub.setName("Built-in anonymous user");
-
-   userList.add(ub);
-   userMap.put(ub.getId(), ub);
-
-   GroupBean gb = new GroupBean();
-   gb.setId(ownerGroup);
-   gb.setDescription("Built-in OWNER group");
-
+   for( BuiltInUsers usr: BuiltInUsers.values() )
+   {
+    UserBean ub = new UserBean();
+    ub.setId(usr.getName());
+    ub.setName(usr.getDescription());
+    
+    userList.add(ub);
+    
+   }
+   
+   GroupBean gb = new EveryoneGroupBean();
+   gb.setId(BuiltInGroups.EVERYONE.getName());
+   gb.setDescription(BuiltInGroups.EVERYONE.getDescription());
+   
    groupList.add(gb);
-   groupMap.put(gb.getId(), gb);
 
-   gb = new GroupBean();
-   gb.setId(everyoneGroup);
-   gb.setDescription("Built-in EVERYONE group");
-
+   gb = new AuthenticatedGroupBean();
+   gb.setId(BuiltInGroups.AUTHENTICATED.getName());
+   gb.setDescription(BuiltInGroups.AUTHENTICATED.getDescription());
+   
    groupList.add(gb);
-   groupMap.put(gb.getId(), gb);
 
-   gb = new GroupBean();
-   gb.setId(usersGroup);
-   gb.setDescription("Built-in authenticated users group");
-
-   groupList.add(gb);
-   groupMap.put(gb.getId(), gb);
+   
+   
+//   for( BuiltInGroups grp: BuiltInGroups.values() )
+//   {
+//    GroupBean gb = new GroupBean();
+//    gb.setId(grp.getName());
+//    gb.setDescription(grp.getDescription());
+//    
+//    groupList.add(gb);
+//   }
 
    String txId;
 
@@ -197,7 +216,7 @@ public class SerializedAuthDBImpl implements AuthDB
    {
     txId = txManager.generatedUniqueTxId();
     txManager.startTransaction(txId);
-    OutputStream outputStream = txManager.writeResource(txId, serialFile);
+    OutputStream outputStream = txManager.writeResource(txId, serialFileRelPath);
     
     ObjectOutputStream oos = new ObjectOutputStream(outputStream);
     
@@ -233,12 +252,8 @@ public class SerializedAuthDBImpl implements AuthDB
   groupList=dataPacket.groupList;
   profileList=dataPacket.profileList;
   classifierList=dataPacket.classifierList;
+  sysTag=dataPacket.sysTag;
   
-  userMap=dataPacket.userMap;
-  groupMap=dataPacket.groupMap;
-  profileMap=dataPacket.profileMap;
-  classifierMap=dataPacket.classifierMap;
-
   fis.close();
   
  }
@@ -397,9 +412,9 @@ public class SerializedAuthDBImpl implements AuthDB
 
   txManager.startTransaction(txId);
 
-  txManager.moveResource(txId, serialFile, serialFile + "." + System.currentTimeMillis(), true);
+  txManager.moveResource(txId, serialFileRelPath, serialFileRelPath + "." + System.currentTimeMillis(), true);
 
-  OutputStream outputStream = txManager.writeResource(txId, serialFile);
+  OutputStream outputStream = txManager.writeResource(txId, serialFileRelPath);
 
   ObjectOutputStream oos = new ObjectOutputStream(outputStream);
 
@@ -445,7 +460,7 @@ public class SerializedAuthDBImpl implements AuthDB
  
  private ClassifierBean getClassifier( String id )
  {
-  return classifierMap.get(id);
+  return classifierList.getByKey(id);
  }
 
  @Override
@@ -477,7 +492,7 @@ public class SerializedAuthDBImpl implements AuthDB
 
  private UserBean getUser( String id)
  {
-  return userMap.get(id);
+  return userList.getByKey(id);
  }
  
  @Override
@@ -490,7 +505,7 @@ public class SerializedAuthDBImpl implements AuthDB
 
  private GroupBean getUserGroup( String id )
  {
-  return groupMap.get(id);
+  return groupList.getByKey(id);
  }
  
  @Override
@@ -501,7 +516,7 @@ public class SerializedAuthDBImpl implements AuthDB
 
  private ProfileBean getProfile( String id)
  {
-  return profileMap.get(id);
+  return profileList.getByKey(id);
  }
  
  @Override
@@ -566,63 +581,109 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void updateUser( Transaction lck, String userId, String userName, String userPass) throws AuthException
+ public void updateUser( Transaction lck, String userId, String userName) throws AuthDBException
  {
   checkState(lck);
 
-  for( UserBean u : userList )
-  {
-   if( u.getId().equals(userId) )
-   {
-    if( userName != null )
-     u.setName(userName);
-
-    if( userPass != null )
-     u.setPass(userPass);
-   
-    return;
-   }
-  }
+  UserBean u = userList.getByKey(userId);
   
-  throw new UserNotFoundException();
+  if( u == null )
+   throw new UserNotFoundException( userId );
+  
+  for( BuiltInUsers usr : BuiltInUsers.values() )
+   if( usr.getName().equals(userId) )
+    throw new BuiltInChangeException("Built-in user can't be modified");
+  
+  u.setName(userName);
+ 
+ }
+ 
+ @Override
+ public boolean checkUserPassword( ReadLock lck, String userId, String userPass) throws AuthDBException
+ {
+  checkState(lck);
+
+  UserBean u = userList.getByKey(userId);
+  
+  if( u == null )
+   throw new UserNotFoundException( userId );
+  
+  return StringUtils.hashStringSHA1(userPass).equals(u.getPass()) ;
+ }
+
+ 
+ @Override
+ public void setUserPassword( Transaction lck, String userId, String userPass) throws AuthDBException
+ {
+  checkState(lck);
+
+  UserBean u = userList.getByKey(userId);
+  
+  if( u == null )
+   throw new UserNotFoundException( userId );
+  
+  u.setPass( StringUtils.hashStringSHA1(userPass) );  
  }
 
  @Override
- public void addUser( Transaction lck, String userId, String userName, String userPass) throws AuthException
+ public void addUser( Transaction lck, String userId, String userName, String userPass) throws AuthDBException
  {
   checkState(lck);
 
   if( getUser(userId) != null )
-   throw new UserExistsException();
+   throw new UserExistsException( userId );
   
   UserBean u = new UserBean();
   
   u.setId(userId);
   u.setName(userName);
-  u.setPass(userPass);
+  u.setPass(StringUtils.hashStringSHA1(userPass));
   
   userList.add( u );
  }
 
  @Override
- public void deleteUser( Transaction lck, String userId) throws AuthException
+ public void deleteUser( Transaction lck, String userId) throws AuthDBException
  {
   checkState(lck);
 
-  Iterator<UserBean> iter = userList.iterator();
+  for( BuiltInUsers usr : BuiltInUsers.values() )
+   if( usr.getName().equals(userId) )
+    throw new BuiltInChangeException("Built-in user can't be deleted");
   
-  while( iter.hasNext() )
+  UserBean rmUsr = userList.removeKey(userId);
+  
+  if( rmUsr == null )
+   throw new UserNotFoundException(userId);
+
+  for( GroupBean gb : rmUsr.getGroups() )
+   gb.removeUser(rmUsr);
+  
+  for( ClassifierBean clsb: classifierList )
   {
-   UserBean u = iter.next();
-   
-   if( u.getId().equals(userId) )
+   for( TagBean tb : clsb.getTags() )
    {
-    iter.remove();   
-    return;
+    Iterator<PermissionForUserACRBean> pmgIter = tb.getPermissionForUserACRs().iterator();
+    
+    while( pmgIter.hasNext() )
+    {
+     PermissionForUserACRBean p = pmgIter.next();
+     
+     if( p.getSubject() == rmUsr )
+      pmgIter.remove();
+    }
+    
+    Iterator<ProfileForUserACRBean> pfgIter = tb.getProfileForUserACRs().iterator();
+    
+    while( pfgIter.hasNext() )
+    {
+     ProfileForUserACRBean p = pfgIter.next();
+     
+     if( p.getSubject() == rmUsr )
+      pfgIter.remove();
+    }
    }
   }
-  
-  throw new UserNotFoundException();
  }
 
  @Override
@@ -630,7 +691,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  int to = end!=-1 && end <= groupList.size() ?end:groupList.size();
+  int to = end!=-1 && end <= groupList.size() ? end:groupList.size();
   
   return groupList.subList(begin, to);
  }
@@ -678,27 +739,52 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void deleteGroup(Transaction lck, String grpId) throws AuthException
+ public void deleteGroup(Transaction lck, String grpId) throws AuthDBException
  {
   checkState(lck);
-  Iterator<GroupBean> iter = groupList.iterator();
+
+  for( BuiltInGroups grp : BuiltInGroups.values() )
+   if( grp.getName().equals(grpId) )
+    throw new BuiltInChangeException("Built-in group can't be deleted");
+
+  GroupBean rmGrp = groupList.removeKey(grpId);
   
-  while( iter.hasNext() )
+  if( rmGrp == null )
+   throw new GroupNotFoundException();
+
+  for( UserBean ub : rmGrp.getUsers() )
+   ub.removeGroup(rmGrp);
+  
+  for( ClassifierBean clsb: classifierList )
   {
-   GroupBean u = iter.next();
-   
-   if( u.getId().equals(grpId) )
+   for( TagBean tb : clsb.getTags() )
    {
-    iter.remove();   
-    return;
+    Iterator<PermissionForGroupACRBean> pmgIter = tb.getPermissionForGroupACRs().iterator();
+    
+    while( pmgIter.hasNext() )
+    {
+     PermissionForGroupACRBean p = pmgIter.next();
+     
+     if( p.getSubject() == rmGrp )
+      pmgIter.remove();
+    }
+    
+    Iterator<ProfileForGroupACRBean> pfgIter = tb.getProfileForGroupACRs().iterator();
+    
+    while( pfgIter.hasNext() )
+    {
+     ProfileForGroupACRBean p = pfgIter.next();
+     
+     if( p.getSubject() == rmGrp )
+      pfgIter.remove();
+    }
    }
   }
-  
-  throw new GroupNotFoundException();
+
  }
 
  @Override
- public void addGroup(Transaction lck, String grpId, String grpDesc) throws AuthException
+ public void addGroup(Transaction lck, String grpId, String grpDesc) throws AuthDBException
  {
   checkState(lck);
 
@@ -714,7 +800,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void updateGroup(Transaction lck, String grpId, String grpDesc) throws AuthException
+ public void updateGroup(Transaction lck, String grpId, String grpDesc) throws AuthDBException
  {
   checkState(lck);
 
@@ -723,12 +809,17 @@ public class SerializedAuthDBImpl implements AuthDB
   if( u == null  )
    throw new GroupNotFoundException();
 
+  for( BuiltInGroups grp : BuiltInGroups.values() )
+   if( grp.getName().equals(grpId) )
+    throw new BuiltInChangeException("Built-in group can't be modified");
+
+  
   u.setDescription(grpDesc);
   
  }
 
  @Override
- public Collection< ? extends UserGroup> getGroupsOfUser(ReadLock lck, String userId) throws AuthException
+ public Collection< ? extends UserGroup> getGroupsOfUser(ReadLock lck, String userId) throws AuthDBException
  {
   checkState(lck);
 
@@ -741,7 +832,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void removeUserFromGroup(Transaction lck, String grpId, String userId) throws AuthException
+ public void removeUserFromGroup(Transaction lck, String grpId, String userId) throws AuthDBException
  {
   checkState(lck);
 
@@ -750,16 +841,7 @@ public class SerializedAuthDBImpl implements AuthDB
   if( gb == null )
    throw new GroupNotFoundException();
   
-  UserBean ub = null;
-  
-  for( UserBean u : gb.getUsers() )
-  {
-   if( u.getId().equals(userId) )
-   {
-    ub = u;
-    break;
-   }
-  }
+  UserBean ub = gb.getUser(userId);
   
   if( ub == null )
    throw new UserNotFoundException();
@@ -769,7 +851,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void removeGroupFromGroup(Transaction lck, String grpId, String partId) throws AuthException
+ public void removeGroupFromGroup(Transaction lck, String grpId, String partId) throws AuthDBException
  {
   checkState(lck);
 
@@ -778,16 +860,7 @@ public class SerializedAuthDBImpl implements AuthDB
   if( gb == null )
    throw new GroupNotFoundException();
   
-  UserGroup gp = null;
-  
-  for( UserGroup g : gb.getGroups() )
-  {
-   if( g.getId().equals(partId) )
-   {
-    gp = g;
-    break;
-   }
-  }
+  UserGroup gp = gb.getGroup(partId);
   
   if( gp == null )
    throw new GroupNotFoundException();
@@ -797,35 +870,30 @@ public class SerializedAuthDBImpl implements AuthDB
 
  
  @Override
- public void addUserToGroup(Transaction lck, String grpId, String userId) throws AuthException
+ public void addUserToGroup(Transaction lck, String grpId, String userId) throws AuthDBException
  {
   checkState(lck);
 
   GroupBean gb = getUserGroup(grpId);
   
   if( gb == null )
-   throw new GroupNotFoundException();
+   throw new GroupNotFoundException(grpId);
   
-  UserBean ub = null;
-  
-  for( UserBean u : userList )
-  {
-   if( u.getId().equals(userId) )
-   {
-    ub = u;
-    break;
-   }
-  }
-  
+  for( BuiltInGroups grp : BuiltInGroups.values() )
+   if( grp.getName().equals(grpId) )
+    throw new BuiltInChangeException("Built-in group can't be modified");
+
+  UserBean ub = getUser(userId);
+ 
   if( ub == null )
-   throw new UserNotFoundException();
+   throw new UserNotFoundException(userId);
   
   gb.addUser( ub );
   ub.addGroup( gb );
  }
 
  @Override
- public Collection< ? extends User> getUsersOfGroup(ReadLock lck, String groupId) throws AuthException
+ public Collection< ? extends User> getUsersOfGroup(ReadLock lck, String groupId) throws AuthDBException
  {
   checkState(lck);
 
@@ -838,7 +906,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public Collection< ? extends UserGroup> getGroupsOfGroup(ReadLock lck, String groupId) throws AuthException
+ public Collection< ? extends UserGroup> getGroupsOfGroup(ReadLock lck, String groupId) throws AuthDBException
  {
   checkState(lck);
 
@@ -851,19 +919,24 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void addGroupToGroup(Transaction lck, String grpId, String partId) throws AuthException
+ public void addGroupToGroup(Transaction lck, String grpId, String partId) throws AuthDBException
  {
   checkState(lck);
 
   GroupBean gb = getUserGroup(grpId);
   
   if( gb == null )
-   throw new GroupNotFoundException();
+   throw new GroupNotFoundException(grpId);
 
+  for( BuiltInGroups grp : BuiltInGroups.values() )
+   if( grp.getName().equals(grpId) )
+    throw new BuiltInChangeException("Built-in group can't be modified");
+
+  
   GroupBean pb = getUserGroup(partId);
   
   if( pb == null )
-   throw new GroupNotFoundException();
+   throw new GroupNotFoundException(partId);
  
   if( grpId.equals(partId) || gb.isPartOf(pb) )
    throw new GroupCycleException();
@@ -873,7 +946,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void addProfile(Transaction lck, String profId, String dsc) throws AuthException
+ public void addProfile(Transaction lck, String profId, String dsc) throws AuthDBException
  {
   checkState(lck);
 
@@ -889,11 +962,11 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void updateProfile(Transaction lck, String profId, String dsc) throws AuthException
+ public void updateProfile(Transaction lck, String profId, String dsc) throws AuthDBException
  {
   checkState(lck);
 
-  ProfileBean pf =getProfile(profId);
+  ProfileBean pf = getProfile(profId);
   
   if( pf == null )
    throw new ProfileNotFoundException();
@@ -902,24 +975,40 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void deleteProfile(Transaction lck, String profId) throws AuthException
+ public void deleteProfile(Transaction lck, String profId) throws AuthDBException
  {
   checkState(lck);
 
-  Iterator<ProfileBean> iter = profileList.iterator();
+  ProfileBean rmPb = profileList.removeKey(profId);
   
-  while( iter.hasNext() )
+  if( rmPb == null )
+   throw new ProfileNotFoundException();
+ 
+  for( ClassifierBean clsb: classifierList )
   {
-   ProfileBean u = iter.next();
-   
-   if( u.getId().equals(profId) )
+   for( TagBean tb : clsb.getTags() )
    {
-    iter.remove();   
-    return;
+    Iterator<ProfileForGroupACRBean> pfuIter = tb.getProfileForGroupACRs().iterator();
+    
+    while( pfuIter.hasNext() )
+    {
+     ProfileForGroupACRBean p = pfuIter.next();
+     
+     if( p.getPermissionUnit() == rmPb )
+      pfuIter.remove();
+    }
+    
+    Iterator<ProfileForUserACRBean> pfgIter = tb.getProfileForUserACRs().iterator();
+    
+    while( pfgIter.hasNext() )
+    {
+     ProfileForUserACRBean p = pfgIter.next();
+     
+     if( p.getPermissionUnit() == rmPb )
+      pfgIter.remove();
+    }
    }
   }
-  
-  throw new ProfileNotFoundException();
  }
 
  @Override
@@ -976,7 +1065,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void addPermissionToProfile(Transaction lck, String profId, SystemAction actn, boolean allow) throws AuthException
+ public void addPermissionToProfile(Transaction lck, String profId, SystemAction actn, boolean allow) throws AuthDBException
  {
   checkState(lck);
 
@@ -1003,7 +1092,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public Collection< ? extends Permission> getPermissionsOfProfile(ReadLock lck, String profId) throws AuthException
+ public Collection< ? extends Permission> getPermissionsOfProfile(ReadLock lck, String profId) throws AuthDBException
  {
   checkState(lck);
 
@@ -1017,7 +1106,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public Collection< ? extends PermissionProfile> getProfilesOfProfile(ReadLock lck, String profId) throws AuthException
+ public Collection< ? extends PermissionProfile> getProfilesOfProfile(ReadLock lck, String profId) throws AuthDBException
  {
   checkState(lck);
 
@@ -1032,7 +1121,7 @@ public class SerializedAuthDBImpl implements AuthDB
 
  
  @Override
- public void removePermissionFromProfile(Transaction lck, String profId, SystemAction actn, boolean allow) throws AuthException
+ public void removePermissionFromProfile(Transaction lck, String profId, SystemAction actn, boolean allow) throws AuthDBException
  {
   checkState(lck);
 
@@ -1059,7 +1148,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
  
  @Override
- public void removeProfileFromProfile(Transaction lck, String profId, String toRemProf) throws AuthException
+ public void removeProfileFromProfile(Transaction lck, String profId, String toRemProf) throws AuthDBException
  {
   checkState(lck);
 
@@ -1078,7 +1167,7 @@ public class SerializedAuthDBImpl implements AuthDB
 
 
  @Override
- public void addProfileToProfile(Transaction lck, String profId, String toAdd) throws AuthException
+ public void addProfileToProfile(Transaction lck, String profId, String toAdd) throws AuthDBException
  {
   checkState(lck);
 
@@ -1105,20 +1194,9 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  Iterator<ClassifierBean> iter = classifierList.iterator();
+  if( classifierList.removeKey(csfId) == null )
+   throw new ClassifierNotFoundException();
   
-  while( iter.hasNext() )
-  {
-   ClassifierBean u = iter.next();
-   
-   if( u.getId().equals(csfId) )
-   {
-    iter.remove();   
-    return;
-   }
-  }
-  
-  throw new ClassifierNotFoundException();
  }
 
  @Override
@@ -1503,7 +1581,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void addProfileForGroupACR(Transaction lck, String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthException
+ public void addProfileForGroupACR(Transaction lck, String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthDBException
  {
   checkState(lck);
 
@@ -1531,7 +1609,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void addProfileForUserACR(Transaction lck, String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthException
+ public void addProfileForUserACR(Transaction lck, String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthDBException
  {
   checkState(lck);
 
@@ -1559,7 +1637,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void addActionForUserACR(Transaction lck, String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthException
+ public void addActionForUserACR(Transaction lck, String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthDBException
  {
   checkState(lck);
 
@@ -1586,7 +1664,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void addActionForGroupACR(Transaction lck, String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthException
+ public void addActionForGroupACR(Transaction lck, String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthDBException
  {
   checkState(lck);
 
@@ -1628,6 +1706,213 @@ public class SerializedAuthDBImpl implements AuthDB
     tb.getPermissionForGroupACRs(),
     tb.getProfileForUserACRs(),
     tb.getProfileForGroupACRs()});
+ }
+
+ @Override
+ public boolean removeSysProfileForGroupACR(Transaction lck, String subjId, String profileId) throws AuthDBException
+ {
+  checkState(lck);
+
+  
+  Collection<? extends ProfileForGroupACR> acrs = sysTag.getProfileForGroupACRs();
+  
+  Iterator<? extends ProfileForGroupACR> iter = acrs.iterator();
+  
+  while( iter.hasNext() )
+  {
+   ProfileForGroupACR acr = iter.next();
+   
+   if(acr.getPermissionUnit().getId().equals(profileId) && acr.getSubject().getId().equals(subjId) )
+   {
+    iter.remove();
+    return true;
+   }
+  }
+  
+  return false; }
+
+ @Override
+ public boolean removeSysPermissionForGroupACR(Transaction lck, String subjId, SystemAction action, boolean allow)
+   throws AuthDBException
+ {
+  checkState(lck);
+
+  
+  Collection<? extends PermissionForGroupACR> acrs = sysTag.getPermissionForGroupACRs();
+  
+  Iterator<? extends PermissionForGroupACR> iter = acrs.iterator();
+  
+  while( iter.hasNext() )
+  {
+   PermissionForGroupACR acr = iter.next();
+   
+   if(acr.getPermissionUnit().getAction() == action && acr.getPermissionUnit().isAllow() == allow && acr.getSubject().getId().equals(subjId) )
+   {
+    iter.remove();
+    return true;
+   }
+  }
+
+  return false;
+ }
+
+ @Override
+ public boolean removeSysProfileForUserACR(Transaction trn, String subjId, String profileId) throws AuthDBException
+ {
+  checkState(trn);
+  
+  Collection<? extends ProfileForUserACR> acrs = sysTag.getProfileForUserACRs();
+  
+  Iterator<? extends ProfileForUserACR> iter = acrs.iterator();
+  
+  while( iter.hasNext() )
+  {
+   ProfileForUserACR acr = iter.next();
+   
+   if(acr.getPermissionUnit().getId().equals(profileId) && acr.getSubject().getId().equals(subjId) )
+   {
+    iter.remove();
+    return true;
+   }
+  }
+
+  return false;
+ }
+
+ @Override
+ public boolean removeSysPermissionForUserACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException
+ {
+  checkState(trn);
+
+  
+  Collection<? extends PermissionForUserACR> acrs = sysTag.getPermissionForUserACRs();
+  
+  Iterator<? extends PermissionForUserACR> iter = acrs.iterator();
+  
+  while( iter.hasNext() )
+  {
+   PermissionForUserACR acr = iter.next();
+   
+   if(acr.getPermissionUnit().getAction() == action && acr.getPermissionUnit().isAllow() == allow && acr.getSubject().getId().equals(subjId) )
+   {
+    iter.remove();
+    return true;
+   }
+  }
+
+  return false;
+  
+ }
+
+ @Override
+ public void addSysProfileForGroupACR(Transaction trn, String subjId, String profileId) throws AuthDBException
+ {
+  checkState(trn);
+
+
+  ProfileForGroupACRBean acr = new ProfileForGroupACRBean();
+  
+  ProfileBean pb = getProfile(profileId);
+  
+  if( pb == null )
+   throw new ProfileNotFoundException(profileId);
+  
+  GroupBean gb = getUserGroup(subjId);
+  
+  if( gb == null )
+   throw new GroupNotFoundException();
+
+  acr.setPermissionUnit(pb);
+  acr.setSubject(gb);
+  
+  sysTag.addProfileForGroupACR( acr );
+ }
+
+ @Override
+ public void addSysActionForGroupACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException
+ {
+  checkState(trn);
+
+  PermissionForGroupACRBean acr = new PermissionForGroupACRBean();
+  
+  GroupBean gb = getUserGroup(subjId);
+  
+  if( gb == null )
+   throw new GroupNotFoundException();
+
+  PermissionBean pb = new PermissionBean();
+  pb.setAction(action);
+  pb.setAllow(allow);
+  
+  acr.setPermissionUnit(pb);
+  acr.setSubject(gb);
+  
+  sysTag.addPermissionForGroupACR( acr );
+  
+ }
+
+ @Override
+ public void addSysProfileForUserACR(Transaction trn, String subjId, String profileId) throws AuthDBException
+ {
+  checkState(trn);
+
+  ProfileForUserACRBean acr = new ProfileForUserACRBean();
+  
+  ProfileBean pb = getProfile(profileId);
+  
+  if( pb == null )
+   throw new ProfileNotFoundException(profileId);
+  
+  UserBean gb = getUser(subjId);
+  
+  if( gb == null )
+   throw new UserNotFoundException(subjId);
+
+  acr.setPermissionUnit(pb);
+  acr.setSubject(gb);
+  
+  sysTag.addProfileForUserACR( acr );  
+ }
+
+ @Override
+ public void addSysActionForUserACR(Transaction trn, String subjId, SystemAction action, boolean allow)  throws AuthDBException
+ {
+  checkState(trn);
+
+  PermissionForUserACRBean acr = new PermissionForUserACRBean();
+  
+  UserBean gb = getUser(subjId);
+  
+  if( gb == null )
+   throw new UserNotFoundException(subjId);
+
+  PermissionBean pb = new PermissionBean();
+  pb.setAction(action);
+  pb.setAllow(allow);
+  
+  acr.setPermissionUnit(pb);
+  acr.setSubject(gb);
+  
+  sysTag.addPermissionForUserACR( acr );  
+ }
+
+ @SuppressWarnings("unchecked")
+ @Override
+ public Collection< ? extends ACR> getSysACL(ReadLock lck) throws AuthDBException
+ {
+  checkState(lck);
+
+  
+  return new CollectionsUnion<ACR>( new Collection[] {
+    sysTag.getPermissionForUserACRs(),
+    sysTag.getPermissionForGroupACRs(),
+    sysTag.getProfileForUserACRs(),
+    sysTag.getProfileForGroupACRs()}); }
+
+ @Override
+ public Permit checkSystemPermission(SystemAction act, User usr)
+ {
+  return sysTag.checkPermission(act, usr);
  }
 
 }

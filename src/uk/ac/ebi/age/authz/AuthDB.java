@@ -3,7 +3,8 @@ package uk.ac.ebi.age.authz;
 import java.util.Collection;
 import java.util.List;
 
-import uk.ac.ebi.age.authz.exception.AuthException;
+import uk.ac.ebi.age.authz.ACR.Permit;
+import uk.ac.ebi.age.authz.exception.AuthDBException;
 import uk.ac.ebi.age.authz.exception.TagException;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 import uk.ac.ebi.age.transaction.ReadLock;
@@ -19,17 +20,21 @@ public interface AuthDB extends TransactionalDB
  public final static String everyoneGroup="$everyone";
  public final static String usersGroup="$users";
 
+ Permit checkSystemPermission(SystemAction act, User usr);
+
  User getUser( ReadLock lock, String id );
  List< ? extends User> getUsers( ReadLock lock, int begin, int end);
  ListFragment<User> getUsers( ReadLock lock, String idPat, String namePat, int begin, int end);
 
  int getUsersTotal( ReadLock lock );
 
- void updateUser( Transaction trn, String userId, String userName, String userPass) throws AuthException;
+ void updateUser( Transaction trn, String userId, String userName) throws AuthDBException;
+ void setUserPassword(Transaction trn, String userId, String userPass) throws AuthDBException;
+ boolean checkUserPassword(ReadLock lck, String userId, String userPass) throws AuthDBException;
 
- void addUser( Transaction trn, String userId, String userName, String userPass) throws AuthException;
+ void addUser( Transaction trn, String userId, String userName, String userPass) throws AuthDBException;
 
- void deleteUser( Transaction trn, String userId) throws AuthException;
+ void deleteUser( Transaction trn, String userId) throws AuthDBException;
 
  
  UserGroup getUserGroup( ReadLock lock, String id );
@@ -38,38 +43,38 @@ public interface AuthDB extends TransactionalDB
 
  int getGroupsTotal( ReadLock lock);
 
- void deleteGroup( Transaction trn, String grpId) throws AuthException;
+ void deleteGroup( Transaction trn, String grpId) throws AuthDBException;
 
- void addGroup( Transaction trn, String grpId, String grpDesc) throws AuthException;
+ void addGroup( Transaction trn, String grpId, String grpDesc) throws AuthDBException;
 
- void updateGroup( Transaction trn, String grpId, String grpDesc) throws AuthException;
+ void updateGroup( Transaction trn, String grpId, String grpDesc) throws AuthDBException;
 
- Collection< ? extends UserGroup> getGroupsOfUser( ReadLock lock, String userId) throws AuthException;
+ Collection< ? extends UserGroup> getGroupsOfUser( ReadLock lock, String userId) throws AuthDBException;
 
- void removeUserFromGroup( Transaction trn, String grpId, String userId) throws AuthException;
- void removeGroupFromGroup( Transaction trn, String grpId, String partId) throws AuthException;
+ void removeUserFromGroup( Transaction trn, String grpId, String userId) throws AuthDBException;
+ void removeGroupFromGroup( Transaction trn, String grpId, String partId) throws AuthDBException;
 
- void addUserToGroup( Transaction trn, String userId, String grpId) throws AuthException;
- void addGroupToGroup( Transaction trn, String grpId, String partId) throws AuthException;
+ void addUserToGroup( Transaction trn, String userId, String grpId) throws AuthDBException;
+ void addGroupToGroup( Transaction trn, String grpId, String partId) throws AuthDBException;
 
- Collection< ? extends User> getUsersOfGroup( ReadLock lock, String groupId) throws AuthException;
- Collection< ? extends UserGroup> getGroupsOfGroup( ReadLock lock, String groupId) throws AuthException;
+ Collection< ? extends User> getUsersOfGroup( ReadLock lock, String groupId) throws AuthDBException;
+ Collection< ? extends UserGroup> getGroupsOfGroup( ReadLock lock, String groupId) throws AuthDBException;
 
- void addProfile( Transaction trn, String profId, String dsc) throws AuthException;
- void updateProfile( Transaction trn, String profId, String dsc) throws AuthException;
- void deleteProfile( Transaction trn, String profId) throws AuthException;
+ void addProfile( Transaction trn, String profId, String dsc) throws AuthDBException;
+ void updateProfile( Transaction trn, String profId, String dsc) throws AuthDBException;
+ void deleteProfile( Transaction trn, String profId) throws AuthDBException;
  
  PermissionProfile getProfile( ReadLock lock, String id );
  List< ? extends PermissionProfile> getProfiles( ReadLock lock, int begin, int end);
  ListFragment<PermissionProfile> getProfiles( ReadLock lock, String idPat, String namePat, int begin, int end);
  int getProfilesTotal( ReadLock lock );
 
- void addPermissionToProfile( Transaction trn, String profId, SystemAction actn, boolean allow) throws AuthException;
- void addProfileToProfile( Transaction trn, String profId, String string) throws AuthException;
- Collection< ? extends Permission> getPermissionsOfProfile( ReadLock lock, String profId) throws AuthException;
- Collection< ? extends PermissionProfile> getProfilesOfProfile( ReadLock lock, String profId) throws AuthException;
- void removePermissionFromProfile( Transaction trn, String profId, SystemAction actn, boolean allow) throws AuthException;
- void removeProfileFromProfile( Transaction trn, String profId, String toRemProf) throws AuthException;
+ void addPermissionToProfile( Transaction trn, String profId, SystemAction actn, boolean allow) throws AuthDBException;
+ void addProfileToProfile( Transaction trn, String profId, String string) throws AuthDBException;
+ Collection< ? extends Permission> getPermissionsOfProfile( ReadLock lock, String profId) throws AuthDBException;
+ Collection< ? extends PermissionProfile> getProfilesOfProfile( ReadLock lock, String profId) throws AuthDBException;
+ void removePermissionFromProfile( Transaction trn, String profId, SystemAction actn, boolean allow) throws AuthDBException;
+ void removeProfileFromProfile( Transaction trn, String profId, String toRemProf) throws AuthDBException;
 
 
  
@@ -102,11 +107,20 @@ public interface AuthDB extends TransactionalDB
  boolean removePermissionForUserACR( Transaction trn,String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException;
  boolean removePermissionForGroupACR( Transaction trn,String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException;
 
- void addProfileForGroupACR( Transaction trn,String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthException;
- void addProfileForUserACR( Transaction trn,String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthException;
- void addActionForUserACR( Transaction trn,String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthException;
- void addActionForGroupACR( Transaction trn,String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthException;
+ void addProfileForGroupACR( Transaction trn,String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthDBException;
+ void addProfileForUserACR( Transaction trn,String clsfId, String tagId, String subjId, String profileId) throws TagException, AuthDBException;
+ void addActionForUserACR( Transaction trn,String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthDBException;
+ void addActionForGroupACR( Transaction trn,String clsfId, String tagId, String subjId, SystemAction act, boolean allow) throws TagException, AuthDBException;
 
  Collection< ? extends ACR> getACL( ReadLock lock, String clsfId, String tagId) throws TagException;
 
+ boolean removeSysProfileForGroupACR(Transaction trn, String subjId, String profileId) throws AuthDBException;
+ boolean removeSysPermissionForGroupACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
+ boolean removeSysProfileForUserACR(Transaction trn, String subjId, String profileId) throws AuthDBException;
+ boolean removeSysPermissionForUserACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
+ void addSysProfileForGroupACR(Transaction trn, String subjId, String profileId) throws AuthDBException;
+ void addSysActionForGroupACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
+ void addSysProfileForUserACR(Transaction trn, String subjId, String profileId) throws AuthDBException;
+ void addSysActionForUserACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
+ Collection< ? extends ACR> getSysACL(ReadLock rl) throws AuthDBException;
 }

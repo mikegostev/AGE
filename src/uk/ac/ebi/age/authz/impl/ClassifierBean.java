@@ -1,12 +1,18 @@
 package uk.ac.ebi.age.authz.impl;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
 import uk.ac.ebi.age.authz.Classifier;
+import uk.ac.ebi.mg.collection.Named;
 
-public class ClassifierBean implements Classifier
+public class ClassifierBean implements Classifier, Named<String>, Serializable
 {
+
+ private static final long serialVersionUID = 1L;
+
+
  private String id;
  private String description;
  private Collection<TagBean> tags = new ArrayList<TagBean>();

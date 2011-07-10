@@ -1,6 +1,6 @@
 package uk.ac.ebi.age.authz.exception;
 
-public class PermissionNotFound extends AuthException
+public class PermissionNotFound extends AuthDBException
 {
  public PermissionNotFound()
  {

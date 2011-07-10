@@ -1,6 +1,6 @@
 package uk.ac.ebi.age.authz.exception;
 
-public class ProfileCycleException extends AuthException
+public class ProfileCycleException extends AuthDBException
 {
  public ProfileCycleException()
  {

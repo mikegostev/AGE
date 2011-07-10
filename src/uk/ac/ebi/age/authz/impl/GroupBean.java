@@ -1,18 +1,24 @@
 package uk.ac.ebi.age.authz.impl;
 
+import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.authz.UserGroup;
+import uk.ac.ebi.mg.collection.IndexList;
+import uk.ac.ebi.mg.collection.Named;
 
-public class GroupBean implements UserGroup
+import com.pri.util.NaturalStringComparator;
+
+public class GroupBean implements UserGroup, Named<String>, Serializable
 {
+
+ private static final long serialVersionUID = 1L;
+
  private String id;
  private String description;
- private Set<UserBean> users = new HashSet<UserBean>();
- private Set<GroupBean> groups = new HashSet<GroupBean>();
+ private IndexList<String,UserBean> users = new IndexList<String,UserBean>( NaturalStringComparator.getInstance() );
+ private IndexList<String,GroupBean> groups = new IndexList<String,GroupBean>( NaturalStringComparator.getInstance() );
 
  public String getId()
  {
@@ -93,6 +99,16 @@ public class GroupBean implements UserGroup
     return true;
   
   return false;
+ }
+
+ public UserBean getUser(String userId)
+ {
+  return users.getByKey(userId);
+ }
+
+ public UserGroup getGroup(String partId)
+ {
+  return groups.getByKey(partId);
  }
 
 

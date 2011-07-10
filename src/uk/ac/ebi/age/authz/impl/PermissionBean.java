@@ -1,11 +1,17 @@
 package uk.ac.ebi.age.authz.impl;
 
+import java.io.Serializable;
+
 import uk.ac.ebi.age.authz.ACR.Permit;
 import uk.ac.ebi.age.authz.Permission;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 
-public class PermissionBean implements Permission
+public class PermissionBean implements Permission, Serializable
 {
+
+ private static final long serialVersionUID = 1L;
+
+
  private SystemAction action;
  private boolean allow;
  

@@ -1,7 +1,7 @@
 package uk.ac.ebi.age.authz.exception;
 
 
-public class DBInitException extends AuthException
+public class DBInitException extends AuthDBException
 {
  public DBInitException()
  {

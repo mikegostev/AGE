@@ -1,6 +1,6 @@
 package uk.ac.ebi.age.authz.exception;
 
-public class GroupCycleException extends AuthException
+public class GroupCycleException extends AuthDBException
 {
  public GroupCycleException()
  {
