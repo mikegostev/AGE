@@ -5,10 +5,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collection;
 
+import uk.ac.ebi.age.authz.ACR.Permit;
+import uk.ac.ebi.age.authz.PermissionManager;
+import uk.ac.ebi.age.entity.ID;
+import uk.ac.ebi.age.ext.authz.SystemAction;
+import uk.ac.ebi.age.ext.authz.TagRef;
 import uk.ac.ebi.age.log.impl.BufferLogger;
 import uk.ac.ebi.age.mng.SemanticManager;
-import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
@@ -48,7 +53,7 @@ public class Test
    
    BufferLogger logBuf = new BufferLogger();
   
-   DataModuleWritable dblock = new AgeTab2AgeConverterImpl().convert(sbm, smngr.getContextModel(new DefContext()), logBuf.getRootNode() );
+   DataModuleWritable dblock = new AgeTab2AgeConverterImpl( new DefPM() ).convert(sbm, smngr.getContextModel(), logBuf.getRootNode() );
    
    if( dblock == null )
    {
@@ -97,28 +102,52 @@ public class Test
   }
  }
 
- static class DefContext implements SubmissionContext
+ static class DefPM implements PermissionManager
  {
 
-  public boolean isCustomAttributeClassAllowed()
+  @Override
+  public Permit checkSystemPermission(SystemAction act)
   {
-   return true;
-  }
-
-  public boolean isCustomClassAllowed()
-  {
-   return true;
-  }
-
-  public boolean isCustomRelationClassAllowed()
-  {
-   return true;
+   return Permit.ALLOW;
   }
 
   @Override
-  public boolean isCustomQualifierAllowed()
+  public Permit checkPermission(SystemAction act, ID objId)
   {
-   return true;
+   return Permit.ALLOW;
+  }
+
+  @Override
+  public Permit checkPermission(SystemAction act, String objOwner, ID objId)
+  {
+   return Permit.ALLOW;
+  }
+
+  @Override
+  public Permit checkSystemPermission(SystemAction act, String user)
+  {
+   return Permit.ALLOW;
+  }
+
+  @Override
+  public Collection<TagRef> getEffectiveTags(ID objId)
+  {
+   // TODO Auto-generated method stub
+   return null;
+  }
+
+  @Override
+  public Collection<TagRef> getAllowTags(SystemAction act, String user)
+  {
+   // TODO Auto-generated method stub
+   return null;
+  }
+
+  @Override
+  public Collection<TagRef> getDenyTags(SystemAction act, String user)
+  {
+   // TODO Auto-generated method stub
+   return null;
   }
   
  }

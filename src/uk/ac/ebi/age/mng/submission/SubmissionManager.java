@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import uk.ac.ebi.age.authz.PermissionManager;
 import uk.ac.ebi.age.conf.Constants;
 import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.LogNode.Level;
@@ -31,7 +32,6 @@ import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.IdScope;
-import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
@@ -133,21 +133,24 @@ public class SubmissionManager
 // }
  
  private AgeTabSyntaxParser ageTabParser = new AgeTabSyntaxParserImpl();
- private AgeTab2AgeConverter converter = new AgeTab2AgeConverterImpl();
+ private AgeTab2AgeConverter converter = null;
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
+ private PermissionManager permissionManager;
  
  private SubmissionDB submissionDB;
  private AgeStorageAdm ageStorage;
  
- public SubmissionManager( AgeStorageAdm ageS, SubmissionDB sDB )
+ public SubmissionManager( AgeStorageAdm ageS, SubmissionDB sDB, PermissionManager pMngr )
  {
   ageStorage = ageS;
   submissionDB = sDB;
+  permissionManager = pMngr;
+  converter= new AgeTab2AgeConverterImpl(permissionManager);
  }
 
  
  @SuppressWarnings("unchecked")
- public boolean storeSubmission( SubmissionMeta sMeta,  String updateDescr, SubmissionContext context, LogNode logRoot )
+ public boolean storeSubmission( SubmissionMeta sMeta,  String updateDescr, LogNode logRoot )
  {
   
   SubmissionMeta origSbm = null;
@@ -600,7 +603,7 @@ public class SubmissionManager
    }
    
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(context), convLog );
+   mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(), convLog );
    
    if( mm.newModule != null )
     convLog.log(Level.SUCCESS, "Success");
@@ -631,8 +634,6 @@ public class SubmissionManager
   try
   {
    ageStorage.lockWrite();
-
-   
    // XXX connection to main graph
    
    if( ! checkUniqObjects(cstMeta, ageStorage, logRoot) )
@@ -641,8 +642,6 @@ public class SubmissionManager
     return false;
    }
 
-
- 
    
    Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject> > extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable,AgeObject>>();
    Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable> > relConnections = null;
@@ -993,7 +992,8 @@ public class SubmissionManager
     }
     catch(Exception e)
     {
-     updtLog.log(Level.ERROR, e.getMessage());
+     e.printStackTrace();
+     updtLog.log(Level.ERROR, e.getMessage()!=null?e.getMessage():"Exception: "+e.getClass().getName());
      updtLog.log(Level.ERROR, "Failed");
 
      res = false;
@@ -1032,6 +1032,7 @@ public class SubmissionManager
     
     return false;
    }
+   
    
    
    
@@ -1086,7 +1087,7 @@ public class SubmissionManager
  
  
  
- public boolean restoreSubmission( String sbmID, SubmissionContext context, LogNode logRoot )
+ public boolean restoreSubmission( String sbmID, LogNode logRoot )
  {
   
   SubmissionMeta sMeta = null;
@@ -1207,7 +1208,7 @@ public class SubmissionManager
    }
    
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(context), convLog );
+   mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(), convLog );
    
    if( mm.newModule != null )
     convLog.log(Level.SUCCESS, "Success");
@@ -1503,7 +1504,7 @@ public class SubmissionManager
  
  
  
- public boolean removeSubmission( String sbmID, SubmissionContext context, LogNode logRoot )
+ public boolean removeSubmission( String sbmID, LogNode logRoot )
  {
   SubmissionMeta sMeta = null;
   

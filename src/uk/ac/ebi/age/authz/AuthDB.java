@@ -15,11 +15,8 @@ import com.pri.util.collection.ListFragment;
 
 public interface AuthDB extends TransactionalDB
 {
- public final static String anonymousUser="$anonymous";
- public final static String ownerGroup="$owner";
- public final static String everyoneGroup="$everyone";
- public final static String usersGroup="$users";
-
+ void addSecurityChangedListener( SecurityChangedListener lsnr );
+ 
  Permit checkSystemPermission(SystemAction act, User usr);
 
  User getUser( ReadLock lock, String id );

@@ -11,6 +11,7 @@ public interface Tag
  String getDescription();
  Tag getParent();
  
+ boolean hasAccessRules();
  Permit checkPermission( SystemAction act, User user );
  
  Collection<? extends ProfileForGroupACR> getProfileForGroupACRs();

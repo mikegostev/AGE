@@ -1,12 +1,18 @@
 package uk.ac.ebi.age.test;
 
+import java.util.Collection;
+
+import uk.ac.ebi.age.authz.ACR.Permit;
+import uk.ac.ebi.age.authz.PermissionManager;
+import uk.ac.ebi.age.entity.ID;
+import uk.ac.ebi.age.ext.authz.SystemAction;
+import uk.ac.ebi.age.ext.authz.TagRef;
 import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.SemanticModel;
-import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -23,7 +29,7 @@ public class ExtObjAttrTest
   
   SemanticManager.getInstance().setMasterModel(mod);
   
-  ContextSemanticModel cMod = SemanticManager.getInstance().getContextModel( new DefContext() );
+  ContextSemanticModel cMod = SemanticManager.getInstance().getContextModel();
   
   DataModuleWritable dm = mod.getModelFactory().createDataModule(cMod);
   
@@ -82,28 +88,52 @@ public class ExtObjAttrTest
   
  }
 
- static class DefContext implements SubmissionContext
+ static class DefPM implements PermissionManager
  {
-  
-  public boolean isCustomAttributeClassAllowed()
-  {
-   return true;
-  }
-  
-  public boolean isCustomClassAllowed()
-  {
-   return true;
-  }
-  
-  public boolean isCustomRelationClassAllowed()
-  {
-   return true;
-  }
-  
+
   @Override
-  public boolean isCustomQualifierAllowed()
+  public Permit checkSystemPermission(SystemAction act)
   {
-   return true;
+   return Permit.ALLOW;
+  }
+
+  @Override
+  public Permit checkPermission(SystemAction act, ID objId)
+  {
+   return Permit.ALLOW;
+  }
+
+  @Override
+  public Permit checkPermission(SystemAction act, String objOwner, ID objId)
+  {
+   return Permit.ALLOW;
+  }
+
+  @Override
+  public Permit checkSystemPermission(SystemAction act, String user)
+  {
+   return Permit.ALLOW;
+  }
+
+  @Override
+  public Collection<TagRef> getEffectiveTags(ID objId)
+  {
+   // TODO Auto-generated method stub
+   return null;
+  }
+
+  @Override
+  public Collection<TagRef> getAllowTags(SystemAction act, String user)
+  {
+   // TODO Auto-generated method stub
+   return null;
+  }
+
+  @Override
+  public Collection<TagRef> getDenyTags(SystemAction act, String user)
+  {
+   // TODO Auto-generated method stub
+   return null;
   }
   
  }

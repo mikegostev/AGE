@@ -2,8 +2,10 @@ package uk.ac.ebi.age.ext.submission.v1;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import uk.ac.ebi.age.ext.authz.TagRef;
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
 import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
 import uk.ac.ebi.age.ext.submission.Status;
@@ -19,6 +21,8 @@ public class SubmissionMetaImpl implements Serializable, SubmissionMeta
  private String description;
  private String submitter;
  private String modifier;
+ 
+ private transient Collection<TagRef> tags;
  
  private long submissionTime;
  private long modificationTime;
@@ -155,6 +159,12 @@ public class SubmissionMetaImpl implements Serializable, SubmissionMeta
  public void setRemoved(boolean removed)
  {
   this.removed = removed;
+ }
+
+ @Override
+ public Collection<TagRef> getTags()
+ {
+  return tags;
  }
 
 }

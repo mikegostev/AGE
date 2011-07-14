@@ -9,6 +9,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import uk.ac.ebi.age.authz.ACR.Permit;
+import uk.ac.ebi.age.authz.PermissionManager;
+import uk.ac.ebi.age.ext.authz.SystemAction;
 import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.LogNode.Level;
 import uk.ac.ebi.age.model.AgeAttributeClass;
@@ -42,6 +45,12 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 // private AttrAttchRel attributeAttachmentClass;
  
  private static final String prototypeId = "*";
+ private PermissionManager permissionManager;
+ 
+ public AgeTab2AgeConverterImpl( PermissionManager pMngr )
+ {
+  permissionManager = pMngr;
+ }
  
  @Override
  public DataModuleWritable convert(AgeTabModule data, ContextSemanticModel sm, LogNode log )// throws SemanticException, ConvertionException
@@ -303,7 +312,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    clsloop : for( AgeRelationClass pRlCla : protoRlCls)
    {
-    if( obj.getRelationClasses() != null )
+    if( obj.getRelationClasses() != null && obj.getRelationClasses().size() > 0 )
     {
      for( AgeRelationWritable or : obj.getRelations() )
       if( or.getAgeElClass() == pRlCla )
@@ -320,7 +329,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  {
   if( colHdr.isCustom() )
   {
-   if( sm.getContext().isCustomClassAllowed() )
+   if( permissionManager.checkSystemPermission(SystemAction.CUSTCLASSDEF) == Permit.ALLOW )
    {
     AgeClass parent = null;
     
@@ -601,11 +610,10 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  
  private AgeAttributeClass getCustomAttributeClass( ClassReference cr , AgeClass aCls, ContextSemanticModel sm, LogNode log)
  {
-   if(!sm.getContext().isCustomAttributeClassAllowed())
+   if(permissionManager.checkSystemPermission(SystemAction.CUSTATTRCLASSDEF) != Permit.ALLOW)
    {
     log.log(Level.ERROR, "Custom attribure class (" + cr.getName() + ") is not allowed within this context. Row: "+cr.getRow()+" Col: "+cr.getCol() );
     return null;
-//    throw new SemanticException(cr.getRow(), cr.getCol(), "Custom attribure class (" + cr.getName() + ") is not allowed within this context.");
    }
    
    AgeAttributeClass attrClass = sm.getCustomAgeAttributeClass(cr.getName(), aCls);
@@ -801,7 +809,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     }
 
     
-    if( qualif.isCustom() && ! sm.getContext().isCustomQualifierAllowed() )
+    if( qualif.isCustom() && permissionManager.checkSystemPermission(SystemAction.CUSTQUALCLASSDEF) != Permit.ALLOW )
     {
      log.log(Level.ERROR, "Custom qualifier ("+qualif.getName()+") is not allowed within this context. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
      addConverter(convs, new InvalidColumnConvertor(attHd) );
@@ -873,7 +881,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     if( rgHdr != null )
     {
-     if( ! sm.getContext().isCustomRelationClassAllowed() )
+     if( permissionManager.checkSystemPermission(SystemAction.CUSTRELCLASSDEF) != Permit.ALLOW )
      {
       log.log(Level.ERROR, "Custom relation class ("+attHd.getName()+") is not allowed within this context. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
       addConverter(convs, new InvalidColumnConvertor(attHd) );

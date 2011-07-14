@@ -20,11 +20,12 @@ public class TagBean implements Tag, Serializable
  private String description;
  private Tag    parent;
  
- private Collection<ProfileForGroupACRBean> acrPf4G = new ArrayList<ProfileForGroupACRBean>();
- private Collection<ProfileForUserACRBean> acrPf4U = new ArrayList<ProfileForUserACRBean>();
- private Collection<PermissionForGroupACRBean> acrPm4G = new ArrayList<PermissionForGroupACRBean>();
- private Collection<PermissionForUserACRBean> acrPm4U = new ArrayList<PermissionForUserACRBean>();
+ private Collection<ProfileForGroupACRBean> acrPf4G = null;
+ private Collection<ProfileForUserACRBean> acrPf4U = null;
+ private Collection<PermissionForGroupACRBean> acrPm4G = null;
+ private Collection<PermissionForUserACRBean> acrPm4U = null;
 
+ @Override
  public String getId()
  {
   return id;
@@ -35,6 +36,7 @@ public class TagBean implements Tag, Serializable
   this.id = id;
  }
 
+ @Override
  public String getDescription()
  {
   return description;
@@ -45,6 +47,16 @@ public class TagBean implements Tag, Serializable
   this.description = description;
  }
 
+ @Override
+ public boolean hasAccessRules()
+ {
+  return   ( acrPf4G != null && acrPf4G.size() > 0 )
+        || ( acrPf4U != null && acrPf4U.size() > 0 )
+        || ( acrPm4U != null && acrPm4U.size() > 0 )
+        || ( acrPm4G != null && acrPm4G.size() > 0 );
+ }
+ 
+ @Override
  public Tag getParent()
  {
   return parent;
@@ -81,21 +93,33 @@ public class TagBean implements Tag, Serializable
 
  public void addProfileForGroupACR(ProfileForGroupACRBean acr)
  {
+  if(acrPf4G == null)
+   acrPf4G = new ArrayList<ProfileForGroupACRBean>();
+ 
   acrPf4G.add(acr);
  }
 
  public void addProfileForUserACR(ProfileForUserACRBean acr)
  {
+  if(acrPf4U == null)
+   acrPf4U = new ArrayList<ProfileForUserACRBean>();
+  
   acrPf4U.add(acr);
  }
 
  public void addPermissionForUserACR(PermissionForUserACRBean acr)
  {
+  if(acrPm4U == null)
+   acrPm4U = new ArrayList<PermissionForUserACRBean>();
+  
   acrPm4U.add(acr);
  }
 
  public void addPermissionForGroupACR(PermissionForGroupACRBean acr)
  {
+  if(acrPm4G == null)
+   acrPm4G = new ArrayList<PermissionForGroupACRBean>();
+  
   acrPm4G.add(acr);
  }
 
@@ -103,44 +127,56 @@ public class TagBean implements Tag, Serializable
  public Permit checkPermission(SystemAction act, User user)
  {
   boolean allow = false;
-  
-  for( ProfileForGroupACRBean b : acrPf4G )
+
+  if(acrPf4G != null)
   {
-   Permit p = b.checkPermission(act, user);
-   if( p == Permit.DENY )
-    return Permit.DENY;
-   else if( p == Permit.ALLOW )
-    allow = true;
-  }
-  
-  for( ACR b : acrPf4U )
-  {
-   Permit p = b.checkPermission(act, user);
-   if( p == Permit.DENY )
-    return Permit.DENY;
-   else if( p == Permit.ALLOW )
-    allow = true;
+   for(ProfileForGroupACRBean b : acrPf4G)
+   {
+    Permit p = b.checkPermission(act, user);
+    if(p == Permit.DENY)
+     return Permit.DENY;
+    else if(p == Permit.ALLOW)
+     allow = true;
+   }
   }
 
-  for( ACR b : acrPm4U )
+  if(acrPf4U != null)
   {
-   Permit p = b.checkPermission(act, user);
-   if( p == Permit.DENY )
-    return Permit.DENY;
-   else if( p == Permit.ALLOW )
-    allow = true;
+   for(ACR b : acrPf4U)
+   {
+    Permit p = b.checkPermission(act, user);
+    if(p == Permit.DENY)
+     return Permit.DENY;
+    else if(p == Permit.ALLOW)
+     allow = true;
+   }
   }
 
-  for( ACR b : acrPm4G )
+  if(acrPm4U != null)
   {
-   Permit p = b.checkPermission(act, user);
-   if( p == Permit.DENY )
-    return Permit.DENY;
-   else if( p == Permit.ALLOW )
-    allow = true;
+   for(ACR b : acrPm4U)
+   {
+    Permit p = b.checkPermission(act, user);
+    if(p == Permit.DENY)
+     return Permit.DENY;
+    else if(p == Permit.ALLOW)
+     allow = true;
+   }
   }
-  
-  return allow?Permit.ALLOW:Permit.UNDEFINED;
+
+  if(acrPm4G != null)
+  {
+   for(ACR b : acrPm4G)
+   {
+    Permit p = b.checkPermission(act, user);
+    if(p == Permit.DENY)
+     return Permit.DENY;
+    else if(p == Permit.ALLOW)
+     allow = true;
+   }
+  }
+
+  return allow ? Permit.ALLOW : Permit.UNDEFINED;
  }
 
 }

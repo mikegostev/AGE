@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import uk.ac.ebi.age.entity.ID;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.ContextSemanticModel;
@@ -298,4 +299,9 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  }
 
 
+ @Override
+ public ID getEntityID()
+ {
+  return new DataModuleId( this );
+ }
 }

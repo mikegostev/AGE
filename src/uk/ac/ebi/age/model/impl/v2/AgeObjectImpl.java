@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import uk.ac.ebi.age.entity.ID;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
@@ -309,6 +310,12 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  public void setIdScope(IdScope idScope)
  {
   this.idScope = idScope;
+ }
+
+ @Override
+ public ID getEntityID()
+ {
+  return new AgeObjectID( this );
  }
  
 }

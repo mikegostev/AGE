@@ -931,5 +931,11 @@ public class SerializedStorage implements AgeStorageAdm
   if( ! fSrc.renameTo(fDest) )
    throw new AttachmentIOException("Can't rename file '"+fSrc.getAbsolutePath()+"' to '"+fDest.getAbsolutePath()+"'");
  }
+
+ @Override
+ public void rebuildIndices()
+ {
+  updateIndices(null, true);
+ }
  
 }

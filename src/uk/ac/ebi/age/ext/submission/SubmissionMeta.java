@@ -1,6 +1,9 @@
 package uk.ac.ebi.age.ext.submission;
 
+import java.util.Collection;
 import java.util.List;
+
+import uk.ac.ebi.age.ext.authz.TagRef;
 
 
 public interface SubmissionMeta
@@ -45,4 +48,5 @@ public interface SubmissionMeta
  void setRemoved(boolean rm);
  boolean isRemoved();
 
+ Collection<TagRef> getTags();
 }

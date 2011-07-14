@@ -48,6 +48,8 @@ public interface AgeStorageAdm extends AgeStorage
  String makeFileSysRef(String id);
  String makeFileSysRef(String id, String clustID);
 
+ public void rebuildIndices();
+
  
  //void renameAttachment(String id, String id2) throws AttachmentIOException;
 

@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -31,6 +30,7 @@ import uk.ac.ebi.age.authz.PermissionForUserACR;
 import uk.ac.ebi.age.authz.PermissionProfile;
 import uk.ac.ebi.age.authz.ProfileForGroupACR;
 import uk.ac.ebi.age.authz.ProfileForUserACR;
+import uk.ac.ebi.age.authz.SecurityChangedListener;
 import uk.ac.ebi.age.authz.Tag;
 import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.authz.UserGroup;
@@ -67,15 +67,7 @@ import com.pri.util.collection.ListFragment;
 public class SerializedAuthDBImpl implements AuthDB
 {
  private static final String serialFileName = "authdb.ser";
- 
- private Comparator<String> naturStrCmp = new Comparator<String>()
- {
-  @Override
-  public int compare(String o1, String o2)
-  {
-   return StringUtils.naturalCompare(o1, o2);
-  }
- };
+ private static final String defaultSupervisorPassword = BuiltInUsers.SUPERVISOR.getName();
  
  private class RLock implements ReadLock
  {
@@ -148,6 +140,8 @@ public class SerializedAuthDBImpl implements AuthDB
  private String serialFileRelPath;
  private File serialFile;
  
+ private ArrayList<SecurityChangedListener> listeners = new ArrayList<SecurityChangedListener>();
+ 
  public SerializedAuthDBImpl(FileResourceManager frm, String authRelPath) throws DBInitException
  {
   txManager=frm;
@@ -185,6 +179,8 @@ public class SerializedAuthDBImpl implements AuthDB
     
     userList.add(ub);
     
+    if( usr.getName().equals(BuiltInUsers.SUPERVISOR.getName()) )
+     ub.setPass(StringUtils.hashStringSHA1(defaultSupervisorPassword));
    }
    
    GroupBean gb = new EveryoneGroupBean();
@@ -402,6 +398,7 @@ public class SerializedAuthDBImpl implements AuthDB
    lock.writeLock().unlock();
   }
 
+  fireSecurityChanged();
  }
 
  private void sync() throws ResourceManagerException, IOException
@@ -1480,6 +1477,9 @@ public class SerializedAuthDBImpl implements AuthDB
   
   Collection<? extends ProfileForGroupACR> acrs = tb.getProfileForGroupACRs();
   
+  if( acrs == null )
+   return false;
+  
   Iterator<? extends ProfileForGroupACR> iter = acrs.iterator();
   
   while( iter.hasNext() )
@@ -1507,6 +1507,9 @@ public class SerializedAuthDBImpl implements AuthDB
    throw new TagNotFoundException();
   
   Collection<? extends ProfileForUserACR> acrs = tb.getProfileForUserACRs();
+  
+  if( acrs == null )
+   return false;
   
   Iterator<? extends ProfileForUserACR> iter = acrs.iterator();
   
@@ -1536,6 +1539,9 @@ public class SerializedAuthDBImpl implements AuthDB
   
   Collection<? extends PermissionForUserACR> acrs = tb.getPermissionForUserACRs();
   
+  if( acrs == null )
+   return false;
+  
   Iterator<? extends PermissionForUserACR> iter = acrs.iterator();
   
   while( iter.hasNext() )
@@ -1563,6 +1569,9 @@ public class SerializedAuthDBImpl implements AuthDB
    throw new TagNotFoundException();
   
   Collection<? extends PermissionForGroupACR> acrs = tb.getPermissionForGroupACRs();
+  
+  if( acrs == null )
+   return false;
   
   Iterator<? extends PermissionForGroupACR> iter = acrs.iterator();
   
@@ -1915,4 +1924,22 @@ public class SerializedAuthDBImpl implements AuthDB
   return sysTag.checkPermission(act, usr);
  }
 
+ @Override
+ public void addSecurityChangedListener(SecurityChangedListener lsnr)
+ {
+  synchronized(listeners)
+  {
+   listeners.add(lsnr);
+  }
+ }
+
+ private synchronized void fireSecurityChanged()
+ {
+  synchronized(listeners)
+  {
+   for( SecurityChangedListener l : listeners )
+    l.securityChanged();
+  }
+ }
+ 
 }

@@ -1,5 +1,7 @@
 package uk.ac.ebi.age.authz;
 
+import java.util.Collection;
+
 public interface Classifier
 {
 
@@ -9,4 +11,5 @@ public interface Classifier
 
  Tag getTag(String tagId);
 
+ Collection<? extends Tag> getTags();
 }

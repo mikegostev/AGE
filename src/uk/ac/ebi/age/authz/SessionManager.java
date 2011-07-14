@@ -1,12 +1,15 @@
 package uk.ac.ebi.age.authz;
 
-public class SessionManager
+public interface SessionManager
 {
+ String getEffectiveUser();
+ 
+ Session createSession( String uname );
+ Session getSession( String sKey );
+ Session getSession();
 
- public Session getSession()
- {
-  // TODO Auto-generated method stub
-  return null;
- }
+ Session checkin( String sessId );
+ Session checkout( );
 
+ void shutdown();
 }

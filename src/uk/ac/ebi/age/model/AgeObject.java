@@ -2,11 +2,13 @@ package uk.ac.ebi.age.model;
 
 import java.util.Collection;
 
+import uk.ac.ebi.age.entity.Entity;
+
 /**
  @model
 */
 
-public interface AgeObject extends AgeAbstractObject
+public interface AgeObject extends AgeAbstractObject, Entity
 {
 
  /** @model */

@@ -21,7 +21,6 @@ import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
-import uk.ac.ebi.age.model.SubmissionContext;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAnnotationWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
@@ -43,8 +42,6 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  
  private transient SemanticModel masterModel;
  
- private transient SubmissionContext context;
- 
  private Map<String,AgeClassPlug> classPlugs = new TreeMap<String, AgeClassPlug>();
  private Map<String,AgeAttributeClassPlug> attrClassPlugs = new TreeMap<String, AgeAttributeClassPlug>();
  private Map<String,AgeRelationClassPlug> relClassPlugs = new TreeMap<String, AgeRelationClassPlug>();
@@ -59,10 +56,9 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 // private Map<AgeClass,Map<String,AgeRelationClass>> class2CustomRelationMap = new TreeMap<AgeClass,Map<String,AgeRelationClass>>();
 
  
- public ContextSemanticModelImpl( SemanticModel mm, SubmissionContext ctxt)
+ public ContextSemanticModelImpl( SemanticModel mm )
  {
   masterModel=mm;
-  context=ctxt;
  }
 
  public SemanticModel getMasterModel()
@@ -180,10 +176,6 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 //  return rcls;
 // }
 
- public SubmissionContext getContext()
- {
-  return context;
- }
 
  public AgeClass getDefinedAgeClass(String name)
  {

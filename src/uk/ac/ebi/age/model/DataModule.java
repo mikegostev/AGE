@@ -2,10 +2,11 @@ package uk.ac.ebi.age.model;
 
 import java.util.Collection;
 
+import uk.ac.ebi.age.entity.Entity;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 
 
-public interface DataModule
+public interface DataModule extends Entity
 {
  public static interface AttributedSelector
  {

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import uk.ac.ebi.age.entity.ID;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.SemanticModel;
@@ -217,5 +218,12 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  public void registerExternalRelation(AgeExternalRelationWritable rel)
  {
   throw new UnsupportedOperationException();
+ }
+
+
+ @Override
+ public ID getEntityID()
+ {
+  return null;
  }
 }

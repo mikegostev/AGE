@@ -7,8 +7,6 @@ import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 public interface ContextSemanticModel extends SemanticModel
 {
- SubmissionContext getContext();
-
  AgeClass getDefinedAgeClass(String name);
  AgeClass getCustomAgeClass(String name);
 
