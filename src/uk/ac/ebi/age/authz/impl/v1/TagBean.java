@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.authz.impl;
+package uk.ac.ebi.age.authz.impl.v1;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -6,11 +6,16 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.authz.ACR;
 import uk.ac.ebi.age.authz.ACR.Permit;
+import uk.ac.ebi.age.authz.writable.PermissionForGroupACRWritable;
+import uk.ac.ebi.age.authz.writable.PermissionForUserACRWritable;
+import uk.ac.ebi.age.authz.writable.ProfileForGroupACRWritable;
+import uk.ac.ebi.age.authz.writable.ProfileForUserACRWritable;
+import uk.ac.ebi.age.authz.writable.TagWritable;
 import uk.ac.ebi.age.authz.Tag;
 import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 
-public class TagBean implements Tag, Serializable
+public class TagBean implements TagWritable, Serializable
 {
 
  private static final long serialVersionUID = 1L;
@@ -20,17 +25,21 @@ public class TagBean implements Tag, Serializable
  private String description;
  private Tag    parent;
  
- private Collection<ProfileForGroupACRBean> acrPf4G = null;
- private Collection<ProfileForUserACRBean> acrPf4U = null;
- private Collection<PermissionForGroupACRBean> acrPm4G = null;
- private Collection<PermissionForUserACRBean> acrPm4U = null;
+ private Collection<ProfileForGroupACRWritable> acrPf4G = null;
+ private Collection<ProfileForUserACRWritable> acrPf4U = null;
+ private Collection<PermissionForGroupACRWritable> acrPm4G = null;
+ private Collection<PermissionForUserACRWritable> acrPm4U = null;
 
+ TagBean()
+ {}
+ 
  @Override
  public String getId()
  {
   return id;
  }
 
+ @Override
  public void setId(String id)
  {
   this.id = id;
@@ -42,6 +51,7 @@ public class TagBean implements Tag, Serializable
   return description;
  }
 
+ @Override
  public void setDescription(String description)
  {
   this.description = description;
@@ -62,63 +72,68 @@ public class TagBean implements Tag, Serializable
   return parent;
  }
 
+ @Override
  public void setParent(Tag parent)
  {
   this.parent = parent;
  }
 
  @Override
- public Collection<ProfileForGroupACRBean> getProfileForGroupACRs()
+ public Collection<ProfileForGroupACRWritable> getProfileForGroupACRs()
  {
   return acrPf4G;
  }
 
  @Override
- public Collection<ProfileForUserACRBean> getProfileForUserACRs()
+ public Collection<ProfileForUserACRWritable> getProfileForUserACRs()
  {
   return acrPf4U;
  }
 
  @Override
- public Collection<PermissionForUserACRBean> getPermissionForUserACRs()
+ public Collection<PermissionForUserACRWritable> getPermissionForUserACRs()
  {
   return acrPm4U;
  }
 
  @Override
- public Collection<PermissionForGroupACRBean> getPermissionForGroupACRs()
+ public Collection<PermissionForGroupACRWritable> getPermissionForGroupACRs()
  {
   return acrPm4G;
  }
 
- public void addProfileForGroupACR(ProfileForGroupACRBean acr)
+ @Override
+ public void addProfileForGroupACR(ProfileForGroupACRWritable acr)
  {
   if(acrPf4G == null)
-   acrPf4G = new ArrayList<ProfileForGroupACRBean>();
+   acrPf4G = new ArrayList<ProfileForGroupACRWritable>();
  
   acrPf4G.add(acr);
  }
 
- public void addProfileForUserACR(ProfileForUserACRBean acr)
+ @Override
+ public void addProfileForUserACR(ProfileForUserACRWritable acr)
  {
   if(acrPf4U == null)
-   acrPf4U = new ArrayList<ProfileForUserACRBean>();
+   acrPf4U = new ArrayList<ProfileForUserACRWritable>();
   
   acrPf4U.add(acr);
  }
 
- public void addPermissionForUserACR(PermissionForUserACRBean acr)
+ @Override
+ public void addPermissionForUserACR(PermissionForUserACRWritable acr)
  {
   if(acrPm4U == null)
-   acrPm4U = new ArrayList<PermissionForUserACRBean>();
+   acrPm4U = new ArrayList<PermissionForUserACRWritable>();
   
   acrPm4U.add(acr);
  }
 
- public void addPermissionForGroupACR(PermissionForGroupACRBean acr)
+ @Override
+ public void addPermissionForGroupACR(PermissionForGroupACRWritable acr)
  {
   if(acrPm4G == null)
-   acrPm4G = new ArrayList<PermissionForGroupACRBean>();
+   acrPm4G = new ArrayList<PermissionForGroupACRWritable>();
   
   acrPm4G.add(acr);
  }
@@ -130,7 +145,7 @@ public class TagBean implements Tag, Serializable
 
   if(acrPf4G != null)
   {
-   for(ProfileForGroupACRBean b : acrPf4G)
+   for(ProfileForGroupACRWritable b : acrPf4G)
    {
     Permit p = b.checkPermission(act, user);
     if(p == Permit.DENY)

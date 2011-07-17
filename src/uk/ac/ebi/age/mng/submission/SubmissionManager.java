@@ -742,7 +742,8 @@ public class SubmissionManager
     {
      LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
      
-     if( validator.validateRelations(obj, invRelMap.get(obj), relationDetachMap.get(obj), objLogNode) )
+     if( validator.validateRelations(obj, invRelMap!=null?invRelMap.get(obj):null,
+       relationDetachMap!=null?relationDetachMap.get(obj):null, objLogNode) )
       objLogNode.log(Level.SUCCESS, "Success");
      else
       invRelRes = false;
@@ -1798,7 +1799,7 @@ public class SubmissionManager
 
       if(invClassOk)
       {
-       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
+       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
        invRel.setTargetObject(exr.getSourceObject());
        invRel.setInferred(true);
 
@@ -2053,7 +2054,7 @@ public class SubmissionManager
        
        if( dirRel == null )
        {
-        dirRel = replObj.getAgeElClass().getSemanticModel().createExternalRelation(replObj, target.getId(), invrsRel.getAgeElClass().getInverseRelationClass());
+        dirRel = replObj.getDataModule().getContextSemanticModel().createExternalRelation(replObj, target.getId(), invrsRel.getAgeElClass().getInverseRelationClass());
 
         dirRel.setInferred(true);
         
@@ -2351,7 +2352,7 @@ public class SubmissionManager
   
   Attributed atInst = atStk.peek();
   
-  if( atInst.getAttributes() == null )
+  if( atInst.getAttributes().isEmpty() )
    return true;
   
   for( AgeAttribute attr : atInst.getAttributes() )

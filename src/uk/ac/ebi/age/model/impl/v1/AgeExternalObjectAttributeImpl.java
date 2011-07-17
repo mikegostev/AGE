@@ -7,8 +7,8 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeObjectAttribute;
 import uk.ac.ebi.age.model.AttributedClass;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.FormatException;
-import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 
 class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExternalObjectAttributeWritable, Serializable
@@ -19,7 +19,7 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
  private int order;
  private transient AgeObject target;
  
- public AgeExternalObjectAttributeImpl(AgeAttributeClass relClass, String id, SemanticModel sm)
+ public AgeExternalObjectAttributeImpl(AgeAttributeClass relClass, String id, ContextSemanticModel sm)
  {
   super(relClass, sm);
   

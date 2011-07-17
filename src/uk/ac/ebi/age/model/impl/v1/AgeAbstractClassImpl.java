@@ -22,7 +22,7 @@ abstract class AgeAbstractClassImpl extends AgeSemanticElementImpl implements  A
 
 
 
- public AgeAbstractClassImpl(SemanticModel model)
+ public AgeAbstractClassImpl( SemanticModel model)
  {
   super(model);
  }

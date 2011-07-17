@@ -23,8 +23,8 @@ public class InMemoryQueryProcessor implements Iterable<AgeObject>, Iterator<Age
   
   if( roots.size() == 0 )
   {
-   submsItr = new EmptyIterator<DataModule>();
-   objItr.setObjIterator(new EmptyIterator<AgeObject>());
+   submsItr = EmptyIterator.getInstance();
+   objItr.setObjIterator(EmptyIterator.<AgeObject>getInstance());
   }
   else
   {

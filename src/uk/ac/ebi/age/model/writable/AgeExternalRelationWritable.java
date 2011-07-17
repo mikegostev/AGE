@@ -12,4 +12,6 @@ public interface AgeExternalRelationWritable extends AgeExternalRelation, AgeRel
  AgeExternalRelationWritable getInverseRelation();
  
  void setInverseRelation( AgeExternalRelationWritable inrv );
+ void setSourceObject(AgeObjectWritable ageObject);
+
 }

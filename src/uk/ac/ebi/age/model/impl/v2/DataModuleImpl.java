@@ -168,11 +168,8 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  {
   atbObj.reset();
   
-  if( atbObj.getAttributes() != null )
-  {
-   for(AttributedWritable atw : atbObj.getAttributes() )
-    resetAttributedObject(atw);
-  }
+  for(AttributedWritable atw : atbObj.getAttributes() )
+   resetAttributedObject(atw);
  }
 
 // @Override
@@ -243,7 +240,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
     
      atbt = cIter.next();
     
-     if( atbt.getAttributes() != null )
+     if( ! atbt.getAttributes().isEmpty() )
      {
       stk.add(cIter = atbt.getAttributes().iterator());
       last++;

@@ -226,7 +226,7 @@ public class PermissionManagerImpl implements PermissionManager
   {
    while( oid != null )
    {
-    tags = (Collection<TagRef>) annotMngr.getAnnotation(Topic.TAG, objId );
+    tags = (Collection<TagRef>) annotMngr.getAnnotation(Topic.TAG, oid );
    
     if( tags != null )
     {

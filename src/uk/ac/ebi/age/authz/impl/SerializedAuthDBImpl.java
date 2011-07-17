@@ -39,6 +39,7 @@ import uk.ac.ebi.age.authz.exception.BuiltInChangeException;
 import uk.ac.ebi.age.authz.exception.ClassifierExistsException;
 import uk.ac.ebi.age.authz.exception.ClassifierNotFoundException;
 import uk.ac.ebi.age.authz.exception.DBInitException;
+import uk.ac.ebi.age.authz.exception.EmailNotUniqueException;
 import uk.ac.ebi.age.authz.exception.GroupCycleException;
 import uk.ac.ebi.age.authz.exception.GroupExistsException;
 import uk.ac.ebi.age.authz.exception.GroupNotFoundException;
@@ -47,9 +48,20 @@ import uk.ac.ebi.age.authz.exception.ProfileCycleException;
 import uk.ac.ebi.age.authz.exception.ProfileExistsException;
 import uk.ac.ebi.age.authz.exception.ProfileNotFoundException;
 import uk.ac.ebi.age.authz.exception.TagException;
+import uk.ac.ebi.age.authz.exception.TagExistsException;
 import uk.ac.ebi.age.authz.exception.TagNotFoundException;
 import uk.ac.ebi.age.authz.exception.UserExistsException;
 import uk.ac.ebi.age.authz.exception.UserNotFoundException;
+import uk.ac.ebi.age.authz.writable.ClassifierWritable;
+import uk.ac.ebi.age.authz.writable.PermissionForGroupACRWritable;
+import uk.ac.ebi.age.authz.writable.PermissionForUserACRWritable;
+import uk.ac.ebi.age.authz.writable.PermissionProfileWritable;
+import uk.ac.ebi.age.authz.writable.PermissionWritable;
+import uk.ac.ebi.age.authz.writable.ProfileForGroupACRWritable;
+import uk.ac.ebi.age.authz.writable.ProfileForUserACRWritable;
+import uk.ac.ebi.age.authz.writable.TagWritable;
+import uk.ac.ebi.age.authz.writable.UserGroupWritable;
+import uk.ac.ebi.age.authz.writable.UserWritable;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 import uk.ac.ebi.age.transaction.InconsistentStateException;
 import uk.ac.ebi.age.transaction.InvalidStateException;
@@ -105,31 +117,31 @@ public class SerializedAuthDBImpl implements AuthDB
 
  }
  
- private IndexList<String, UserBean> userList;
- private IndexList<String, GroupBean> groupList;
- private IndexList<String, ProfileBean> profileList;
- private IndexList<String, ClassifierBean> classifierList;
- private TagBean sysTag;
+ private IndexList<String, UserWritable> userList;
+ private IndexList<String, UserGroupWritable> groupList;
+ private IndexList<String, PermissionProfileWritable> profileList;
+ private IndexList<String, ClassifierWritable> classifierList;
+ private TagWritable sysTag;
  
-// private List<UserBean> userList;
-// private List<GroupBean> groupList;
-// private List<ProfileBean> profileList;
-// private List<ClassifierBean> classifierList;
+// private List<UserWritable> userList;
+// private List<UserGroupWritable> groupList;
+// private List<PermissionProfileWritable> profileList;
+// private List<ClassifierWritable> classifierList;
 // 
-// private Map<String, UserBean> userMap;
-// private Map<String,GroupBean> groupMap;
-// private Map<String,ProfileBean> profileMap;
-// private Map<String,ClassifierBean> classifierMap;
+// private Map<String, UserWritable> userMap;
+// private Map<String,UserGroupWritable> groupMap;
+// private Map<String,PermissionProfileWritable> profileMap;
+// private Map<String,ClassifierWritable> classifierMap;
 
  private static class DataPacket implements Serializable
  {
   private static final long serialVersionUID = 1L;
   
-  IndexList<String, UserBean> userList;
-  IndexList<String, GroupBean> groupList;
-  IndexList<String, ProfileBean> profileList;
-  IndexList<String, ClassifierBean> classifierList;
-  TagBean sysTag;
+  IndexList<String, UserWritable> userList;
+  IndexList<String, UserGroupWritable> groupList;
+  IndexList<String, PermissionProfileWritable> profileList;
+  IndexList<String, ClassifierWritable> classifierList;
+  TagWritable sysTag;
  }
  
  private DataPacket dataPacket;
@@ -165,15 +177,15 @@ public class SerializedAuthDBImpl implements AuthDB
   {
    dataPacket = new DataPacket();
 
-   userList = dataPacket.userList = new IndexList<String, UserBean>( NaturalStringComparator.getInstance() );
-   groupList = dataPacket.groupList = new IndexList<String, GroupBean>( NaturalStringComparator.getInstance() );
-   profileList = dataPacket.profileList = new IndexList<String, ProfileBean>( NaturalStringComparator.getInstance() );
-   classifierList = dataPacket.classifierList = new IndexList<String, ClassifierBean>( NaturalStringComparator.getInstance() );
-   sysTag=dataPacket.sysTag = new TagBean();
+   userList = dataPacket.userList = new IndexList<String, UserWritable>( NaturalStringComparator.getInstance() );
+   groupList = dataPacket.groupList = new IndexList<String, UserGroupWritable>( NaturalStringComparator.getInstance() );
+   profileList = dataPacket.profileList = new IndexList<String, PermissionProfileWritable>( NaturalStringComparator.getInstance() );
+   classifierList = dataPacket.classifierList = new IndexList<String, ClassifierWritable>( NaturalStringComparator.getInstance() );
+   sysTag=dataPacket.sysTag = AuthBeanFactory.getInstance().createTagBean();
 
    for( BuiltInUsers usr: BuiltInUsers.values() )
    {
-    UserBean ub = new UserBean();
+    UserWritable ub = AuthBeanFactory.getInstance().createUserBean();
     ub.setId(usr.getName());
     ub.setName(usr.getDescription());
     
@@ -183,23 +195,19 @@ public class SerializedAuthDBImpl implements AuthDB
      ub.setPass(StringUtils.hashStringSHA1(defaultSupervisorPassword));
    }
    
-   GroupBean gb = new EveryoneGroupBean();
+   UserGroupWritable gb = AuthBeanFactory.getInstance().createEveryoneGroupBean();
    gb.setId(BuiltInGroups.EVERYONE.getName());
    gb.setDescription(BuiltInGroups.EVERYONE.getDescription());
    
    groupList.add(gb);
 
-   gb = new AuthenticatedGroupBean();
-   gb.setId(BuiltInGroups.AUTHENTICATED.getName());
-   gb.setDescription(BuiltInGroups.AUTHENTICATED.getDescription());
-   
-   groupList.add(gb);
+   groupList.add(AuthBeanFactory.getInstance().createAuthenticatedGroupBean());
 
    
    
 //   for( BuiltInGroups grp: BuiltInGroups.values() )
 //   {
-//    GroupBean gb = new GroupBean();
+//    UserGroupWritable gb = new UserGroupWritable();
 //    gb.setId(grp.getName());
 //    gb.setDescription(grp.getDescription());
 //    
@@ -260,11 +268,11 @@ public class SerializedAuthDBImpl implements AuthDB
   txManager=frm;
   relPath=authRelPath;
   
-  groupList = new HashMap<String,GroupBean>(20);
+  groupList = new HashMap<String,UserGroupWritable>(20);
   
   for( int i=1; i <= 13; i++ )
   {
-   GroupBean u = new GroupBean();
+   UserGroupWritable u = new UserGroupWritable();
    
    u.setId("Group"+i);
    u.setDescription("Test Group №"+i);
@@ -273,10 +281,10 @@ public class SerializedAuthDBImpl implements AuthDB
 
   }
 
-  userList = new HashMap<String,UserBean>(200);
+  userList = new HashMap<String,UserWritable>(200);
   for( int i=1; i <= 13; i++ )
   {
-   UserBean u = new UserBean();
+   UserWritable u = new UserWritable();
    
    u.setId("User"+i);
    u.setName("Test User №"+i);
@@ -284,7 +292,7 @@ public class SerializedAuthDBImpl implements AuthDB
    int n = Random.randInt(1, 5);
    for( int j=0; j < n; j++ )
    {
-    GroupBean grp = groupList.get( Random.randInt(0, groupList.size()-1) );
+    UserGroupWritable grp = groupList.get( Random.randInt(0, groupList.size()-1) );
     u.addGroup( grp );
     grp.addUser( u );
    }
@@ -292,28 +300,28 @@ public class SerializedAuthDBImpl implements AuthDB
    userList.put(u.getId(),u);
   }
 
-  profileList = new HashMap<String,ProfileBean>();
+  profileList = new HashMap<String,PermissionProfileWritable>();
   
   for( int i=1; i <=3; i++ )
   {
-   ProfileBean pb = new ProfileBean();
+   PermissionProfileWritable pb = new PermissionProfileWritable();
    
    pb.setId("P"+i);
    pb.setDescription("Profile No."+i);
    
-   PermissionBean prmb = new PermissionBean();
+   PermissionWritable prmb = new PermissionWritable();
    prmb.setAction(SystemAction.READ);
    prmb.setAllow(true);
 
    pb.addPermission( prmb );
    
-   prmb = new PermissionBean();
+   prmb = new PermissionWritable();
    prmb.setAction(SystemAction.CHANGE);
    prmb.setAllow(true);
 
    pb.addPermission( prmb );
    
-   prmb = new PermissionBean();
+   prmb = new PermissionWritable();
    prmb.setAction(SystemAction.DELETE);
    prmb.setAllow(false);
 
@@ -323,25 +331,25 @@ public class SerializedAuthDBImpl implements AuthDB
   }
 
   
-  ClassifierBean cb = new ClassifierBean();
+  ClassifierWritable cb = new ClassifierWritable();
   
   cb.setId("Test clssf");
   cb.setDescription("Test clssifier No1");
   
-  TagBean a = new TagBean();
+  TagWritable a = new TagWritable();
   a.setId("A");
   a.setDescription("Test tag A");
   
-  TagBean b = new TagBean();
+  TagWritable b = new TagWritable();
   b.setId("B");
   b.setDescription("Test tag B");
   
-  TagBean a1 = new TagBean();
+  TagWritable a1 = new TagWritable();
   a1.setId("A1");
   a1.setDescription("Test tag A1");
   a1.setParent(a);
   
-  TagBean a2 = new TagBean();
+  TagWritable a2 = new TagWritable();
   a2.setId("A2");
   a2.setDescription("Test tag A2");
   a2.setParent(a);
@@ -351,7 +359,7 @@ public class SerializedAuthDBImpl implements AuthDB
   cb.addTag(a2);
   cb.addTag(b);
   
-  classifierList = new HashMap<String, ClassifierBean>();
+  classifierList = new HashMap<String, ClassifierWritable>();
   
   classifierList.put(cb.getId(),cb);
  }
@@ -455,13 +463,13 @@ public class SerializedAuthDBImpl implements AuthDB
    throw new InvalidStateException();
  }
  
- private ClassifierBean getClassifier( String id )
+ private ClassifierWritable getClassifier( String id )
  {
   return classifierList.getByKey(id);
  }
 
  @Override
- public ClassifierBean getClassifier( ReadLock lck, String id)
+ public Classifier getClassifier( ReadLock lck, String id)
  {
   checkState(lck);
 
@@ -469,9 +477,9 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
 
- private TagBean getTag( String clsfId, String tagId) throws TagException
+ private TagWritable getTag( String clsfId, String tagId) throws TagException
  {
-  ClassifierBean c = getClassifier(clsfId);
+  ClassifierWritable c = getClassifier(clsfId);
   
   if( c == null )
    throw new ClassifierNotFoundException();
@@ -480,44 +488,63 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public TagBean getTag( ReadLock lck, String clsfId, String tagId) throws TagException
+ public Tag getTag( ReadLock lck, String clsfId, String tagId) throws TagException
  {
   checkState(lck);
    
   return getTag(clsfId, tagId);
  }
 
- private UserBean getUser( String id)
+ private UserWritable getUser( String id)
  {
   return userList.getByKey(id);
  }
  
+ private UserWritable getUserByEmail( String email )
+ {
+  for( UserWritable u : userList )
+   if( email.equals(u.getEmail()) )
+    return u;
+  
+  return null;
+ }
+
+ 
  @Override
- public UserBean getUser( ReadLock lck, String id)
+ public User getUser( ReadLock lck, String id)
  {
   checkState(lck);
   
   return getUser( id );
  }
 
- private GroupBean getUserGroup( String id )
+ @Override
+ public User getUserByEmail( ReadLock lck, String email)
+ {
+  checkState(lck);
+  
+  return getUserByEmail(email);
+ }
+
+ 
+ private UserGroupWritable getUserGroup( String id )
  {
   return groupList.getByKey(id);
  }
  
  @Override
- public GroupBean getUserGroup( ReadLock lck, String id)
+ public UserGroup getUserGroup( ReadLock lck, String id)
  {
   return getUserGroup(id);
  }
 
- private ProfileBean getProfile( String id)
+ private PermissionProfileWritable getProfile( String id)
  {
   return profileList.getByKey(id);
  }
  
  @Override
- public ProfileBean getProfile( ReadLock lck, String id)
+ public PermissionProfile getProfile( ReadLock lck, String id)
  {
   checkState(lck);
 
@@ -578,11 +605,11 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void updateUser( Transaction lck, String userId, String userName) throws AuthDBException
+ public void updateUser( Transaction lck, String userId, String userName, String email) throws AuthDBException
  {
   checkState(lck);
 
-  UserBean u = userList.getByKey(userId);
+  UserWritable u = userList.getByKey(userId);
   
   if( u == null )
    throw new UserNotFoundException( userId );
@@ -591,7 +618,17 @@ public class SerializedAuthDBImpl implements AuthDB
    if( usr.getName().equals(userId) )
     throw new BuiltInChangeException("Built-in user can't be modified");
   
+  if( email!=null )
+  {
+   email = email.trim();
+   
+   if( email.length() != 0 )
+    if( getUserByEmail(email) != null )
+     throw new EmailNotUniqueException( userId );
+  }
+  
   u.setName(userName);
+  u.setEmail(email);
  
  }
  
@@ -600,7 +637,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  UserBean u = userList.getByKey(userId);
+  UserWritable u = userList.getByKey(userId);
   
   if( u == null )
    throw new UserNotFoundException( userId );
@@ -614,7 +651,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  UserBean u = userList.getByKey(userId);
+  UserWritable u = userList.getByKey(userId);
   
   if( u == null )
    throw new UserNotFoundException( userId );
@@ -623,17 +660,27 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void addUser( Transaction lck, String userId, String userName, String userPass) throws AuthDBException
+ public void addUser( Transaction lck, String userId, String userName, String email, String userPass) throws AuthDBException
  {
   checkState(lck);
 
   if( getUser(userId) != null )
    throw new UserExistsException( userId );
   
-  UserBean u = new UserBean();
+  if( email!=null )
+  {
+   email = email.trim();
+   
+   if( email.length() != 0 )
+    if( getUserByEmail(email) != null )
+     throw new EmailNotUniqueException( userId );
+  }
+  
+  UserWritable u = AuthBeanFactory.getInstance().createUserBean();
   
   u.setId(userId);
   u.setName(userName);
+  u.setEmail(email);
   u.setPass(StringUtils.hashStringSHA1(userPass));
   
   userList.add( u );
@@ -648,33 +695,33 @@ public class SerializedAuthDBImpl implements AuthDB
    if( usr.getName().equals(userId) )
     throw new BuiltInChangeException("Built-in user can't be deleted");
   
-  UserBean rmUsr = userList.removeKey(userId);
+  UserWritable rmUsr = userList.removeKey(userId);
   
   if( rmUsr == null )
    throw new UserNotFoundException(userId);
 
-  for( GroupBean gb : rmUsr.getGroups() )
+  for( UserGroupWritable gb : rmUsr.getGroups() )
    gb.removeUser(rmUsr);
   
-  for( ClassifierBean clsb: classifierList )
+  for( ClassifierWritable clsb: classifierList )
   {
-   for( TagBean tb : clsb.getTags() )
+   for( TagWritable tb : clsb.getTags() )
    {
-    Iterator<PermissionForUserACRBean> pmgIter = tb.getPermissionForUserACRs().iterator();
+    Iterator<? extends PermissionForUserACRWritable> pmgIter = tb.getPermissionForUserACRs().iterator();
     
     while( pmgIter.hasNext() )
     {
-     PermissionForUserACRBean p = pmgIter.next();
+     PermissionForUserACRWritable p = pmgIter.next();
      
      if( p.getSubject() == rmUsr )
       pmgIter.remove();
     }
     
-    Iterator<ProfileForUserACRBean> pfgIter = tb.getProfileForUserACRs().iterator();
+    Iterator<? extends ProfileForUserACRWritable> pfgIter = tb.getProfileForUserACRs().iterator();
     
     while( pfgIter.hasNext() )
     {
-     ProfileForUserACRBean p = pfgIter.next();
+     ProfileForUserACRWritable p = pfgIter.next();
      
      if( p.getSubject() == rmUsr )
       pfgIter.remove();
@@ -744,33 +791,33 @@ public class SerializedAuthDBImpl implements AuthDB
    if( grp.getName().equals(grpId) )
     throw new BuiltInChangeException("Built-in group can't be deleted");
 
-  GroupBean rmGrp = groupList.removeKey(grpId);
+  UserGroupWritable rmGrp = groupList.removeKey(grpId);
   
   if( rmGrp == null )
    throw new GroupNotFoundException();
 
-  for( UserBean ub : rmGrp.getUsers() )
+  for( UserWritable ub : rmGrp.getUsers() )
    ub.removeGroup(rmGrp);
   
-  for( ClassifierBean clsb: classifierList )
+  for( ClassifierWritable clsb: classifierList )
   {
-   for( TagBean tb : clsb.getTags() )
+   for( TagWritable tb : clsb.getTags() )
    {
-    Iterator<PermissionForGroupACRBean> pmgIter = tb.getPermissionForGroupACRs().iterator();
+    Iterator<? extends PermissionForGroupACRWritable> pmgIter = tb.getPermissionForGroupACRs().iterator();
     
     while( pmgIter.hasNext() )
     {
-     PermissionForGroupACRBean p = pmgIter.next();
+     PermissionForGroupACRWritable p = pmgIter.next();
      
      if( p.getSubject() == rmGrp )
       pmgIter.remove();
     }
     
-    Iterator<ProfileForGroupACRBean> pfgIter = tb.getProfileForGroupACRs().iterator();
+    Iterator<? extends ProfileForGroupACRWritable> pfgIter = tb.getProfileForGroupACRs().iterator();
     
     while( pfgIter.hasNext() )
     {
-     ProfileForGroupACRBean p = pfgIter.next();
+     ProfileForGroupACRWritable p = pfgIter.next();
      
      if( p.getSubject() == rmGrp )
       pfgIter.remove();
@@ -788,7 +835,7 @@ public class SerializedAuthDBImpl implements AuthDB
   if( getUserGroup(grpId) != null  )
    throw new GroupExistsException();
   
-  GroupBean u = new GroupBean();
+  UserGroupWritable u = AuthBeanFactory.getInstance().createGroupBean();
   
   u.setId(grpId);
   u.setDescription(grpDesc);
@@ -801,7 +848,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  GroupBean u = getUserGroup(grpId);
+  UserGroupWritable u = getUserGroup(grpId);
   
   if( u == null  )
    throw new GroupNotFoundException();
@@ -833,12 +880,12 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  GroupBean gb = getUserGroup(grpId);
+  UserGroupWritable gb = getUserGroup(grpId);
   
   if( gb == null )
    throw new GroupNotFoundException();
   
-  UserBean ub = gb.getUser(userId);
+  UserWritable ub = gb.getUser(userId);
   
   if( ub == null )
    throw new UserNotFoundException();
@@ -852,7 +899,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  GroupBean gb = getUserGroup(grpId);
+  UserGroupWritable gb = getUserGroup(grpId);
   
   if( gb == null )
    throw new GroupNotFoundException();
@@ -871,7 +918,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  GroupBean gb = getUserGroup(grpId);
+  UserGroupWritable gb = getUserGroup(grpId);
   
   if( gb == null )
    throw new GroupNotFoundException(grpId);
@@ -880,7 +927,7 @@ public class SerializedAuthDBImpl implements AuthDB
    if( grp.getName().equals(grpId) )
     throw new BuiltInChangeException("Built-in group can't be modified");
 
-  UserBean ub = getUser(userId);
+  UserWritable ub = getUser(userId);
  
   if( ub == null )
    throw new UserNotFoundException(userId);
@@ -894,7 +941,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  GroupBean gb = getUserGroup(groupId);
+  UserGroupWritable gb = getUserGroup(groupId);
   
   if( gb == null )
    throw new GroupNotFoundException();
@@ -907,7 +954,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  GroupBean gb = getUserGroup(groupId);
+  UserGroupWritable gb = getUserGroup(groupId);
   
   if( gb == null )
    throw new GroupNotFoundException();
@@ -920,7 +967,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  GroupBean gb = getUserGroup(grpId);
+  UserGroupWritable gb = getUserGroup(grpId);
   
   if( gb == null )
    throw new GroupNotFoundException(grpId);
@@ -930,7 +977,7 @@ public class SerializedAuthDBImpl implements AuthDB
     throw new BuiltInChangeException("Built-in group can't be modified");
 
   
-  GroupBean pb = getUserGroup(partId);
+  UserGroupWritable pb = getUserGroup(partId);
   
   if( pb == null )
    throw new GroupNotFoundException(partId);
@@ -950,7 +997,7 @@ public class SerializedAuthDBImpl implements AuthDB
   if( getProfile(profId) != null )
    throw new ProfileExistsException();
   
-  ProfileBean pb = new ProfileBean();
+  PermissionProfileWritable pb = AuthBeanFactory.getInstance().createProfileBean();
   
   pb.setId(profId);
   pb.setDescription(dsc);
@@ -963,7 +1010,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ProfileBean pf = getProfile(profId);
+  PermissionProfileWritable pf = getProfile(profId);
   
   if( pf == null )
    throw new ProfileNotFoundException();
@@ -976,30 +1023,30 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ProfileBean rmPb = profileList.removeKey(profId);
+  PermissionProfileWritable rmPb = profileList.removeKey(profId);
   
   if( rmPb == null )
    throw new ProfileNotFoundException();
  
-  for( ClassifierBean clsb: classifierList )
+  for( ClassifierWritable clsb: classifierList )
   {
-   for( TagBean tb : clsb.getTags() )
+   for( TagWritable tb : clsb.getTags() )
    {
-    Iterator<ProfileForGroupACRBean> pfuIter = tb.getProfileForGroupACRs().iterator();
+    Iterator<? extends ProfileForGroupACRWritable> pfuIter = tb.getProfileForGroupACRs().iterator();
     
     while( pfuIter.hasNext() )
     {
-     ProfileForGroupACRBean p = pfuIter.next();
+     ProfileForGroupACRWritable p = pfuIter.next();
      
      if( p.getPermissionUnit() == rmPb )
       pfuIter.remove();
     }
     
-    Iterator<ProfileForUserACRBean> pfgIter = tb.getProfileForUserACRs().iterator();
+    Iterator<? extends ProfileForUserACRWritable> pfgIter = tb.getProfileForUserACRs().iterator();
     
     while( pfgIter.hasNext() )
     {
-     ProfileForUserACRBean p = pfgIter.next();
+     ProfileForUserACRWritable p = pfgIter.next();
      
      if( p.getPermissionUnit() == rmPb )
       pfgIter.remove();
@@ -1066,7 +1113,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ProfileBean prof =getProfile(profId);
+  PermissionProfileWritable prof =getProfile(profId);
   
   if( prof == null )
    throw new ProfileNotFoundException();
@@ -1081,7 +1128,7 @@ public class SerializedAuthDBImpl implements AuthDB
    }
   }
   
-  PermissionBean pb = new PermissionBean();
+  PermissionWritable pb = AuthBeanFactory.getInstance().createPermissionBean();
   pb.setAction(actn);
   pb.setAllow(allow);
   
@@ -1093,7 +1140,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ProfileBean prof =getProfile(profId);
+  PermissionProfileWritable prof =getProfile(profId);
   
   if( prof == null )
    throw new ProfileNotFoundException();
@@ -1107,7 +1154,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ProfileBean prof =getProfile(profId);
+  PermissionProfileWritable prof =getProfile(profId);
   
   if( prof == null )
    throw new ProfileNotFoundException();
@@ -1122,7 +1169,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ProfileBean prof =getProfile(profId);
+  PermissionProfileWritable prof =getProfile(profId);
   
   if( prof == null )
    throw new ProfileNotFoundException();
@@ -1149,7 +1196,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ProfileBean prof =getProfile(profId);
+  PermissionProfileWritable prof =getProfile(profId);
   
   if( prof == null )
    throw new ProfileNotFoundException();
@@ -1168,13 +1215,13 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ProfileBean prof =getProfile(profId);
+  PermissionProfileWritable prof =getProfile(profId);
   
   if( prof == null )
    throw new ProfileNotFoundException();
 
  
-  ProfileBean npb = getProfile(toAdd);
+  PermissionProfileWritable npb = getProfile(toAdd);
   
   if( npb == null )
    throw new ProfileNotFoundException();
@@ -1204,7 +1251,7 @@ public class SerializedAuthDBImpl implements AuthDB
   if( getClassifier(csfId) != null )
    throw new ClassifierExistsException();
   
-  ClassifierBean cb = new ClassifierBean();
+  ClassifierWritable cb = AuthBeanFactory.getInstance().createClassifierBean();
   
   cb.setId( csfId );
   cb.setDescription(csfDesc);
@@ -1217,7 +1264,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ClassifierBean cb = getClassifier(csfId);
+  ClassifierWritable cb = getClassifier(csfId);
   
   if( cb == null )
    throw new ClassifierNotFoundException();
@@ -1282,7 +1329,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ClassifierBean cb = getClassifier(clsId);
+  ClassifierWritable cb = getClassifier(clsId);
   
   if( cb == null )
    throw new ClassifierNotFoundException(); 
@@ -1320,7 +1367,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ClassifierBean clsb = getClassifier(clsId);
+  ClassifierWritable clsb = getClassifier(clsId);
   
   if( clsb == null )
    throw new ClassifierNotFoundException();
@@ -1337,9 +1384,9 @@ public class SerializedAuthDBImpl implements AuthDB
   
 
   if( clsb.getTag(tagId) != null )
-   throw new ClassifierExistsException();
+   throw new TagExistsException();
   
-  TagBean tb = new TagBean();
+  TagWritable tb = AuthBeanFactory.getInstance().createTagBean();
   
   tb.setId(tagId);
   tb.setDescription(description);
@@ -1353,7 +1400,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ClassifierBean clsb = getClassifier(clsId);
+  ClassifierWritable clsb = getClassifier(clsId);
   
   if( clsb == null )
    throw new ClassifierNotFoundException();
@@ -1368,7 +1415,7 @@ public class SerializedAuthDBImpl implements AuthDB
     throw new TagNotFoundException();
   }
   
-  TagBean tb = clsb.getTag(tagId);
+  TagWritable tb = clsb.getTag(tagId);
 
   if( tb == null )
    throw new ClassifierNotFoundException();
@@ -1382,7 +1429,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  ClassifierBean clsb = getClassifier(clsId);
+  ClassifierWritable clsb = getClassifier(clsId);
   
   if( clsb == null )
    throw new ClassifierNotFoundException();
@@ -1395,21 +1442,21 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  final ClassifierBean clsb = getClassifier(clsId);
+  final ClassifierWritable clsb = getClassifier(clsId);
   
   if( clsb == null )
    throw new ClassifierNotFoundException();
   
-  return new AbstractCollection<TagBean>()
+  return new AbstractCollection<TagWritable>()
   {
 
    @Override
-   public Iterator<TagBean> iterator()
+   public Iterator<TagWritable> iterator()
    {
-    return new Iterator<TagBean>()
+    return new Iterator<TagWritable>()
     {
-     private TagBean next;
-     private Iterator<TagBean> iter = clsb.getTags().iterator();
+     private TagWritable next;
+     private Iterator<? extends TagWritable> iter = clsb.getTags().iterator();
 
      @Override
      public boolean hasNext()
@@ -1438,12 +1485,12 @@ public class SerializedAuthDBImpl implements AuthDB
      }
 
      @Override
-     public TagBean next()
+     public TagWritable next()
      {
       if( ! hasNext() )
        return null;
       
-      TagBean nxt = next;
+      TagWritable nxt = next;
       next = null;
       
       return nxt;
@@ -1470,7 +1517,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  TagBean tb = getTag(clsfId, tagId);
+  TagWritable tb = getTag(clsfId, tagId);
   
   if( tb == null )
    throw new TagNotFoundException();
@@ -1501,7 +1548,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  TagBean tb = getTag(clsfId, tagId);
+  TagWritable tb = getTag(clsfId, tagId);
   
   if( tb == null )
    throw new TagNotFoundException();
@@ -1532,7 +1579,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  TagBean tb = getTag(clsfId, tagId);
+  TagWritable tb = getTag(clsfId, tagId);
   
   if( tb == null )
    throw new TagNotFoundException();
@@ -1563,7 +1610,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  TagBean tb = getTag(clsfId, tagId);
+  TagWritable tb = getTag(clsfId, tagId);
   
   if( tb == null )
    throw new TagNotFoundException();
@@ -1594,19 +1641,19 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  TagBean tb = getTag(clsfId, tagId);
+  TagWritable tb = getTag(clsfId, tagId);
   
   if( tb == null )
    throw new TagNotFoundException();
 
-  ProfileForGroupACRBean acr = new ProfileForGroupACRBean();
+  ProfileForGroupACRWritable acr = AuthBeanFactory.getInstance().createProfileForGroupACRBean();
   
-  ProfileBean pb = getProfile(profileId);
+  PermissionProfileWritable pb = getProfile(profileId);
   
   if( pb == null )
    throw new ProfileNotFoundException();
   
-  GroupBean gb = getUserGroup(subjId);
+  UserGroupWritable gb = getUserGroup(subjId);
   
   if( gb == null )
    throw new GroupNotFoundException();
@@ -1622,19 +1669,19 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  TagBean tb = getTag(clsfId, tagId);
+  TagWritable tb = getTag(clsfId, tagId);
   
   if( tb == null )
    throw new TagNotFoundException();
 
-  ProfileForUserACRBean acr = new ProfileForUserACRBean();
+  ProfileForUserACRWritable acr = AuthBeanFactory.getInstance().createProfileForUserACRBean();
   
-  ProfileBean pb = getProfile(profileId);
+  PermissionProfileWritable pb = getProfile(profileId);
   
   if( pb == null )
    throw new ProfileNotFoundException();
   
-  UserBean gb = getUser(subjId);
+  UserWritable gb = getUser(subjId);
   
   if( gb == null )
    throw new UserNotFoundException();
@@ -1650,19 +1697,19 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  TagBean tb = getTag(clsfId, tagId);
+  TagWritable tb = getTag(clsfId, tagId);
   
   if( tb == null )
    throw new TagNotFoundException();
 
-  PermissionForUserACRBean acr = new PermissionForUserACRBean();
+  PermissionForUserACRWritable acr = AuthBeanFactory.getInstance().createPermissionForUserACRBean();
   
-  UserBean gb = getUser(subjId);
+  UserWritable gb = getUser(subjId);
   
   if( gb == null )
    throw new UserNotFoundException();
 
-  PermissionBean pb = new PermissionBean();
+  PermissionWritable pb = AuthBeanFactory.getInstance().createPermissionBean();
   pb.setAction(act);
   pb.setAllow(allow);
   
@@ -1677,19 +1724,19 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  TagBean tb = getTag(clsfId, tagId);
+  TagWritable tb = getTag(clsfId, tagId);
   
   if( tb == null )
    throw new TagNotFoundException();
 
-  PermissionForGroupACRBean acr = new PermissionForGroupACRBean();
+  PermissionForGroupACRWritable acr = AuthBeanFactory.getInstance().createPermissionForGroupACRBean();
   
-  GroupBean gb = getUserGroup(subjId);
+  UserGroupWritable gb = getUserGroup(subjId);
   
   if( gb == null )
    throw new GroupNotFoundException();
 
-  PermissionBean pb = new PermissionBean();
+  PermissionWritable pb = AuthBeanFactory.getInstance().createPermissionBean();
   pb.setAction(act);
   pb.setAllow(allow);
   
@@ -1705,7 +1752,7 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(lck);
 
-  TagBean tb = getTag(clsfId, tagId);
+  TagWritable tb = getTag(clsfId, tagId);
   
   if( tb == null )
    throw new TagNotFoundException();
@@ -1819,14 +1866,14 @@ public class SerializedAuthDBImpl implements AuthDB
   checkState(trn);
 
 
-  ProfileForGroupACRBean acr = new ProfileForGroupACRBean();
+  ProfileForGroupACRWritable acr = AuthBeanFactory.getInstance().createProfileForGroupACRBean();
   
-  ProfileBean pb = getProfile(profileId);
+  PermissionProfileWritable pb = getProfile(profileId);
   
   if( pb == null )
    throw new ProfileNotFoundException(profileId);
   
-  GroupBean gb = getUserGroup(subjId);
+  UserGroupWritable gb = getUserGroup(subjId);
   
   if( gb == null )
    throw new GroupNotFoundException();
@@ -1842,14 +1889,14 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(trn);
 
-  PermissionForGroupACRBean acr = new PermissionForGroupACRBean();
+  PermissionForGroupACRWritable acr = AuthBeanFactory.getInstance().createPermissionForGroupACRBean();
   
-  GroupBean gb = getUserGroup(subjId);
+  UserGroupWritable gb = getUserGroup(subjId);
   
   if( gb == null )
    throw new GroupNotFoundException();
 
-  PermissionBean pb = new PermissionBean();
+  PermissionWritable pb = AuthBeanFactory.getInstance().createPermissionBean();
   pb.setAction(action);
   pb.setAllow(allow);
   
@@ -1865,14 +1912,14 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(trn);
 
-  ProfileForUserACRBean acr = new ProfileForUserACRBean();
+  ProfileForUserACRWritable acr = AuthBeanFactory.getInstance().createProfileForUserACRBean();
   
-  ProfileBean pb = getProfile(profileId);
+  PermissionProfileWritable pb = getProfile(profileId);
   
   if( pb == null )
    throw new ProfileNotFoundException(profileId);
   
-  UserBean gb = getUser(subjId);
+  UserWritable gb = getUser(subjId);
   
   if( gb == null )
    throw new UserNotFoundException(subjId);
@@ -1888,14 +1935,14 @@ public class SerializedAuthDBImpl implements AuthDB
  {
   checkState(trn);
 
-  PermissionForUserACRBean acr = new PermissionForUserACRBean();
+  PermissionForUserACRWritable acr = AuthBeanFactory.getInstance().createPermissionForUserACRBean();
   
-  UserBean gb = getUser(subjId);
+  UserWritable gb = getUser(subjId);
   
   if( gb == null )
    throw new UserNotFoundException(subjId);
 
-  PermissionBean pb = new PermissionBean();
+  PermissionWritable pb = AuthBeanFactory.getInstance().createPermissionBean();
   pb.setAction(action);
   pb.setAllow(allow);
   

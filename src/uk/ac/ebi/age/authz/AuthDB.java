@@ -20,16 +20,17 @@ public interface AuthDB extends TransactionalDB
  Permit checkSystemPermission(SystemAction act, User usr);
 
  User getUser( ReadLock lock, String id );
+ User getUserByEmail(ReadLock lck, String email);
  List< ? extends User> getUsers( ReadLock lock, int begin, int end);
  ListFragment<User> getUsers( ReadLock lock, String idPat, String namePat, int begin, int end);
 
  int getUsersTotal( ReadLock lock );
 
- void updateUser( Transaction trn, String userId, String userName) throws AuthDBException;
+ void updateUser( Transaction trn, String userId, String userName, String email) throws AuthDBException;
  void setUserPassword(Transaction trn, String userId, String userPass) throws AuthDBException;
  boolean checkUserPassword(ReadLock lck, String userId, String userPass) throws AuthDBException;
 
- void addUser( Transaction trn, String userId, String userName, String userPass) throws AuthDBException;
+ void addUser( Transaction trn, String userId, String userName, String email, String userPass) throws AuthDBException;
 
  void deleteUser( Transaction trn, String userId) throws AuthDBException;
 
@@ -120,4 +121,5 @@ public interface AuthDB extends TransactionalDB
  void addSysProfileForUserACR(Transaction trn, String subjId, String profileId) throws AuthDBException;
  void addSysActionForUserACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
  Collection< ? extends ACR> getSysACL(ReadLock rl) throws AuthDBException;
+
 }

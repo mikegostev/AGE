@@ -51,7 +51,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, SemanticModel sm)
+ public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, ContextSemanticModel sm)
  {
   return new AgeObjectImpl(id, ageClass, sm);
  }
@@ -84,7 +84,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
 
  @Override
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, SemanticModel sm)
+ public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, ContextSemanticModel sm)
  {
   AgeAttributeWritable attr=null;
   
@@ -123,63 +123,63 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, SemanticModel sm)
+ public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, ContextSemanticModel sm)
  {
-  throw new UnsupportedOperationException();
+  return new AgeExternalRelationImpl(targetClass, sourceObj, id, sm);
  }
  
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, SemanticModel sm)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, ContextSemanticModel sm)
  {
   return new AgeExternalObjectAttributeImpl(atCls, id, sm);
  }
 
  @Override
- public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel)
+ public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, ContextSemanticModel sm)
  {
   throw new UnsupportedOperationException();
  }
 
 
  @Override
- public AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, SemanticModel sm, AgeClass owner)
+ public AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, ContextSemanticModel sm, AgeClass owner)
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public AgeClassWritable createCustomAgeClass(String name, String pfx, SemanticModel sm)
+ public AgeClassWritable createCustomAgeClass(String name, String pfx, ContextSemanticModel sm)
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public AgeRelationClassWritable createCustomAgeRelationClass(String name, SemanticModel sm, AgeClass range, AgeClass owner)
+ public AgeRelationClassWritable createCustomAgeRelationClass(String name, ContextSemanticModel sm, AgeClass range, AgeClass owner)
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, ContextSemanticModel sm)
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public AgeClassPlug createAgeClassPlug(AgeClass cls, SemanticModel mdl)
+ public AgeClassPlug createAgeClassPlug(AgeClass cls, ContextSemanticModel sm)
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass relClass, SemanticModel mod)
+ public AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass relClass, ContextSemanticModel sm)
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass relClass, SemanticModel mod)
+ public AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass relClass, ContextSemanticModel sm)
  {
   throw new UnsupportedOperationException();
  }

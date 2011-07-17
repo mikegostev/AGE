@@ -9,23 +9,23 @@ import java.util.Map;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
-import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
-public abstract class AttributedObject extends AgeSemanticElementImpl implements AttributedWritable
+public abstract class AttributedObject extends AgeContextSemanticElementImpl implements AttributedWritable
 {
 
  private static final long serialVersionUID = 2L;
 
- private List<AgeAttributeWritable> attributes;
+ private List<AgeAttributeWritable> attributes = com.pri.util.collection.Collections.emptyList();
  
  private transient Map<AgeAttributeClass,List<AgeAttributeWritable>> attribMap; // = new HashMap<String,List<AgeAttributeWritable>>();
 
 // private transient List<AgeAttributeClass> atClasses = null;
 
  
- public AttributedObject(SemanticModel m)
+ public AttributedObject( ContextSemanticModel m)
  {
   super(m);
  }
@@ -83,7 +83,7 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
  @Override
  public synchronized void addAttribute(AgeAttributeWritable attr)
  {
-  if( attributes == null )
+  if( attributes.isEmpty() )
    attributes = new ArrayList<AgeAttributeWritable>(15);
   
   attributes.add(attr);
@@ -95,11 +95,12 @@ public abstract class AttributedObject extends AgeSemanticElementImpl implements
  @Override
  public synchronized void removeAttribute(AgeAttributeWritable attr)
  {
-  if( attributes == null )
-   return;
-  
   if( ! attributes.remove(attr) )
    return;
+  
+  if( attributes.isEmpty() )
+   attributes = com.pri.util.collection.Collections.emptyList();
+
   
   if( attribMap == null )
    return;

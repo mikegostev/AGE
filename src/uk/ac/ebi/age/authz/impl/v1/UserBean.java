@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.authz.impl;
+package uk.ac.ebi.age.authz.impl.v1;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -6,9 +6,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import uk.ac.ebi.age.authz.User;
+import uk.ac.ebi.age.authz.writable.UserGroupWritable;
+import uk.ac.ebi.age.authz.writable.UserWritable;
 import uk.ac.ebi.mg.collection.Named;
 
-public class UserBean implements User, Named<String>, Serializable
+public class UserBean implements Named<String>, Serializable, UserWritable
 {
 
  private static final long serialVersionUID = 1L;
@@ -16,49 +18,62 @@ public class UserBean implements User, Named<String>, Serializable
  private String id;
  private String name;
  private String pass;
- private Set<GroupBean> groups = new HashSet<GroupBean>();
+ private String email;
+ private Set<UserGroupWritable> groups = new HashSet<UserGroupWritable>();
 
+ UserBean()
+ {}
+ 
+ @Override
  public String getId()
  {
   return id;
  }
 
+ @Override
  public void setId(String id)
  {
   this.id = id;
  }
 
+ @Override
  public String getName()
  {
   return name;
  }
 
+ @Override
  public void setName(String name)
  {
   this.name = name;
  }
 
+ @Override
  public String getPass()
  {
   return pass;
  }
 
+ @Override
  public void setPass(String pass)
  {
   this.pass = pass;
  }
 
- public Collection<GroupBean> getGroups()
+ @Override
+ public Collection<UserGroupWritable> getGroups()
  {
   return groups;
  }
 
- public void addGroup( GroupBean grp )
+ @Override
+ public void addGroup( UserGroupWritable grp )
  {
   groups.add(grp);
  }
 
- public void removeGroup(GroupBean gb)
+ @Override
+ public void removeGroup(UserGroupWritable gb)
  {
   groups.remove(gb);
  }
@@ -67,6 +82,18 @@ public class UserBean implements User, Named<String>, Serializable
  public boolean isUserCompatible(User u)
  {
   return u == this;
+ }
+
+ @Override
+ public String getEmail()
+ {
+  return email;
+ }
+
+ @Override
+ public void setEmail(String email)
+ {
+  this.email = email;
  }
  
 

@@ -16,8 +16,8 @@ import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributedClass;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.IdScope;
-import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.impl.v1.AttributedObject;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -28,7 +28,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
 {
  private static final long serialVersionUID = 1L;
 
- private List<AgeRelationWritable> relations;
+ private List<AgeRelationWritable> relations = com.pri.util.collection.Collections.emptyList();
  
  private transient Map<AgeRelationClass, List<AgeRelationWritable>> relationMap;
  
@@ -37,11 +37,11 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  private String id;
  private IdScope idScope;
 
- private DataModuleWritable subm;
+ private DataModuleWritable module;
  
  private int order;
  
- public AgeObjectImpl(String id, AgeClass cls, SemanticModel sm)
+ public AgeObjectImpl(String id, AgeClass cls, ContextSemanticModel sm)
  {
   super(sm);
 
@@ -68,7 +68,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  public synchronized void addRelation(AgeRelationWritable rl)
  {
   
-  if( relations == null )
+  if( relations.isEmpty() )
    relations = new ArrayList<AgeRelationWritable>(5);
   
   relations.add(rl);
@@ -76,18 +76,23 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   if( relationMap != null )
    addRelToMap(rl);
   
-  if( subm != null && rl instanceof AgeExternalRelationWritable )
-   subm.registerExternalRelation((AgeExternalRelationWritable)rl);
+  if( rl instanceof AgeExternalRelationWritable )
+  {
+   if( module != null )
+    module.registerExternalRelation((AgeExternalRelationWritable)rl);
+
+   ((AgeExternalRelationWritable)rl).setSourceObject( this );
+  }
  }
  
  @Override
  public synchronized void removeRelation(AgeRelationWritable rel)
  {
-  if( relations == null )
-   return;
-  
   if( ! relations.remove(rel) )
    return;
+  
+  if( relations.isEmpty() )
+   relations = com.pri.util.collection.Collections.emptyList();
   
   if( relationMap == null )
    return;
@@ -111,11 +116,8 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   
   relationMap = new HashMap<AgeRelationClass, List<AgeRelationWritable>>();
   
-  if( relations != null )
-  {
    for( AgeRelationWritable attr : relations )
     addRelToMap(attr);
-  }
   
   return relationMap;
  }
@@ -240,13 +242,13 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  @Override
  public DataModuleWritable getDataModule()
  {
-  return subm;
+  return module;
  }
 
  @Override
  public void setDataModule(DataModuleWritable subm)
  {
-  this.subm = subm;
+  this.module = subm;
  }
 
 

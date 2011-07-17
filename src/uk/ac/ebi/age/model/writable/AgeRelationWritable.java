@@ -14,4 +14,5 @@ public interface AgeRelationWritable extends AgeRelation, AttributedWritable, Ag
  
  AgeRelationWritable getInverseRelation();
  void setInverseRelation( AgeRelationWritable invRl );
+
 }

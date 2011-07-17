@@ -51,7 +51,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, SemanticModel sm)
+ public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, ContextSemanticModel sm)
  {
   return new AgeObjectImpl(id, ageClass, sm);
  }
@@ -84,63 +84,63 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, SemanticModel sm)
+ public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, ContextSemanticModel sm)
  {
   return new AgeExternalRelationImpl(targetClass, sourceObj, id, sm);
  }
  
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, SemanticModel sm)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, ContextSemanticModel sm)
  {
   return new AgeExternalObjectAttributeImpl(atCls.getAttributeClass(), id, sm);
  }
 
  @Override
- public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel)
+ public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, ContextSemanticModel semanticModel)
  {
   return new AgeRelationImpl(targetObj, relClass, semanticModel);
  }
 
 
  @Override
- public AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, SemanticModel sm, AgeClass owner)
+ public AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, ContextSemanticModel sm, AgeClass owner)
  {
   return new CustomAgeAttributeClassImpl(name, type, sm, owner);
  }
 
  @Override
- public AgeClassWritable createCustomAgeClass(String name, String pfx, SemanticModel sm)
+ public AgeClassWritable createCustomAgeClass(String name, String pfx, ContextSemanticModel sm)
  {
   return new CustomAgeClassImpl(name, pfx, sm);
  }
 
  @Override
- public AgeRelationClassWritable createCustomAgeRelationClass(String name, SemanticModel sm, AgeClass range, AgeClass owner)
+ public AgeRelationClassWritable createCustomAgeRelationClass(String name, ContextSemanticModel sm, AgeClass range, AgeClass owner)
  {
   return new CustomAgeRelationClassImpl(name, sm, range, owner);
  }
 
  @Override
- public AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, ContextSemanticModel sm)
  {
   return new AgeAttributeClassPlugPluggable(attrClass, sm);
  }
 
  @Override
- public AgeClassPlug createAgeClassPlug(AgeClass cls, SemanticModel mdl)
+ public AgeClassPlug createAgeClassPlug(AgeClass cls, ContextSemanticModel mdl)
  {
   return new AgeClassPlugPluggable(cls, mdl);
  }
 
  @Override
- public AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass relClass, SemanticModel mod)
+ public AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass relClass, ContextSemanticModel mod)
  {
   return new AgeRelationClassPlugPluggable(relClass, mod);
  }
 
  @Override
- public AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass relClass, SemanticModel mod)
+ public AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass relClass, ContextSemanticModel mod)
  {
   return new AgeRelationInverseClassPlugPluggable(relClass, mod);
  }
@@ -170,7 +170,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, SemanticModel sm)
+ public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, ContextSemanticModel sm)
  {
   AgeAttributeWritable attr=null;
   

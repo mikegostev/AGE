@@ -1,8 +1,12 @@
 package uk.ac.ebi.age.model;
 
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
+import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
+import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
+import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
+import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 public interface ContextSemanticModel extends SemanticModel
@@ -23,5 +27,18 @@ public interface ContextSemanticModel extends SemanticModel
 
  SemanticModel getMasterModel();
  void setMasterModel(SemanticModel newModel);
+
+ AgeAttributeClassPlug getAgeAttributeClassPlug(AgeAttributeClass attrClass);
+ 
+ AgeClassPlug getAgeClassPlug(AgeClass cls);
+ 
+ AgeRelationClassPlug getAgeRelationClassPlug(AgeRelationClass relClass);
+
+ 
+ AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass);
+ AgeObjectWritable createAgeObject(String id, AgeClass cls);
+ AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String val, AgeRelationClass relClass);
+ AgeAttributeWritable createExternalObjectAttribute( AttributeClassRef atCls, String val );
+ AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass);
 
 }

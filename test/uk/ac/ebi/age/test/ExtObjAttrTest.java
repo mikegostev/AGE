@@ -33,22 +33,22 @@ public class ExtObjAttrTest
   
   DataModuleWritable dm = mod.getModelFactory().createDataModule(cMod);
   
-  AgeClassWritable cls = mod.createAgeClass("MyClass", "clsId", "MC", mod.getRootAgeClass());
+  AgeClassWritable cls = cMod.createAgeClass("MyClass", "clsId", "MC", mod.getRootAgeClass());
  
-  AgeAttributeClassWritable atClsS = mod.createAgeAttributeClass("MyText","MyText",DataType.STRING, mod.getRootAgeAttributeClass());
+  AgeAttributeClassWritable atClsS = cMod.createAgeAttributeClass("MyText","MyText",DataType.STRING, mod.getRootAgeAttributeClass());
   
-  AgeAttributeClassPlug cPlug = mod.getAgeAttributeClassPlug(atClsS);
-  AttributeClassRef classRefS = mod.getModelFactory().createAttributeClassRef(cPlug, 0,"MyText");
+  AgeAttributeClassPlug cPlug = cMod.getAgeAttributeClassPlug(atClsS);
+  AttributeClassRef classRefS = cMod.getModelFactory().createAttributeClassRef(cPlug, 0,"MyText");
 
   
-  AgeAttributeClassWritable atClsO = mod.createAgeAttributeClass("MyObj","MyObj",DataType.OBJECT, mod.getRootAgeAttributeClass());
+  AgeAttributeClassWritable atClsO = cMod.createAgeAttributeClass("MyObj","MyObj",DataType.OBJECT, mod.getRootAgeAttributeClass());
   
-  cPlug = mod.getAgeAttributeClassPlug(atClsO);
-  AttributeClassRef classRefO = mod.getModelFactory().createAttributeClassRef(cPlug, 0, "MyObj");
+  cPlug = cMod.getAgeAttributeClassPlug(atClsO);
+  AttributeClassRef classRefO = cMod.getModelFactory().createAttributeClassRef(cPlug, 0, "MyObj");
 
   for( int i=0; i<5; i++ )
   {
-   AgeObjectWritable obj = mod.createAgeObject("obj"+i, cls);
+   AgeObjectWritable obj = cMod.createAgeObject("obj"+i, cls);
    
    obj.createAgeAttribute(classRefS).setValue("Val");
    

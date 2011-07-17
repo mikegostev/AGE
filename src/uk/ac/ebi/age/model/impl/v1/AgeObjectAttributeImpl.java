@@ -4,8 +4,8 @@ import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeObjectAttribute;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.FormatException;
-import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectAttributeWritable;
 
@@ -15,7 +15,7 @@ class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjectAttrib
  
  private AgeObject value; 
 
- public AgeObjectAttributeImpl(AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeObjectAttributeImpl(AgeAttributeClass attrClass, ContextSemanticModel sm)
  {
   super(attrClass, sm);
  }

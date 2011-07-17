@@ -10,11 +10,11 @@ import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeAttachmentRule;
-import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.service.id.IdGenerator;
 
-class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRelationClassWritable
+class CustomAgeRelationClassImpl extends AgeContextSemanticElementImpl implements AgeRelationClassWritable
 {
  private static final long serialVersionUID = 1L;
  
@@ -27,12 +27,12 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
  
  private Collection<AgeRelationClass> superClasses;
 
- public CustomAgeRelationClassImpl(String name, SemanticModel sm, AgeClass range, AgeClass owner)
+ public CustomAgeRelationClassImpl(String name, ContextSemanticModel sm, AgeClass range, AgeClass owner)
  {
   this( name, sm, range, owner, null);
  }
 
- private CustomAgeRelationClassImpl(String name, SemanticModel sm, AgeClass range, AgeClass owner, CustomAgeRelationClassImpl inv)
+ private CustomAgeRelationClassImpl(String name, ContextSemanticModel sm, AgeClass range, AgeClass owner, CustomAgeRelationClassImpl inv)
  {
   super(sm);
   

@@ -55,7 +55,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, SemanticModel sm)
+ public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, ContextSemanticModel sm)
  {
   return v2factory.createAgeObject(id, ageClass, sm);
  }
@@ -87,72 +87,72 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
 
  @Override
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, SemanticModel sm)
+ public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, ContextSemanticModel sm)
  {
   return v2factory.createAgeAttribute(attrClass, sm);
  }
 
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, SemanticModel sm)
+ public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, ContextSemanticModel sm)
  {
-  return v1factory. createExternalRelation( sourceObj, id, targetClass, sm);
+  return v2factory.createExternalRelation( sourceObj, id, targetClass, sm);
  }
  
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, SemanticModel sm)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, ContextSemanticModel sm)
  {
   return v2factory.createExternalObjectAttribute(atCls, id, sm);
  }
 
  @Override
- public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel)
+ public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, ContextSemanticModel sm)
  {
-  return v1factory.createRelation(targetObj, relClass, semanticModel);
+  return v1factory.createRelation(targetObj, relClass, sm);
  }
 
 
  @Override
- public AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, SemanticModel sm, AgeClass owner)
+ public AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, ContextSemanticModel sm, AgeClass owner)
  {
   return v1factory.createCustomAgeAttributeClass(name, type, sm, owner);
  }
 
  @Override
- public AgeClassWritable createCustomAgeClass(String name, String pfx, SemanticModel sm)
+ public AgeClassWritable createCustomAgeClass(String name, String pfx, ContextSemanticModel sm)
  {
   return v1factory.createCustomAgeClass(name, pfx, sm);
  }
 
  @Override
- public AgeRelationClassWritable createCustomAgeRelationClass(String name, SemanticModel sm, AgeClass range, AgeClass owner)
+ public AgeRelationClassWritable createCustomAgeRelationClass(String name, ContextSemanticModel sm, AgeClass range, AgeClass owner)
  {
   return v1factory.createCustomAgeRelationClass(name, sm, range, owner);
  }
 
  @Override
- public AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, ContextSemanticModel sm)
  {
   return v1factory.createAgeAttributeClassPlug(attrClass, sm);
  }
 
  @Override
- public AgeClassPlug createAgeClassPlug(AgeClass cls, SemanticModel mdl)
+ public AgeClassPlug createAgeClassPlug(AgeClass cls, ContextSemanticModel sm)
  {
-  return v1factory.createAgeClassPlug(cls, mdl);
+  return v1factory.createAgeClassPlug(cls, sm);
  }
 
  @Override
- public AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass relClass, SemanticModel mod)
+ public AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass relClass, ContextSemanticModel sm)
  {
-  return v1factory.createAgeRelationClassPlug(relClass, mod);
+  return v1factory.createAgeRelationClassPlug(relClass, sm);
  }
 
  @Override
- public AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass relClass, SemanticModel mod)
+ public AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass relClass, ContextSemanticModel sm)
  {
-  return v1factory.createAgeRelationInverseClassPlug(relClass, mod);
+  return v1factory.createAgeRelationInverseClassPlug(relClass, sm);
  }
 
  @Override

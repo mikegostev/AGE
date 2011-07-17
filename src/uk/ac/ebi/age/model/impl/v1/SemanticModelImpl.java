@@ -9,13 +9,9 @@ import java.util.TreeMap;
 import uk.ac.ebi.age.model.AgeAnnotation;
 import uk.ac.ebi.age.model.AgeAnnotationClass;
 import uk.ac.ebi.age.model.AgeAttributeClass;
-import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
-import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeRelationClass;
-import uk.ac.ebi.age.model.AgeRelationClassPlug;
-import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.RestrictionType;
@@ -23,12 +19,8 @@ import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAnnotationWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
-import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
-import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
-import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
-import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
@@ -119,12 +111,6 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  }
 
 
- @Override
- public AgeObjectWritable createAgeObject(String id, AgeClass cls)
- {
-  return getModelFactory().createAgeObject(id, cls, this);
- }
-
  public AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type, AgeAttributeClass parent)
  {
   if( id == null )
@@ -203,20 +189,6 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  }
 
 
-// @Override
-// public AgeAttributeWritable createAgeAttribute( AgeAttributeClass attrClass )
-// {
-//  AttributeClassRef ref = modelFactory.createAttributeClassRef( getAgeAttributeClassPlug(attrClass), 0, attrClass.getName());
-//  
-//  return modelFactory.createAgeAttribute(ref, this);
-// }
- 
- @Override
- public AgeAttributeWritable createAgeAttribute( AttributeClassRef attrClass)
- {
-  return modelFactory.createAgeAttribute(attrClass, this);
- }
-
  
  @Override
  public AttributeAttachmentRuleWritable createAttributeAttachmentRule(RestrictionType type)
@@ -238,25 +210,10 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass)
+ public AgeRelationClass getDefinedAgeRelationClass(String name)
  {
-  return modelFactory.createExternalRelation(sourceObj, id, targetClass,  this);
+  return relationMap.get(name);
  }
-
- @Override
- public AgeAttributeWritable createExternalObjectAttribute( AttributeClassRef atCls, String id )
- {
-  return modelFactory.createExternalObjectAttribute( atCls, id, this );
- }
-
-
-
- 
- public AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass)
- {
-  return modelFactory.createRelation(targetObj, relClass, this);
- }
-
 
 // public AgeRelationClass getAttributeAttachmentClass()
 // {
@@ -273,12 +230,6 @@ public class SemanticModelImpl implements SemanticModel, Serializable
   return getDefinedAgeRelationClass(relClassName);
  }
 
- public AgeRelationClass getDefinedAgeRelationClass(String name)
- {
-  return relationMap.get(name);
- }
-
-
 
  public AgeAttributeClass getAgeAttributeClass(String attClsName)
  {
@@ -287,6 +238,7 @@ public class SemanticModelImpl implements SemanticModel, Serializable
 
 
 
+ @Override
  public AgeAttributeClass getDefinedAgeAttributeClass(String attClsName)
  {
   return attributeMap.get(attClsName);
@@ -310,11 +262,6 @@ public class SemanticModelImpl implements SemanticModel, Serializable
   relationIdMap.put(cls.getId(), cls);
  }
 
- @Override
- public AgeClassPlug getAgeClassPlug(AgeClass attrClass)
- {
-  return modelFactory.createAgeClassPlug(attrClass, this);
- }
 
  @Override
  public AgeClass getDefinedAgeClassById(String classId)
@@ -322,11 +269,6 @@ public class SemanticModelImpl implements SemanticModel, Serializable
   return classIdMap.get(classId);
  }
 
- @Override
- public AgeRelationClassPlug getAgeRelationClassPlug(AgeRelationClass attrClass)
- {
-  return modelFactory.createAgeRelationClassPlug(attrClass, this);
- }
 
  @Override
  public AgeRelationClass getDefinedAgeRelationClassById(String classId)
@@ -334,11 +276,6 @@ public class SemanticModelImpl implements SemanticModel, Serializable
   return relationIdMap.get(classId);
  }
 
- @Override
- public AgeAttributeClassPlug getAgeAttributeClassPlug(AgeAttributeClass attrClass)
- {
-  return modelFactory.createAgeAttributeClassPlug(attrClass, this);
- }
 
  @Override
  public AgeAttributeClass getDefinedAgeAttributeClassById(String classId)
@@ -400,37 +337,6 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  {
   idGen = id;
  }
- 
-// public void setRootAgeClass( AgeClass cls )
-// {
-//  classRoot = cls;
-//  
-//  classMap.put(cls.getName(), cls);
-//  classIdMap.put(cls.getId(), cls);
-// }
-//
-// public void setRootAgeAttributeClass( AgeAttributeClass cls )
-// {
-//  attrClassRoot = cls;
-//  
-//  attributeMap.put(cls.getName(), cls);
-//  attributeIdMap.put(cls.getId(), cls);
-// }
-//
-// public void setRootAgeRelationClass( AgeRelationClass cls )
-// {
-//  relationRoot = cls;
-//  
-//  relationMap.put(cls.getName(), cls);
-//  relationIdMap.put(cls.getId(), cls);
-// }
-//
-// public void setRootAgeAnnotationClass( AgeAnnotationClass cls )
-// {
-//  annotationRoot = cls;
-//  
-//  annotationMap.put(cls.getName(), cls);
-//  annotationIdMap.put(cls.getId(), cls);
-// }
+
 
 }

@@ -2,12 +2,20 @@ package uk.ac.ebi.age.authz;
 
 import java.util.Collection;
 
-public interface UserGroup extends Subject
-{
+import uk.ac.ebi.age.authz.writable.UserWritable;
+import uk.ac.ebi.mg.collection.Named;
 
+public interface UserGroup extends Subject, Named<String>
+{
  String getId();
  String getDescription();
 
- public Collection<? extends User> getUsers();
- public Collection< ? extends UserGroup> getGroups();
+ Collection<? extends User> getUsers();
+ Collection< ? extends UserGroup> getGroups();
+ 
+ boolean isPartOf(UserGroup pb);
+
+ UserWritable getUser(String userId);
+ UserGroup getGroup(String partId);
+
 }

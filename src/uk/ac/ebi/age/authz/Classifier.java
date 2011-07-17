@@ -2,7 +2,9 @@ package uk.ac.ebi.age.authz;
 
 import java.util.Collection;
 
-public interface Classifier
+import uk.ac.ebi.mg.collection.Named;
+
+public interface Classifier extends Named<String>
 {
 
  String getId();

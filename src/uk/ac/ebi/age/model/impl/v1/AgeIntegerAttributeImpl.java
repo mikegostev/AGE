@@ -2,8 +2,8 @@ package uk.ac.ebi.age.model.impl.v1;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.FormatException;
-import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 
 
@@ -13,7 +13,7 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
 
  private int value; 
 
- public AgeIntegerAttributeImpl(AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeIntegerAttributeImpl(AgeAttributeClass attrClass, ContextSemanticModel sm)
  {
   super(attrClass, sm);
  }

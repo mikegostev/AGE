@@ -7,12 +7,14 @@ import java.util.Collection;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
+import uk.ac.ebi.age.model.AgeContextSemanticElement;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.service.id.IdGenerator;
 
-class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAttributeClassWritable, Serializable
+class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeContextSemanticElement, AgeAttributeClassWritable, Serializable
 {
  private static final long serialVersionUID = 1L;
  
@@ -141,6 +143,24 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
  public AgeClass getTargetClass()
  {
   return targetClass;
+ }
+
+ @Override
+ public ContextSemanticModel getSemanticModel()
+ {
+  return (ContextSemanticModel)super.getSemanticModel();
+ }
+ 
+ @Override
+ public void setSemanticModel( ContextSemanticModel m )
+ {
+  super.setSemanticModel(m);
+ }
+
+ @Override
+ public void setSemanticModel( SemanticModel m )
+ {
+  throw new UnsupportedOperationException();
  }
 
 }

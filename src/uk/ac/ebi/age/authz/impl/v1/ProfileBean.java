@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.authz.impl;
+package uk.ac.ebi.age.authz.impl.v1;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -6,12 +6,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import uk.ac.ebi.age.authz.ACR.Permit;
+import uk.ac.ebi.age.authz.writable.PermissionProfileWritable;
+import uk.ac.ebi.age.authz.writable.PermissionWritable;
 import uk.ac.ebi.age.authz.Permission;
 import uk.ac.ebi.age.authz.PermissionProfile;
 import uk.ac.ebi.age.ext.authz.SystemAction;
-import uk.ac.ebi.mg.collection.Named;
 
-public class ProfileBean implements PermissionProfile, Named<String>, Serializable
+public class ProfileBean implements Serializable, PermissionProfileWritable
 {
 
  private static final long serialVersionUID = 1L;
@@ -19,15 +20,19 @@ public class ProfileBean implements PermissionProfile, Named<String>, Serializab
 
  private String id;
  private String description;
- private Collection<PermissionBean> permissions = new HashSet<PermissionBean>();
- private Set<ProfileBean> profiles = new HashSet<ProfileBean>();
+ private Collection<PermissionWritable> permissions = new HashSet<PermissionWritable>();
+ private Set<PermissionProfileWritable> profiles = new HashSet<PermissionProfileWritable>();
 
+ ProfileBean()
+ {}
+ 
  @Override
  public String getId()
  {
   return id;
  }
 
+ @Override
  public void setId(String id)
  {
   this.id = id;
@@ -39,28 +44,32 @@ public class ProfileBean implements PermissionProfile, Named<String>, Serializab
   return description;
  }
 
+ @Override
  public void setDescription(String description)
  {
   this.description = description;
  }
 
  @Override
- public Collection<PermissionBean> getPermissions()
+ public Collection<PermissionWritable> getPermissions()
  {
   return permissions;
  }
 
+ @Override
  public void removePermission(Permission perm)
  {
   permissions.remove(perm);
  }
  
- public void addPermission(PermissionBean perm)
+ @Override
+ public void addPermission(PermissionWritable perm)
  {
   permissions.add(perm);
  }
 
- public void addProfile(ProfileBean npb)
+ @Override
+ public void addProfile(PermissionProfileWritable npb)
  {
   profiles.add(npb);
  }
@@ -70,11 +79,13 @@ public class ProfileBean implements PermissionProfile, Named<String>, Serializab
   return profiles;
  }
 
+ @Override
  public void removeProfile(PermissionProfile p)
  {
   profiles.remove(p);
  }
 
+ @Override
  public boolean isPartOf(PermissionProfile pb)
  {
   if( pb.getProfiles() == null )
@@ -108,7 +119,7 @@ public class ProfileBean implements PermissionProfile, Named<String>, Serializab
    }
   }
    
-  for( ProfileBean pp : profiles )
+  for( PermissionProfileWritable pp : profiles )
   {
    Permit r = pp.checkPermission(act);
    

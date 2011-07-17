@@ -6,7 +6,7 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
-import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 
 abstract class AgeAttributeImpl extends AttributedObject implements AgeAttributeWritable, Serializable
@@ -28,7 +28,7 @@ abstract class AgeAttributeImpl extends AttributedObject implements AgeAttribute
   return new _ClassRef();
  }
  
- public AgeAttributeImpl(AgeAttributeClass attrClass, SemanticModel sm)
+ public AgeAttributeImpl(AgeAttributeClass attrClass, ContextSemanticModel sm)
  {
   super(sm);
   

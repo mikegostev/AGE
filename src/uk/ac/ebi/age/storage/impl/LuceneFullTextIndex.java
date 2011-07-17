@@ -208,8 +208,15 @@ public class LuceneFullTextIndex implements TextIndex
    {
     Document doc = new Document();
     
+//    System.out.println("---Index rec--");
     for(TextFieldExtractor tfe : extractors )
-     doc.add(new Field(tfe.getName(), tfe.getExtractor().getValue(ao), Field.Store.NO, Field.Index.ANALYZED));
+    {
+     String name = tfe.getName();
+     String val = tfe.getExtractor().getValue(ao);
+     
+     doc.add(new Field(name, val, Field.Store.NO, Field.Index.ANALYZED));
+//     System.out.println(name+" = "+val);
+    }
     
     iWriter.addDocument(doc);
    }

@@ -151,17 +151,19 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return cls;
  }
 
+
+ 
  @Override
  public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String val, AgeRelationClass targetClass )
  {
-  return masterModel.createExternalRelation(sourceObj, val, targetClass);
+  return masterModel.getModelFactory().createExternalRelation(sourceObj, val, targetClass, this);
  }
 
 
  @Override
  public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String val)
  {
-  return masterModel.createExternalObjectAttribute(atCls, val);
+  return masterModel.getModelFactory().createExternalObjectAttribute(atCls, val, this);
  }
 
 // public AgeRelationClass createRelationClass(String name, AgeClass cls, AgeClass rangeCls)

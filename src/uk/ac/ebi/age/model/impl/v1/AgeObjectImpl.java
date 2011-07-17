@@ -16,8 +16,8 @@ import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributedClass;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.IdScope;
-import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
@@ -40,7 +40,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  
  private int order;
  
- public AgeObjectImpl(String id, AgeClass cls, SemanticModel sm)
+ public AgeObjectImpl(String id, AgeClass cls, ContextSemanticModel sm)
  {
   super(sm);
 

@@ -174,11 +174,9 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  {
   atbObj.reset();
   
-  if( atbObj.getAttributes() != null )
-  {
-   for(AttributedWritable atw : atbObj.getAttributes() )
-    resetAttributedObject(atw);
-  }
+
+  for(AttributedWritable atw : atbObj.getAttributes() )
+   resetAttributedObject(atw);
  }
 
  public String getClusterId()

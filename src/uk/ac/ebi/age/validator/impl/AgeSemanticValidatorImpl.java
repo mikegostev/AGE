@@ -167,13 +167,13 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     
     for( AgeRelation r : auxRels )
     {
-     if( r.getAgeElClass().isClassOrSubclass(rlCls) || ! remRels.contains( r ) )
+     if( r.getAgeElClass().isClassOrSubclass(rlCls) || remRels == null || ! remRels.contains( r ) )
       byClassRels.add(r);
     }
  
     for( AgeRelation r : rels )
     {
-     if( ! remRels.contains( r ) )
+     if( remRels == null || ! remRels.contains( r ) )
       byClassRels.add(r);
     }
 

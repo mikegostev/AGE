@@ -2,8 +2,8 @@ package uk.ac.ebi.age.model.impl.v2;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AttributeClassRef;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.FormatException;
-import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 
 class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttributeWritable
@@ -13,7 +13,7 @@ class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttributeWrita
 
  private double value; 
 
- public AgeRealAttributeImpl(AttributeClassRef attrClass, SemanticModel sm)
+ public AgeRealAttributeImpl(AttributeClassRef attrClass, ContextSemanticModel sm)
  {
   super(attrClass, sm);
  }

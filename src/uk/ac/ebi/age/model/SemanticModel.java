@@ -5,12 +5,8 @@ import java.util.Collection;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAnnotationWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
-import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
-import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
-import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
-import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
@@ -34,13 +30,8 @@ public interface SemanticModel
  AgeRelationClassWritable createAgeRelationClass(String name, String id, AgeRelationClass parent);
  AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id, AgeAnnotationClass parent);
  
- AgeObjectWritable createAgeObject(String id, AgeClass cls);
  AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls);
 // AgeAttributeWritable createAgeAttribute(AgeAttributeClass attr);
- AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass);
- AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String val, AgeRelationClass relClass);
- AgeAttributeWritable createExternalObjectAttribute( AttributeClassRef atCls, String val );
- AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass);
 
 
  AttributeAttachmentRuleWritable createAttributeAttachmentRule(RestrictionType type);
@@ -65,11 +56,11 @@ public interface SemanticModel
  ModelFactory getModelFactory();
 
  
- AgeAttributeClassPlug getAgeAttributeClassPlug(AgeAttributeClass attrClass);
-
- AgeClassPlug getAgeClassPlug(AgeClass cls);
-
- AgeRelationClassPlug getAgeRelationClassPlug(AgeRelationClass relClass);
+// AgeAttributeClassPlug getAgeAttributeClassPlug(AgeAttributeClass attrClass);
+//
+// AgeClassPlug getAgeClassPlug(AgeClass cls);
+//
+// AgeRelationClassPlug getAgeRelationClassPlug(AgeRelationClass relClass);
 
  Collection< ? extends AgeClass> getAgeClasses();
  

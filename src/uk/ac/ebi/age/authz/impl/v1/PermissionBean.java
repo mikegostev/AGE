@@ -1,12 +1,12 @@
-package uk.ac.ebi.age.authz.impl;
+package uk.ac.ebi.age.authz.impl.v1;
 
 import java.io.Serializable;
 
 import uk.ac.ebi.age.authz.ACR.Permit;
-import uk.ac.ebi.age.authz.Permission;
+import uk.ac.ebi.age.authz.writable.PermissionWritable;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 
-public class PermissionBean implements Permission, Serializable
+public class PermissionBean implements Serializable, PermissionWritable
 {
 
  private static final long serialVersionUID = 1L;
@@ -15,7 +15,8 @@ public class PermissionBean implements Permission, Serializable
  private SystemAction action;
  private boolean allow;
  
-
+ PermissionBean()
+ {}
 
  @Override
  public String getDescription()
@@ -24,6 +25,7 @@ public class PermissionBean implements Permission, Serializable
  }
 
 
+ @Override
  public SystemAction getAction()
  {
   return action;
@@ -31,6 +33,7 @@ public class PermissionBean implements Permission, Serializable
 
 
 
+ @Override
  public void setAction(SystemAction action)
  {
   this.action = action;
@@ -38,6 +41,7 @@ public class PermissionBean implements Permission, Serializable
 
 
 
+ @Override
  public boolean isAllow()
  {
   return allow;
@@ -45,6 +49,7 @@ public class PermissionBean implements Permission, Serializable
 
 
 
+ @Override
  public void setAllow(boolean allow)
  {
   this.allow = allow;

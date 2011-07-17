@@ -207,8 +207,12 @@ public class SerializedStorage implements AgeStorageAdm
    for(AgeObject nd : trv)
     res.add(nd);
 
+   ArrayList<AgeObject> indList = new ArrayList<AgeObject>( res.size() );
+   
+   indList.addAll(res);
+   
    if(res.size() > 0)
-    idx.index(res);
+    idx.index(indList);
   }
  }
  
@@ -477,7 +481,7 @@ public class SerializedStorage implements AgeStorageAdm
       
       AgeRelationClass invRCls = exr.getAgeElClass().getInverseRelationClass();
       
-      if( invRCls == null )
+      if( invRCls == null ) //it should not be as implicit class must be generated if there is no explicit one
        continue;
       
       boolean hasInv = false;
@@ -515,7 +519,7 @@ public class SerializedStorage implements AgeStorageAdm
       {
 //       AgeRelationWritable iRel = tgObj.getAgeElClass().getSemanticModel().createAgeRelation(tgObj, invRCls);
        
-       AgeExternalRelationWritable invRel = tgObj.getAgeElClass().getSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
+       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
        invRel.setTargetObject(exr.getSourceObject());
 
        invRel.setInferred(true);

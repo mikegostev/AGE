@@ -5,7 +5,7 @@ import java.io.Serializable;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributedClass;
-import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
@@ -19,7 +19,7 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  private int order;
  private boolean inferred=false;
  
- public AgeRelationImpl(AgeObjectWritable targetObj, AgeRelationClass relClass, SemanticModel semanticModel)
+ public AgeRelationImpl(AgeObjectWritable targetObj, AgeRelationClass relClass, ContextSemanticModel semanticModel)
  {
   super(semanticModel);
   relClassPlug= semanticModel.getAgeRelationClassPlug(relClass);

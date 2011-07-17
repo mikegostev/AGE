@@ -5,7 +5,7 @@ import java.io.Serializable;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributedClass;
-import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
@@ -18,11 +18,11 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  private String objId;
  private int order;
  private AgeObjectWritable sourceObject;
- AgeExternalRelationWritable invRelation;
+ private AgeExternalRelationWritable invRelation;
  private transient AgeObjectWritable target;
  private boolean infered;
 
- public AgeExternalRelationImpl(AgeRelationClass relClass, AgeObjectWritable srcOb, String id, SemanticModel sm)
+ public AgeExternalRelationImpl(AgeRelationClass relClass, AgeObjectWritable srcOb, String id, ContextSemanticModel sm)
  {
   super(sm);
   
@@ -122,6 +122,12 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  public void setInverseRelation(AgeExternalRelationWritable invr)
  {
   invRelation=invr;
+ }
+
+ @Override
+ public void setSourceObject(AgeObjectWritable ageObject)
+ {
+  sourceObject=ageObject;
  }
 }
 

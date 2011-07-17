@@ -160,9 +160,12 @@ public class H2SubmissionDB extends SubmissionDB
   {
    stmt.executeUpdate("CALL FTL_CREATE_INDEX('"+submissionDB+"', '"+submissionTable+"', 'FT_DESC')");
   }
-  catch (Exception e)
+  catch (SQLException e)
   {
-   e.printStackTrace();
+   System.out.println( e.getErrorCode() );
+   
+   if( e.getErrorCode() != 23001 )
+    e.printStackTrace();
   }
   
   stmt.close();
