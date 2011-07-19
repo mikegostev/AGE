@@ -2,25 +2,24 @@ package uk.ac.ebi.age.storage;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
+import java.util.Comparator;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.query.AgeQuery;
-import uk.ac.ebi.age.storage.index.AgeIndex;
+import uk.ac.ebi.age.storage.index.KeyExtractor;
+import uk.ac.ebi.age.storage.index.SortedTextIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
+import uk.ac.ebi.age.storage.index.TextIndex;
 
 public interface AgeStorage
 {
  Collection<AgeObject> executeQuery( AgeQuery qury );
  
- List<AgeObject> queryTextIndex(AgeIndex idx, String query);
- int queryTextIndexCount(AgeIndex idx, String query);
+// List<AgeObject> queryTextIndex(IndexID idx, String query);
+// int queryTextIndexCount(IndexID idx, String query);
  
-// AgeIndex createTextIndex(AgeQuery qury, TextValueExtractor cb );
- AgeIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> cb );
-
  SemanticModel getSemanticModel();
  
  void shutdown();
@@ -44,5 +43,8 @@ public interface AgeStorage
  Collection<? extends DataModule> getDataModules();
 
  boolean isFileIdGlobal(String fileID);
+
+ TextIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> cb );
+ public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator);
 
 }

@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,17 +40,20 @@ import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.storage.DataChangeListener;
 import uk.ac.ebi.age.storage.DataModuleReaderWriter;
-import uk.ac.ebi.age.storage.IndexFactory;
 import uk.ac.ebi.age.storage.RelationResolveException;
-import uk.ac.ebi.age.storage.TextIndex;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
 import uk.ac.ebi.age.storage.exeption.ModelStoreException;
 import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
-import uk.ac.ebi.age.storage.impl.AgeStorageIndex;
 import uk.ac.ebi.age.storage.impl.SerializedDataModuleReaderWriter;
-import uk.ac.ebi.age.storage.index.AgeIndex;
+import uk.ac.ebi.age.storage.index.AgeIndexWritable;
+import uk.ac.ebi.age.storage.index.IndexFactory;
+import uk.ac.ebi.age.storage.index.KeyExtractor;
+import uk.ac.ebi.age.storage.index.SortedTextIndex;
+import uk.ac.ebi.age.storage.index.SortedTextIndexWritable;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
+import uk.ac.ebi.age.storage.index.TextIndex;
+import uk.ac.ebi.age.storage.index.TextIndexWritable;
 import uk.ac.ebi.age.util.FileUtil;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
@@ -88,7 +92,7 @@ public class SerializedStorage implements AgeStorageAdm
  
  private Map<String, DataModuleWritable> moduleMap = new TreeMap<String, DataModuleWritable>();
 
- private Map<AgeIndex,AgeStorageIndex> indexMap = new HashMap<AgeIndex,AgeStorageIndex>();
+ private List<AgeIndexWritable> indexList = new ArrayList<AgeIndexWritable>();
 
  private SemanticModel model;
  
@@ -152,11 +156,9 @@ public class SerializedStorage implements AgeStorageAdm
  }
 
  
- public AgeIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts)
+ public TextIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts)
  {
-  AgeIndex idx = new AgeIndex();
-
-  TextIndex ti = IndexFactory.getInstance().createFullTextIndex(qury,exts);
+  TextIndexWritable ti = IndexFactory.getInstance().createFullTextIndex(qury,exts);
 
   try
   {
@@ -164,9 +166,30 @@ public class SerializedStorage implements AgeStorageAdm
 
    ti.index(executeQuery(qury) );
 
-   indexMap.put(idx, ti);
+   indexList.add(ti);
 
-   return idx;
+   return ti;
+  }
+  finally
+  {
+   dbLock.readLock().unlock();
+  }
+
+ }
+ 
+ public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator)
+ {
+  SortedTextIndexWritable<KeyT> ti = IndexFactory.getInstance().createSortedFullTextIndex(qury,exts,keyExtractor, comparator);
+
+  try
+  {
+   dbLock.readLock().lock();
+
+   ti.index(executeQuery(qury) );
+
+   indexList.add(ti);
+
+   return ti;
   }
   finally
   {
@@ -179,9 +202,8 @@ public class SerializedStorage implements AgeStorageAdm
  {
   ArrayList<AgeObject> res = new ArrayList<AgeObject>();
 
-  for( Map.Entry<AgeIndex, AgeStorageIndex> me : indexMap.entrySet() )
+  for( AgeIndexWritable idx : indexList )
   {
-   AgeStorageIndex idx = me.getValue();
    
    if( ! fullreset )
    {
@@ -207,12 +229,9 @@ public class SerializedStorage implements AgeStorageAdm
    for(AgeObject nd : trv)
     res.add(nd);
 
-   ArrayList<AgeObject> indList = new ArrayList<AgeObject>( res.size() );
-   
-   indList.addAll(res);
    
    if(res.size() > 0)
-    idx.index(indList);
+    idx.index(res);
   }
  }
  
@@ -244,19 +263,19 @@ public class SerializedStorage implements AgeStorageAdm
   return new InMemoryQueryProcessor(query,sbms);
  }
 
- public List<AgeObject> queryTextIndex(AgeIndex idx, String query)
- {
-  TextIndex ti = (TextIndex)indexMap.get(idx);
-  
-  return ti.select(query);
- }
- 
- public int queryTextIndexCount(AgeIndex idx, String query)
- {
-  TextIndex ti = (TextIndex)indexMap.get(idx);
-  
-  return ti.count(query);
- }
+// public List<AgeObject> queryTextIndex(IndexID idx, String query)
+// {
+//  TextIndex ti = (TextIndex)indexList.get(idx);
+//  
+//  return ti.select(query);
+// }
+// 
+// public int queryTextIndexCount(IndexID idx, String query)
+// {
+//  TextIndex ti = (TextIndex)indexList.get(idx);
+//  
+//  return ti.count(query);
+// }
 
  @Override
  public void update( Collection<DataModuleWritable> mods2Ins, Collection<String> mods2Del ) throws RelationResolveException, ModuleStoreException

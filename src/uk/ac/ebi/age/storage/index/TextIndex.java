@@ -1,13 +1,14 @@
-package uk.ac.ebi.age.storage;
+package uk.ac.ebi.age.storage.index;
 
 import java.util.List;
 
 import uk.ac.ebi.age.model.AgeObject;
-import uk.ac.ebi.age.storage.impl.AgeStorageIndex;
 
-public interface TextIndex extends AgeStorageIndex
+public interface TextIndex extends AgeIndex
 {
  List<AgeObject> select(String query);
 
  int count(String query);
+
+
 }

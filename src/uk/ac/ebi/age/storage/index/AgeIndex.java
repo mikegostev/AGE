@@ -1,13 +1,10 @@
 package uk.ac.ebi.age.storage.index;
 
+import java.util.List;
 
-public class AgeIndex
+import uk.ac.ebi.age.model.AgeObject;
+
+public interface AgeIndex
 {
-
- public interface TextFieldExtractor
- {
-  String getName();
-  TextValueExtractor getExtractor();
- }
-
+ List<? extends AgeObject> getObjectList();
 }

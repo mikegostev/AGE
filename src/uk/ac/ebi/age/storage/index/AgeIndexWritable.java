@@ -1,11 +1,11 @@
-package uk.ac.ebi.age.storage.impl;
+package uk.ac.ebi.age.storage.index;
 
 import java.util.List;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.query.AgeQuery;
 
-public interface AgeStorageIndex
+public interface AgeIndexWritable extends AgeIndex
 {
 
  AgeQuery getQuery();
@@ -13,5 +13,5 @@ public interface AgeStorageIndex
  void index(List<AgeObject> res);
 
  void reset();
-
+ 
 }

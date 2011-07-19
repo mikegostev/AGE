@@ -24,10 +24,10 @@ import org.apache.lucene.util.Version;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.query.AgeQuery;
-import uk.ac.ebi.age.storage.TextIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
+import uk.ac.ebi.age.storage.index.TextIndexWritable;
 
-public class LuceneFullTextIndex implements TextIndex
+public class LuceneFullTextIndex implements TextIndexWritable
 {
 // private static final String AGEOBJECTFIELD="AgeObject";
  private String defaultFieldName;
@@ -85,10 +85,6 @@ public class LuceneFullTextIndex implements TextIndex
 //  }
 // }
  
- public List<AgeObject> getIndexedObjects()
- {
-  return objectList;
- }
  
  public int count(String query)
  {
@@ -194,16 +190,31 @@ public class LuceneFullTextIndex implements TextIndex
  @Override
  public void index(List<AgeObject> aol)
  {
+  ArrayList<AgeObject> naol = null;
+
+
+  if( objectList != null )
+  {
+   naol = new ArrayList<AgeObject>( aol.size() + objectList.size() );
+   naol.addAll(objectList);
+  }
+  else 
+   naol = new ArrayList<AgeObject>( aol.size());
+  
+  naol.addAll(aol);
+  
+  indexList( naol );
+ }
+ 
+ protected void indexList(List<AgeObject> aol)
+ {
   try
   {
    IndexWriter iWriter = new IndexWriter(index, analyzer, objectList == null,
      IndexWriter.MaxFieldLength.UNLIMITED);
 
-   if( objectList == null )
-    objectList=aol;
-   else
-    objectList.addAll(aol);
-   
+   objectList=aol;
+
    for(AgeObject ao : aol )
    {
     Document doc = new Document();
@@ -297,6 +308,12 @@ public class LuceneFullTextIndex implements TextIndex
   {
    return count;
   }
+ }
+
+ @Override
+ public List<AgeObject> getObjectList()
+ {
+  return objectList;
  }
 
 }
