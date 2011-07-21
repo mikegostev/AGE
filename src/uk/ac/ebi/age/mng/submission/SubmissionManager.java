@@ -148,9 +148,14 @@ public class SubmissionManager
   converter= new AgeTab2AgeConverterImpl(permissionManager);
  }
 
- 
  @SuppressWarnings("unchecked")
  public boolean storeSubmission( SubmissionMeta sMeta,  String updateDescr, LogNode logRoot )
+ {
+  return storeSubmission( sMeta,  updateDescr, logRoot, false );
+ }
+
+ @SuppressWarnings("unchecked")
+ public boolean storeSubmission( SubmissionMeta sMeta,  String updateDescr, LogNode logRoot, boolean verifyOnly )
  {
   
   SubmissionMeta origSbm = null;
@@ -763,6 +768,10 @@ public class SubmissionManager
    if( ! res )
     return false;
    
+   if( verifyOnly )
+   {
+    return checkLocalModulesToFilesConnections(cstMeta, ageStorage, logRoot);
+   }
    
    if( cstMeta.id == null )
    {
@@ -2191,6 +2200,71 @@ public class SubmissionManager
   
   return res;
  }
+ 
+ 
+ @SuppressWarnings("unchecked")
+ private boolean checkLocalModulesToFilesConnections(ClustMeta cMeta, AgeStorageAdm stor, LogNode logRoot )
+ {
+  boolean res = true;
+
+  LogNode logCon = logRoot.branch("Checking file attributes to files connections");
+
+  
+  for(ModMeta mm : new CollectionsUnion<ModMeta>( cMeta.mod4Ins, cMeta.mod4Upd.values() ))
+  {
+   for(AgeFileAttributeWritable fattr : mm.newModule.getFileAttributes())
+   {
+    FileAttachmentMeta fmt = cMeta.att4Use.get(fattr.getFileId());
+
+    if(fmt == null)
+    {
+     String sysRef = stor.makeFileSysRef(fattr.getFileId());
+
+     if(stor.getAttachmentBySysRef(sysRef) == null)
+     {
+      AttributeClassRef clRef = fattr.getClassRef();
+
+      logCon.log(Level.ERROR, "Reference to file can't be resolved. Module: " + mm.aux.getOrder()
+        + (mm.meta.getId() != null ? (" (ID='" + mm.meta.getId() + "')") : "") + " Attribute: row: " + fattr.getOrder() + " col: " + clRef.getOrder());
+
+      res = false;
+     }
+    }
+   }
+  }
+
+  
+  for( ModMeta mm : cMeta.mod4Hld.values() )
+  {
+   for( AgeFileAttributeWritable fattr : mm.origModule.getFileAttributes() )
+   {
+    FileAttachmentMeta fam = cMeta.att4Use.get(fattr.getFileId());
+    
+    if( fam == null )
+    {
+     String sysref = stor.makeFileSysRef(fattr.getFileId());
+     
+     if( stor.getAttachmentBySysRef(sysref) == null )
+     {
+      logCon.log(Level.ERROR, "Can't connect file attribute: '"+fattr.getFileId()+"'. Module: ID='"+mm.meta.getId()
+        +"' Row: "+fattr.getOrder()+" Col: "+fattr.getClassRef().getOrder());
+      res = false;
+     }
+      
+    }
+   }
+  }
+
+  
+  if( res )
+   logCon.log(Level.SUCCESS, "Success");
+  else
+   logCon.log(Level.INFO, "Failed");
+
+  
+  return res;
+ }
+
  
  private boolean checkRemovedDataFiles( ClustMeta cMeta, AgeStorageAdm stor, LogNode logRoot)
  {

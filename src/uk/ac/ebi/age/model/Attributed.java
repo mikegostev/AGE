@@ -9,6 +9,7 @@ public interface Attributed
  Collection<? extends AgeAttribute> getAttributes();
 
  Collection< ? extends AgeAttribute> getAttributes(AgeAttributeClass cls);
+ AgeAttribute getAttribute(AgeAttributeClass cls);
 
  Collection< ? extends AgeAttribute> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls);
 

@@ -763,13 +763,13 @@ public class SerializedStorage implements AgeStorageAdm
     {
      ln.log(Level.ERROR,"Validation failed");
      res = false;
-     vldBranch.append( submLog.getRootNode() );
+     vldBranch.append( ln );
     }
    }
    
    if( !res )
    {
-    BufferLogger.printBranch(vldBranch);
+//    BufferLogger.printBranch(vldBranch);
     
     vldBranch.log(Level.ERROR,"Validation failed");    
     return false;

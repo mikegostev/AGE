@@ -1441,7 +1441,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      if( a.getAgeElClass() == classRef.getAttributeClass() )
       obj.removeAttribute(a);
    }
-
+   
+   setLastConvertedValue(null);
   }
   
   @Override

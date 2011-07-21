@@ -4,7 +4,6 @@ import uk.ac.ebi.age.model.AgeObject;
 
 public interface KeyExtractor<KeyT>
 {
-
- KeyT getKey(AgeObject o1);
-
+ KeyT extractKey(AgeObject o1);
+ void recycleKey( KeyT k );
 }

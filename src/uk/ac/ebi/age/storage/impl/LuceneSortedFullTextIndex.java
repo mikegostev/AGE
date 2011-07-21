@@ -19,7 +19,15 @@ public class LuceneSortedFullTextIndex<KeyT> extends LuceneFullTextIndex impleme
   @Override
   public int compare(AgeObject o1, AgeObject o2)
   {
-   return keyComparator.compare(keyExtractor.getKey(o1), keyExtractor.getKey(o2) );
+   KeyT objk1 = keyExtractor.extractKey(o1);
+   KeyT objk2 = keyExtractor.extractKey(o2);
+
+   int res  = keyComparator.compare(objk1, objk2 );
+   
+   keyExtractor.recycleKey(objk1);
+   keyExtractor.recycleKey(objk2);
+   
+   return res;
   }
  }
  
@@ -31,6 +39,9 @@ public class LuceneSortedFullTextIndex<KeyT> extends LuceneFullTextIndex impleme
  public LuceneSortedFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> kext, Comparator<KeyT> keyComp)
  {
   super(qury,exts);
+  
+  keyExtractor = kext;
+  keyComparator = keyComp;
  }
 
  
@@ -45,8 +56,13 @@ public class LuceneSortedFullTextIndex<KeyT> extends LuceneFullTextIndex impleme
   {
    int mid = (low + high) >>> 1;
    AgeObject midVal = list.get(mid);
-   int cmp = keyComparator.compare( keyExtractor.getKey(midVal), key);
+   
+   KeyT objk = keyExtractor.extractKey(midVal);
+   
+   int cmp = keyComparator.compare( objk, key);
 
+   keyExtractor.recycleKey(objk);
+   
    if(cmp < 0)
     low = mid + 1;
    else if(cmp > 0)

@@ -84,7 +84,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   valid = res && valid;
 
   if( res )
-   ln.log(Level.INFO, "Attributes validation successful");
+   ln.log(Level.SUCCESS, "Attributes validation successful");
   else
    ln.log(Level.INFO, "Attributes validation failed");
   
@@ -95,7 +95,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   valid = res && valid;
 
   if( res )
-   ln.log(Level.INFO, "Relations validation successful");
+   ln.log(Level.SUCCESS, "Relations validation successful");
   else
    ln.log(Level.INFO, "Relations validation failed");
 
@@ -193,7 +193,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    res = isRelationAllowed(rslvRlCls, rels, rlRules, mod, ln);
    
    if( res )
-    ln.log(Level.INFO, "Validation successful");
+    ln.log(Level.SUCCESS, "Validation successful");
    else
     ln.log(Level.INFO, "Validation failed");
    
@@ -212,7 +212,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     boolean res = isRelationRuleSatisfied(rlRl, obj, auxRels, remRels, mod, rlln);
     
     if( res )
-     rlln.log(Level.INFO, "Rule satisfied");
+     rlln.log(Level.SUCCESS, "Rule satisfied");
     else
      rlln.log(Level.INFO, "Rule failed");
     
@@ -220,7 +220,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    }
    
    if( rrulOk )
-    ln.log(Level.INFO, "Validation successful" );
+    ln.log(Level.SUCCESS, "Validation successful" );
    else
     ln.log(Level.INFO, "Validation failed" );
    
@@ -235,7 +235,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   {
    for(AgeRelation rl : obj.getRelations())
    {
-    if( rl.getAttributes() == null )
+    if( rl.isInferred() || rl.getAttributes() == null )
      continue;
     
     LogNode atln = ln.branch("Validating relation's qualifiers. Relation class: '" + rl.getAgeElClass()
@@ -244,7 +244,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     boolean res = validateAttributed(rl, 1, mod, atln);
 
     if(res)
-     atln.log(Level.INFO, "Validation successful");
+     atln.log(Level.SUCCESS, "Validation successful");
     else
      atln.log(Level.INFO, "Validation failed");
 
@@ -253,7 +253,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   }
   
   if( qres )
-   ln.log(Level.INFO, "Validation successful" );
+   ln.log(Level.SUCCESS, "Validation successful" );
   else
    ln.log(Level.INFO, "Validation failed" );
 
@@ -304,7 +304,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    boolean res = isAttributeAllowed(rslvAtCls, attrs, atRules, rslv, ln);
    
    if( res )
-    ln.log(Level.INFO, "Validation successful");
+    ln.log(Level.SUCCESS, "Validation successful");
    else
     ln.log(Level.INFO, "Validation failed. No correspondent rule that allows this attribute.");
    
@@ -323,7 +323,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     boolean res = isAttributeRuleSatisfied( atRl, obj, rslv, sln );
     
     if( res )
-     sln.log(Level.INFO, "Validation successful");
+     sln.log(Level.SUCCESS, "Validation successful");
     else
      sln.log(Level.INFO, "Validation failed");
     
@@ -331,7 +331,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    }
    
    if( rlres )
-    ln.log(Level.INFO, "Validation successful");
+    ln.log(Level.SUCCESS, "Validation successful");
    else
     ln.log(Level.INFO, "Validation failed");
   
@@ -352,7 +352,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     boolean res = validateAttributed(attr, level+1, rslv, sln);
 
     if( res )
-     sln.log(Level.INFO, "Qualifier validation successful");
+     sln.log(Level.SUCCESS, "Qualifier validation successful");
     else
      sln.log(Level.INFO, "Qualifier validation failes");
     
@@ -361,7 +361,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    }
    
    if( qres )
-    ln.log(Level.INFO, "Qualifiers validation successful");
+    ln.log(Level.SUCCESS, "Qualifiers validation successful");
    else
     ln.log(Level.INFO, "Qualifiers validation failes");
   }

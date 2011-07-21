@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
@@ -121,6 +122,18 @@ public abstract class AttributedObject extends AgeContextSemanticElementImpl imp
  {
   return getAttribMap().get(cls);
  }
+
+ @Override
+ public synchronized AgeAttribute getAttribute(AgeAttributeClass cls)
+ {
+  List<? extends AgeAttribute> lst = getAttribMap().get(cls);
+  
+  if( lst == null )
+   return null;
+  
+  return lst.get(0);
+ }
+
 
  
  private Map<AgeAttributeClass,List<AgeAttributeWritable>> getAttribMap()

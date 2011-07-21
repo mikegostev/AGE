@@ -23,7 +23,7 @@ public class IndexFactory
 
  public <KeyT> SortedTextIndexWritable<KeyT> createSortedFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> kext, Comparator<KeyT> keyComp)
  {
-  return new LuceneSortedFullTextIndex( qury, exts, kext, keyComp );
+  return new LuceneSortedFullTextIndex<KeyT>( qury, exts, kext, keyComp );
  }
 
 }
