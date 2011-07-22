@@ -13,11 +13,12 @@ import uk.ac.ebi.age.entity.ID;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
-import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributedClass;
+import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.impl.v1.AttributedObject;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -26,13 +27,13 @@ import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectWritable
 {
- private static final long serialVersionUID = 1L;
+ private static final long serialVersionUID = 2L;
 
  private List<AgeRelationWritable> relations = com.pri.util.collection.Collections.emptyList();
  
  private transient Map<AgeRelationClass, List<AgeRelationWritable>> relationMap;
  
- private AgeClassPlug ageClassPlug;
+ private ClassRef classRef;
 
  private String id;
  private IdScope idScope;
@@ -41,14 +42,15 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  
  private int order;
  
- public AgeObjectImpl(String id, AgeClass cls, ContextSemanticModel sm)
+ public AgeObjectImpl(String id, ClassRef cr)
  {
-  super(sm);
+  super();
 
   this.id=id;
 
-  ageClassPlug= sm.getAgeClassPlug(cls);
+  classRef= cr;
  }
+
 
  @Override
  public String getId()
@@ -143,7 +145,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  @Override
  public AgeClass getAgeElClass()
  {
-  return ageClassPlug.getAgeClass();
+  return classRef.getAgeClass();
  }
 
 
@@ -207,9 +209,9 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
 
  
  @Override
- public AgeExternalRelationWritable createExternalRelation(String val, AgeRelationClass relClass)
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef relr, String val)
  {
-  AgeExternalRelationWritable rel = getSemanticModel().createExternalRelation(this, val, relClass);
+  AgeExternalRelationWritable rel = getSemanticModel().createExternalRelation(relr, this, val);
   
   addRelation(rel);
   
@@ -318,6 +320,12 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  public ID getEntityID()
  {
   return new AgeObjectID( this );
+ }
+
+ @Override
+ public ContextSemanticModel getSemanticModel()
+ {
+  return classRef.getSemanticModel();
  }
  
 }

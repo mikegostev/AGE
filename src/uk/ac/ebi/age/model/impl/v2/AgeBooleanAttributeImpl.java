@@ -2,9 +2,9 @@ package uk.ac.ebi.age.model.impl.v2;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AttributeClassRef;
-import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
+import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 class AgeBooleanAttributeImpl extends AgeAttributeImpl 
 {
@@ -15,9 +15,9 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
  protected AgeBooleanAttributeImpl()
  {}
  
- public AgeBooleanAttributeImpl(AttributeClassRef attrClass, ContextSemanticModel sm)
+ public AgeBooleanAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
  {
-  super(attrClass, sm);
+  super(attrClass, host);
  }
 
  public Object getValue()
@@ -96,9 +96,9 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
  }
 
  @Override
- public AgeAttributeWritable createClone()
+ public AgeAttributeWritable createClone( AttributedWritable host )
  {
-  AgeBooleanAttributeImpl clone  = new AgeBooleanAttributeImpl(getClassRef(), getSemanticModel());
+  AgeBooleanAttributeImpl clone  = new AgeBooleanAttributeImpl(getClassRef(), host);
   clone.value=this.value;
   
   cloneAttributes( clone );

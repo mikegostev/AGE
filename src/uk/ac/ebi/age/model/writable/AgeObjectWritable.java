@@ -5,6 +5,7 @@ import java.util.Collection;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.RelationClassRef;
 
 
 
@@ -29,9 +30,9 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  void removeRelation(AgeRelationWritable rel);
 
 
- AgeExternalRelationWritable createExternalRelation(String val, AgeRelationClass relClass);
+ AgeExternalRelationWritable createExternalRelation( RelationClassRef ref, String val);
 
- AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass);
+ AgeRelationWritable createRelation(RelationClassRef ref, AgeObjectWritable targetObj);
 
  void setOrder(int row);
 

@@ -9,12 +9,12 @@ import java.util.Map;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
+import uk.ac.ebi.age.model.AgeContextSemanticElement;
 import uk.ac.ebi.age.model.AttributeClassRef;
-import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
-public abstract class AttributedObject extends AgeContextSemanticElementImpl implements AttributedWritable
+public abstract class AttributedObject implements AttributedWritable, AgeContextSemanticElement
 {
 
  private static final long serialVersionUID = 2L;
@@ -26,10 +26,10 @@ public abstract class AttributedObject extends AgeContextSemanticElementImpl imp
 // private transient List<AgeAttributeClass> atClasses = null;
 
  
- public AttributedObject( ContextSemanticModel m)
- {
-  super(m);
- }
+// public AttributedObject( ContextSemanticModel m )
+// {
+//  super(m);
+// }
 
  
 // @Override
@@ -221,7 +221,7 @@ public abstract class AttributedObject extends AgeContextSemanticElementImpl imp
   if( attributes != null )
   {
    for( AgeAttributeWritable attr : attributes )
-    objClone.addAttribute(attr.createClone());
+    objClone.addAttribute(attr.createClone(objClone));
   }
  }
 }

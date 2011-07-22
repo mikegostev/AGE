@@ -6,7 +6,5 @@ public interface AgeExternalRelation extends AgeRelation
 {
  String getTargetObjectId();
  
- AgeObject getSourceObject();
- 
  AgeExternalRelation getInverseRelation();
 }

@@ -1,8 +1,8 @@
 package uk.ac.ebi.age.model.impl.v2;
 
 import uk.ac.ebi.age.model.AttributeClassRef;
-import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
+import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeFileAttributeWritable
 {
@@ -10,9 +10,9 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
 
  private transient String fileSysRef;
 
- public AgeFileAttributeImpl(AttributeClassRef attrClass, ContextSemanticModel sm)
+ public AgeFileAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
  {
-  super(attrClass, sm);
+  super(attrClass, host);
  }
 
  @Override

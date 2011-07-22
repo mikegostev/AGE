@@ -8,16 +8,17 @@ import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.impl.v1.AttributedObject;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
+import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 abstract class AgeAttributeImpl extends AttributedObject implements AgeAttributeWritable, Serializable
 {
- private static final long serialVersionUID = 1L;
+ private static final long serialVersionUID = 2L;
 
  private AttributeClassRef classReference;
- 
+ private AttributedWritable hostObject;
+
  protected AgeAttributeImpl()
  {
-  super(null);
  }
  
  @Override
@@ -26,11 +27,10 @@ abstract class AgeAttributeImpl extends AttributedObject implements AgeAttribute
   return classReference;
  }
  
- public AgeAttributeImpl(AttributeClassRef attrClassR, ContextSemanticModel sm)
+ public AgeAttributeImpl(AttributeClassRef attrClassR, AttributedWritable host)
  {
-  super(sm);
-  
   classReference = attrClassR;
+  hostObject = host;
  }
 
 
@@ -38,7 +38,13 @@ abstract class AgeAttributeImpl extends AttributedObject implements AgeAttribute
  {
  }
  
- 
+ @Override
+ public ContextSemanticModel getSemanticModel()
+ {
+  return hostObject.getSemanticModel();
+ }
+
+ @Override
  public AgeAttributeClass getAgeElClass()
  {
   return classReference.getAttributeClass();
@@ -56,5 +62,10 @@ abstract class AgeAttributeImpl extends AttributedObject implements AgeAttribute
  {
   return classReference.getOrder( );
  }
-
+ 
+ @Override
+ public AttributedWritable getHostObject()
+ {
+  return hostObject;
+ }
 }

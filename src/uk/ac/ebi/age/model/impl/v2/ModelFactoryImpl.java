@@ -10,9 +10,11 @@ import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
+import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
@@ -25,13 +27,14 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
+import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 
 public class ModelFactoryImpl extends ModelFactory implements Serializable
 {
- private static final long serialVersionUID = 1L;
+ private static final long serialVersionUID = 2L;
 
  private static ModelFactoryImpl instance = new ModelFactoryImpl();
 
@@ -51,9 +54,9 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, ContextSemanticModel sm)
+ public AgeObjectWritable createAgeObject(String id, ClassRef ageClassRef)
  {
-  return new AgeObjectImpl(id, ageClass, sm);
+  return new AgeObjectImpl(id, ageClassRef);
  }
 
 
@@ -84,37 +87,37 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
 
  @Override
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, ContextSemanticModel sm)
+ public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, AttributedWritable host)
  {
   AgeAttributeWritable attr=null;
   
   switch( attrClassRef.getAttributeClass().getDataType() )
   {
    case INTEGER:
-    attr = new AgeIntegerAttributeImpl(attrClassRef, sm);
+    attr = new AgeIntegerAttributeImpl(attrClassRef, host);
     break;
    
    case REAL:
-    attr = new AgeRealAttributeImpl(attrClassRef, sm);
+    attr = new AgeRealAttributeImpl(attrClassRef, host);
     break;
    
    case BOOLEAN:
-    attr = new AgeBooleanAttributeImpl(attrClassRef, sm);
+    attr = new AgeBooleanAttributeImpl(attrClassRef, host);
     break;
    
    case URI:
    case TEXT: 
    case STRING:
    case GUESS:
-    attr = new AgeStringAttributeImpl(attrClassRef, sm);
+    attr = new AgeStringAttributeImpl(attrClassRef, host);
     break;
 
    case FILE:
-    attr = new AgeFileAttributeImpl(attrClassRef, sm);
+    attr = new AgeFileAttributeImpl(attrClassRef, host);
     break;
     
    case OBJECT:
-    attr = new AgeObjectAttributeImpl(attrClassRef, sm);
+    attr = new AgeObjectAttributeImpl(attrClassRef, host);
   }
   
   
@@ -123,16 +126,16 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, ContextSemanticModel sm)
+ public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, RelationClassRef ref)
  {
-  return new AgeExternalRelationImpl(targetClass, sourceObj, id, sm);
+  return new AgeExternalRelationImpl(ref, sourceObj, id);
  }
  
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, ContextSemanticModel sm)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, AttributedWritable host)
  {
-  return new AgeExternalObjectAttributeImpl(atCls, id, sm);
+  return new AgeExternalObjectAttributeImpl(atCls, id, host);
  }
 
  @Override
@@ -212,6 +215,18 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  public AttributeClassRef createAttributeClassRef(AgeAttributeClassPlug plug, int order, String heading)
  {
   return new AttrClassRef(plug, order, heading);
+ }
+
+ @Override
+ public ClassRef createClassRef(AgeClassPlug plug, int order, String heading, boolean hrz)
+ {
+  return new uk.ac.ebi.age.model.impl.v2.ClassRef(plug, order, heading, hrz);
+ }
+
+ @Override
+ public RelationClassRef createRelationClassRef(AgeRelationClassPlug plug, int order, String heading)
+ {
+  return new RelClassRef(plug, order, heading);
  }
 
 

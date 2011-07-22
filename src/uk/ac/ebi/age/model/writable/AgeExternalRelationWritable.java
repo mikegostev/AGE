@@ -4,14 +4,12 @@ import uk.ac.ebi.age.model.AgeExternalRelation;
 
 public interface AgeExternalRelationWritable extends AgeExternalRelation, AgeRelationWritable
 {
+ void setSourceObject(AgeObjectWritable ageObject);
  void setTargetObject( AgeObjectWritable obj );
  
- AgeObjectWritable getSourceObject();
- AgeObjectWritable getTargetObject();
  
  AgeExternalRelationWritable getInverseRelation();
  
  void setInverseRelation( AgeExternalRelationWritable inrv );
- void setSourceObject(AgeObjectWritable ageObject);
 
 }

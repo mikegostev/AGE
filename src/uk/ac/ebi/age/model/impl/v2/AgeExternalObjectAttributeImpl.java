@@ -7,9 +7,9 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeObjectAttribute;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
-import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
+import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExternalObjectAttributeWritable, Serializable
 {
@@ -18,9 +18,9 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
  private String objId;
  private transient AgeObject target;
  
- public AgeExternalObjectAttributeImpl(AttributeClassRef relClass, String id, ContextSemanticModel sm)
+ public AgeExternalObjectAttributeImpl(AttributeClassRef relClass, String id,  AttributedWritable host)
  {
-  super(relClass, sm);
+  super(relClass, host);
   
   objId=id;
  }
@@ -119,9 +119,9 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
  
  
  @Override
- public AgeExternalObjectAttributeWritable createClone()
+ public AgeExternalObjectAttributeWritable createClone( AttributedWritable host )
  {
-  AgeExternalObjectAttributeImpl clone  = new AgeExternalObjectAttributeImpl(getClassRef(), objId, getSemanticModel());
+  AgeExternalObjectAttributeImpl clone  = new AgeExternalObjectAttributeImpl(getClassRef(), objId, host);
   clone.target=this.target;
   
   cloneAttributes( clone );

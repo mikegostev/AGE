@@ -16,9 +16,11 @@ import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
+import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
@@ -31,6 +33,7 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
+import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
@@ -154,16 +157,16 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 
  
  @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String val, AgeRelationClass targetClass )
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef clsRef, AgeObjectWritable sourceObj, String val )
  {
-  return masterModel.getModelFactory().createExternalRelation(sourceObj, val, targetClass, this);
+  return masterModel.getModelFactory().createExternalRelation(sourceObj, val, clsRef);
  }
 
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String val)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String val, AttributedWritable host)
  {
-  return masterModel.getModelFactory().createExternalObjectAttribute(atCls, val, this);
+  return masterModel.getModelFactory().createExternalObjectAttribute(atCls, val, host);
  }
 
 // public AgeRelationClass createRelationClass(String name, AgeClass cls, AgeClass rangeCls)
@@ -252,31 +255,36 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.createAgeAttributeClass(name, id, type, parent);
  }
 
- public AgeObjectWritable createAgeObject(String id, AgeClass cls)
+ @Override
+ public AgeObjectWritable createAgeObject(String id, ClassRef cls)
  {
-  return masterModel.getModelFactory().createAgeObject(id, cls, this);
+  return masterModel.getModelFactory().createAgeObject(id, cls);
  }
 
+ @Override
  public AgeRelationClassWritable createAgeRelationClass(String name, String id, AgeRelationClass parent)
  {
   return masterModel.createAgeRelationClass(name, id, parent);
  }
 
+ @Override
  public ModelFactory getModelFactory()
  {
   return masterModel.getModelFactory();
  }
 
- public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass)
+ @Override
+ public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass, AttributedWritable host)
  {
   AttributeClassRef ref = masterModel.getModelFactory().createAttributeClassRef( getAgeAttributeClassPlug(attrClass), 0, attrClass.getName());
   
-  return masterModel.getModelFactory().createAgeAttribute(ref,this);
+  return masterModel.getModelFactory().createAgeAttribute(ref,host);
  }
  
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass)
+ @Override
+ public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host)
  {
-  return masterModel.getModelFactory().createAgeAttribute(attrClass,this);
+  return masterModel.getModelFactory().createAgeAttribute(attrClass, host);
  }
 
  

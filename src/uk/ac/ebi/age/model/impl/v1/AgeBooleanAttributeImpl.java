@@ -2,7 +2,6 @@ package uk.ac.ebi.age.model.impl.v1;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
-import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 
@@ -15,9 +14,9 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
  protected AgeBooleanAttributeImpl()
  {}
  
- public AgeBooleanAttributeImpl(AgeAttributeClass attrClass, ContextSemanticModel sm)
+ public AgeBooleanAttributeImpl(AgeAttributeClass attrClass, AttributedObject host)
  {
-  super(attrClass, sm);
+  super(attrClass, host);
  }
 
  public Object getValue()

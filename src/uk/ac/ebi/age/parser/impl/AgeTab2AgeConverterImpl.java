@@ -302,7 +302,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     } 
     
     for( AgeAttributeWritable ptAttr : prototype.getAttributesByClass(pAtCla, false) )
-     obj.addAttribute( ptAttr.createClone() );
+     obj.addAttribute( ptAttr.createClone(obj) );
    }
   }
   
@@ -320,7 +320,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     } 
     
     for( AgeRelationWritable ptRel : prototype.getRelationsByClass(pRlCla, false) )
-     obj.addRelation( ptRel.createClone() );
+     obj.addRelation( ptRel.createClone(obj) );
    }
   }
  }
@@ -1200,8 +1200,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    else
     rel = hostObject.createRelation(targetObj, relClass);
 
-   rel.setOrder(getClassReference().getCol());
-  
    setLastConvertedValue(rel);
 
   }
@@ -1337,9 +1335,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    else
     rel = hostObject.createRelation(targetObj, relClass);
 
-   rel.setOrder(getClassReference().getCol());
    setLastConvertedValue(rel);
-
   }
   
   @Override

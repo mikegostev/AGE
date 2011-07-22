@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model;
 
+
 public interface AgeAttribute extends Attributed, AgeObjectProperty, Comparable<AgeAttribute>
 {
  AgeAttributeClass getAgeElClass();
@@ -13,4 +14,6 @@ public interface AgeAttribute extends Attributed, AgeObjectProperty, Comparable<
  public int getOrder();
  
  AttributeClassRef getClassRef();
+ 
+ Attributed getHostObject();
 }

@@ -3,9 +3,9 @@ package uk.ac.ebi.age.model.impl.v2;
 import java.io.Serializable;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
-import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.impl.v1.AttributedObject;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -15,53 +15,57 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
 {
  private static final long serialVersionUID = 2L;
 
- private AgeRelationClassPlug relClassPlug; 
+ private RelationClassRef relClassRef; 
  private String objId;
- private int order;
  private AgeObjectWritable sourceObject;
  private transient AgeExternalRelationWritable invRelation;
  private transient AgeObjectWritable target;
  private boolean infered;
 
- public AgeExternalRelationImpl(AgeRelationClass relClass, AgeObjectWritable srcOb, String id, ContextSemanticModel sm)
+ public AgeExternalRelationImpl(RelationClassRef cRef, AgeObjectWritable srcOb, String id)
  {
-  super(sm);
-  
-  relClassPlug = sm.getAgeRelationClassPlug(relClass);
+  relClassRef=cRef;
 
   objId=id;
   sourceObject=srcOb;
  }
 
+ @Override
  public AgeRelationClass getAgeElClass()
  {
-  return relClassPlug.getAgeRelationClass();
+  return relClassRef.getAgeRelationClass();
  }
 
+ @Override
  public AgeObjectWritable getTargetObject()
  {
   return target;
  }
  
+ @Override
  public AgeObjectWritable getSourceObject()
  {
   return sourceObject;
  }
 
+ 
+ @Override
  public String getTargetObjectId()
  {
   return objId;
  }
 
+ @Override
  public int getOrder()
  {
-  return order;
+  return relClassRef.getOrder();
  }
-
- public void setOrder(int ord)
- {
-  order=ord;
- }
+//
+// @Override
+// public void setOrder(int ord)
+// {
+//  order=ord;
+// }
 
  @Override
  public void setTargetObject(AgeObjectWritable obj)
@@ -96,10 +100,9 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  }
  
  @Override
- public AgeRelationWritable createClone()
+ public AgeRelationWritable createClone( AgeObjectWritable src )
  {
-  AgeExternalRelationImpl clone = new AgeExternalRelationImpl(getAgeElClass(), getSourceObject(), getTargetObjectId(), getSemanticModel());
-  clone.setOrder( getOrder() );
+  AgeExternalRelationImpl clone = new AgeExternalRelationImpl(relClassRef, src, getTargetObjectId());
   clone.infered = infered;
   
   cloneAttributes(clone);
@@ -129,6 +132,12 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  public void setSourceObject(AgeObjectWritable ageObject)
  {
   sourceObject=ageObject;
+ }
+
+ @Override
+ public ContextSemanticModel getSemanticModel()
+ {
+  return sourceObject.getSemanticModel();
  }
 }
 

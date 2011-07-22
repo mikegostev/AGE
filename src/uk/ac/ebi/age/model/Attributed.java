@@ -2,7 +2,7 @@ package uk.ac.ebi.age.model;
 
 import java.util.Collection;
 
-public interface Attributed
+public interface Attributed extends AgeContextSemanticElement
 {
  AttributedClass getAttributedClass();
 

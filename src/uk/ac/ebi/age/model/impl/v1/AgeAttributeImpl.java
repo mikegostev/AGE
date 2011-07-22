@@ -5,6 +5,7 @@ import java.io.Serializable;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
+import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
@@ -13,13 +14,12 @@ abstract class AgeAttributeImpl extends AttributedObject implements AgeAttribute
 {
  private static final long serialVersionUID = 1L;
 
- 
+ private Attributed hostObject;
  private AgeAttributeClassPlug attrClassPlug;
  private int order;
 
  protected AgeAttributeImpl()
  {
-  super(null);
  }
  
  @Override
@@ -28,24 +28,32 @@ abstract class AgeAttributeImpl extends AttributedObject implements AgeAttribute
   return new _ClassRef();
  }
  
- public AgeAttributeImpl(AgeAttributeClass attrClass, ContextSemanticModel sm)
+ public AgeAttributeImpl(AgeAttributeClass attrClass, Attributed host)
  {
-  super(sm);
+  attrClassPlug= host.getSemanticModel().getAgeAttributeClassPlug(attrClass);
   
-  attrClassPlug= sm.getAgeAttributeClassPlug(attrClass);
+  hostObject = host;
  }
 
+ @Override
+ public ContextSemanticModel getSemanticModel()
+ {
+  return hostObject.getSemanticModel();
+ }
+ 
  public AgeAttributeClass getAgeAttributeClass()
  {
   return attrClassPlug.getAgeAttributeClass();
  }
 
 
+ @Override
  public void finalizeValue()
  {
  }
  
  
+ @Override
  public AgeAttributeClass getAgeElClass()
  {
   return attrClassPlug.getAgeAttributeClass();
@@ -63,6 +71,7 @@ abstract class AgeAttributeImpl extends AttributedObject implements AgeAttribute
   order=ord;
  }
  
+ @Override
  public int getOrder()
  {
   return order;
@@ -88,5 +97,11 @@ abstract class AgeAttributeImpl extends AttributedObject implements AgeAttribute
   {
    return attrClassPlug.getAgeAttributeClass().getName();
   }
+ }
+
+ @Override
+ public AttributedObject getHostObject()
+ {
+  return hostObject;
  }
 }
