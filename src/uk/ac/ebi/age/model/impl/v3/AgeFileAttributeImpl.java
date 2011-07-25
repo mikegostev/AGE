@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v2;
+package uk.ac.ebi.age.model.impl.v3;
 
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;

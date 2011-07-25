@@ -271,22 +271,33 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 
    String classRef = parts.get(0);
    
+   BlockHeader header = new BlockHeaderImpl(data);
+
    if( classRef.startsWith(profile.getHorizontalBlockPrefix()) )
    {
     parts.set(0, classRef.substring(profile.getHorizontalBlockPrefix().length()));
     block = new HorizontalBlockSupplier( reader, parts );
+    
+    header.setHorizontal(true);
    }
    else if( classRef.startsWith(profile.getVerticalBlockPrefix()) )
    {
     parts.set(0, classRef.substring(profile.getVerticalBlockPrefix().length()));
     block = new VerticalBlockSupplier( reader, parts );
+    header.setHorizontal(false);
    }
    else if( profile.isHorizontalBlockDefault() )
+   {
     block = new HorizontalBlockSupplier( reader, parts );
+    header.setHorizontal(true);
+   }
    else
+   {
     block = new VerticalBlockSupplier( reader, parts );
-  
-   BlockHeader header = new BlockHeaderImpl(data);
+
+    header.setHorizontal(false);
+   }
+   
    analyzeHeader(header, block.getLine(parts), block.getLineNum() );
    data.addBlock(header);
    
@@ -393,6 +404,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   try
   {
    partName = string2ClassReference(itr.next());
+   partName.setHorizontal(hdr.isHorizontal());
    partName.setRow(row);
    partName.setCol(1);
   }
@@ -406,10 +418,10 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   
   hdr.setClassColumnHeader(partName);
   
-  int col=1;
+  int ord=1;
   while( itr.hasNext() )
   {
-   col++;
+   ord++;
    
    String hdrStr = itr.next();
 
@@ -424,22 +436,48 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    try
    {
     partName = string2ClassReference(hdrStr);
-    partName.setRow(row);
-    partName.setCol(col);
+    
+    if( hdr.isHorizontal() )
+    {
+     partName.setRow(row);
+     partName.setCol(ord);
+    }
+    else
+    {
+     partName.setRow(row+ord);
+     partName.setCol(1);
+    }
     
     if( partName.getQualifiers() != null )
     {
      for( ClassReference qref : partName.getQualifiers() )
      {
-      qref.setRow(row);
-      qref.setCol(col);
+      if( hdr.isHorizontal() )
+      {
+       qref.setRow(row);
+       qref.setCol(ord);
+      }
+      else
+      {
+       qref.setRow(row+ord);
+       qref.setCol(1);
+      }
      }
     }
    }
    catch(ParserException e)
    {
-    e.setLineNumber(row);
-    e.setColumn(col);
+    if( hdr.isHorizontal() )
+    {
+     e.setLineNumber(row);
+     e.setColumn(ord);
+    }
+    else
+    {
+     e.setLineNumber(row+ord);
+     e.setColumn(1);
+    }
+
     throw e;
    }
    

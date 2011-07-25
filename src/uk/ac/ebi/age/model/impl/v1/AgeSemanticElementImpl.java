@@ -22,9 +22,9 @@ abstract class AgeSemanticElementImpl implements AgeSemanticElement, Serializabl
   return model;
  }
  
- public void setSemanticModel( SemanticModel m )
- {
-  model=m;
- }
+// public void setSemanticModel( SemanticModel m )
+// {
+//  model=m;
+// }
 
 }

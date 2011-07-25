@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v2;
+package uk.ac.ebi.age.model.impl.v3;
 
 import java.io.Serializable;
 
@@ -16,13 +16,14 @@ public class ClassRef implements uk.ac.ebi.age.model.ClassRef, Serializable
  private boolean horizontal;
  private ContextSemanticModel model;
 
- public ClassRef(AgeClassPlug cp, int order, String heading, boolean horiz )
+ public ClassRef(AgeClassPlug cp, int order, String headingl, boolean horiz, ContextSemanticModel md )
  {
   super();
   this.order = order;
-  this.heading = heading;
+  this.heading = headingl;
   this.classPlug = cp;
   horizontal = horiz;
+  model = md;
  }
 
 

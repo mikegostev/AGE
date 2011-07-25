@@ -1,11 +1,11 @@
-package uk.ac.ebi.age.model.impl.v1;
+package uk.ac.ebi.age.model.impl.v3;
 
 import java.io.Serializable;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
-import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
@@ -13,45 +13,51 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
 {
  private static final long serialVersionUID = 1L;
  
- private AgeRelationClassPlug relClassPlug;
+ private RelationClassRef relClassRef;
+ private AgeObjectWritable source;
  private AgeObjectWritable target;
  private AgeRelationWritable invRelation;
- private int order;
  private boolean inferred=false;
  
- public AgeRelationImpl(AgeObjectWritable targetObj, AgeRelationClass relClass, ContextSemanticModel semanticModel)
+ public AgeRelationImpl(RelationClassRef cref, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
  {
-  super(semanticModel);
-  relClassPlug= semanticModel.getAgeRelationClassPlug(relClass);
+  relClassRef= cref;
+  source=sourceObj;
   target=targetObj;
  }
 
+ @Override
  public AgeRelationClass getAgeElClass()
  {
-  return relClassPlug.getAgeRelationClass();
+  return relClassRef.getAgeRelationClass();
  }
 
+ @Override
  public AgeObjectWritable getTargetObject()
  {
   return target;
  }
 
+ @Override
+ public AgeObjectWritable getSourceObject()
+ {
+  return source;
+ }
+
+ @Override
  public int getOrder()
  {
-  return order;
+  return relClassRef.getOrder();
  }
 
- public void setOrder(int ord)
- {
-  order=ord;
- }
-
+ @Override
  public void setInferred( boolean inf )
  {
   inferred = inf;
  }
 
  
+ @Override
  public boolean isInferred()
  {
   return inferred;
@@ -71,10 +77,9 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  }
 
  @Override
- public AgeRelationWritable createClone()
+ public AgeRelationWritable createClone( AgeObjectWritable src )
  {
-  AgeRelationImpl clone = new AgeRelationImpl(getTargetObject(), getAgeElClass(), getSemanticModel());
-  clone.setOrder( getOrder() );
+  AgeRelationImpl clone = new AgeRelationImpl(relClassRef, src, getTargetObject());
   
   cloneAttributes(clone);
   
@@ -91,5 +96,11 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  public void setInverseRelation(AgeRelationWritable invRl)
  {
   invRelation = invRl;
+ }
+
+ @Override
+ public ContextSemanticModel getSemanticModel()
+ {
+  return source.getSemanticModel();
  }
 }

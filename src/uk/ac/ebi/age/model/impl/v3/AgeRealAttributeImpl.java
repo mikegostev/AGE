@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v2;
+package uk.ac.ebi.age.model.impl.v3;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AttributeClassRef;
@@ -6,14 +6,14 @@ import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
-
-class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWritable
+class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttributeWritable
 {
+
  private static final long serialVersionUID = 1L;
 
- private int value; 
+ private double value; 
 
- public AgeIntegerAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
+ public AgeRealAttributeImpl(AttributeClassRef attrClass, AttributedWritable host )
  {
   super(attrClass, host);
  }
@@ -29,17 +29,16 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
   
   if( val.length() == 0 )
    return;
-  
+
   try
   { 
-   value=Integer.parseInt(val);
+   value=Double.parseDouble(val);
   }
   catch (NumberFormatException e) 
   {
-   throw new FormatException("Invalid integer format",e);
+   throw new FormatException("Invalid real format",e);
   }
  }
-
 
  @Override
  public String getId()
@@ -62,7 +61,7 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
  @Override
  public int getValueAsInteger()
  {
-  return value;
+  return (int)Math.round(value);
  }
 
  @Override
@@ -74,7 +73,7 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
  @Override
  public void setDoubleValue(double doubleValue)
  {
-  value=(int)Math.round(doubleValue);
+  value=doubleValue;
  }
 
  @Override
@@ -87,10 +86,10 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
  public void setValue(Object val)
  {
   if( val instanceof Number )
-   value=((Number)val).intValue();
+   value=((Number)val).doubleValue();
   else try
   {
-   value = Integer.parseInt(val.toString());
+   value = Double.parseDouble(val.toString());
   }
   catch (Exception e)
   {
@@ -98,9 +97,9 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
  }
  
  @Override
- public AgeAttributeWritable createClone( AttributedWritable host)
+ public AgeAttributeWritable createClone( AttributedWritable host )
  {
-  AgeIntegerAttributeImpl clone  = new AgeIntegerAttributeImpl(getClassRef(), host);
+  AgeRealAttributeImpl clone  = new AgeRealAttributeImpl(getClassRef(), host);
   clone.value=this.value;
   
   cloneAttributes( clone );
@@ -113,12 +112,12 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
   if( ! (ob instanceof AgeAttribute) )
    return false;
   
-   return value == ((AgeAttribute)ob).getValueAsInteger();
+   return value == ((AgeAttribute)ob).getValueAsDouble();
  }
  
  @Override
  public int compareTo(AgeAttribute o)
  {
-  return value-o.getValueAsInteger();
+  return value==o.getValueAsDouble()? 0 : value-o.getValueAsDouble() > 0 ? 1 : -1;
  }
 }

@@ -159,14 +159,14 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  @Override
  public AgeExternalRelationWritable createExternalRelation(RelationClassRef clsRef, AgeObjectWritable sourceObj, String val )
  {
-  return masterModel.getModelFactory().createExternalRelation(sourceObj, val, clsRef);
+  return masterModel.getModelFactory().createExternalRelation(clsRef, sourceObj, val);
  }
 
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String val, AttributedWritable host)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String val )
  {
-  return masterModel.getModelFactory().createExternalObjectAttribute(atCls, val, host);
+  return masterModel.getModelFactory().createExternalObjectAttribute(atCls, host, val );
  }
 
 // public AgeRelationClass createRelationClass(String name, AgeClass cls, AgeClass rangeCls)
@@ -182,22 +182,26 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 // }
 
 
+ @Override
  public AgeClass getDefinedAgeClass(String name)
  {
   return masterModel.getDefinedAgeClass(name);
  }
 
+ @Override
  public AgeRelationClass getDefinedAgeRelationClass(String name)
  {
   return masterModel.getDefinedAgeRelationClass(name);
  }
 
  
+ @Override
  public AgeClass getCustomAgeClass(String name)
  {
   return customClassMap.get(name);
  }
- 
+
+ /*
  public AgeClass getAgeClass(String name)
  {
   AgeClass cls = getCustomAgeClass(name);
@@ -217,13 +221,15 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   
   return getDefinedAgeRelationClass(name);
  }
-
+*/
  
+ @Override
  public AgeRelationClass getCustomAgeRelationClass(String name)
  {
   return customRelationClassMap.get(name);
  }
 
+ @Override
  public AgeAttributeClass getCustomAgeAttributeClass(String name, AgeClass cls)
  {
   Map<String,AgeAttributeClassWritable> atclMap = class2CustomAttrMap.get(cls);
@@ -234,6 +240,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return atclMap.get(name);
  }
 
+ @Override
  public AgeClassProperty getDefinedAgeClassProperty( String name )
  {
   return masterModel.getDefinedAgeClassProperty(name);
@@ -256,9 +263,9 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  }
 
  @Override
- public AgeObjectWritable createAgeObject(String id, ClassRef cls)
+ public AgeObjectWritable createAgeObject(ClassRef cls, String id )
  {
-  return masterModel.getModelFactory().createAgeObject(id, cls);
+  return masterModel.getModelFactory().createAgeObject( cls, id );
  }
 
  @Override
@@ -273,13 +280,13 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.getModelFactory();
  }
 
- @Override
- public AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass, AttributedWritable host)
- {
-  AttributeClassRef ref = masterModel.getModelFactory().createAttributeClassRef( getAgeAttributeClassPlug(attrClass), 0, attrClass.getName());
-  
-  return masterModel.getModelFactory().createAgeAttribute(ref,host);
- }
+// @Override
+// public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host)
+// {
+//  AttributeClassRef ref = masterModel.getModelFactory().createAttributeClassRef( getAgeAttributeClassPlug(attrClass), 0, attrClass.getName());
+//  
+//  return masterModel.getModelFactory().createAgeAttribute(ref,host);
+// }
  
  @Override
  public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host)
@@ -288,12 +295,14 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  }
 
  
- public AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass)
+ @Override
+ public AgeRelationWritable createAgeRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
  {
-  return masterModel.getModelFactory().createRelation(targetObj, relClass, this);
+  return masterModel.getModelFactory().createRelation(rClsR,sourceObj, targetObj);
  }
 
 
+ @Override
  public AgeAttributeClass getDefinedAgeAttributeClass(String attrClass)
  {
   return masterModel.getDefinedAgeAttributeClass( attrClass );
@@ -439,6 +448,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return null;
  }
 
+ @Override
  public Collection<AgeAnnotation> getAnnotations()
  {
   return null;
@@ -483,6 +493,12 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  public void setIdGen(int id)
  {
   masterModel.setIdGen( id );
+ }
+
+ @Override
+ public void setModelFactory(ModelFactory mf)
+ {
+  getMasterModel().setModelFactory(mf);
  }
 
 // @Override

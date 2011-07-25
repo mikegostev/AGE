@@ -1,10 +1,10 @@
-package uk.ac.ebi.age.model.impl.v1;
+package uk.ac.ebi.age.model.impl.v3;
 
 import uk.ac.ebi.age.model.AgeAttribute;
-import uk.ac.ebi.age.model.AgeAttributeClass;
-import uk.ac.ebi.age.model.ContextSemanticModel;
+import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
+import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 
 class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWritable
@@ -13,9 +13,9 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
 
  private int value; 
 
- public AgeIntegerAttributeImpl(AgeAttributeClass attrClass, ContextSemanticModel sm)
+ public AgeIntegerAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
  {
-  super(attrClass, sm);
+  super(attrClass, host);
  }
 
  public Object getValue()
@@ -98,12 +98,10 @@ class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWr
  }
  
  @Override
- public AgeAttributeWritable createClone()
+ public AgeAttributeWritable createClone( AttributedWritable host)
  {
-  AgeIntegerAttributeImpl clone  = new AgeIntegerAttributeImpl(getAgeAttributeClass(), getSemanticModel());
+  AgeIntegerAttributeImpl clone  = new AgeIntegerAttributeImpl(getClassRef(), host);
   clone.value=this.value;
-  
-  clone.setOrder( getOrder() );
   
   cloneAttributes( clone );
 

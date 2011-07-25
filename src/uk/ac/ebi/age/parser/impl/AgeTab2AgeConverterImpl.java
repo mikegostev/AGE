@@ -22,9 +22,11 @@ import uk.ac.ebi.age.model.AgeExternalRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
+import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.FormatException;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -87,6 +89,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     continue;
    }
   
+   ClassRef clsRef = sm.getModelFactory().createClassRef(sm.getAgeClassPlug(cls), colHdr.getRow(), colHdr.getOriginalReference(), hdr.isHorizontal(), sm);
+   
    blk2classMap.put(hdr, cls);
    
    objectMap = classMap.get(cls);
@@ -103,7 +107,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      
      if( obj == null )
      {
-      obj = sm.createAgeObject(prototypeId, cls);
+      obj = sm.createAgeObject(clsRef, prototypeId);
       obj.setOrder( atObj.getRow() );
       
       prototypeMap.put(cls, obj);
@@ -128,7 +132,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 //       id+="-"+atObj.getId();
      }
      
-     obj = sm.createAgeObject(id, cls);
+     obj = sm.createAgeObject(clsRef, id);
      obj.setOrder( atObj.getRow() );
      obj.setId(id);
      obj.setIdScope(atObj.getIdScope());
@@ -556,6 +560,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
  private void imputeInverseRelations( DataModuleWritable data )
  {
+  Map<AgeRelationClass, RelationClassRef> relRefMap = new HashMap<AgeRelationClass, RelationClassRef>();
+  
   for( AgeObjectWritable obj : data.getObjects() )
   {
    
@@ -596,10 +602,22 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     if( ! found )
     {
-     AgeRelationWritable invR = rl.getTargetObject().createRelation(obj, invClass);
-     invR.setInferred(true);
-     invR.setInverseRelation(rl);
-     rl.setInverseRelation(invR);
+     RelationClassRef invCRef = relRefMap.get(invClass);
+     
+     if( invCRef == null )
+     {
+      invCRef =data.getContextSemanticModel().getModelFactory().createRelationClassRef(
+        data.getContextSemanticModel().getAgeRelationClassPlug(invClass), 0, invClass.getId());
+      
+      relRefMap.put(invClass, invCRef);
+     }
+     
+     
+     AgeRelationWritable invRel = rl.getTargetObject().createRelation(invCRef, obj );
+
+     invRel.setInverseRelation(rl);
+     invRel.setInferred(true);
+     rl.setInverseRelation(invRel);
     }
    }
   }
@@ -863,12 +881,12 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     else
      dupCol = addConverter(convs, new ScalarQualifierConvertor( attHd, qClass, hostConverter, sm ) );
     
-    if( dupCol != -1 )
-    {
-     log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
-       +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
-     result = false;
-    }
+//    if( dupCol != -1 )
+//    {
+//     log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
+//       +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+//     result = false;
+//    }
     
     continue;
    }
@@ -929,14 +947,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 //     if( relCls == null )
 //      relCls = sm.createCustomAgeRelationClass(attHd.getName(), rangeClass, blkCls);
      
-     int dupCol = addConverter(convs, new CustomRelationConvertor(attHd,relCls,classMap.get(rangeClass)) );
+     int dupCol = addConverter(convs, new CustomRelationConvertor(attHd,relCls,sm,classMap.get(rangeClass)) );
      
-     if( dupCol != -1 )
-     {
-      log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
-        +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
-      result = false;
-     }
+//     if( dupCol != -1 )
+//     {
+//      log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
+//        +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+//      result = false;
+//     }
 
     }
     else
@@ -969,12 +987,12 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       else
        dupCol = addConverter(convs, new AttributeConvertor(attHd, attrClass, sm));
 
-      if(dupCol != -1)
-      {
-       log.log(Level.ERROR, "Column header duplicates header at column " + convs.get(dupCol).getClassReference().getCol() + ". Row: " + attHd.getRow()
-         + " Col: " + attHd.getCol());
-       result = false;
-      }
+//      if(dupCol != -1)
+//      {
+//       log.log(Level.ERROR, "Column header duplicates header at column " + convs.get(dupCol).getClassReference().getCol() + ". Row: " + attHd.getRow()
+//         + " Col: " + attHd.getCol());
+//       result = false;
+//      }
      }
     }
    }
@@ -1020,12 +1038,12 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      }
      
      
-     if( dupCol != -1 )
-     {
-      log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
-        +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
-      result = false;
-     }
+//     if( dupCol != -1 )
+//     {
+//      log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
+//        +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+//      result = false;
+//     }
     }
     else
     {
@@ -1054,14 +1072,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       }
      }
      
-     int dupCol = addConverter(convs, new DefinedRelationConvertor( attHd, rCls, classMap) );
+     int dupCol = addConverter(convs, new DefinedRelationConvertor( attHd, rCls, sm, classMap) );
      
-     if( dupCol != -1 )
-     {
-      log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
-        +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
-      result = false;
-     }
+//     if( dupCol != -1 )
+//     {
+//      log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
+//        +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+//      result = false;
+//     }
 
     }
    }
@@ -1109,8 +1127,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   private Collection<Map<String, AgeObjectWritable>> rangeObjects;
   private AgeRelationClass relClass;
   private AgeObjectWritable hostObject;
+  private RelationClassRef rClsRef;
   
-  public DefinedRelationConvertor(ClassReference hd, AgeRelationClass rlClass, Map<AgeClass, Map<String, AgeObjectWritable>> classMap)
+  public DefinedRelationConvertor(ClassReference hd, AgeRelationClass rlClass, ContextSemanticModel sm, Map<AgeClass, Map<String, AgeObjectWritable>> classMap)
   {
    super(hd);
    
@@ -1136,6 +1155,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      }
     }
    }
+   
+   rClsRef = sm.getModelFactory().createRelationClassRef(sm.getAgeRelationClassPlug(rlClass), hd.isHorizontal()?hd.getCol():hd.getRow(), hd.getOriginalReference());
   }
   
   public void reset( AgeObjectWritable obj )
@@ -1148,6 +1169,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      if( r.getAgeElClass() == relClass )
       obj.removeRelation(r);
    }
+   
+   setLastConvertedValue(null);
+
   }
 
 
@@ -1196,9 +1220,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
    AgeRelationWritable rel = null;
    if(targetObj == null)
-    rel = hostObject.createExternalRelation(val, relClass);
+    rel = hostObject.createExternalRelation( rClsRef, val );
    else
-    rel = hostObject.createRelation(targetObj, relClass);
+    rel = hostObject.createRelation( rClsRef, targetObj);
 
    setLastConvertedValue(rel);
 
@@ -1258,7 +1282,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    AgeAttributeWritable obAttr = null;
    if(targetObj == null)
    {
-    obAttr = hostObject.createExternalObjectAttribute(val, classRef);
+    obAttr = hostObject.createExternalObjectAttribute( classRef, val );
    }
    else
    {
@@ -1289,12 +1313,15 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   private Map<String, AgeObjectWritable> rangeObjects;
   private AgeRelationClass       relClass;
   private AgeObjectWritable hostObject;
+  private RelationClassRef rClsRef;
 
-  public CustomRelationConvertor(ClassReference hd, AgeRelationClass relCls, Map<String, AgeObjectWritable> map)
+  public CustomRelationConvertor(ClassReference hd, AgeRelationClass relCls, ContextSemanticModel sm, Map<String, AgeObjectWritable> map)
   {
    super(hd);
    rangeObjects = map;
    relClass = relCls;
+
+   rClsRef = sm.getModelFactory().createRelationClassRef(sm.getAgeRelationClassPlug(relCls), hd.isHorizontal()?hd.getCol():hd.getRow(), hd.getOriginalReference());
   }
 
   public void reset( AgeObjectWritable obj )
@@ -1331,9 +1358,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
    AgeRelationWritable rel = null;
    if(targetObj == null)
-    rel = hostObject.createExternalRelation(val, relClass);
+    rel = hostObject.createExternalRelation(rClsRef, val);
    else
-    rel = hostObject.createRelation(targetObj, relClass);
+    rel = hostObject.createRelation(rClsRef, targetObj);
 
    setLastConvertedValue(rel);
   }
@@ -1697,7 +1724,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
    AgeAttributeWritable obAttr = null;
    if(targetObj == null)
-    obAttr = prop.createExternalObjectAttribute(val, classRef);
+    obAttr = prop.createExternalObjectAttribute(classRef, val);
    else
    {
     obAttr = prop.createAgeAttribute(classRef);

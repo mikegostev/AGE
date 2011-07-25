@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v2;
+package uk.ac.ebi.age.model.impl.v3;
 
 import java.io.Serializable;
 
@@ -6,7 +6,6 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
-import uk.ac.ebi.age.model.impl.v1.AttributedObject;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 

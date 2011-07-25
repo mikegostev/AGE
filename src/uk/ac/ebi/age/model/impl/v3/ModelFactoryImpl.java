@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v2;
+package uk.ac.ebi.age.model.impl.v3;
 
 import java.io.Serializable;
 
@@ -34,15 +34,18 @@ import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 
 public class ModelFactoryImpl extends ModelFactory implements Serializable
 {
- private static final long serialVersionUID = 2L;
+ private static final long serialVersionUID = 3L;
 
- private static ModelFactoryImpl instance = new ModelFactoryImpl();
+ private static ModelFactoryImpl instance;
 
  private ModelFactoryImpl()
  {}
  
  public static ModelFactory getInstance()
  {
+  if( instance == null )
+   instance = new ModelFactoryImpl();
+  
   return instance;
  }
 
@@ -54,9 +57,9 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeObjectWritable createAgeObject(String id, ClassRef ageClassRef)
+ public AgeObjectWritable createAgeObject(ClassRef ageClassRef, String id )
  {
-  return new AgeObjectImpl(id, ageClassRef);
+  return new AgeObjectImpl(ageClassRef, id);
  }
 
 
@@ -126,22 +129,22 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, RelationClassRef ref)
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id )
  {
   return new AgeExternalRelationImpl(ref, sourceObj, id);
  }
  
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, AttributedWritable host)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host , String id )
  {
   return new AgeExternalObjectAttributeImpl(atCls, id, host);
  }
 
  @Override
- public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, ContextSemanticModel sm)
+ public AgeRelationWritable createRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
  {
-  throw new UnsupportedOperationException();
+  return new AgeRelationImpl(rClsR, sourceObj, targetObj);
  }
 
 
@@ -218,9 +221,9 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public ClassRef createClassRef(AgeClassPlug plug, int order, String heading, boolean hrz)
+ public ClassRef createClassRef(AgeClassPlug plug, int order, String heading, boolean hrz, ContextSemanticModel modl )
  {
-  return new uk.ac.ebi.age.model.impl.v2.ClassRef(plug, order, heading, hrz);
+  return new uk.ac.ebi.age.model.impl.v3.ClassRef(plug, order, heading, hrz, modl );
  }
 
  @Override

@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 import uk.ac.ebi.age.model.AgeContextSemanticElement;
 import uk.ac.ebi.age.model.ContextSemanticModel;
-import uk.ac.ebi.age.model.SemanticModel;
 
 abstract class AgeContextSemanticElementImpl extends AgeSemanticElementImpl implements AgeContextSemanticElement, Serializable
 {
@@ -22,16 +21,16 @@ abstract class AgeContextSemanticElementImpl extends AgeSemanticElementImpl impl
   return (ContextSemanticModel)super.getSemanticModel();
  }
  
- @Override
- public void setSemanticModel( ContextSemanticModel m )
- {
-  super.setSemanticModel(m);
- }
+// @Override
+// public void setSemanticModel( ContextSemanticModel m )
+// {
+//  super.setSemanticModel(m);
+// }
 
- @Override
- public void setSemanticModel( SemanticModel m )
- {
-  throw new UnsupportedOperationException();
- }
+// @Override
+// public void setSemanticModel( SemanticModel m )
+// {
+//  throw new UnsupportedOperationException();
+// }
 
 }

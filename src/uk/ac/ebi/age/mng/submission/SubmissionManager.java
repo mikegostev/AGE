@@ -32,6 +32,7 @@ import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
@@ -125,6 +126,8 @@ public class SubmissionManager
   
   Map<String, AgeObjectWritable> clusterIdMap = new HashMap<String, AgeObjectWritable>();
   Map<String, AgeObjectWritable> globalIdMap = new HashMap<String, AgeObjectWritable>();
+ 
+  Map<AgeRelationClass, RelationClassRef> relRefMap = new HashMap<AgeRelationClass, RelationClassRef>();
  }
  
 // public static SubmissionManager getInstance()
@@ -1808,7 +1811,18 @@ public class SubmissionManager
 
       if(invClassOk)
       {
-       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
+       RelationClassRef invCRef = cstMeta.relRefMap.get(invRCls);
+       
+       if( invCRef == null )
+       {
+        invCRef =tgObj.getDataModule().getContextSemanticModel().getModelFactory().createRelationClassRef(
+          tgObj.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(invRCls), 0, invRCls.getId());
+        
+        cstMeta.relRefMap.put(invRCls, invCRef);
+       }
+       
+       
+       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId() );
        invRel.setTargetObject(exr.getSourceObject());
        invRel.setInferred(true);
 
@@ -1995,7 +2009,7 @@ public class SubmissionManager
       AgeObjectWritable replObj = null;
       String tgObjId = invrsRel.getTargetObjectId();
       
-      replObj = target.getDataModule().getClusterId().equals(cstMeta.id)?
+      replObj = target.getDataModule().getClusterId().equals(cstMeta.id)? // XXX not sure what I meant, why target is not in our cluster?
         cstMeta.clusterIdMap.get(tgObjId) 
       : cstMeta.globalIdMap.get(tgObjId);
 
@@ -2063,7 +2077,19 @@ public class SubmissionManager
        
        if( dirRel == null )
        {
-        dirRel = replObj.getDataModule().getContextSemanticModel().createExternalRelation(replObj, target.getId(), invrsRel.getAgeElClass().getInverseRelationClass());
+        
+        RelationClassRef invCRef = cstMeta.relRefMap.get(extRel.getAgeElClass());
+        
+        if( invCRef == null )
+        {
+         invCRef =replObj.getDataModule().getContextSemanticModel().getModelFactory().createRelationClassRef(
+           replObj.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(extRel.getAgeElClass()), 0,
+           extRel.getTargetObjectId());
+         
+         cstMeta.relRefMap.put(extRel.getAgeElClass(), invCRef);
+        }
+
+        dirRel = replObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, replObj, target.getId());
 
         dirRel.setInferred(true);
         

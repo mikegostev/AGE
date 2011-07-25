@@ -10,7 +10,6 @@ import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeContextSemanticElement;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
-import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.service.id.IdGenerator;
 
@@ -29,7 +28,7 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeCon
  private Collection<AgeAttributeClassPlug> superClassPlugs;
  private transient Collection<AgeAttributeClass> superClasses;
  
- public CustomAgeAttributeClassImpl(String name2, DataType type, SemanticModel sm, AgeClass owner2)
+ public CustomAgeAttributeClassImpl(String name2, DataType type, ContextSemanticModel sm, AgeClass owner2)
  {
   super(sm);
   dataType=type;
@@ -151,17 +150,5 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeCon
   return (ContextSemanticModel)super.getSemanticModel();
  }
  
- @Override
- public void setSemanticModel( ContextSemanticModel m )
- {
-  super.setSemanticModel(m);
- }
-
- @Override
- public void setSemanticModel( SemanticModel m )
- {
-  throw new UnsupportedOperationException();
- }
-
 }
 

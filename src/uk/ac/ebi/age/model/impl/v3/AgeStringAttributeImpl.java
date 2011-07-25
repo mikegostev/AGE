@@ -1,37 +1,43 @@
-package uk.ac.ebi.age.model.impl.v2;
+package uk.ac.ebi.age.model.impl.v3;
 
 import uk.ac.ebi.age.model.AgeAttribute;
-import uk.ac.ebi.age.model.AgeObject;
-import uk.ac.ebi.age.model.AgeObjectAttribute;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
-import uk.ac.ebi.age.model.writable.AgeObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
-class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjectAttributeWritable
+class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttributeWritable
 {
  private static final long serialVersionUID = 1L;
  
- private AgeObject value; 
+ private String value; 
 
- public AgeObjectAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
+ public AgeStringAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
  {
   super(attrClass, host);
  }
 
- public AgeObject getValue()
+ public Object getValue()
  {
   return value;
  }
 
  public void updateValue(String val) throws FormatException
  {
-  throw new UnsupportedOperationException();
+  if( value == null )
+   value=val;
+  else if( val.length() == 0 )
+   value +="\n";
+  else
+   value += "\n"+val;
  }
 
  public void finalizeValue()
  {
+  if( value != null )
+   value = value.trim();
+  
+  value = value.intern();
  }
  
 
@@ -62,42 +68,35 @@ class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjectAttrib
  @Override
  public void setBooleanValue(boolean boolValue)
  {
-  throw new UnsupportedOperationException();
+  value = String.valueOf(boolValue);
  }
 
  @Override
  public void setDoubleValue(double doubleValue)
  {
-  throw new UnsupportedOperationException();
+  value = String.valueOf(doubleValue);
  }
 
  @Override
  public void setIntValue(int intValue)
  {
-  throw new UnsupportedOperationException();
+  value = String.valueOf(intValue);
  }
 
  @Override
  public void setValue(Object val)
  {
-  if( val instanceof AgeObject )
-   value=(AgeObject)val;
+  value=val.toString();
  }
  
  @Override
- public void setValue( AgeObject val)
+ public AgeAttributeWritable createClone(AttributedWritable host)
  {
-  value=val;
- }
- 
- @Override
- public AgeAttributeWritable createClone( AttributedWritable host )
- {
-  AgeObjectAttributeImpl clone  = new AgeObjectAttributeImpl(getClassRef(), host);
+  AgeStringAttributeImpl clone  = new AgeStringAttributeImpl(getClassRef(), host);
   clone.value=this.value;
   
   cloneAttributes( clone );
-
+  
   return clone;
  }
  
@@ -110,20 +109,9 @@ class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjectAttrib
  }
 
  @Override
- public int compareTo( AgeAttribute ob )
+ public int compareTo(AgeAttribute o)
  {
-  if( ! (ob instanceof AgeObjectAttribute) )
-   return 1;
-
-  
-  return value.getId().compareTo( ((AgeObjectAttribute)ob).getValue().getId() );
+  return value.compareTo(o.getValue().toString());
  }
-
- @Override
- public String getTargetObjectId()
- {
-  return value.getId();
- }
-
-
+ 
 }

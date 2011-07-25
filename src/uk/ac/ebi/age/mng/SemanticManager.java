@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.mng;
 
 import uk.ac.ebi.age.model.ContextSemanticModel;
+import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
 import uk.ac.ebi.age.model.impl.v1.ContextSemanticModelImpl;
@@ -45,10 +46,15 @@ public class SemanticManager
  {
   model = mod;
  }
+ 
+ public static ModelFactory getModelFactory()
+ {
+  return ModelFactoryImpl.getInstance();
+ }
 
  public static SemanticModel createModelInstance()
  {
-  return new SemanticModelImpl(ModelFactoryImpl.getInstance());
+  return new SemanticModelImpl(getModelFactory());
  }
 
 }

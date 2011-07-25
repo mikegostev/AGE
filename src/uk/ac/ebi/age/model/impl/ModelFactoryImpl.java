@@ -10,9 +10,11 @@ import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
+import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
@@ -25,6 +27,7 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
+import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
@@ -45,19 +48,19 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
  
  private ModelFactory v1factory = uk.ac.ebi.age.model.impl.v1.ModelFactoryImpl.getInstance();
- private ModelFactory v2factory = uk.ac.ebi.age.model.impl.v2.ModelFactoryImpl.getInstance();
+ private ModelFactory v3factory = uk.ac.ebi.age.model.impl.v3.ModelFactoryImpl.getInstance();
  
  
  @Override
  public DataModuleWritable createDataModule( ContextSemanticModel sm )
  {
-  return v2factory.createDataModule( sm );
+  return v3factory.createDataModule( sm );
  }
 
  @Override
- public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, ContextSemanticModel sm)
+ public AgeObjectWritable createAgeObject( ClassRef clsR, String id)
  {
-  return v2factory.createAgeObject(id, ageClass, sm);
+  return v3factory.createAgeObject(clsR, id);
  }
 
  @Override
@@ -87,29 +90,29 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
 
  @Override
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, ContextSemanticModel sm)
+ public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host)
  {
-  return v2factory.createAgeAttribute(attrClass, sm);
+  return v3factory.createAgeAttribute(attrClass, host);
  }
 
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, ContextSemanticModel sm)
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, String id)
  {
-  return v2factory.createExternalRelation( sourceObj, id, targetClass, sm);
+  return v3factory.createExternalRelation(rClsR, sourceObj, id);
  }
  
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, ContextSemanticModel sm)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id)
  {
-  return v2factory.createExternalObjectAttribute(atCls, id, sm);
+  return v3factory.createExternalObjectAttribute(atCls, host, id);
  }
 
  @Override
- public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, ContextSemanticModel sm)
+ public AgeRelationWritable createRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
  {
-  return v1factory.createRelation(targetObj, relClass, sm);
+  return v3factory.createRelation(rClsR, sourceObj, targetObj);
  }
 
 
@@ -182,8 +185,19 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AttributeClassRef createAttributeClassRef(AgeAttributeClassPlug plug, int order, String heading)
  {
-  return v2factory.createAttributeClassRef(plug, order, heading);
+  return v3factory.createAttributeClassRef(plug, order, heading);
  }
 
+ @Override
+ public RelationClassRef createRelationClassRef(AgeRelationClassPlug plug, int order, String heading)
+ {
+  return v3factory.createRelationClassRef(plug, order, heading);
+ }
+
+ @Override
+ public ClassRef createClassRef(AgeClassPlug plug, int order, String heading, boolean hrz, ContextSemanticModel modl )
+ {
+  return v3factory.createClassRef(plug, order, heading, hrz, modl );
+ }
 
 }

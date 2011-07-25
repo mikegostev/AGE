@@ -42,7 +42,7 @@ public class SemanticModelImpl implements SemanticModel, Serializable
 
  private Collection<AgeAnnotation> annotation = new ArrayList<AgeAnnotation>();
  
- private ModelFactory modelFactory;
+ private transient ModelFactory modelFactory;
 
  private AgeAttributeClassWritable attrClassRoot;
  private AgeClassWritable classRoot;
@@ -92,7 +92,11 @@ public class SemanticModelImpl implements SemanticModel, Serializable
   return modelFactory;
  }
 
- 
+ public void setModelFactory( ModelFactory mf )
+ {
+  modelFactory=mf;
+ }
+
  
  public AgeClass getDefinedAgeClass(String name)
  {

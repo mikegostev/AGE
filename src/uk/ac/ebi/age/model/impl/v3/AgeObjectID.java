@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v2;
+package uk.ac.ebi.age.model.impl.v3;
 
 import uk.ac.ebi.age.entity.EntityDomain;
 import uk.ac.ebi.age.entity.ID;

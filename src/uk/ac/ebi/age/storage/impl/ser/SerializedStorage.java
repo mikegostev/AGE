@@ -29,6 +29,7 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
@@ -442,6 +443,8 @@ public class SerializedStorage implements AgeStorageAdm
  
  private void loadData() throws StorageInstantiationException
  {
+  Map<AgeRelationClass, RelationClassRef> relRefMap = new HashMap<AgeRelationClass, RelationClassRef>();
+
   try
   {
    dbLock.writeLock().lock();
@@ -473,14 +476,14 @@ public class SerializedStorage implements AgeStorageAdm
     dm.setMasterModel(model);
    }
    
-   for( DataModuleWritable smb : moduleMap.values() )
+   for( DataModuleWritable mod : moduleMap.values() )
    {
-    Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(smb.getClusterId());
+    Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(mod.getClusterId());
 
     
-    if( smb.getExternalRelations() != null )
+    if( mod.getExternalRelations() != null )
     {
-     for( AgeExternalRelationWritable exr : smb.getExternalRelations() )
+     for( AgeExternalRelationWritable exr : mod.getExternalRelations() )
      {
       if( exr.getTargetObject() != null )
        continue;
@@ -537,11 +540,23 @@ public class SerializedStorage implements AgeStorageAdm
       if( ! hasInv )
       {
 //       AgeRelationWritable iRel = tgObj.getAgeElClass().getSemanticModel().createAgeRelation(tgObj, invRCls);
+       RelationClassRef invCRef = relRefMap.get(invRCls);
        
-       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(tgObj, exr.getSourceObject().getId(), invRCls);
-       invRel.setTargetObject(exr.getSourceObject());
+       if( invCRef == null )
+       {
+        invCRef =tgObj.getDataModule().getContextSemanticModel().getModelFactory().createRelationClassRef(
+          tgObj.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(invRCls), 0, invRCls.getId());
+        
+        relRefMap.put(invRCls, invCRef);
+       }
+       
+       
+       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId() );
 
+       invRel.setTargetObject(exr.getSourceObject());
+       invRel.setInverseRelation(exr);
        invRel.setInferred(true);
+       exr.setInverseRelation(invRel);
        
        tgObj.addRelation(invRel);
       }
@@ -549,11 +564,11 @@ public class SerializedStorage implements AgeStorageAdm
      }
     }
    
-    if( smb.getFileAttributes() != null )
+    if( mod.getFileAttributes() != null )
     {
-     for(AgeFileAttributeWritable fattr : smb.getFileAttributes())
+     for(AgeFileAttributeWritable fattr : mod.getFileAttributes())
      {
-      String fid = makeFileSysRef(fattr.getFileId(), smb.getClusterId());
+      String fid = makeFileSysRef(fattr.getFileId(), mod.getClusterId());
 
       if(fileDepot.getFilePath(fid).exists())
        fattr.setFileSysRef(fid);
@@ -564,8 +579,8 @@ public class SerializedStorage implements AgeStorageAdm
        if(fileDepot.getFilePath(fid).exists())
         fattr.setFileSysRef(fid);
        else
-        log.error("Can't resolve file attribute: '" + fattr.getFileId() + "'. Cluster: " + smb.getClusterId()
-          + " Module: " + smb.getId());
+        log.error("Can't resolve file attribute: '" + fattr.getFileId() + "'. Cluster: " + mod.getClusterId()
+          + " Module: " + mod.getId());
       }
      }
     }
@@ -641,6 +656,7 @@ public class SerializedStorage implements AgeStorageAdm
    ois.close();
    
    SemanticManager.getInstance().setMasterModel( model );
+   model.setModelFactory(SemanticManager.getModelFactory());
   }
   catch(Exception e)
   {

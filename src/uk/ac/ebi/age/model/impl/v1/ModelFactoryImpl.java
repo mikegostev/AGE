@@ -10,9 +10,11 @@ import uk.ac.ebi.age.model.AgeClassPlug;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
+import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
@@ -25,6 +27,7 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
+import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
@@ -33,13 +36,16 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 {
  private static final long serialVersionUID = 1L;
 
- private static ModelFactoryImpl instance = new ModelFactoryImpl();
+ private static ModelFactoryImpl instance;
 
  private ModelFactoryImpl()
  {}
  
  public static ModelFactory getInstance()
  {
+  if( instance == null )
+   instance = new ModelFactoryImpl();
+  
   return instance;
  }
 
@@ -50,11 +56,6 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
   return new DataModuleImpl( sm );
  }
 
- @Override
- public AgeObjectWritable createAgeObject(String id, AgeClass ageClass, ContextSemanticModel sm)
- {
-  return new AgeObjectImpl(id, ageClass, sm);
- }
 
  @Override
  public AgeClassWritable createAgeClass(String name, String id, String pfx, SemanticModel sm)
@@ -79,27 +80,6 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  public AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type, SemanticModel sm)
  {
   return new AgeAttributeClassImpl(name, id, type, sm);
- }
-
-
-
- @Override
- public AgeExternalRelationWritable createExternalRelation(AgeObjectWritable sourceObj, String id, AgeRelationClass targetClass, ContextSemanticModel sm)
- {
-  return new AgeExternalRelationImpl(targetClass, sourceObj, id, sm);
- }
- 
-
- @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, String id, ContextSemanticModel sm)
- {
-  return new AgeExternalObjectAttributeImpl(atCls.getAttributeClass(), id, sm);
- }
-
- @Override
- public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass, ContextSemanticModel semanticModel)
- {
-  return new AgeRelationImpl(targetObj, relClass, semanticModel);
  }
 
 
@@ -170,43 +150,49 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, ContextSemanticModel sm)
+ public AttributeClassRef createAttributeClassRef(AgeAttributeClassPlug plug, int order, String heading)
  {
-  AgeAttributeWritable attr=null;
-  
-  AgeAttributeClass attrClass = attrClassRef.getAttributeClass();
-  
-  switch( attrClass.getDataType() )
-  {
-   case INTEGER:
-    attr = new AgeIntegerAttributeImpl(attrClass, sm);
-    break;
-   
-   case REAL:
-    attr = new AgeRealAttributeImpl(attrClass, sm);
-    break;
-   
-   case BOOLEAN:
-    attr = new AgeBooleanAttributeImpl(attrClass, sm);
-    break;
-   
-   case URI:
-   case TEXT: 
-   case STRING:
-   case GUESS:
-    attr = new AgeStringAttributeImpl(attrClass, sm);
-    break;
-   
-   case OBJECT:
-    attr = new AgeObjectAttributeImpl(attrClass, sm);
-  }
-  
-  
-  return attr;
+  throw new UnsupportedOperationException();
  }
 
  @Override
- public AttributeClassRef createAttributeClassRef(AgeAttributeClassPlug plug, int order, String heading)
+ public AgeObjectWritable createAgeObject(ClassRef ageClassRef, String id)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeRelationWritable createRelation(RelationClassRef relClassRef, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public ClassRef createClassRef(AgeClassPlug plug, int order, String heading, boolean hrz, ContextSemanticModel modl )
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public RelationClassRef createRelationClassRef(AgeRelationClassPlug plug, int order, String heading)
  {
   throw new UnsupportedOperationException();
  }

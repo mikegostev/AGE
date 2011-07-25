@@ -14,5 +14,9 @@ public interface BlockHeader
  public abstract List<ClassReference> getColumnHeaders();
  
  AgeTabModule getModule();
+ 
+ public abstract boolean isHorizontal();
+
+ public abstract void setHorizontal(boolean horizontal);
 
 }

@@ -10,6 +10,7 @@ import uk.ac.ebi.age.ext.authz.TagRef;
 import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
+import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.SemanticModel;
@@ -46,36 +47,38 @@ public class ExtObjAttrTest
   cPlug = cMod.getAgeAttributeClassPlug(atClsO);
   AttributeClassRef classRefO = cMod.getModelFactory().createAttributeClassRef(cPlug, 0, "MyObj");
 
+  ClassRef clsRef = cMod.getModelFactory().createClassRef(cMod.getAgeClassPlug(cls), 0, cls.getId(), true, cMod);
+  
   for( int i=0; i<5; i++ )
   {
-   AgeObjectWritable obj = cMod.createAgeObject("obj"+i, cls);
+   AgeObjectWritable obj = cMod.createAgeObject(clsRef, "obj"+i);
    
    obj.createAgeAttribute(classRefS).setValue("Val");
    
    if( i == 1 )
    {
-    obj.createExternalObjectAttribute("ObjRef"+i, classRefO);
+    obj.createExternalObjectAttribute( classRefO, "ObjRef"+i );
    }
    else if( i == 2 )
    {
-    obj.createExternalObjectAttribute("ObjRef"+i+"+1L1", classRefO);
+    obj.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+1L1");
     obj.createAgeAttribute(classRefS).setValue("Val2");
-    AttributedWritable attr = obj.createExternalObjectAttribute("ObjRef"+i+"+2L1", classRefO);
+    AttributedWritable attr = obj.createExternalObjectAttribute(classRefO ,"ObjRef"+i+"+2L1");
     obj.createAgeAttribute(classRefS).setValue("Val3");
-    obj.createExternalObjectAttribute("ObjRef"+i+"+3L1", classRefO);
+    obj.createExternalObjectAttribute(classRefO , "ObjRef"+i+"+3L1");
 
     attr.createAgeAttribute(classRefS).setValue("Val2+");
-    attr.createExternalObjectAttribute("ObjRef"+i+"+1L2", classRefO);
-    attr.createExternalObjectAttribute("ObjRef"+i+"+2L2", classRefO);
+    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+1L2");
+    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+2L2");
     
     AgeAttributeWritable sat = attr.createAgeAttribute(classRefS);
     sat.setValue("Val3+");
     attr=sat;
     
     attr.createAgeAttribute(classRefS).setValue("Val2++");
-    attr.createExternalObjectAttribute("ObjRef"+i+"+1L3", classRefO);
+    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+1L3");
     attr.createAgeAttribute(classRefS).setValue("Val3++");
-    attr.createExternalObjectAttribute("ObjRef"+i+"+2L3", classRefO);
+    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+2L3");
    }
    
    dm.addObject(obj);

@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v2;
+package uk.ac.ebi.age.model.impl.v3;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -19,7 +19,6 @@ import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.RelationClassRef;
-import uk.ac.ebi.age.model.impl.v1.AttributedObject;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
@@ -42,7 +41,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  
  private int order;
  
- public AgeObjectImpl(String id, ClassRef cr)
+ public AgeObjectImpl( ClassRef cr, String id )
  {
   super();
 
@@ -220,9 +219,9 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  
 
  @Override
- public AgeRelationWritable createRelation(AgeObjectWritable targetObj, AgeRelationClass relClass)
+ public AgeRelationWritable createRelation(RelationClassRef relClsR, AgeObjectWritable targetObj)
  {
-  AgeRelationWritable rel = getSemanticModel().createAgeRelation(targetObj, relClass);
+  AgeRelationWritable rel = getSemanticModel().createAgeRelation(relClsR, this, targetObj);
   
   addRelation(rel);
   

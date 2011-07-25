@@ -54,6 +54,7 @@ public interface SemanticModel
 
  
  ModelFactory getModelFactory();
+ void setModelFactory( ModelFactory mf );
 
  
 // AgeAttributeClassPlug getAgeAttributeClassPlug(AgeAttributeClass attrClass);

@@ -8,7 +8,7 @@ import java.util.TreeMap;
 
 public class ClassReference extends AgeTabElement
 {
-
+ private boolean horizontal;
  private boolean custom;
  private String name;
  private Map<String,String> flags;
@@ -205,6 +205,16 @@ public class ClassReference extends AgeTabElement
  public String getOriginalReference()
  {
   return rawRef;
+ }
+
+ public boolean isHorizontal()
+ {
+  return horizontal;
+ }
+
+ public void setHorizontal(boolean horizontal)
+ {
+  this.horizontal = horizontal;
  }
 
 }

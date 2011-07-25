@@ -12,7 +12,7 @@ import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 public interface ContextSemanticModel extends SemanticModel
 {
- AgeClass getDefinedAgeClass(String name);
+// AgeClass getDefinedAgeClass(String name);
  AgeClass getCustomAgeClass(String name);
 
  AgeRelationClass getCustomAgeRelationClass(String name);
@@ -36,10 +36,11 @@ public interface ContextSemanticModel extends SemanticModel
  AgeRelationClassPlug getAgeRelationClassPlug(AgeRelationClass relClass);
 
  
- AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass);
- AgeObjectWritable createAgeObject(String id, AgeClass cls);
+ AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host);
+ AgeObjectWritable createAgeObject( ClassRef clsR, String id);
+ 
  AgeExternalRelationWritable createExternalRelation(RelationClassRef clsRef, AgeObjectWritable sourceObj, String val);
- AgeAttributeWritable createExternalObjectAttribute( AttributeClassRef atCls, String val, AttributedWritable host );
- AgeRelationWritable createAgeRelation(AgeObjectWritable targetObj, AgeRelationClass relClass);
+ AgeAttributeWritable createExternalObjectAttribute( AttributeClassRef atCls, AttributedWritable host, String val );
+ AgeRelationWritable createAgeRelation(RelationClassRef clsRef, AgeObjectWritable sourceObj, AgeObjectWritable targetObj);
 
 }

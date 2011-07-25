@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v1;
+package uk.ac.ebi.age.model.impl.v3;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,7 +46,7 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
  @Override
  public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass)
  {
-  AgeAttributeWritable attr = getSemanticModel().createAgeAttribute(attrClass);
+  AgeAttributeWritable attr = getSemanticModel().createAgeAttribute(attrClass, this);
   
   addAttribute(attr);
   
@@ -55,9 +55,9 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
 
  
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(String val, AttributeClassRef attrClass)
+ public AgeAttributeWritable createExternalObjectAttribute( AttributeClassRef attrClass, String val )
  {
-  AgeAttributeWritable attr = getSemanticModel().createExternalObjectAttribute(  attrClass, val );
+  AgeAttributeWritable attr = getSemanticModel().createExternalObjectAttribute(  attrClass, this, val );
 
   addAttribute(attr);
 

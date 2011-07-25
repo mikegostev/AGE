@@ -9,6 +9,7 @@ import uk.ac.ebi.age.parser.ClassReference;
 
 public class BlockHeaderImpl implements BlockHeader
 {
+ private boolean horizontal;
  private ClassReference classCol;
  private List<ClassReference> props=new ArrayList<ClassReference>(30);
  private AgeTabModule module;
@@ -53,5 +54,15 @@ public class BlockHeaderImpl implements BlockHeader
  public List<ClassReference> getColumnHeaders()
  {
   return props;
+ }
+
+ public boolean isHorizontal()
+ {
+  return horizontal;
+ }
+
+ public void setHorizontal(boolean horizontal)
+ {
+  this.horizontal = horizontal;
  }
 }
