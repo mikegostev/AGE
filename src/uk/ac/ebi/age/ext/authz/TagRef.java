@@ -9,6 +9,7 @@ public class TagRef implements Serializable
 
  private String classiferName;
  private String tagName;
+ private String tagValue;
  
  public TagRef()
  {}
@@ -37,5 +38,15 @@ public class TagRef implements Serializable
  public void setTagName(String tagName)
  {
   this.tagName = tagName;
+ }
+
+ public String getTagValue()
+ {
+  return tagValue;
+ }
+
+ public void setTagValue(String tagValue)
+ {
+  this.tagValue = tagValue;
  }
 }

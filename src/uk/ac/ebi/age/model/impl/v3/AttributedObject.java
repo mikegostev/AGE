@@ -1,8 +1,10 @@
 package uk.ac.ebi.age.model.impl.v3;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,15 +16,23 @@ import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
-public abstract class AttributedObject implements AttributedWritable, AgeContextSemanticElement
+public abstract class AttributedObject implements AttributedWritable, AgeContextSemanticElement, Serializable
 {
 
- private static final long serialVersionUID = 2L;
+ private static final long serialVersionUID = 3L;
 
- private List<AgeAttributeWritable> attributes = com.pri.util.collection.Collections.emptyList();
+ private List<AgeAttributeWritable> attributes; // = com.pri.util.collection.Collections.emptyList();
  
  private transient Map<AgeAttributeClass,List<AgeAttributeWritable>> attribMap; // = new HashMap<String,List<AgeAttributeWritable>>();
 
+ protected AttributedObject()
+ {}
+
+ protected AttributedObject( boolean init )
+ {
+  attributes = com.pri.util.collection.Collections.emptyList();
+ }
+ 
 // private transient List<AgeAttributeClass> atClasses = null;
 
  
@@ -223,5 +233,23 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
    for( AgeAttributeWritable attr : attributes )
     objClone.addAttribute(attr.createClone(objClone));
   }
+ }
+ 
+ public synchronized void sortAttributes()
+ {
+  if( attributes == null )
+   return;
+  
+  reset();
+  
+  Collections.sort(attributes, new Comparator<AgeAttributeWritable>()
+  {
+
+   @Override
+   public int compare(AgeAttributeWritable o1, AgeAttributeWritable o2)
+   {
+    return o1.getOrder()-o2.getOrder();
+   }
+  });
  }
 }

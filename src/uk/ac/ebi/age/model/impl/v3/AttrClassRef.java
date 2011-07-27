@@ -8,7 +8,7 @@ import uk.ac.ebi.age.model.AttributeClassRef;
 
 public class AttrClassRef implements AttributeClassRef, Serializable
 {
- private static final long serialVersionUID = 2L;
+ private static final long serialVersionUID = 3L;
 
  private int order;
  private String heading;

@@ -23,7 +23,7 @@ import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 class DataModuleImpl  implements DataModuleWritable, Serializable
 {
- private static final long serialVersionUID = 1L;
+ private static final long serialVersionUID = 3L;
  
 // private long version;
  private Collection<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);

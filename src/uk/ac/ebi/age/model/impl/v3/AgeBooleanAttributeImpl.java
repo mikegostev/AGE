@@ -8,7 +8,7 @@ import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 class AgeBooleanAttributeImpl extends AgeAttributeImpl 
 {
- private static final long serialVersionUID = 1L;
+ private static final long serialVersionUID = 3L;
 
  private boolean value; 
 

@@ -27,4 +27,5 @@ public interface AttributedWritable extends Attributed
  void removeAttribute(AgeAttributeWritable attr);
 
  void reset();
+ void sortAttributes();
 }

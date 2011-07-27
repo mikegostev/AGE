@@ -11,7 +11,7 @@ import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
 class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, Serializable
 {
- private static final long serialVersionUID = 1L;
+ private static final long serialVersionUID = 3L;
  
  private RelationClassRef relClassRef;
  private AgeObjectWritable source;
@@ -21,6 +21,8 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  
  public AgeRelationImpl(RelationClassRef cref, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
  {
+  super( true );
+  
   relClassRef= cref;
   source=sourceObj;
   target=targetObj;

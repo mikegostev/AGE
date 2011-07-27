@@ -1,5 +1,7 @@
 package uk.ac.ebi.age.model.impl.v3;
 
+import java.io.Serializable;
+
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeObjectAttribute;
@@ -9,9 +11,9 @@ import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
-class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjectAttributeWritable
+class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjectAttributeWritable, Serializable
 {
- private static final long serialVersionUID = 1L;
+ private static final long serialVersionUID = 3L;
  
  private AgeObject value; 
 

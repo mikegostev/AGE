@@ -26,9 +26,9 @@ import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectWritable
 {
- private static final long serialVersionUID = 2L;
+ private static final long serialVersionUID = 3L;
 
- private List<AgeRelationWritable> relations = com.pri.util.collection.Collections.emptyList();
+ private List<AgeRelationWritable> relations;
  
  private transient Map<AgeRelationClass, List<AgeRelationWritable>> relationMap;
  
@@ -41,13 +41,18 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  
  private int order;
  
+ private AgeObjectImpl()
+ {}
+ 
  public AgeObjectImpl( ClassRef cr, String id )
  {
-  super();
+  super( true );
 
   this.id=id;
 
   classRef= cr;
+  
+  relations = com.pri.util.collection.Collections.emptyList();
  }
 
 

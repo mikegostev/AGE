@@ -422,6 +422,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
   for( AttributedWritable obj : data )
   {
+   obj.sortAttributes();
+   
    if( obj instanceof AgeObjectWritable )
    {
     AgeObjectWritable aow = (AgeObjectWritable)obj;

@@ -8,7 +8,7 @@ import uk.ac.ebi.age.model.RelationClassRef;
 
 public class RelClassRef implements RelationClassRef, Serializable
 {
- private static final long serialVersionUID = 2L;
+ private static final long serialVersionUID = 3L;
 
  private int order;
  private String heading;

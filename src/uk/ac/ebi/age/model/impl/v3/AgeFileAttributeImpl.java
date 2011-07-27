@@ -6,7 +6,7 @@ import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeFileAttributeWritable
 {
- private static final long serialVersionUID = 2L;
+ private static final long serialVersionUID = 3L;
 
  private transient String fileSysRef;
 

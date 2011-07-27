@@ -13,7 +13,7 @@ import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExternalObjectAttributeWritable, Serializable
 {
- private static final long serialVersionUID = 1L;
+ private static final long serialVersionUID = 3L;
 
  private String objId;
  private transient AgeObject target;

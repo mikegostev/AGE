@@ -11,7 +11,7 @@ import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 abstract class AgeAttributeImpl extends AttributedObject implements AgeAttributeWritable, Serializable
 {
- private static final long serialVersionUID = 2L;
+ private static final long serialVersionUID = 3L;
 
  private AttributeClassRef classReference;
  private AttributedWritable hostObject;
@@ -28,6 +28,8 @@ abstract class AgeAttributeImpl extends AttributedObject implements AgeAttribute
  
  public AgeAttributeImpl(AttributeClassRef attrClassR, AttributedWritable host)
  {
+  super(true);
+  
   classReference = attrClassR;
   hostObject = host;
  }

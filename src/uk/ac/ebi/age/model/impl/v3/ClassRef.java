@@ -8,7 +8,7 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 
 public class ClassRef implements uk.ac.ebi.age.model.ClassRef, Serializable
 {
- private static final long serialVersionUID = 2L;
+ private static final long serialVersionUID = 3L;
 
  private int order;
  private String heading;
