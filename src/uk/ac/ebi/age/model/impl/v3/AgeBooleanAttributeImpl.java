@@ -12,9 +12,6 @@ class AgeBooleanAttributeImpl extends AgeAttributeImpl
 
  private boolean value; 
 
- protected AgeBooleanAttributeImpl()
- {}
- 
  public AgeBooleanAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
  {
   super(attrClass, host);

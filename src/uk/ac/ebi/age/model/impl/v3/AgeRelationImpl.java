@@ -21,8 +21,6 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  
  public AgeRelationImpl(RelationClassRef cref, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
  {
-  super( true );
-  
   relClassRef= cref;
   source=sourceObj;
   target=targetObj;

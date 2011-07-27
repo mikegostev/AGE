@@ -23,8 +23,6 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
 
  public AgeExternalRelationImpl(RelationClassRef cRef, AgeObjectWritable srcOb, String id)
  {
-  super( true );
-  
   relClassRef=cRef;
 
   objId=id;

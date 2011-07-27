@@ -21,17 +21,10 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
 
  private static final long serialVersionUID = 3L;
 
- private List<AgeAttributeWritable> attributes; // = com.pri.util.collection.Collections.emptyList();
+ private List<AgeAttributeWritable> attributes = com.pri.util.collection.Collections.emptyList();
  
  private transient Map<AgeAttributeClass,List<AgeAttributeWritable>> attribMap; // = new HashMap<String,List<AgeAttributeWritable>>();
 
- protected AttributedObject()
- {}
-
- protected AttributedObject( boolean init )
- {
-  attributes = com.pri.util.collection.Collections.emptyList();
- }
  
 // private transient List<AgeAttributeClass> atClasses = null;
 

@@ -41,13 +41,8 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  
  private int order;
  
- private AgeObjectImpl()
- {}
- 
  public AgeObjectImpl( ClassRef cr, String id )
  {
-  super( true );
-
   this.id=id;
 
   classRef= cr;

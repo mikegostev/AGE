@@ -2405,6 +2405,8 @@ public class SubmissionManager
    if( mm.newModule == null )
     continue;
    
+   boolean mdres = true;
+   
    LogNode extAttrModLog = extAttrLog.branch("Processing module: "+mm.aux.getOrder());
    
    for( AgeObjectWritable obj : mm.newModule.getObjects() )
@@ -2412,7 +2414,7 @@ public class SubmissionManager
     attrStk.clear();
     attrStk.push(obj);
     
-    boolean mdres = connectExternalAttrs( attrStk, stor, cstMeta, mm, extAttrModLog  );
+    mdres = connectExternalAttrs( attrStk, stor, cstMeta, mm, extAttrModLog  );
     
     if( obj.getRelations() != null )
     {
@@ -2425,14 +2427,14 @@ public class SubmissionManager
      }
     }
     
-    if( mdres )
-     extAttrModLog.log(Level.SUCCESS, "Success");
-    else
-     extAttrModLog.log(Level.ERROR, "Failed");
 
     extAttrRes = extAttrRes && mdres;
    }
    
+   if( mdres )
+    extAttrModLog.log(Level.SUCCESS, "Success");
+   else
+    extAttrModLog.log(Level.ERROR, "Failed");
   }
   
   
