@@ -50,13 +50,9 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    LogNode ln = log.branch("Validating object ID="+obj.getId()+" (Scope: "+obj.getIdScope()+") Class: '"+obj.getAgeElClass()+"' Order: "+obj.getOrder());
    
    if( !validateObject( obj, rslv, ln ) )
-   {
-    ln.log(Level.ERROR, "Object validation failed");
-   
-    res = false;
-   }
+     res = false;
    else
-    ln.log(Level.SUCCESS, "Object validation successful");
+    ln.success();
   }
   
   return res;
@@ -86,9 +82,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    valid = res && valid;
    
    if( res )
-    ln.log(Level.SUCCESS, "Attributes validation successful");
-   else
-    ln.log(Level.ERROR, "Attributes validation failed");
+    ln.success();
   }
   
 
@@ -101,9 +95,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    valid = res && valid;
    
    if( res )
-    ln.log(Level.SUCCESS, "Relations validation successful");
-   else
-    ln.log(Level.ERROR, "Relations validation failed");
+    ln.success();
   }
   
 
@@ -189,7 +181,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     rels = byClassRels;
    }
    
-   LogNode ln = log.branch("Validation relations of class '"+rlCls+"' Relations number: "+rels.size());
+   LogNode ln = log.branch("Validating relations of class '"+rlCls+"' Relations number: "+rels.size());
 
    
    boolean res = checkTargetsUnique( rels, log ); 
@@ -202,9 +194,9 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    res = isRelationAllowed(rslvRlCls, rels, rlRules, mod, ln);
    
    if( res )
-    ln.log(Level.SUCCESS, "Validation successful");
+    ln.success();
    else
-    ln.log(Level.ERROR, "Validation failed");
+    ln.log(Level.ERROR, "There is no rule that allows this relation");
    
    objectOk = res && objectOk; 
   }
@@ -221,17 +213,13 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     boolean res = isRelationRuleSatisfied(rlRl, obj, auxRels, remRels, mod, rlln);
     
     if( res )
-     rlln.log(Level.SUCCESS, "Rule satisfied");
-    else
-     rlln.log(Level.ERROR, "Rule failed");
+     rlln.success();
     
     rrulOk = res && rrulOk;
    }
    
    if( rrulOk )
-    ln.log(Level.SUCCESS, "Validation successful" );
-   else
-    ln.log(Level.ERROR, "Validation failed" );
+    ln.success();
    
    objectOk = objectOk && rrulOk;
   }
@@ -263,17 +251,13 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     boolean res = validateAttributed(rl, 1, mod, atln);
 
     if(res)
-     atln.log(Level.SUCCESS, "Validation successful");
-    else
-     atln.log(Level.ERROR, "Validation failed");
+     atln.success();
 
     qres = res && qres;
    }
 
    if( qres )
-    ln.log(Level.SUCCESS, "Validation successful" );
-   else
-    ln.log(Level.ERROR, "Validation failed" );
+    ln.success();
 
    objectOk = objectOk && qres;
   }
@@ -325,7 +309,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    boolean res = isAttributeAllowed(rslvAtCls, attrs, atRules, rslv, ln);
    
    if( res )
-    ln.log(Level.SUCCESS, "Validation successful");
+    ln.success();
    else
     ln.log(Level.ERROR, "Validation failed. No correspondent rule that allows this attribute.");
    
@@ -344,17 +328,13 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     boolean res = isAttributeRuleSatisfied( atRl, obj, rslv, sln );
     
     if( res )
-     sln.log(Level.SUCCESS, "Validation successful");
-    else
-     sln.log(Level.ERROR, "Validation failed");
+     sln.success();
     
     rlres = res && rlres;
    }
    
    if( rlres )
-    ln.log(Level.SUCCESS, "Validation successful");
-   else
-    ln.log(Level.ERROR, "Validation failed");
+    ln.success();
   
    valid = rlres && valid;
   }
@@ -387,18 +367,14 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     boolean res = validateAttributed(attr, level+1, rslv, sln);
 
     if( res )
-     sln.log(Level.SUCCESS, "Qualifier validation successful");
-    else
-     sln.log(Level.ERROR, "Qualifier validation failes");
+     sln.success();
     
     valid = res && valid;
     qres = res && qres;
    }
    
    if( qres )
-    ln.log(Level.SUCCESS, "Qualifiers validation successful");
-   else
-    ln.log(Level.ERROR, "Qualifiers validation failes");
+    ln.success();
   }
   
 
@@ -434,7 +410,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     continue;
    }
    else
-    ln.log(Level.SUCCESS, "Cardinality validation successful");
+    ln.success();
    
    if( rul.isValueUnique() )
    {
@@ -444,7 +420,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
      continue;
     }
     else
-     ln.log(Level.SUCCESS, "Value uniqueness check successful");
+     ln.success();
    }
    
    if( rul.getQualifiers() != null  )
@@ -496,7 +472,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     continue;
    }
    else
-    ln.log(Level.SUCCESS, "Cardinality validation successful");
+    ln.success();
 
   
    if( rul.getQualifiers() != null  )
@@ -507,11 +483,11 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
      continue;
     }
     else
-     ln.log(Level.SUCCESS, "Qualifiers matched");
+     ln.success();
    }
 
   
-   ln.log(Level.INFO,"Relations of class '"+rslvRlCls+"' are allowed by rule "+rul.getRuleId());
+   ln.log(Level.SUCCESS,"Relations of class '"+rslvRlCls+"' are allowed by rule "+rul.getRuleId());
 
    
    return true;
@@ -606,7 +582,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return atRl.getType() == RestrictionType.MUSTNOT;
   }
   else
-   ln.log(Level.SUCCESS, "Validation successful");
+   ln.success();
   
   if( atRl.isValueUnique() )
   {
@@ -617,7 +593,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     return atRl.getType() == RestrictionType.MUSTNOT;
    }
    else
-    ln.log(Level.SUCCESS, "Uniqueness validation successful");
+    ln.success();
   }
   
   
@@ -631,7 +607,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     return atRl.getType() == RestrictionType.MUSTNOT;
    }
    else
-    ln.log(Level.SUCCESS, "Qualifiers matched");
+    ln.success();
   }
   
   return true;
@@ -687,13 +663,13 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   LogNode ln = log.branch("Validating cardinality");
   if( ! matchCardinality( rlRl, rels.size() ) )
   {
-   ln.log(Level.INFO,"Rule "+rlRl.getRuleId()+" cardinality requirement failed. Cardinality: "+rlRl.getCardinalityType().name()+":"+rlRl.getCardinality()
+   ln.log(Level.ERROR,"Rule "+rlRl.getRuleId()+" cardinality requirement failed. Cardinality: "+rlRl.getCardinalityType().name()+":"+rlRl.getCardinality()
      +" Relations: "+rels.size());
 
    return rlRl.getType() == RestrictionType.MUSTNOT;
   }
   else
-   ln.log(Level.SUCCESS, "Validation successful");
+   ln.success();
   
 //  if( ! checkTargetsUnique(rels) )
 //   return rlRl.getType() == RestrictionType.MUSTNOT;
@@ -709,7 +685,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     return rlRl.getType() == RestrictionType.MUSTNOT;
    }
    else
-    ln.log(Level.SUCCESS, "Qualifiers matched");
+    ln.success();
   }
   
   
@@ -900,7 +876,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
      }
     }
 
-    ln.log(Level.SUCCESS, "Rule validation successful");
+    ln.success();
    }
   }
 

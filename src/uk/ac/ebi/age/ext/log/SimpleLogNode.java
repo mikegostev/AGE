@@ -13,15 +13,17 @@ public class SimpleLogNode implements LogNode,Serializable
  private Level             level;
 
  private List<LogNode>     subNodes;
-
- public SimpleLogNode()
- {
- }
  
- public SimpleLogNode(Level l, String msg)
+ private transient ErrorCounter errCnt;
+
+ SimpleLogNode()
+ {}
+ 
+ public SimpleLogNode(Level l, String msg, ErrorCounter rn)
  {
   nodeMessage = msg;
   level = l;
+  errCnt = rn;
  }
 
  @Override
@@ -30,7 +32,10 @@ public class SimpleLogNode implements LogNode,Serializable
   if(subNodes == null)
    subNodes = new ArrayList<LogNode>(10);
 
-  subNodes.add(new SimpleLogNode(lvl, msg));
+  subNodes.add(new SimpleLogNode(lvl, msg, errCnt));
+  
+  if( lvl.getPriority() >= Level.ERROR.getPriority() )
+   errCnt.incErrorCounter();
  }
 
  @Override
@@ -39,7 +44,7 @@ public class SimpleLogNode implements LogNode,Serializable
   if(subNodes == null)
    subNodes = new ArrayList<LogNode>(10);
 
-  LogNode nnd = new SimpleLogNode(null, msg);
+  LogNode nnd = new SimpleLogNode(null, msg, errCnt);
 
   subNodes.add(nnd);
 
@@ -53,8 +58,31 @@ public class SimpleLogNode implements LogNode,Serializable
    subNodes = new ArrayList<LogNode>(10);
 
   subNodes.add(node);
+  
+  errCnt.addErrorCounter( countErrors(node) );
  }
 
+ private int countErrors( LogNode node )
+ {
+  
+  if( node.getSubNodes() == null )
+  {
+   if( node.getLevel().getPriority() >= Level.ERROR.getPriority() )
+    return 1;
+   else
+    return 0;
+  }
+  else
+  {
+   int res = 0;
+
+   for( LogNode sn : node.getSubNodes() )
+    res += countErrors(sn);
+
+   return res;
+  }
+ }
+ 
  @Override
  public String getMessage()
  {
@@ -79,6 +107,13 @@ public class SimpleLogNode implements LogNode,Serializable
   return subNodes;
  }
 
+ 
+ @Override
+ public void success()
+ {
+  level = Level.SUCCESS;
+ }
+
  public static void setLevels( LogNode ln )
  {
   if( ln.getSubNodes() == null )
@@ -89,7 +124,7 @@ public class SimpleLogNode implements LogNode,Serializable
    return;
   }
   
-  LogNode.Level maxLevel = Level.getMinLevel();
+  LogNode.Level maxLevel = ln.getLevel()!=null?ln.getLevel():Level.getMinLevel();
   
   for( LogNode snd : ln.getSubNodes() )
   {

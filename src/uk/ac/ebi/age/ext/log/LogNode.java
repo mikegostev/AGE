@@ -29,7 +29,7 @@ public interface LogNode
   }
  }
  
- 
+ void success();
  void log(Level lvl, String msg);
  LogNode branch(String msg);
  void setLevel( Level lvl );

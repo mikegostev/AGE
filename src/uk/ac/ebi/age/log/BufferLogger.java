@@ -1,17 +1,46 @@
-package uk.ac.ebi.age.log.impl;
+package uk.ac.ebi.age.log;
 
 import java.io.PrintWriter;
 
+import uk.ac.ebi.age.ext.log.ErrorCounter;
 import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.SimpleLogNode;
 
-public class BufferLogger
+public class BufferLogger implements ErrorCounter
 {
  private SimpleLogNode rootNode;
  
- public BufferLogger()
+ private static final long serialVersionUID = 1L;
+
+ private int maxErr;
+ private int errCnt = 0;
+ 
+ public BufferLogger( int maxErr )
  {
-  rootNode = new SimpleLogNode( null, "" );
+  rootNode = new SimpleLogNode( null, "", this );
+  this.maxErr = maxErr;
+ }
+ 
+ @Override
+ public int getErrorCounter()
+ {
+  return errCnt;
+ }
+
+ @Override
+ public void incErrorCounter()
+ {
+  errCnt++;
+  
+  if( maxErr > 0 && errCnt > maxErr )
+   throw new TooManyErrorsException( errCnt );
+ }
+
+
+ @Override
+ public void addErrorCounter(int countErrors)
+ {
+  errCnt+=countErrors;
  }
  
  public SimpleLogNode getRootNode()
@@ -51,6 +80,9 @@ public class BufferLogger
     case ERROR:
      out.print("ERRR: ");
      break;
+    case SUCCESS:
+     out.print("SUCS: ");
+     break;
    }
    
    out.println(node.getMessage());
@@ -67,7 +99,5 @@ public class BufferLogger
   }
    
  }
-
- 
 
 }

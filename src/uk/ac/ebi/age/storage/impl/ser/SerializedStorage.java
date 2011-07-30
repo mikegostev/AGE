@@ -20,9 +20,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import uk.ac.ebi.age.conf.Constants;
 import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.LogNode.Level;
-import uk.ac.ebi.age.log.impl.BufferLogger;
+import uk.ac.ebi.age.log.BufferLogger;
+import uk.ac.ebi.age.log.TooManyErrorsException;
 import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
@@ -771,27 +773,38 @@ public class SerializedStorage implements AgeStorageAdm
    
    for(DataModuleWritable sbm : moduleMap.values())
    {
-    BufferLogger submLog=new BufferLogger();
+    BufferLogger submLog=new BufferLogger( Constants.MAX_ERRORS );
     
     LogNode ln = submLog.getRootNode().branch("Validating data module: "+sbm.getId());
     
-    if( ! validator.validate(sbm, sm, ln) )
+    boolean vldRes = false;
+    
+    try
     {
-     ln.log(Level.ERROR,"Validation failed");
+     vldRes = validator.validate(sbm, sm, ln);
+     
+     res = res && vldRes;
+     
+     if( ! vldRes )
+      ln.log(Level.ERROR,"Validation failed");
+    }
+    catch(TooManyErrorsException e)
+    {
      res = false;
+     ln.log(Level.ERROR,"Too many errors: "+e.getErrorCount());
+
      vldBranch.append( ln );
     }
+
+    if( ! vldRes )
+     vldBranch.append( ln );
+    
    }
    
-   if( !res )
-   {
-//    BufferLogger.printBranch(vldBranch);
-    
-    vldBranch.log(Level.ERROR,"Validation failed");    
-    return false;
-   }
+   if( res )
+    vldBranch.success();
    else
-    vldBranch.log(Level.SUCCESS,"Success");    
+    return false;
 
    
    LogNode saveBranch = bfLog.branch("Saving model"); 
@@ -806,7 +819,7 @@ public class SerializedStorage implements AgeStorageAdm
     return false;
    }
 
-   saveBranch.log(Level.SUCCESS, "Success");
+   saveBranch.success();
 
    LogNode setupBranch = bfLog.branch("Installing model"); 
 
@@ -818,7 +831,7 @@ public class SerializedStorage implements AgeStorageAdm
 
    SemanticManager.getInstance().setMasterModel(model);
    
-   setupBranch.log(Level.SUCCESS, "Success");
+   setupBranch.success();
   }
   finally
   {

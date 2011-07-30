@@ -563,9 +563,7 @@ public class SubmissionManager
    }
   
    if( res )
-    fileNode.log(Level.SUCCESS, "Success");
-   else
-    fileNode.log(Level.ERROR, "Failed");
+    fileNode.success();
   
   }
   
@@ -601,7 +599,8 @@ public class SubmissionManager
    try
    {
     mm.atMod = ageTabParser.parse(mm.meta.getText());
-    atLog.log(Level.SUCCESS, "Success");
+//    atLog.log(Level.SUCCESS, "Success");
+    atLog.success();
    }
    catch(ParserException e)
    {
@@ -614,7 +613,8 @@ public class SubmissionManager
    mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(), convLog );
    
    if( mm.newModule != null )
-    convLog.log(Level.SUCCESS, "Success");
+    convLog.success();
+//   convLog.log(Level.SUCCESS, "Success");
    else
    {
     convLog.log(Level.ERROR, "Conversion failed");
@@ -624,12 +624,9 @@ public class SubmissionManager
    
    
    if( modRes )
-    modNode.log(Level.SUCCESS, "Success");
+    modNode.success();
    else
-   {
-    modNode.log(Level.ERROR, "Failed");
     mm.newModule = null;
-   }
    
    res = res && modRes;
   }
@@ -717,17 +714,13 @@ public class SubmissionManager
     boolean modRes = validator.validate(mm.newModule, vldLog);
     
     if(modRes)
-     vldLog.log(Level.SUCCESS, "Success");
-    else
-     vldLog.log(Level.ERROR, "Validation failed");
+     vldLog.success();
 
     vldRes = vldRes && modRes;
    }
    
    if( vldRes )
-    semLog.log(Level.SUCCESS, "Success");
-   else
-    semLog.log(Level.ERROR, "Failed");
+    semLog.success();
 
    res = res && vldRes;
    
@@ -752,18 +745,15 @@ public class SubmissionManager
      
      if( validator.validateRelations(obj, invRelMap!=null?invRelMap.get(obj):null,
        relationDetachMap!=null?relationDetachMap.get(obj):null, objLogNode) )
-      objLogNode.log(Level.SUCCESS, "Success");
+      objLogNode.success();
      else
       invRelRes = false;
     }
     
     if(invRelRes)
-     invRelLog.log(Level.SUCCESS, "Success");
+     invRelLog.success();
     else
-    {
-     invRelLog.log(Level.ERROR, "Validation failed");
      invRelRes =false;
-    }
 
     res = res && invRelRes;
    }
@@ -878,14 +868,13 @@ public class SubmissionManager
      catch(Exception e)
      {
       finsLog.log(Level.ERROR, e.getMessage());
-      finsLog.log(Level.ERROR, "Failed");
 
       res = false;
       return false;
      }
 
      
-     finsLog.log(Level.SUCCESS, "Success");
+     finsLog.success();
     }
    }
    
@@ -893,15 +882,23 @@ public class SubmissionManager
    {
     LogNode fdelLog = logRoot.branch("Deleting files");
     
+    boolean delRes = true;
+    
     for( FileAttachmentMeta fam : cstMeta.att4Del.values() )
     {
      fdelLog.log(Level.INFO, "Deleting file: '"+fam.getId()+"' (scope "+(fam.isGlobal()?"global":"cluster")+")");
      
      if( ! ageStorage.deleteAttachment(fam.getId(), cstMeta.id, fam.isGlobal()) )
+     {
       fdelLog.log(Level.WARN, "File wasn't deleted or doesn't exist" );
+      delRes = false;
+     }
      
-      fdelLog.log(Level.SUCCESS, "Success");
     }
+    
+    if( delRes )
+     fdelLog.success();
+     
    }
    
    if( cstMeta.att4Upd.size() > 0 )
@@ -923,13 +920,12 @@ public class SubmissionManager
      catch(Exception e)
      {
       fupdLog.log(Level.ERROR, e.getMessage());
-      fupdLog.log(Level.ERROR, "Failed");
 
       res = false;
       return false;
      }
      
-     fupdLog.log(Level.SUCCESS, "Success");
+     fupdLog.success();
     }
    }
 
@@ -948,13 +944,12 @@ public class SubmissionManager
      catch(AttachmentIOException e)
      {
       fupdLog.log(Level.ERROR, e.getMessage());
-      fupdLog.log(Level.ERROR, "Failed");
 
       res = false;
       return false;
      }
      
-     fupdLog.log(Level.SUCCESS, "Success");
+     fupdLog.success();
     }
    }
 
@@ -973,13 +968,12 @@ public class SubmissionManager
      catch(AttachmentIOException e)
      {
       fupdLog.log(Level.ERROR, e.getMessage());
-      fupdLog.log(Level.ERROR, "Failed");
 
       res = false;
       return false;
      }
      
-     fupdLog.log(Level.SUCCESS, "Success");
+     fupdLog.success();
     }
    }
  
@@ -1001,13 +995,12 @@ public class SubmissionManager
         new ExtractorCollection<ModMeta, String>(cstMeta.mod4Upd.values(), idExtractor),
         new ExtractorCollection<ModMeta, String>(cstMeta.mod4Del.values(), idExtractor)));
 
-     updtLog.log(Level.SUCCESS, "Success");
+     updtLog.success();
     }
     catch(Exception e)
     {
      e.printStackTrace();
      updtLog.log(Level.ERROR, e.getMessage()!=null?e.getMessage():"Exception: "+e.getClass().getName());
-     updtLog.log(Level.ERROR, "Failed");
 
      res = false;
 
@@ -1188,7 +1181,7 @@ public class SubmissionManager
    }
    catch(IOException e)
    {
-    modNode.log(Level.ERROR, "Failed");
+    modNode.log(Level.ERROR, "File read error. "+e.getMessage());
     res = false;
    }
    
@@ -1211,7 +1204,7 @@ public class SubmissionManager
    try
    {
     mm.atMod = ageTabParser.parse(mm.meta.getText());
-    atLog.log(Level.SUCCESS, "Success");
+    atLog.success();
    }
    catch(ParserException e)
    {
@@ -1224,22 +1217,16 @@ public class SubmissionManager
    mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(), convLog );
    
    if( mm.newModule != null )
-    convLog.log(Level.SUCCESS, "Success");
+    convLog.success();
    else
-   {
-    convLog.log(Level.ERROR, "Conversion failed");
     modRes = false;
-   }
    
    
    
    if( modRes )
-    modNode.log(Level.SUCCESS, "Success");
+    modNode.success();
    else
-   {
-    modNode.log(Level.ERROR, "Failed");
     mm.newModule = null;
-   }
    
    res = res && modRes;
   }
@@ -1300,17 +1287,13 @@ public class SubmissionManager
     boolean modRes = validator.validate(mm.newModule, vldLog);
     
     if(modRes)
-     vldLog.log(Level.SUCCESS, "Success");
-    else
-     vldLog.log(Level.ERROR, "Validation failed");
+     vldLog.success();
 
     vldRes = vldRes && modRes;
    }
    
    if( vldRes )
-    semLog.log(Level.SUCCESS, "Success");
-   else
-    semLog.log(Level.ERROR, "Failed");
+    semLog.success();
 
    res = res && vldRes;
    
@@ -1332,18 +1315,15 @@ public class SubmissionManager
      LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
      
      if( validator.validateRelations(obj, invRelMap.get(obj), null, objLogNode) )
-      objLogNode.log(Level.SUCCESS, "Success");
+      objLogNode.success();
      else
       invRelRes = false;
     }
     
     if(invRelRes)
-     invRelLog.log(Level.SUCCESS, "Success");
+     invRelLog.success();
     else
-    {
-     invRelLog.log(Level.ERROR, "Validation failed");
      invRelRes =false;
-    }
 
     res = res && invRelRes;
    }
@@ -1413,13 +1393,12 @@ public class SubmissionManager
         null  
      );
      
-     updtLog.log(Level.SUCCESS, "Success");
+     updtLog.success();
     }
    }
    catch (Exception e)
    {
     updtLog.log(Level.ERROR, e.getMessage());
-    updtLog.log(Level.ERROR, "Failed");
     
     res = false;
  
@@ -1612,18 +1591,15 @@ public class SubmissionManager
      LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
      
      if( validator.validateRelations(obj, null, relationDetachMap.get(obj), objLogNode) )
-      objLogNode.log(Level.SUCCESS, "Success");
+      objLogNode.success();
      else
       invRelRes = false;
     }
     
     if(invRelRes)
-     invRelLog.log(Level.SUCCESS, "Success");
+     invRelLog.success();
     else
-    {
-     invRelLog.log(Level.ERROR, "Validation failed");
      invRelRes =false;
-    }
 
     res = res && invRelRes;
    }
@@ -1637,13 +1613,21 @@ public class SubmissionManager
    {
     LogNode fdelLog = logRoot.branch("Deleting files");
     
+    boolean delRes = true;
+    
     for( FileAttachmentMeta fam : cstMeta.att4Del.values() )
     {
      fdelLog.log(Level.INFO, "Deleting file: '"+fam.getId()+"' (scope "+(fam.isGlobal()?"global":"cluster")+")");
      
-     ageStorage.deleteAttachment(fam.getId(),cstMeta.id,fam.isGlobal());
-     fdelLog.log(Level.SUCCESS, "Success");
+     if( ! ageStorage.deleteAttachment(fam.getId(),cstMeta.id,fam.isGlobal() ) )
+     {
+      fdelLog.log(Level.WARN, "File deletion failed");
+      delRes = false;
+     }
     }
+    
+    if( delRes )
+     fdelLog.success();
    }
    
  
@@ -1657,13 +1641,12 @@ public class SubmissionManager
      
      ageStorage.update( null, new ExtractorCollection<ModMeta, String>(cstMeta.mod4Del.values(), idExtractor) );
      
-     updtLog.log(Level.SUCCESS, "Success");
+     updtLog.success();
     }
    }
    catch (Exception e)
    {
     updtLog.log(Level.ERROR, e.getMessage());
-    updtLog.log(Level.ERROR, "Failed");
     
     res = false;
  
@@ -1846,9 +1829,7 @@ public class SubmissionManager
    }
 
    if(extModRelRes)
-    extRelModLog.log(Level.SUCCESS, "Success");
-   else
-    extRelModLog.log(Level.ERROR, "Failed");
+    extRelModLog.success();
 
    
    extRelRes = extRelRes && extModRelRes;
@@ -1856,9 +1837,7 @@ public class SubmissionManager
   }
 
   if(extRelRes)
-   extRelLog.log(Level.SUCCESS, "Success");
-  else
-   extRelLog.log(Level.ERROR, "Failed");
+   extRelLog.success();
 
   return extRelRes;
  }
@@ -1966,9 +1945,7 @@ public class SubmissionManager
   
   
   if( res )
-   logUniq.log(Level.SUCCESS, "Success");
-  else
-   logUniq.log(Level.ERROR, "Failed");
+   logUniq.success();
 
   return res;
  }
@@ -2114,9 +2091,7 @@ public class SubmissionManager
 
   
   if( res )
-   logRecon.log(Level.SUCCESS, "Success");
-  else
-   logRecon.log(Level.ERROR, "Failed");
+   logRecon.success();
   
   return res;
 
@@ -2172,9 +2147,7 @@ public class SubmissionManager
   }
    
   if( res )
-   logRecon.log(Level.SUCCESS, "Success");
-  else
-   logRecon.log(Level.ERROR, "Failed");
+   logRecon.success();
   
   return res;
  }
@@ -2219,10 +2192,7 @@ public class SubmissionManager
   }
 
   if( res )
-   logCon.log(Level.SUCCESS, "Success");
-  else
-   logCon.log(Level.INFO, "Failed");
-
+   logCon.success();
   
   return res;
  }
@@ -2283,10 +2253,7 @@ public class SubmissionManager
 
   
   if( res )
-   logCon.log(Level.SUCCESS, "Success");
-  else
-   logCon.log(Level.INFO, "Failed");
-
+   logCon.success();
   
   return res;
  }
@@ -2341,9 +2308,7 @@ public class SubmissionManager
   }
    
   if( res )
-   logRecon.log(Level.SUCCESS, "Success");
-  else
-   logRecon.log(Level.INFO, "Failed");
+   logRecon.success();
   
   return res;
  }
@@ -2432,16 +2397,21 @@ public class SubmissionManager
    }
    
    if( mdres )
-    extAttrModLog.log(Level.SUCCESS, "Success");
-   else
-    extAttrModLog.log(Level.ERROR, "Failed");
+    extAttrModLog.success();
+   
+//   if( mdres )
+//    extAttrModLog.log(Level.SUCCESS, "Success");
+//   else
+//    extAttrModLog.log(Level.ERROR, "Failed");
   }
   
-  
-  if( extAttrRes )
-   extAttrLog.log(Level.SUCCESS, "Success");
-  else
-   extAttrLog.log(Level.ERROR, "Failed");
+ if( extAttrRes )
+  extAttrLog.success();
+
+//  if( extAttrRes )
+//   extAttrLog.log(Level.SUCCESS, "Success");
+//  else
+//   extAttrLog.log(Level.ERROR, "Failed");
 
 
   return extAttrRes;
