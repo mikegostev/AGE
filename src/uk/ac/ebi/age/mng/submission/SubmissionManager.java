@@ -1646,7 +1646,9 @@ public class SubmissionManager
    }
    catch (Exception e)
    {
-    updtLog.log(Level.ERROR, e.getMessage());
+    updtLog.log(Level.ERROR, "Exception: "+e.getClass().getName()+" Message: "+e.getMessage());
+    
+    e.printStackTrace();
     
     res = false;
  

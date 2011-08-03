@@ -306,7 +306,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    
    LogNode ln = log.branch("Validating attributes of class '"+atCls+"' Attributes: "+attrs.size());
 
-   boolean res = isAttributeAllowed(rslvAtCls, attrs, atRules, rslv, ln);
+   boolean res = isAttributeAllowed(rslvAtCls, obj, atCls, atRules, rslv, ln);
    
    if( res )
     ln.success();
@@ -381,7 +381,8 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return valid;
  }
  
- private boolean isAttributeAllowed(AgeAttributeClass rslvAtCls, Collection<? extends AgeAttribute> attrs, Collection<AttributeAttachmentRule> atRules, Resolver rslv, LogNode log)
+ //  Collection<? extends AgeAttribute> attrs,
+ private boolean isAttributeAllowed(AgeAttributeClass rslvAtCls, Attributed obj, AgeAttributeClass atClass,  Collection<AttributeAttachmentRule> atRules, Resolver rslv, LogNode log)
  {
   if( atRules == null )
    return false;
@@ -402,6 +403,12 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
     continue;
    }
    
+   Collection<? extends AgeAttribute> attrs = null;
+   
+   if( rul.isSubclassesCountedSeparately() )
+    attrs = obj.getAttributesByClass(atClass, false);
+   else
+    attrs = obj.getAttributesByClass(rslv.getAttributeClassOriginal(rul.getAttributeClass()), true);
 
    if( ! matchCardinality( rul, attrs.size() ) )
    {
@@ -568,7 +575,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
 
   if( attrs == null || attrs.size() == 0 )
   {
-   log.log(Level.DEBUG, "No attributes of rule's class");
+   log.log(atRl.getType() == RestrictionType.MUSTNOT?Level.DEBUG:Level.ERROR, "No attributes of rule's class");
 
    return atRl.getType() == RestrictionType.MUSTNOT;
   }
@@ -576,7 +583,8 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   LogNode ln = log.branch("Validating cardinality");
   if( ! matchCardinality( atRl, attrs.size() ) )
   {
-   log.log(Level.INFO,"Rule "+atRl.getRuleId()+" cardinality requirement failed. Cardinality: "+atRl.getCardinalityType().name()+":"+atRl.getCardinality()
+   log.log(atRl.getType() == RestrictionType.MUSTNOT?Level.INFO:Level.ERROR,
+     "Rule "+atRl.getRuleId()+" cardinality requirement failed. Cardinality: "+atRl.getCardinalityType().name()+":"+atRl.getCardinality()
      +" Attributes: "+attrs.size());
    
    return atRl.getType() == RestrictionType.MUSTNOT;

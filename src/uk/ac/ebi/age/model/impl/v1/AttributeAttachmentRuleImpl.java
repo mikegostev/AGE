@@ -24,6 +24,8 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
  private Collection<QualifierRule> qualifiers;
  private boolean valueUnique;
  private boolean subclassesIncluded=true;
+ private boolean subclassesCountedSeparately=true;
+ 
  
  private SemanticModel model;
 
@@ -273,6 +275,16 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
  public String getId()
  {
   return null;
+ }
+
+ public boolean isSubclassesCountedSeparately()
+ {
+  return subclassesCountedSeparately;
+ }
+
+ public void setSubclassesCountedSeparately(boolean subclassesCountedSeparately)
+ {
+  this.subclassesCountedSeparately = subclassesCountedSeparately;
  }
 
 

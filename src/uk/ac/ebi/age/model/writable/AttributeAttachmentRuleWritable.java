@@ -15,7 +15,9 @@ public interface AttributeAttachmentRuleWritable extends AttributeAttachmentRule
  void setCardinalityType(Cardinality cardinalityType);
 
  void setSubclassesIncluded(boolean subclassesIncluded);
-
+ 
+ void setSubclassesCountedSeparately(boolean sbClsSep);
+ 
  void setType(RestrictionType type);
 
  void setValueUnique(boolean valueUnique);

@@ -9,6 +9,8 @@ public interface AttributeAttachmentRule
  AgeAttributeClass getAttributeClass();
 
  int getCardinality();
+ 
+ boolean isSubclassesCountedSeparately();
 
  Cardinality getCardinalityType();
 
