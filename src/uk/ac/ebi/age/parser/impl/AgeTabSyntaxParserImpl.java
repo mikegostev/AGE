@@ -13,7 +13,8 @@ import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.SyntaxProfile;
 import uk.ac.ebi.age.service.id.IdGenerator;
-import uk.ac.ebi.age.util.StringUtil;
+
+import com.pri.util.SpreadsheetReader;
 
 public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 {
@@ -29,9 +30,9 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
  static class HorizontalBlockSupplier implements BlockSupplier
  {
   private List<String> firstLine;
-  private LineReader reader;
+  private SpreadsheetReader reader;
   
-  HorizontalBlockSupplier(LineReader r, List<String> fstLine)
+  HorizontalBlockSupplier(SpreadsheetReader r, List<String> fstLine)
   {
    reader = r;
    firstLine = new ArrayList<String>( fstLine.size() );
@@ -99,7 +100,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   private List<List<String>> lines = new ArrayList<List<String>>( 50 );
   private int maxDim = 0;
  
-  VerticalBlockSupplier(LineReader reader, List<String> fstLine)
+  VerticalBlockSupplier(SpreadsheetReader reader, List<String> fstLine)
   {
    List<String> line = new ArrayList<String>( fstLine.size() );
    
@@ -157,102 +158,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
  }
 
  
- private static class LineReader
- {
-  String text;
-  String columnSep="\t";
-  
-  int cpos=0;
-  int lpos;
-  int ln=0;
-  
-  int textLen;
-  
-  LineReader( String text )
-  {
-   textLen = text.length();
-   
-   while( cpos < textLen )
-   {
-    if( text.charAt(cpos) == '\r' )
-     cpos++;
-    else if( text.charAt(cpos) == '\n' )
-    {
-     ln++;
-     cpos++;
-    }
-    else
-     break;
-   }
-   
-   {  // looking for column separator
-    int commaPos = text.indexOf(',',cpos);
-    int tabPos = text.indexOf('\t',cpos);
-    
-    commaPos = commaPos==-1?Integer.MAX_VALUE:commaPos;
-    tabPos = tabPos==-1?Integer.MAX_VALUE:tabPos;
-    
-    if( commaPos < tabPos )
-     columnSep = ",";
-   }
-   
-   this.text = text;
-  }
-  
-  int getLineNumber()
-  {
-   return ln;
-  }
-  
-  int getCurrentPosition()
-  {
-   return cpos;
-  }
-  
-  int getLineBeginPosition()
-  {
-   return lpos;
-  }
-  
-  List<String> readLine( List<String> accum )
-  {
-   if( cpos >= textLen )
-    return null;
-   
-   lpos = cpos;
-   
-   ln++;
 
-   if( accum == null )
-    accum = new ArrayList<String>(50);
-   else
-    accum.clear();
-   
-   int pos = text.indexOf('\n', cpos);
-
-   String line = null;
-   
-   if(pos == -1)
-   {
-    line=text.substring(cpos);
-    cpos=text.length();
-   }
-   else
-   {
-    int tpos = cpos;   
-    cpos = pos + 1;
-
-    if( text.charAt( pos-1 ) == '\r')
-     pos--;
-    
-    line=text.substring(tpos,pos);
-   }
-
-   StringUtil.splitExcelString(line, columnSep, accum);
-  
-   return accum;
-  }
- }
  
  public AgeTabModule parse( String txt, SyntaxProfile profile ) throws ParserException
  {
@@ -260,7 +166,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   
   List<String> parts = new ArrayList<String>(100);
 
-  LineReader reader = new LineReader(txt);
+  SpreadsheetReader reader = new SpreadsheetReader(txt);
  
   BlockSupplier block;
   
