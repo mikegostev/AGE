@@ -19,4 +19,6 @@ public interface AgeAbstractClass
  boolean isCustom();
  
  Collection<AgeAnnotation> getAnnotations();
+ 
+ Collection<String> getAliases();
 }
