@@ -278,4 +278,10 @@ class CustomAgeRelationClassImpl extends AgeSemanticElementImpl implements AgeRe
   throw new UnsupportedOperationException();
  }
 
+ @Override
+ public Collection<String> getAliases()
+ {
+  return null;
+ }
+
 }

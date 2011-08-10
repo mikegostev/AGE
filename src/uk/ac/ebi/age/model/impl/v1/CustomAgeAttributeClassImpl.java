@@ -143,5 +143,11 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeAtt
   return targetClass;
  }
 
+ @Override
+ public Collection<String> getAliases()
+ {
+  return null;
+ }
+
 }
 

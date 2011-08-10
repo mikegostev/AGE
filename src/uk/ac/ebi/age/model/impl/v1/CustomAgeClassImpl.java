@@ -149,4 +149,10 @@ class CustomAgeClassImpl extends AgeAbstractClassImpl implements AgeClassWritabl
   throw new UnsupportedOperationException();
  }
 
+ @Override
+ public Collection<String> getAliases()
+ {
+  return null;
+ }
+
 }

@@ -286,18 +286,30 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  {
   attributeMap.put(cls.getName(), cls);
   attributeIdMap.put(cls.getId(), cls);
+  
+  if( cls.getAliases() != null )
+   for( String als : cls.getAliases() )
+    attributeMap.put( als, cls );
  }
 
  protected void addClass(AgeClassWritable cls)
  {
   classMap.put(cls.getName(), cls);
   classIdMap.put(cls.getId(), cls);
+
+  if( cls.getAliases() != null )
+   for( String als : cls.getAliases() )
+    classMap.put( als, cls );
  }
 
  protected void addRelationClass(AgeRelationClassWritable cls)
  {
   relationMap.put(cls.getName(), cls);
   relationIdMap.put(cls.getId(), cls);
+
+  if( cls.getAliases() != null )
+   for( String als : cls.getAliases() )
+    relationMap.put( als, cls );
  }
 
  @Override
