@@ -133,11 +133,23 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  {
   return masterModel.createAgeAnnotationClass(name, id, parent);
  }
- 
+
+ @Override
+ public AgeAnnotationClassWritable createAgeAnnotationClass(String name, Collection<String> aliases, String id, AgeAnnotationClass parent)
+ {
+  return masterModel.createAgeAnnotationClass(name, aliases, id, parent);
+ }
+
  public AgeClassWritable createAgeClass(String name, String id, String pfx, AgeClass parent)
  {
   return masterModel.createAgeClass(name, id, pfx, parent);
  }
+ 
+ public AgeClassWritable createAgeClass(String name, Collection<String> aliases, String id, String pfx, AgeClass parent)
+ {
+  return masterModel.createAgeClass(name, aliases, id, pfx, parent);
+ }
+
  
  public AgeClassWritable getOrCreateCustomAgeClass(String name, String pfx, AgeClass parent)
  {
@@ -263,6 +275,12 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  }
 
  @Override
+ public AgeAttributeClassWritable createAgeAttributeClass(String name, Collection<String> aliases, String id, DataType type, AgeAttributeClass parent)
+ {
+  return masterModel.createAgeAttributeClass(name, aliases, id, type, parent);
+ }
+ 
+ @Override
  public AgeObjectWritable createAgeObject(ClassRef cls, String id )
  {
   return masterModel.getModelFactory().createAgeObject( cls, id );
@@ -274,6 +292,12 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.createAgeRelationClass(name, id, parent);
  }
 
+ @Override
+ public AgeRelationClassWritable createAgeRelationClass(String name, Collection<String> aliases, String id, AgeRelationClass parent)
+ {
+  return masterModel.createAgeRelationClass(name, aliases, id, parent);
+ }
+ 
  @Override
  public ModelFactory getModelFactory()
  {

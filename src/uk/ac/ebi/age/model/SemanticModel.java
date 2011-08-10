@@ -26,9 +26,18 @@ public interface SemanticModel
  void setIdGen( int id );
  
  AgeClassWritable createAgeClass(String name, String id, String pfx, AgeClass parent);
+ AgeClassWritable createAgeClass(String name, Collection<String> aliases, String id, String pfx, AgeClass parent);
+
  AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type, AgeAttributeClass parent);
+ AgeAttributeClassWritable createAgeAttributeClass(String name, Collection<String> aliases, String id, DataType type, AgeAttributeClass parent);
+
  AgeRelationClassWritable createAgeRelationClass(String name, String id, AgeRelationClass parent);
+ AgeRelationClassWritable createAgeRelationClass(String name, Collection<String> aliases, String id, AgeRelationClass parent);
+
  AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id, AgeAnnotationClass parent);
+ AgeAnnotationClassWritable createAgeAnnotationClass(String name, Collection<String> aliases, String id, AgeAnnotationClass parent);
+
+ 
  
  AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls);
 // AgeAttributeWritable createAgeAttribute(AgeAttributeClass attr);
