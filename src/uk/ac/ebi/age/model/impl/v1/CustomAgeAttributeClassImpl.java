@@ -150,5 +150,9 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeCon
   return (ContextSemanticModel)super.getSemanticModel();
  }
  
+ public Collection<String> getAliases()
+ {
+  return null;
+ }
 }
 
