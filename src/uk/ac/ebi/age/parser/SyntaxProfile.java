@@ -1,34 +1,36 @@
 package uk.ac.ebi.age.parser;
 
-import uk.ac.ebi.age.model.IdScope;
+import java.util.HashMap;
+import java.util.Map;
 
-public interface SyntaxProfile
+
+public class SyntaxProfile
 {
- public String getCustomTokenBrackets();
+ private SyntaxProfileDefinition commonSyntaxProfileDefinition = AgeDefaultSyntaxProfileDefinition.getInstance();
+ private Map<String,SyntaxProfileDefinition> classDefMap = new HashMap<String, SyntaxProfileDefinition>();
  
- public String getFlagsTokenBrackets();
+ public SyntaxProfileDefinition getCommonSyntaxProfile()
+ {
+  return commonSyntaxProfileDefinition;
+ }
  
- public String getQualifierTokenBrackets();
- 
- public String getFlagsSeparatorSign();
- 
- public String getFlagsEqualSign();
- 
- public String getPrototypeObjectId();
- 
- public String getAnonymousObjectId();
- 
- public String getGlobalIdPrefix();
+ public void setCommonSyntaxProfile( SyntaxProfileDefinition def )
+ {
+  commonSyntaxProfileDefinition = def;
+ }
 
- public String getClusterIdPrefix();
-
- public String getModuleIdPrefix();
-
- public IdScope getDefaultIdScope();
-
- public String getHorizontalBlockPrefix();
+ public SyntaxProfileDefinition getClassSpecificSyntaxProfile( String className )
+ {
+  SyntaxProfileDefinition clDef = classDefMap.get(className);
+  
+  if( clDef != null )
+   return clDef;
+  
+  return commonSyntaxProfileDefinition;
+ }
  
- public String getVerticalBlockPrefix();
- 
- public boolean isHorizontalBlockDefault();
+ public void addClassSpecificSyntaxProfile( String className, SyntaxProfileDefinition profile )
+ {
+  classDefMap.put(className, profile);
+ }
 }

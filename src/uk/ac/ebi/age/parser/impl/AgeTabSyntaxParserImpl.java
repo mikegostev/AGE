@@ -12,12 +12,19 @@ import uk.ac.ebi.age.parser.BlockHeader;
 import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.SyntaxProfile;
+import uk.ac.ebi.age.parser.SyntaxProfileDefinition;
 import uk.ac.ebi.age.service.id.IdGenerator;
 
 import com.pri.util.SpreadsheetReader;
 
 public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 {
+ public AgeTabSyntaxParserImpl(SyntaxProfile sp)
+ {
+  super(sp);
+ }
+
+
  interface BlockSupplier
  {
 //  List<String> getHeaderLine();
@@ -159,10 +166,12 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 
  
 
- 
- public AgeTabModule parse( String txt, SyntaxProfile profile ) throws ParserException
+ @Override
+ public AgeTabModule parse( String txt ) throws ParserException
  {
-  AgeTabModule data = new AgeTabModuleImpl( this );
+  SyntaxProfile profile = getSyntaxProfile();
+  
+  AgeTabModule data = new AgeTabModuleImpl( getSyntaxProfile() );
   
   List<String> parts = new ArrayList<String>(100);
 
@@ -179,20 +188,20 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    
    BlockHeader header = new BlockHeaderImpl(data);
 
-   if( classRef.startsWith(profile.getHorizontalBlockPrefix()) )
+   if( classRef.startsWith(profile.getCommonSyntaxProfile().getHorizontalBlockPrefix()) )
    {
-    parts.set(0, classRef.substring(profile.getHorizontalBlockPrefix().length()));
+    parts.set(0, classRef.substring(profile.getCommonSyntaxProfile().getHorizontalBlockPrefix().length()));
     block = new HorizontalBlockSupplier( reader, parts );
     
     header.setHorizontal(true);
    }
-   else if( classRef.startsWith(profile.getVerticalBlockPrefix()) )
+   else if( classRef.startsWith(profile.getCommonSyntaxProfile().getVerticalBlockPrefix()) )
    {
-    parts.set(0, classRef.substring(profile.getVerticalBlockPrefix().length()));
+    parts.set(0, classRef.substring(profile.getCommonSyntaxProfile().getVerticalBlockPrefix().length()));
     block = new VerticalBlockSupplier( reader, parts );
     header.setHorizontal(false);
    }
-   else if( profile.isHorizontalBlockDefault() )
+   else if( profile.getClassSpecificSyntaxProfile(classRef).isHorizontalBlockDefault() )
    {
     block = new HorizontalBlockSupplier( reader, parts );
     header.setHorizontal(true);
@@ -209,6 +218,9 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    
    AgeTabObject cObj = null;
    
+   SyntaxProfileDefinition profileDef = header.getClassColumnHeader().isCustom()?
+     profile.getCommonSyntaxProfile():profile.getClassSpecificSyntaxProfile(header.getClassColumnHeader().getName());
+   
    parts.clear();
    while( block.getLine(parts) != null )
    {
@@ -218,7 +230,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     
     if( part.length() != 0 )
     {
-     if( part.equals( profile.getAnonymousObjectId() ) )
+     if( part.equals( profileDef.getAnonymousObjectId() ) )
      { 
       String id = "??"+IdGenerator.getInstance().getStringId("tempObjectId");
       cObj = data.createObject(id,header,block.getLineNum());
@@ -228,11 +240,11 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      else
      {
       String id = part;
-      boolean defined = ! part.startsWith( profile.getAnonymousObjectId());
+      boolean defined = ! part.startsWith( profileDef.getAnonymousObjectId());
       
-      IdScope scope = defined? profile.getDefaultIdScope() : IdScope.MODULE;
+      IdScope scope = defined? profileDef.getDefaultIdScope() : IdScope.MODULE;
 
-      String pfx = profile.getGlobalIdPrefix();
+      String pfx = profileDef.getGlobalIdPrefix();
       
       if( part.startsWith(pfx) )
       {
@@ -241,7 +253,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
       }
       else
       {
-       pfx = profile.getClusterIdPrefix();
+       pfx = profileDef.getClusterIdPrefix();
        
        if( part.startsWith(pfx) )
        {
@@ -250,7 +262,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
        }
        else
        {
-        pfx = profile.getModuleIdPrefix();
+        pfx = profileDef.getModuleIdPrefix();
         
         if( part.startsWith(pfx) )
         {
@@ -266,7 +278,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
       
       cObj.setIdScope(scope);
       cObj.setIdDefined( defined );
-      cObj.setPrototype( part.equals( profile.getPrototypeObjectId() ) );
+      cObj.setPrototype( part.equals( profileDef.getPrototypeObjectId() ) );
      }
     }
     else if( cObj == null )

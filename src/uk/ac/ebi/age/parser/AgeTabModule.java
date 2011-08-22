@@ -15,6 +15,6 @@ public interface AgeTabModule
 
  AgeTabObject createObject(String part, BlockHeader header, int ln);
  
- AgeTabSyntaxParser getParser();
+ SyntaxProfile getSyntaxProfile();
 
 }

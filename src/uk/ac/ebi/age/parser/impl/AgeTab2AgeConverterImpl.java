@@ -41,12 +41,14 @@ import uk.ac.ebi.age.parser.AgeTabValue;
 import uk.ac.ebi.age.parser.BlockHeader;
 import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ConvertionException;
+import uk.ac.ebi.age.parser.SyntaxProfile;
+import uk.ac.ebi.age.parser.SyntaxProfileDefinition;
 
 public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 {
 // private AttrAttchRel attributeAttachmentClass;
  
- private static final String prototypeId = "*";
+// private static final String prototypeId = "*";
  private PermissionManager permissionManager;
  
  public AgeTab2AgeConverterImpl( PermissionManager pMngr )
@@ -55,7 +57,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  }
  
  @Override
- public DataModuleWritable convert(AgeTabModule data, ContextSemanticModel sm, LogNode log )// throws SemanticException, ConvertionException
+ public DataModuleWritable convert(AgeTabModule data, ContextSemanticModel sm, SyntaxProfile syntaxProfile, LogNode log )// throws SemanticException, ConvertionException
  {
   boolean result = true;
   
@@ -71,6 +73,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   for( BlockHeader hdr : data.getBlocks() )
   {
    ClassReference colHdr = hdr.getClassColumnHeader();
+
+   SyntaxProfileDefinition profileDef = colHdr.isCustom()?
+     syntaxProfile.getCommonSyntaxProfile():syntaxProfile.getClassSpecificSyntaxProfile(colHdr.getName());
 
    LogNode blkLog = log.branch("Processing block for class "+colHdr.getName()+" at line: "+colHdr.getRow());
    
@@ -101,13 +106,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    for( AgeTabObject atObj : data.getObjects(hdr) ) // Creating (if necessary) objects for every new ID
    {
-    if( atObj.isPrototype() )
+    
+    if( atObj.isPrototype() && ! profileDef.isResetPrototype() )
     {
      AgeObjectWritable obj = prototypeMap.get(cls);
      
      if( obj == null )
      {
-      obj = sm.createAgeObject(clsRef, prototypeId);
+      obj = sm.createAgeObject(clsRef, profileDef.getPrototypeObjectId());
       obj.setOrder( atObj.getRow() );
       
       prototypeMap.put(cls, obj);
@@ -153,7 +159,10 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     subLog.log(Level.ERROR,"Convertors creation failed");
     result = false; //We don't stop here, erroneous columns will be ignored
    }
-   
+ 
+   SyntaxProfileDefinition profileDef = me.getKey().getClassColumnHeader().isCustom()?
+     syntaxProfile.getCommonSyntaxProfile():syntaxProfile.getClassSpecificSyntaxProfile(me.getKey().getClassColumnHeader().getName());
+
    AgeObjectWritable prototype = prototypeMap.get(me.getValue());
    
    objectMap = classMap.get( me.getValue() );
@@ -168,7 +177,20 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     
     if( atObj.isPrototype()  )
-     obj = prototypeMap.get(me.getValue());
+    {
+     if( profileDef.isResetPrototype() )
+     {
+      ClassReference colHdr = me.getKey().getClassColumnHeader();
+      ClassRef clsRef = sm.getModelFactory().createClassRef(sm.getAgeClassPlug(me.getValue()), colHdr.getRow(), colHdr.getOriginalReference(), me.getKey().isHorizontal(), sm);
+
+      obj = sm.createAgeObject(clsRef, profileDef.getPrototypeObjectId());
+      obj.setOrder( atObj.getRow() );
+      
+      prototypeMap.put(me.getValue(), obj);
+     }
+     else
+      obj = prototypeMap.get(me.getValue());
+    }
     else
      obj = objectMap.get(atObj.getId());
 

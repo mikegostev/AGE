@@ -2,7 +2,6 @@ package uk.ac.ebi.age.parser;
 
 import java.util.List;
 
-import uk.ac.ebi.age.parser.impl.AgeTabSyntaxParserImpl;
 import uk.ac.ebi.age.util.StringUtil;
 
 public abstract class AgeTabSyntaxParser
@@ -11,8 +10,15 @@ public abstract class AgeTabSyntaxParser
  public static final String typeFlag="TYPE";
  public static final String targetFlag="TARGET";
 
- public static final SyntaxProfile syntaxProfile = new DefaultSyntaxProfile();
+ private SyntaxProfile syntaxProfile;
+ private SyntaxProfileDefinition syntaxProfileDef;
 
+ protected AgeTabSyntaxParser(SyntaxProfile sp)
+ {
+  syntaxProfile = sp;
+  syntaxProfileDef = sp.getCommonSyntaxProfile();
+ }
+ 
  private static interface StrProc
  {
   String getBrackets();
@@ -24,14 +30,14 @@ public abstract class AgeTabSyntaxParser
  private StrProc[] prc = new StrProc[]{
    new StrProc()
    {
-    public String getBrackets(){ return syntaxProfile.getFlagsTokenBrackets(); }
+    public String getBrackets(){ return syntaxProfileDef.getFlagsTokenBrackets(); }
     public void process(ClassReference nm, String s) throws ParserException
     {
-     List<String> flags = StringUtil.splitString(s, syntaxProfile.getFlagsSeparatorSign() );
+     List<String> flags = StringUtil.splitString(s, syntaxProfileDef.getFlagsSeparatorSign() );
      
      for( String flagstr : flags )
      {
-      int eqpos = flagstr.indexOf(syntaxProfile.getFlagsEqualSign());
+      int eqpos = flagstr.indexOf(syntaxProfileDef.getFlagsEqualSign());
       
       if( eqpos == -1 )
        nm.addFlag(flagstr,null);
@@ -71,7 +77,7 @@ public abstract class AgeTabSyntaxParser
    
    new StrProc()
    {
-    public String getBrackets(){ return syntaxProfile.getQualifierTokenBrackets(); }
+    public String getBrackets(){ return syntaxProfileDef.getQualifierTokenBrackets(); }
     public void process(ClassReference nm,String s) throws ParserException
     {
      ClassReference cr = string2ClassReference(s);
@@ -83,17 +89,22 @@ public abstract class AgeTabSyntaxParser
  };
  
  
- public static AgeTabSyntaxParser getInstance()
+ public SyntaxProfile getSyntaxProfile()
  {
-  return new AgeTabSyntaxParserImpl(  );
- }
-
- public AgeTabModule parse( String txt ) throws ParserException
- {
-  return parse( txt, syntaxProfile );
+  return syntaxProfile;
  }
  
- public abstract AgeTabModule parse( String txt, SyntaxProfile profile ) throws ParserException;
+// public static AgeTabSyntaxParser getInstance()
+// {
+//  return new AgeTabSyntaxParserImpl(  );
+// }
+//
+// public AgeTabModule parse( String txt ) throws ParserException
+// {
+//  return parse( txt, syntaxProfile );
+// }
+ 
+ public abstract AgeTabModule parse( String txt ) throws ParserException;
 
  
  public ClassReference string2ClassReference( String str ) throws ParserException
@@ -147,12 +158,12 @@ public abstract class AgeTabSyntaxParser
   
   String name = null;
   
-  if( str.charAt(0) == syntaxProfile.getCustomTokenBrackets().charAt(0) )
+  if( str.charAt(0) == syntaxProfileDef.getCustomTokenBrackets().charAt(0) )
   {
-   int pos = str.indexOf(syntaxProfile.getCustomTokenBrackets().charAt(1));
+   int pos = str.indexOf(syntaxProfileDef.getCustomTokenBrackets().charAt(1));
    
    if( pos == -1 )
-    throw new ParserException(0,0, "No closing bracket: '"+syntaxProfile.getCustomTokenBrackets().charAt(1)+"'");
+    throw new ParserException(0,0, "No closing bracket: '"+syntaxProfileDef.getCustomTokenBrackets().charAt(1)+"'");
    
    if( pos != (str.length()-1) )
     throw new ParserException(0,0, "Invalid character at: "+(pos+1)+". The closing bracket must be the last symbol of the token.");
@@ -162,9 +173,9 @@ public abstract class AgeTabSyntaxParser
   }
   else
   {
-   if( str.charAt(str.length()-1) == syntaxProfile.getCustomTokenBrackets().charAt(1) )
+   if( str.charAt(str.length()-1) == syntaxProfileDef.getCustomTokenBrackets().charAt(1) )
    {
-    int pos = str.indexOf(syntaxProfile.getCustomTokenBrackets().charAt(0));
+    int pos = str.indexOf(syntaxProfileDef.getCustomTokenBrackets().charAt(0));
     
     if( pos == -1 )
      throw new ParserException(0,0, "Invalid character at: "+(str.length())+". The closing bracket must correspond to opening one.");

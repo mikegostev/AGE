@@ -16,9 +16,10 @@ import uk.ac.ebi.age.log.BufferLogger;
 import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.parser.AgeTabModule;
-import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.ParserException;
+import uk.ac.ebi.age.parser.SyntaxProfile;
 import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
+import uk.ac.ebi.age.parser.impl.AgeTabSyntaxParserImpl;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
 import uk.ac.ebi.age.storage.impl.ser.SerializedStorage;
@@ -49,11 +50,13 @@ public class Test
    
    String text = new String(bais.toByteArray());
  
-   AgeTabModule sbm =  AgeTabSyntaxParser.getInstance().parse(text);
+   SyntaxProfile synProf = new SyntaxProfile();
+   
+   AgeTabModule sbm =  new AgeTabSyntaxParserImpl( synProf ).parse(text);
    
    BufferLogger logBuf = new BufferLogger( 30 );
   
-   DataModuleWritable dblock = new AgeTab2AgeConverterImpl( new DefPM() ).convert(sbm, smngr.getContextModel(), logBuf.getRootNode() );
+   DataModuleWritable dblock = new AgeTab2AgeConverterImpl( new DefPM() ).convert(sbm, smngr.getContextModel(), synProf, logBuf.getRootNode() );
    
    if( dblock == null )
    {

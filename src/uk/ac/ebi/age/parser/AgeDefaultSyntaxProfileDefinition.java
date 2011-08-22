@@ -2,7 +2,7 @@ package uk.ac.ebi.age.parser;
 
 import uk.ac.ebi.age.model.IdScope;
 
-public class DefaultSyntaxProfile implements SyntaxProfile
+public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinition
 {
  public static final String customTokenBrackets="{}";
  public static final String flagsTokenBrackets="<>";
@@ -19,8 +19,19 @@ public class DefaultSyntaxProfile implements SyntaxProfile
  public static final String horizontalBlockPrefix="-";
  public static final String verticalBlockPrefix="|";
  
- public static final IdScope defaultScope=IdScope.CLUSTER;
- public static final boolean defaultHorizontal = true;
+ public static final IdScope defaultIdScope=IdScope.CLUSTER;
+ public static final boolean horizontalBlockDefault = true;
+ public static final boolean resetPrototype = true;
+ 
+ private static AgeDefaultSyntaxProfileDefinition instance  = new AgeDefaultSyntaxProfileDefinition();
+ 
+ public static AgeDefaultSyntaxProfileDefinition getInstance()
+ {
+  return instance;
+ }
+ 
+ private AgeDefaultSyntaxProfileDefinition()
+ {}
  
  @Override
  public String getCustomTokenBrackets()
@@ -80,7 +91,7 @@ public class DefaultSyntaxProfile implements SyntaxProfile
  @Override
  public IdScope getDefaultIdScope()
  {
-  return defaultScope;
+  return defaultIdScope;
  }
 
  @Override
@@ -98,7 +109,13 @@ public class DefaultSyntaxProfile implements SyntaxProfile
  @Override
  public boolean isHorizontalBlockDefault()
  {
-  return defaultHorizontal;
+  return horizontalBlockDefault;
+ }
+
+ @Override
+ public boolean isResetPrototype()
+ {
+  return resetPrototype;
  }
 
 }

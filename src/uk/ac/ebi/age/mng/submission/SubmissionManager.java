@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import uk.ac.ebi.age.authz.PermissionManager;
 import uk.ac.ebi.age.conf.Constants;
 import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.LogNode.Level;
@@ -43,8 +42,6 @@ import uk.ac.ebi.age.parser.AgeTab2AgeConverter;
 import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.ParserException;
-import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
-import uk.ac.ebi.age.parser.impl.AgeTabSyntaxParserImpl;
 import uk.ac.ebi.age.service.id.IdGenerator;
 import uk.ac.ebi.age.service.submission.SubmissionDB;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
@@ -135,20 +132,19 @@ public class SubmissionManager
 //  return instance;
 // }
  
- private AgeTabSyntaxParser ageTabParser = new AgeTabSyntaxParserImpl();
+ private AgeTabSyntaxParser ageTabParser;
  private AgeTab2AgeConverter converter = null;
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
- private PermissionManager permissionManager;
  
  private SubmissionDB submissionDB;
  private AgeStorageAdm ageStorage;
  
- public SubmissionManager( AgeStorageAdm ageS, SubmissionDB sDB, PermissionManager pMngr )
+ public SubmissionManager( AgeStorageAdm ageS, SubmissionDB sDB, AgeTabSyntaxParser prs, AgeTab2AgeConverter conv  )
  {
   ageStorage = ageS;
   submissionDB = sDB;
-  permissionManager = pMngr;
-  converter= new AgeTab2AgeConverterImpl(permissionManager);
+  ageTabParser=prs;
+  converter = conv;
  }
 
  @SuppressWarnings("unchecked")
@@ -610,7 +606,7 @@ public class SubmissionManager
    }
    
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(), convLog );
+   mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(), mm.atMod.getSyntaxProfile(), convLog );
    
    if( mm.newModule != null )
     convLog.success();
@@ -1214,7 +1210,7 @@ public class SubmissionManager
    }
    
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(), convLog );
+   mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(), mm.atMod.getSyntaxProfile(), convLog );
    
    if( mm.newModule != null )
     convLog.success();

@@ -6,18 +6,18 @@ import java.util.Map;
 
 import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.AgeTabObject;
-import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.BlockHeader;
+import uk.ac.ebi.age.parser.SyntaxProfile;
 
 public class AgeTabModuleImpl implements AgeTabModule
 {
- private AgeTabSyntaxParser parser;
+ private SyntaxProfile profile;
  private Map<BlockHeader, Map<String,AgeTabObject>> blockObjectMap = new LinkedHashMap<BlockHeader, Map<String,AgeTabObject>>();
  
  
- public AgeTabModuleImpl( AgeTabSyntaxParser p )
+ public AgeTabModuleImpl( SyntaxProfile p )
  {
-  parser = p;
+  profile = p;
  }
  
  @Override
@@ -107,9 +107,9 @@ public class AgeTabModuleImpl implements AgeTabModule
  }
 
  @Override
- public AgeTabSyntaxParser getParser()
+ public SyntaxProfile getSyntaxProfile()
  {
-  return parser;
+  return profile;
  }
 
 }
