@@ -26,6 +26,13 @@ public class BufferLogger implements ErrorCounter
  {
   return errCnt;
  }
+ 
+ @Override
+ public void resetErrorCounter()
+ {
+  errCnt = 0;
+ }
+
 
  @Override
  public void incErrorCounter()
