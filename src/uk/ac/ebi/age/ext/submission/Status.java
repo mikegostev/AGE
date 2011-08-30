@@ -5,5 +5,6 @@ public enum Status
  KEEP,
  DELETE,
  UPDATE,
- NEW
+ NEW,
+ UPDATEORNEW
 }

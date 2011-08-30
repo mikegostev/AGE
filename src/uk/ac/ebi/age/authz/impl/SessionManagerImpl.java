@@ -254,4 +254,28 @@ public class SessionManagerImpl implements SessionManager, Runnable
   return sess.getUser();
  }
 
+ @Override
+ public Session getSessionByUser(String uid)
+ {
+  try
+  {
+   lock.lock();
+   
+   Iterator<Session> sessItr = sessionMap.values().iterator();
+   
+   while( sessItr.hasNext() )
+   {
+    Session s = sessItr.next();
+    if(s.getUser().equals(uid) )
+     return s;
+   } 
+   
+   return null;
+  }
+  finally
+  {
+   lock.unlock();
+  }
+ }
+
 }

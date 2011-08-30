@@ -190,6 +190,55 @@ public class SubmissionManager
    if( sMeta.getDescription() == null )
     sMeta.setDescription( origSbm.getDescription() );
   }
+  else if( sMeta.getStatus() == Status.UPDATEORNEW )
+  {
+   if( sMeta.getId() == null || sMeta.getId().trim().length() == 0 )
+   {
+    logRoot.log(Level.ERROR, "Submission ID must be specified for UPDATEORNEW operation");
+    return false;
+   }
+
+   sMeta.setId(sMeta.getId().trim());
+   
+   try
+   {
+    if(submissionDB.hasSubmission(sMeta.getId()))
+     sMeta.setStatus( Status.UPDATE );
+    else
+     sMeta.setStatus( Status.NEW );
+   }
+   catch(SubmissionDBException e)
+   {
+    logRoot.log(Level.ERROR, "Method hasSubmission error: " + e.getMessage());
+
+    return false;
+   }
+  }
+  else if( sMeta.getId() != null )
+  {
+   sMeta.setId(sMeta.getId().trim());
+
+   if(sMeta.getId().length() == 0)
+    sMeta.setId(null);
+   else
+   {
+    try
+    {
+     if(submissionDB.hasSubmission(sMeta.getId()))
+     {
+      logRoot.log(Level.ERROR, "Submission with ID='" + sMeta.getId() + "' already exists");
+      return false;
+     }
+    }
+    catch(SubmissionDBException e)
+    {
+     logRoot.log(Level.ERROR, "Method hasSubmission error: " + e.getMessage());
+
+     return false;
+    }
+   }
+
+  }
   
   ClustMeta cstMeta = new ClustMeta();
   cstMeta.id = sMeta.getId();
