@@ -156,9 +156,34 @@ public class SubmissionManager
  @SuppressWarnings("unchecked")
  public boolean storeSubmission( SubmissionMeta sMeta,  String updateDescr, LogNode logRoot, boolean verifyOnly )
  {
-  
+
   SubmissionMeta origSbm = null;
-  
+
+  if(sMeta.getStatus() == Status.UPDATEORNEW)
+  {
+   if(sMeta.getId() == null || sMeta.getId().trim().length() == 0)
+   {
+    logRoot.log(Level.ERROR, "Submission ID must be specified for UPDATEORNEW operation");
+    return false;
+   }
+
+   sMeta.setId(sMeta.getId().trim());
+
+   try
+   {
+    if(submissionDB.hasSubmission(sMeta.getId()))
+     sMeta.setStatus(Status.UPDATE);
+    else
+     sMeta.setStatus(Status.NEW);
+   }
+   catch(SubmissionDBException e)
+   {
+    logRoot.log(Level.ERROR, "Method hasSubmission error: " + e.getMessage());
+
+    return false;
+   }
+  }
+
   if( sMeta.getStatus() == Status.UPDATE )
   {
    if(  sMeta.getId() == null  )
@@ -189,30 +214,6 @@ public class SubmissionManager
    
    if( sMeta.getDescription() == null )
     sMeta.setDescription( origSbm.getDescription() );
-  }
-  else if( sMeta.getStatus() == Status.UPDATEORNEW )
-  {
-   if( sMeta.getId() == null || sMeta.getId().trim().length() == 0 )
-   {
-    logRoot.log(Level.ERROR, "Submission ID must be specified for UPDATEORNEW operation");
-    return false;
-   }
-
-   sMeta.setId(sMeta.getId().trim());
-   
-   try
-   {
-    if(submissionDB.hasSubmission(sMeta.getId()))
-     sMeta.setStatus( Status.UPDATE );
-    else
-     sMeta.setStatus( Status.NEW );
-   }
-   catch(SubmissionDBException e)
-   {
-    logRoot.log(Level.ERROR, "Method hasSubmission error: " + e.getMessage());
-
-    return false;
-   }
   }
   else if( sMeta.getId() != null )
   {
@@ -276,6 +277,16 @@ public class SubmissionManager
 //
 //    cstMeta.incomeMods.add(mm);
 
+    DataModuleWritable exstMod = dm.getId() == null? null : ageStorage.getDataModule(dm.getId());
+    
+    if( modAux.getStatus() == Status.UPDATEORNEW )
+    {
+     if( exstMod == null )
+      modAux.setStatus( Status.NEW );
+     else
+      modAux.setStatus( Status.UPDATE );
+    }
+    
     if( modAux.getStatus() == Status.UPDATE || modAux.getStatus() == Status.DELETE )
     {
      if(origSbm == null)
@@ -296,7 +307,7 @@ public class SubmissionManager
      mm.meta = dm;
      mm.aux = modAux;
 
-     mm.origModule = ageStorage.getDataModule(mm.meta.getId());
+     mm.origModule = exstMod;
      
      if(mm.origModule == null)
      {
@@ -337,13 +348,12 @@ public class SubmissionManager
 
      if(dm.getId() != null)
      {
-      DataModuleWritable clashMod = ageStorage.getDataModule(dm.getId());
 
-      if(clashMod != null)
+      if(exstMod != null)
       {
        logRoot.log(Level.ERROR,
          "Module " + modAux.getOrder() + " is marked for insertion and has it's own ID (" + dm.getId()
-           + ") but this ID it already taken by module of cluster '" + clashMod.getClusterId() + "'");
+           + ") but this ID it already taken by module of cluster '" + exstMod.getClusterId() + "'");
        res = false;
        continue;
       }
@@ -360,6 +370,7 @@ public class SubmissionManager
 
      cstMeta.incomingMods.add(mm);
     }
+
 
    }
   }
@@ -469,6 +480,14 @@ public class SubmissionManager
        break;
       }
      }
+    }
+    
+    if( atax.getStatus() == Status.UPDATEORNEW )
+    {
+     if( ageStorage.getAttachment(fm.getId(), cstMeta.id, fm.isGlobal() ) != null )
+      atax.setStatus( Status.UPDATE );
+     else
+      atax.setStatus( Status.NEW );
     }
 
     if(atax.getStatus() == Status.DELETE || atax.getStatus() == Status.UPDATE)
@@ -841,7 +860,9 @@ public class SubmissionManager
     mm.newModule.setClusterId(cstMeta.id);
 
     if( mm.origModule != null )
-     mm.newModule.setId( mm.origModule.getId() ); 
+     mm.newModule.setId( mm.origModule.getId() );
+    else if( mm.meta.getId() != null )
+     mm.newModule.setId( mm.meta.getId() );
     else
     {
      String id = null;
