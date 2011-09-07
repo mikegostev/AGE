@@ -31,14 +31,15 @@ public interface AgeStorage
 // AgeObject getObjectById(String grpID);
 
 // boolean hasObject(String id);
- boolean hasDataModule(String id);
+ boolean hasDataModule(String clstId, String id);
+ boolean hasDataModule(ModuleKey mk);
 
  void addDataChangeListener(DataChangeListener dataChangeListener);
  
  File getAttachment(String id, String clustId, boolean global);
  File getAttachmentBySysRef(String sysid);
  
- DataModule getDataModule(String name);
+ DataModule getDataModule(String clstId, String name);
 
  Collection<? extends DataModule> getDataModules();
 

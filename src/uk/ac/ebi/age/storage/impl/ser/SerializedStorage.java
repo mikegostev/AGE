@@ -13,7 +13,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -43,6 +42,7 @@ import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.storage.DataChangeListener;
 import uk.ac.ebi.age.storage.DataModuleReaderWriter;
+import uk.ac.ebi.age.storage.ModuleKey;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
 import uk.ac.ebi.age.storage.exeption.ModelStoreException;
@@ -93,7 +93,7 @@ public class SerializedStorage implements AgeStorageAdm
  private Map<String, AgeObjectWritable> globalIndexMap = new HashMap<String, AgeObjectWritable>();
  private Map<String, Map<String,AgeObjectWritable>> clusterIndexMap = new HashMap<String, Map<String,AgeObjectWritable>>();
  
- private Map<String, DataModuleWritable> moduleMap = new TreeMap<String, DataModuleWritable>();
+ private Map<ModuleKey, DataModuleWritable> moduleMap = new HashMap<ModuleKey, DataModuleWritable>();
 
  private List<AgeIndexWritable> indexList = new ArrayList<AgeIndexWritable>();
 
@@ -147,9 +147,9 @@ public class SerializedStorage implements AgeStorageAdm
 // }
 
  @Override
- public DataModuleWritable getDataModule(String name)
+ public DataModuleWritable getDataModule( String clustName, String modname )
  {
-  return moduleMap.get(name);
+  return moduleMap.get( new ModuleKey(clustName, modname) );
  }
  
  @Override
@@ -281,7 +281,7 @@ public class SerializedStorage implements AgeStorageAdm
 // }
 
  @Override
- public void update( Collection<DataModuleWritable> mods2Ins, Collection<String> mods2Del ) throws RelationResolveException, ModuleStoreException
+ public void update( Collection<DataModuleWritable> mods2Ins, Collection<ModuleKey> mods2Del ) throws RelationResolveException, ModuleStoreException
  {
   if( ! master )
    throw new ModuleStoreException("Only the master instance can store data");
@@ -295,7 +295,7 @@ public class SerializedStorage implements AgeStorageAdm
 
    if( mods2Del != null )
    {
-    for(String dmId : mods2Del)
+    for(ModuleKey dmId : mods2Del)
      changed = changed || removeDataModule(dmId);
    }
    
@@ -303,11 +303,11 @@ public class SerializedStorage implements AgeStorageAdm
    {
     for(DataModuleWritable dm : mods2Ins)
     {
-     changed = changed || removeDataModule(dm.getId());
+     changed = changed || removeDataModule(dm.getClusterId(), dm.getId());
      
      saveDataModule(dm);
      
-     moduleMap.put(dm.getId(), dm);
+     moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), dm);
      
      Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
      
@@ -353,11 +353,11 @@ public class SerializedStorage implements AgeStorageAdm
   {
    dbLock.writeLock().lock();
 
-   boolean changed = removeDataModule( dm.getId() );
+   boolean changed = removeDataModule( dm.getClusterId(), dm.getId() );
  
    saveDataModule(dm);
    
-   moduleMap.put(dm.getId(), dm);
+   moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), dm);
 
    Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
    
@@ -455,7 +455,7 @@ public class SerializedStorage implements AgeStorageAdm
    {
     DataModuleWritable dm = submRW.read(f);
     
-    moduleMap.put(dm.getId(), dm);
+    moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), dm);
     
     Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
 
@@ -710,9 +710,14 @@ public class SerializedStorage implements AgeStorageAdm
   }
  }
  
- private boolean removeDataModule(String modId) throws ModuleStoreException
+ private boolean removeDataModule(String clstId, String modId) throws ModuleStoreException
  {
-  DataModuleWritable dm = moduleMap.get(modId);
+  return removeDataModule(new ModuleKey(clstId,modId));
+ }
+
+ private boolean removeDataModule(ModuleKey mk) throws ModuleStoreException
+ {
+  DataModuleWritable dm = moduleMap.get(mk);
   
   if( dm == null )
    return false;
@@ -741,7 +746,7 @@ public class SerializedStorage implements AgeStorageAdm
     globalIndexMap.remove(obj.getId());
   }
   
-  moduleMap.remove(modId);
+  moduleMap.remove(mk);
  
   return true;
  }
@@ -867,9 +872,15 @@ public class SerializedStorage implements AgeStorageAdm
 // }
 
  @Override
- public boolean hasDataModule(String dmID)
+ public boolean hasDataModule(String clustId, String dmID)
  {
-  return moduleMap.containsKey( dmID );
+  return hasDataModule( new ModuleKey(clustId,dmID) );
+ }
+
+ @Override
+ public boolean hasDataModule(ModuleKey mk )
+ {
+  return moduleMap.containsKey( mk );
  }
 
 

@@ -45,6 +45,7 @@ import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.service.id.IdGenerator;
 import uk.ac.ebi.age.service.submission.SubmissionDB;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
+import uk.ac.ebi.age.storage.ModuleKey;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
@@ -80,12 +81,12 @@ public class SubmissionManager
   }
  };
  
- private static Extractor<ModMeta, String> idExtractor = new Extractor<ModMeta, String>()
+ private static Extractor<ModMeta, ModuleKey> modkeyExtractor = new Extractor<ModMeta, ModuleKey>()
  {
   @Override
-  public String extract(ModMeta obj)
+  public ModuleKey extract(ModMeta obj)
   {
-   return obj.origModule.getId();
+   return new ModuleKey( obj.origModule.getClusterId(), obj.origModule.getId() );
   }
  };
 
@@ -277,7 +278,7 @@ public class SubmissionManager
 //
 //    cstMeta.incomeMods.add(mm);
 
-    DataModuleWritable exstMod = dm.getId() == null? null : ageStorage.getDataModule(dm.getId());
+    DataModuleWritable exstMod = dm.getId() == null && sMeta.getId() != null ? null : ageStorage.getDataModule(sMeta.getId(), dm.getId());
     
     if( modAux.getStatus() == Status.UPDATEORNEW )
     {
@@ -405,7 +406,7 @@ public class SubmissionManager
     {
      ModMeta mm = new ModMeta();
      mm.meta = odm;
-     mm.origModule = ageStorage.getDataModule(modID);
+     mm.origModule = ageStorage.getDataModule(cstMeta.id, modID);
      
      if( mm.origModule == null )
      {
@@ -855,8 +856,11 @@ public class SubmissionManager
     sMeta.setId(id);
    }
    
+   ModuleKey mk = new ModuleKey();
    for( ModMeta mm : cstMeta.incomingMods )
    {
+    mk.setClusterId(cstMeta.id);
+    
     mm.newModule.setClusterId(cstMeta.id);
 
     if( mm.origModule != null )
@@ -870,7 +874,9 @@ public class SubmissionManager
      do
      {
       id = Constants.dataModuleIDPrefix + IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
-     } while(ageStorage.hasDataModule(id));
+      mk.setModuleId(id);
+     } 
+     while(ageStorage.hasDataModule(mk));
 
      mm.newModule.setId(id);
      mm.meta.setId(id);
@@ -1050,16 +1056,16 @@ public class SubmissionManager
     LogNode updtLog = logRoot.branch("Updating storage");
 
     try
-    {
+    { 
 
      ageStorage.update(
        new CollectionsUnion<DataModuleWritable>(
          new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Upd.values(), modExtractor),
          new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Ins, modExtractor)),
 
-      new CollectionsUnion<String>(
-        new ExtractorCollection<ModMeta, String>(cstMeta.mod4Upd.values(), idExtractor),
-        new ExtractorCollection<ModMeta, String>(cstMeta.mod4Del.values(), idExtractor)));
+      new CollectionsUnion<ModuleKey>(
+        new ExtractorCollection<ModMeta, ModuleKey>(cstMeta.mod4Upd.values(), modkeyExtractor),
+        new ExtractorCollection<ModMeta, ModuleKey>(cstMeta.mod4Del.values(), modkeyExtractor)));
 
      updtLog.success();
     }
@@ -1406,17 +1412,17 @@ public class SubmissionManager
     mm.newModule.setClusterId(cstMeta.id);
 
     
-    while(ageStorage.hasDataModule(modId))
-    {
-     modId = Constants.dataModuleIDPrefix + IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
-    }
+//    while(ageStorage.hasDataModule(modId))
+//    {
+//     modId = Constants.dataModuleIDPrefix + IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
+//    }
     
     
-    if( ! modId.equals(mm.meta.getId()) )
-    {
-     logRoot.log(Level.WARN, "Module ID '"+mm.meta.getId()+"' is already taken by some another module. New ID="+modId+" is assigned");
-     needReload = true;
-    }
+//    if( ! modId.equals(mm.meta.getId()) )
+//    {
+//     logRoot.log(Level.WARN, "Module ID '"+mm.meta.getId()+"' is already taken by some another module. New ID="+modId+" is assigned");
+//     needReload = true;
+//    }
     
     mm.newModule.setId(modId);
     mm.meta.setId(modId);
@@ -1594,7 +1600,7 @@ public class SubmissionManager
     ModMeta mm = new ModMeta();
     
     mm.meta = dmm;
-    mm.origModule = ageStorage.getDataModule(dmm.getId());
+    mm.origModule = ageStorage.getDataModule( sbmID, dmm.getId() );
     
     cstMeta.mod4Del.put(dmm.getId(), mm);
    }
@@ -1705,7 +1711,7 @@ public class SubmissionManager
     if( cstMeta.mod4Upd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0 )
     {
      
-     ageStorage.update( null, new ExtractorCollection<ModMeta, String>(cstMeta.mod4Del.values(), idExtractor) );
+     ageStorage.update( null, new ExtractorCollection<ModMeta, ModuleKey>(cstMeta.mod4Del.values(), modkeyExtractor) );
      
      updtLog.success();
     }
