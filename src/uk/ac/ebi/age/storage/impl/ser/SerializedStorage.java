@@ -167,7 +167,7 @@ public class SerializedStorage implements AgeStorageAdm
   {
    dbLock.readLock().lock();
 
-   ti.index(executeQuery(qury) );
+   ti.index( executeQuery(qury), false );
 
    indexList.add(ti);
 
@@ -188,7 +188,7 @@ public class SerializedStorage implements AgeStorageAdm
   {
    dbLock.readLock().lock();
 
-   ti.index(executeQuery(qury) );
+   ti.index( executeQuery(qury), false );
 
    indexList.add(ti);
 
@@ -211,18 +211,17 @@ public class SerializedStorage implements AgeStorageAdm
    if( ! fullreset )
    {
     for( DataModuleWritable s : mods )
+    {
      if( idx.getQuery().getExpression().isTestingRelations() && s.getExternalRelations() != null && s.getExternalRelations().size() > 0 )
      {
       fullreset=true;
       break;
      }
+    }
    }
    
    if( fullreset )
-   {
-    idx.reset();
     mods = moduleMap.values();
-   }
    
    
    Iterable<AgeObject> trv = traverse(idx.getQuery(), mods);
@@ -234,7 +233,7 @@ public class SerializedStorage implements AgeStorageAdm
 
    
    if(res.size() > 0)
-    idx.index(res);
+    idx.index( res, ! fullreset );
   }
  }
  

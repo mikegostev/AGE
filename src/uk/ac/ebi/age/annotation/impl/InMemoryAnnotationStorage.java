@@ -20,6 +20,11 @@ import uk.ac.ebi.age.annotation.DBInitException;
 import uk.ac.ebi.age.annotation.Topic;
 import uk.ac.ebi.age.entity.EntityDomain;
 import uk.ac.ebi.age.entity.ID;
+import uk.ac.ebi.age.transaction.InconsistentStateException;
+import uk.ac.ebi.age.transaction.InvalidStateException;
+import uk.ac.ebi.age.transaction.ReadLock;
+import uk.ac.ebi.age.transaction.Transaction;
+import uk.ac.ebi.age.transaction.TransactionException;
 
 public class InMemoryAnnotationStorage implements AnnotationManager
 {
@@ -32,7 +37,33 @@ public class InMemoryAnnotationStorage implements AnnotationManager
  private FileResourceManager txManager;
  private String serialFileRelPath;
  private File serialFile;
+ 
+ private ReadLock readLock = new ReadLock() {
 
+  public void release()
+  {
+   releaseLock( this );
+  }};
+  
+ private Transaction transaction  = new Transaction()
+ {
+  
+  @Override
+  public void release()
+  {
+   try
+   {
+    rollbackTransaction(this);
+   }
+   catch(TransactionException e)
+   {
+    e.printStackTrace();
+   }
+  }
+ };
+ 
+ private Thread lockOwner;
+ private boolean dirty = false;
  
  public InMemoryAnnotationStorage(FileResourceManager frm, String annRelPath) throws DBInitException
  {
@@ -103,57 +134,18 @@ public class InMemoryAnnotationStorage implements AnnotationManager
  @Override
  public boolean addAnnotation(Topic tpc, ID objId, Serializable value)
  {
+  
+  Transaction t = startTransaction();
+  
+  addAnnotation(t, tpc, objId, value);
+  
   try
   {
-   lock.writeLock().lock();
-   
-   Map<EntityDomain, Map<String, Serializable>> tMap = annotMap.get(tpc);
-
-   Map<String, Serializable> eMap = null;
-
-   if(tMap == null)
-   {
-    tMap = new HashMap<EntityDomain, Map<String, Serializable>>();
-
-    annotMap.put(tpc, tMap);
-
-    eMap = new HashMap<String, Serializable>();
-
-    tMap.put(objId.getDomain(), eMap);
-   }
-   else
-   {
-    eMap = tMap.get(objId.getDomain());
-
-    if(eMap == null)
-     eMap = new HashMap<String, Serializable>();
-
-    tMap.put(objId.getDomain(), eMap);
-   }
-
-   eMap.put(objId.getId(), value);
-   
-   try
-   {
-    sync();
-   }
-   catch(Exception e)
-   {
-    try
-    {
-     readData();
-    }
-    catch(IOException e1)
-    {
-     e1.printStackTrace();
-    }
-    
-    return false;
-   }
+   commitTransaction(t);
   }
-  finally
+  catch(TransactionException e2)
   {
-   lock.writeLock().unlock();
+   return false;
   }
   
   return true;
@@ -206,5 +198,130 @@ public class InMemoryAnnotationStorage implements AnnotationManager
   oos.close();
 
   txManager.commitTransaction(txId);
+ }
+
+ @Override
+ public ReadLock getReadLock()
+ {
+  lock.readLock().lock();
+  
+  return readLock;
+ }
+
+ @Override
+ public void releaseLock(ReadLock l)
+ {
+  lock.readLock().unlock();
+ }
+
+ @Override
+ public Transaction startTransaction()
+ {
+  lock.writeLock().lock();
+
+  lockOwner = Thread.currentThread();
+  
+  return transaction;
+ }
+
+ @Override
+ public void commitTransaction(Transaction t) throws TransactionException
+ {
+  if( lockOwner != Thread.currentThread() )
+   throw new InvalidStateException();
+  
+  
+  try
+  {
+   if( ! dirty )
+    return;
+
+   sync();
+
+   dirty = false;
+  }
+  catch(Exception e)
+  {
+   try
+   {
+    readData();
+    dirty = false;
+   }
+   catch(IOException e1)
+   {
+    e1.printStackTrace();
+   }
+  }
+  finally
+  {
+   lockOwner=null;
+   lock.writeLock().unlock();
+  }
+ }
+
+ @Override
+ public void rollbackTransaction(Transaction t) throws TransactionException
+ {
+  if( lockOwner != Thread.currentThread() )
+   throw new InvalidStateException();
+
+  try
+  {
+   if( ! dirty )
+    return;
+
+   readData();
+   dirty = false;
+  }
+  catch(IOException e1)
+  {
+   e1.printStackTrace();
+   
+   throw new InconsistentStateException("Transaction rollback failed", e1);
+  }
+  finally
+  {
+   lockOwner=null;
+   lock.writeLock().unlock();
+  }
+  
+ 
+ }
+
+ @Override
+ public boolean addAnnotation(Transaction trn, Topic tpc, ID objId, Serializable value)
+ {
+  if(lockOwner != Thread.currentThread())
+   throw new InvalidStateException();
+
+  dirty = true;
+  
+  Map<EntityDomain, Map<String, Serializable>> tMap = annotMap.get(tpc);
+
+  Map<String, Serializable> eMap = null;
+
+  if(tMap == null)
+  {
+   tMap = new HashMap<EntityDomain, Map<String, Serializable>>();
+
+   annotMap.put(tpc, tMap);
+
+   eMap = new HashMap<String, Serializable>();
+
+   tMap.put(objId.getDomain(), eMap);
+  }
+  else
+  {
+   eMap = tMap.get(objId.getDomain());
+
+   if(eMap == null)
+    eMap = new HashMap<String, Serializable>();
+
+   tMap.put(objId.getDomain(), eMap);
+  }
+
+  eMap.put(objId.getId(), value);
+
+  return true;
  }
 }

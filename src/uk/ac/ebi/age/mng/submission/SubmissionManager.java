@@ -14,7 +14,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import uk.ac.ebi.age.annotation.AnnotationManager;
+import uk.ac.ebi.age.annotation.Topic;
 import uk.ac.ebi.age.conf.Constants;
+import uk.ac.ebi.age.entity.CommonID;
+import uk.ac.ebi.age.entity.EntityDomain;
 import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.LogNode.Level;
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
@@ -47,6 +51,8 @@ import uk.ac.ebi.age.service.submission.SubmissionDB;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.storage.ModuleKey;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
+import uk.ac.ebi.age.transaction.Transaction;
+import uk.ac.ebi.age.transaction.TransactionException;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
 
@@ -136,19 +142,21 @@ public class SubmissionManager
  private AgeTabSyntaxParser ageTabParser;
  private AgeTab2AgeConverter converter = null;
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
+ private AnnotationManager annotationManager;
  
  private SubmissionDB submissionDB;
  private AgeStorageAdm ageStorage;
  
- public SubmissionManager( AgeStorageAdm ageS, SubmissionDB sDB, AgeTabSyntaxParser prs, AgeTab2AgeConverter conv  )
+ public SubmissionManager( AgeStorageAdm ageS, SubmissionDB sDB, AgeTabSyntaxParser prs, AgeTab2AgeConverter conv, AnnotationManager aMngr  )
  {
   ageStorage = ageS;
   submissionDB = sDB;
   ageTabParser=prs;
   converter = conv;
+  
+  annotationManager = aMngr;   
  }
 
- @SuppressWarnings("unchecked")
  public boolean storeSubmission( SubmissionMeta sMeta,  String updateDescr, LogNode logRoot )
  {
   return storeSubmission( sMeta,  updateDescr, logRoot, false );
@@ -1157,6 +1165,38 @@ public class SubmissionManager
    ageStorage.unlockWrite();
   }
 
+  if( ! verifyOnly  )
+  {
+   Transaction trn = annotationManager.startTransaction();
+
+   try
+   {
+    if(sMeta.getStatus() == Status.NEW)
+    {
+     CommonID id = new CommonID();
+
+     id.setDomain(EntityDomain.CLUSTER);
+     id.setId(sMeta.getId());
+
+     annotationManager.addAnnotation(trn, Topic.OWNER, id, sMeta.getModifier());
+    }
+
+   }
+   finally
+   {
+    try
+    {
+     annotationManager.commitTransaction(trn);
+    }
+    catch(TransactionException e)
+    {
+     e.printStackTrace();
+    }
+   }
+
+  }
+
+  
   //Impute reverse relation and revalidate.
 
   return res;

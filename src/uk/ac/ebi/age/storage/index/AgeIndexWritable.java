@@ -10,8 +10,8 @@ public interface AgeIndexWritable extends AgeIndex
 
  AgeQuery getQuery();
 
- void index(List<AgeObject> res);
+ void index(List<AgeObject> res, boolean append);
 
- void reset();
+// void reset();
  
 }

@@ -18,7 +18,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
@@ -26,6 +25,8 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
 import uk.ac.ebi.age.storage.index.TextIndexWritable;
+
+import com.pri.util.collection.Collections;
 
 public class LuceneFullTextIndex implements TextIndexWritable
 {
@@ -35,7 +36,7 @@ public class LuceneFullTextIndex implements TextIndexWritable
  private Directory index = new RAMDirectory();
  private StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_30);
  
- private List<AgeObject> objectList;
+ private List<AgeObject> objectList = Collections.emptyList();
  
  private AgeQuery query;
  private Collection<TextFieldExtractor> extractors;
@@ -188,32 +189,24 @@ public class LuceneFullTextIndex implements TextIndexWritable
  }
 
  @Override
- public void index(List<AgeObject> aol)
+ public void index(List<AgeObject> aol, boolean append)
  {
-  ArrayList<AgeObject> naol = null;
-
-
-  if( objectList != null )
-  {
-   naol = new ArrayList<AgeObject>( aol.size() + objectList.size() );
-   naol.addAll(objectList);
-  }
-  else 
-   naol = new ArrayList<AgeObject>( aol.size());
+  List<AgeObject> naol = new ArrayList<AgeObject>( aol.size() + objectList.size() );
   
+  naol.addAll(objectList);
   naol.addAll(aol);
   
-  indexList( naol );
+  objectList = naol;
+  
+  indexList( aol, append );
  }
  
- protected void indexList(List<AgeObject> aol)
+ protected void indexList(List<AgeObject> aol, boolean append )
  {
   try
   {
-   IndexWriter iWriter = new IndexWriter(index, analyzer, objectList == null,
+   IndexWriter iWriter = new IndexWriter(index, analyzer, ! append,
      IndexWriter.MaxFieldLength.UNLIMITED);
-
-   objectList=aol;
 
    for(AgeObject ao : aol )
    {
@@ -250,33 +243,33 @@ public class LuceneFullTextIndex implements TextIndexWritable
  }
 
 
- @Override
- public void reset()
- {
-  try
-  {
-   IndexWriter iWriter = new IndexWriter(index, analyzer, true,
-     IndexWriter.MaxFieldLength.UNLIMITED);
-   iWriter.close();
-
-   objectList=null;
-  }
-  catch(CorruptIndexException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
-  catch(LockObtainFailedException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
-  catch(IOException e)
-  {
-   // TODO Auto-generated catch block
-   e.printStackTrace();
-  }
- }
+// @Override
+// public void reset()
+// {
+//  try
+//  {
+//   IndexWriter iWriter = new IndexWriter(index, analyzer, true,
+//     IndexWriter.MaxFieldLength.UNLIMITED);
+//   iWriter.close();
+//
+//   objectList=null;
+//  }
+//  catch(CorruptIndexException e)
+//  {
+//   // TODO Auto-generated catch block
+//   e.printStackTrace();
+//  }
+//  catch(LockObtainFailedException e)
+//  {
+//   // TODO Auto-generated catch block
+//   e.printStackTrace();
+//  }
+//  catch(IOException e)
+//  {
+//   // TODO Auto-generated catch block
+//   e.printStackTrace();
+//  }
+// }
 
  private static class CountCollector extends Collector
  {
@@ -316,4 +309,10 @@ public class LuceneFullTextIndex implements TextIndexWritable
   return objectList;
  }
 
+ protected void setObjectList( List<AgeObject> lst )
+ {
+  objectList = lst;
+  
+  indexList(objectList, false);
+ }
 }

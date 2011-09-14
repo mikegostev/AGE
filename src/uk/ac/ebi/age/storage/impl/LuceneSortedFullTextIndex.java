@@ -85,25 +85,16 @@ public class LuceneSortedFullTextIndex<KeyT> extends LuceneFullTextIndex impleme
   return null; // key not found
  }
 
- public void index(List<AgeObject> aol)
+ @Override
+ public void index(List<AgeObject> aol, boolean append)
  {
-  ArrayList<AgeObject> naol = null;
+  ArrayList<AgeObject> naol = new ArrayList<AgeObject>( aol.size() + getObjectList().size() );
 
-
-  if( getObjectList()!= null )
-  {
-   naol = new ArrayList<AgeObject>( aol.size() + getObjectList().size() );
-   naol.addAll(getObjectList());
-  }
-  else 
-   naol = new ArrayList<AgeObject>( aol.size());
-  
+  naol.addAll(getObjectList());
   naol.addAll(aol);
-  
-  Collections.sort(aol, objectComparator );
-  
-  reset();
-  
-  super.indexList(naol);
+
+  Collections.sort(naol, objectComparator );
+
+  setObjectList( naol );
  }
 }
