@@ -21,6 +21,7 @@ import uk.ac.ebi.age.entity.CommonID;
 import uk.ac.ebi.age.entity.EntityDomain;
 import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.LogNode.Level;
+import uk.ac.ebi.age.ext.log.SimpleLogNode;
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
 import uk.ac.ebi.age.ext.submission.Factory;
 import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
@@ -1805,6 +1806,13 @@ public class SubmissionManager
  }
 
  
+ public void tranklucateSubmission(String id, SimpleLogNode rootNode)
+ {
+  // TODO Auto-generated method stub
+  throw new dev.NotImplementedYetException();
+  //
+ }
+ 
  
  private boolean connectNewExternalRelations( ClustMeta cstMeta, AgeStorageAdm stor, Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap, LogNode rootNode )
  {
@@ -2637,4 +2645,6 @@ public class SubmissionManager
  {
   return submissionDB;
  }
+
+
 }

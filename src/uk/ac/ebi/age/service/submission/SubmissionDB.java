@@ -48,4 +48,6 @@ public abstract class SubmissionDB
 
  public abstract boolean  restoreSubmission(String id) throws SubmissionDBException;
 
+ public abstract boolean tranklucateSubmission(String sbmID) throws SubmissionDBException;
+
 }

@@ -80,6 +80,7 @@ public class H2SubmissionDB extends SubmissionDB
  private static final String switchSubmissionRemovedSQL = 
  "UPDATE "+submissionDB+"."+submissionTable+" SET removed=? WHERE id=?";
  
+ 
  private static final String h2DbPath = "h2db";
  private static final String docDepotPath = "docs";
  private static final String attDepotPath = "att";
@@ -149,7 +150,7 @@ public class H2SubmissionDB extends SubmissionDB
 
   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+historyTable+" ("+
     "id VARCHAR NOT NULL, mtime BIGINT NOT NULL, modifier VARCHAR NOT NULL, descr VARCHAR, diff BINARY, data BINARY," +
-    " PRIMARY KEY (id,mtime) )");
+    " PRIMARY KEY (id,mtime) ");
 
   conn.commit();
   
@@ -332,6 +333,40 @@ public class H2SubmissionDB extends SubmissionDB
 
  }
 
+ @Override
+ public boolean tranklucateSubmission(String sbmID) throws SubmissionDBException
+ {
+  try
+  {
+   PreparedStatement stmt = conn.prepareStatement(switchSubmissionRemovedSQL);
+   
+//   stmt.setBoolean(1, sbmID);
+//   stmt.setString(2, sbmID);
+   
+   int nUp = stmt.executeUpdate();
+   
+   conn.commit();
+   
+   return nUp==1;
+  }
+  catch(Exception e)
+  {
+   try
+   {
+    conn.rollback();
+   }
+   catch(SQLException e1)
+   {
+    e1.printStackTrace();
+   }
+
+   e.printStackTrace();
+   
+   throw new SubmissionDBException("System error", e);
+  }
+ }
+
+ 
  @Override
  public boolean removeSubmission(String sbmID) throws SubmissionDBException
  {
