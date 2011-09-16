@@ -4,6 +4,7 @@ public enum EntityDomain
 {
  CLUSTER,
  DATAMODULE,
+ ATTACHMENT,
  AGEOBJECT,
  AGECLASS;
 }

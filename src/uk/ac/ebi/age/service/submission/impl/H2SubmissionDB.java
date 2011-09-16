@@ -17,7 +17,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import uk.ac.ebi.age.ext.submission.AttachmentDiff;
 import uk.ac.ebi.age.ext.submission.DataModuleDiff;
@@ -65,6 +67,9 @@ public class H2SubmissionDB extends SubmissionDB
  private static final String deleteSubmissionSQL = "DELETE FROM "+submissionDB+"."+submissionTable
  +" WHERE id=?";
 
+ private static final String deleteSubmissionHistorySQL = "DELETE FROM "+submissionDB+"."+historyTable
+ +" WHERE id=?";
+ 
  private static final String insertSubmissionSQL = "INSERT INTO "+submissionDB+"."+submissionTable
  +" (id,desc,ctime,mtime,creator,modifier,ft_desc) VALUES (?,?,?,?,?,?,?)";
  
@@ -87,9 +92,14 @@ public class H2SubmissionDB extends SubmissionDB
  
  private static final Charset docCharset = Charset.forName("UTF-8");
  
- private Connection conn;
+ private Connection permConn;
+ private AtomicBoolean permConnFree = new AtomicBoolean( true );
+ 
  private FileDepot docDepot;
  private FileDepot attachmentDepot;
+ 
+ 
+ private String connectionString;
 
  private static StringUtils.ReplacePair likePairs[] = new StringUtils.ReplacePair[]
                  {
@@ -102,8 +112,11 @@ public class H2SubmissionDB extends SubmissionDB
   try
   {
    Class.forName("org.h2.Driver");
-   conn = DriverManager.getConnection("jdbc:h2:"+new File(sbmDbRoot,h2DbPath).getAbsolutePath(), "sa", "");
-   conn.setAutoCommit(false);
+   
+   connectionString = "jdbc:h2:"+new File(sbmDbRoot,h2DbPath).getAbsolutePath();
+   
+   permConn = DriverManager.getConnection(connectionString, "sa", "");
+   permConn.setAutoCommit(false);
    
    System.out.println("DB URL: "+"jdbc:h2:"+new File(sbmDbRoot,h2DbPath).getAbsolutePath());
    
@@ -121,55 +134,87 @@ public class H2SubmissionDB extends SubmissionDB
 
  }
  
+ private Connection createConnection() throws SQLException
+ {
+  if( permConnFree.compareAndSet(true, false) )
+   return permConn;
+ 
+  Connection conn = DriverManager.getConnection(connectionString, "sa", "");
+  conn.setAutoCommit(false);
+
+  return conn;
+ }
+ 
+ private void releaseConnection( Connection conn ) throws SQLException
+ {
+  if( permConn == conn )
+  {
+   permConnFree.set(true);
+   return;
+  }
+  
+  conn.close();
+ }
+ 
  private void initSubmissionDb() throws SQLException
  {
-  Statement stmt = conn.createStatement();
+  Connection conn = createConnection();
   
-  stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS "+submissionDB);
-
-  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+submissionTable+" ("+
-    "id VARCHAR PRIMARY KEY, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL, creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL," +
-    " removed BOOLEAN NOT NULL DEFAULT FALSE, FT_DESC VARCHAR)");
-
-  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS ctimeIdx ON "+submissionDB+'.'+submissionTable+"(ctime)");
-  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS mtimeIdx ON "+submissionDB+'.'+submissionTable+"(mtime)");
-  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS creatorIdx ON "+submissionDB+'.'+submissionTable+"(creator)");
-  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS modifierIdx ON "+submissionDB+'.'+submissionTable+"(modifier)");
-
-  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+moduleTable+" ("+
-    "id VARCHAR PRIMARY KEY, submid VARCHAR NOT NULL, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL," +
-    " creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL, docver BIGINT NOT NULL," +
-    " FOREIGN KEY(submid) REFERENCES "
-    +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
-
-  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+attachmentTable+" ("+
-    "id VARCHAR, submid VARCHAR NOT NULL, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL," +
-    " creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL, filever BIGINT NOT NULL, isglobal BOOL NOT NULL," +
-    " PRIMARY KEY (id,submid), FOREIGN KEY (submid) REFERENCES "
-    +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
-
-  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+historyTable+" ("+
-    "id VARCHAR NOT NULL, mtime BIGINT NOT NULL, modifier VARCHAR NOT NULL, descr VARCHAR, diff BINARY, data BINARY," +
-    " PRIMARY KEY (id,mtime) ");
-
-  conn.commit();
-  
-  stmt.executeUpdate("CREATE ALIAS IF NOT EXISTS FTL_INIT FOR \"org.h2.fulltext.FullTextLucene.init\"");
-  stmt.executeUpdate("CALL FTL_INIT()");
-
   try
   {
-   stmt.executeUpdate("CALL FTL_CREATE_INDEX('"+submissionDB+"', '"+submissionTable+"', 'FT_DESC')");
-  }
-  catch (SQLException e)
-  {
-   System.out.println( e.getErrorCode() );
    
-   if( e.getErrorCode() != 23001 )
-    e.printStackTrace();
+   Statement stmt = conn.createStatement();
+   
+   stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS "+submissionDB);
+ 
+   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+submissionTable+" ("+
+     "id VARCHAR PRIMARY KEY, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL, creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL," +
+     " removed BOOLEAN NOT NULL DEFAULT FALSE, FT_DESC VARCHAR)");
+ 
+   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS ctimeIdx ON "+submissionDB+'.'+submissionTable+"(ctime)");
+   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS mtimeIdx ON "+submissionDB+'.'+submissionTable+"(mtime)");
+   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS creatorIdx ON "+submissionDB+'.'+submissionTable+"(creator)");
+   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS modifierIdx ON "+submissionDB+'.'+submissionTable+"(modifier)");
+ 
+   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+moduleTable+" ("+
+     "id VARCHAR PRIMARY KEY, submid VARCHAR NOT NULL, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL," +
+     " creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL, docver BIGINT NOT NULL," +
+     " FOREIGN KEY(submid) REFERENCES "
+     +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
+ 
+   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+attachmentTable+" ("+
+     "id VARCHAR, submid VARCHAR NOT NULL, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL," +
+     " creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL, filever BIGINT NOT NULL, isglobal BOOL NOT NULL," +
+     " PRIMARY KEY (id,submid), FOREIGN KEY (submid) REFERENCES "
+     +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
+ 
+   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+historyTable+" ("+
+     "id VARCHAR NOT NULL, mtime BIGINT NOT NULL, modifier VARCHAR NOT NULL, descr VARCHAR, diff BINARY, data BINARY," +
+     " PRIMARY KEY (id,mtime) )");
+ 
+   conn.commit();
+   
+   stmt.executeUpdate("CREATE ALIAS IF NOT EXISTS FTL_INIT FOR \"org.h2.fulltext.FullTextLucene.init\"");
+   stmt.executeUpdate("CALL FTL_INIT()");
+ 
+   try
+   {
+    stmt.executeUpdate("CALL FTL_CREATE_INDEX('"+submissionDB+"', '"+submissionTable+"', 'FT_DESC')");
+   }
+   catch (SQLException e)
+   {
+ //   System.out.println( e.getErrorCode() );
+    
+    if( e.getErrorCode() != 23001 )
+     e.printStackTrace();
+   }
+   
+   stmt.close();
   }
-  
-  stmt.close();
+  finally
+  {
+   releaseConnection(conn);
+  }
  }
  
  
@@ -200,8 +245,11 @@ public class H2SubmissionDB extends SubmissionDB
     sb.append(' ').append(dmm.getDescription());
   }
 
+  Connection conn=null;
+ 
   try
   {
+   conn = createConnection();
    PreparedStatement pstsmt = null;
 
    if( oldSbm != null )
@@ -317,18 +365,34 @@ public class H2SubmissionDB extends SubmissionDB
   }
   catch(Exception e)
   {
-   try
+   if( conn != null )
    {
-    conn.rollback();
+    try
+    {
+     conn.rollback();
+    }
+    catch(SQLException e1)
+    {
+     e1.printStackTrace();
+    }
    }
-   catch(SQLException e1)
-   {
-    e1.printStackTrace();
-   }
-
    e.printStackTrace();
    
    throw new SubmissionDBException("System error", e);
+  }
+  finally
+  {
+   if( conn != null )
+   {
+    try
+    {
+     releaseConnection(conn);
+    }
+    catch(SQLException e)
+    {
+     e.printStackTrace();
+    }
+   }
   }
 
  }
@@ -336,34 +400,108 @@ public class H2SubmissionDB extends SubmissionDB
  @Override
  public boolean tranklucateSubmission(String sbmID) throws SubmissionDBException
  {
+  List<HistoryEntry> hist = getHistory(sbmID);
+  
+  if( hist == null || hist.size() == 0 )
+   return false;
+  
+  for( HistoryEntry he : hist )
+  {
+   Collection<DataModuleDiff> mDiffs =  he.getDiff().getDataModuleDiffs();
+   
+   if( mDiffs != null )
+   {
+    for( DataModuleDiff dmd : mDiffs )
+    {
+     File modFile = getDocument(sbmID, dmd.getId(), dmd.getNewDocumentVersion());
+     
+     System.out.println("Deleting module file: "+modFile.getAbsolutePath());
+     
+     if( modFile.delete() )
+      System.out.println("Deletion OK");
+     else
+      System.out.println("Deletion failed");
+      
+    }
+   }
+   
+   Collection<AttachmentDiff> aDiffs =  he.getDiff().getAttachmentDiffs();
+   
+   if( aDiffs != null )
+   {
+    for( AttachmentDiff atd : aDiffs )
+    {
+     File attFile = getAttachment(sbmID, atd.getId(), atd.getNewFileVersion());
+     
+     System.out.println("Deleting attachment file: "+attFile.getAbsolutePath());
+     
+     if( attFile.delete() )
+      System.out.println("Deletion OK");
+     else
+      System.out.println("Deletion failed");
+      
+    }
+   }
+
+  }
+  
+  Connection conn = null;
+  
   try
   {
-   PreparedStatement stmt = conn.prepareStatement(switchSubmissionRemovedSQL);
+   conn = createConnection();
    
-//   stmt.setBoolean(1, sbmID);
-//   stmt.setString(2, sbmID);
+   PreparedStatement stmt = conn.prepareStatement(deleteSubmissionHistorySQL);
    
-   int nUp = stmt.executeUpdate();
+   stmt.setString(1, sbmID);
+   
+   stmt.executeUpdate();
+   
+   
+   stmt = conn.prepareStatement(deleteSubmissionSQL);
+   
+   stmt.setString(1, sbmID);
+   
+   stmt.executeUpdate();
+
    
    conn.commit();
    
-   return nUp==1;
+   return true;
   }
   catch(Exception e)
   {
-   try
+   if( conn != null )
    {
-    conn.rollback();
+    try
+    {
+     conn.rollback();
+    }
+    catch(SQLException e1)
+    {
+     e1.printStackTrace();
+    }
    }
-   catch(SQLException e1)
-   {
-    e1.printStackTrace();
-   }
-
+   
    e.printStackTrace();
    
    throw new SubmissionDBException("System error", e);
   }
+  finally
+  {
+   if( conn != null )
+   {
+    try
+    {
+     releaseConnection(conn);
+    }
+    catch(SQLException e)
+    {
+     e.printStackTrace();
+    }
+   }
+  }
+
  }
 
  
@@ -382,8 +520,11 @@ public class H2SubmissionDB extends SubmissionDB
  
  private boolean setSubmissionRemoved(String sbmID, boolean rem) throws SubmissionDBException
  {
+  Connection conn = null;
+  
   try
   {
+   conn = createConnection();
    PreparedStatement stmt = conn.prepareStatement(switchSubmissionRemovedSQL);
    
    stmt.setBoolean(1, rem);
@@ -397,18 +538,35 @@ public class H2SubmissionDB extends SubmissionDB
   }
   catch(Exception e)
   {
-   try
+   if( conn != null )
    {
-    conn.rollback();
+    try
+    {
+     conn.rollback();
+    }
+    catch(SQLException e1)
+    {
+     e1.printStackTrace();
+    }
    }
-   catch(SQLException e1)
-   {
-    e1.printStackTrace();
-   }
-
+   
    e.printStackTrace();
    
    throw new SubmissionDBException("System error", e);
+  }
+  finally
+  {
+   if( conn != null )
+   {
+    try
+    {
+     releaseConnection(conn);
+    }
+    catch(SQLException e)
+    {
+     e.printStackTrace();
+    }
+   }
   }
   
  }
@@ -416,8 +574,12 @@ public class H2SubmissionDB extends SubmissionDB
  @Override
  public List<HistoryEntry> getHistory( String sbmId ) throws SubmissionDBException
  {
+  Connection conn = null;
+  
   try
   {
+   conn = createConnection();
+
    List<HistoryEntry> res = new ArrayList<HistoryEntry>();
    
    
@@ -451,9 +613,25 @@ public class H2SubmissionDB extends SubmissionDB
 
    return res;
   }
-  catch( Exception e )
+  catch(Exception e)
   {
+   e.printStackTrace();
+   
    throw new SubmissionDBException("System error", e);
+  }
+  finally
+  {
+   if( conn != null )
+   {
+    try
+    {
+     releaseConnection(conn);
+    }
+    catch(SQLException e)
+    {
+     e.printStackTrace();
+    }
+   }
   }
 
  }
@@ -701,10 +879,10 @@ public class H2SubmissionDB extends SubmissionDB
  @Override
  public void shutdown()
  {
-  if( conn != null )
+  if( permConn != null )
    try
    {
-    conn.close();
+    permConn.close();
    }
    catch(SQLException e)
    {
@@ -867,8 +1045,11 @@ public class H2SubmissionDB extends SubmissionDB
   }
   
   
+  Connection conn = null;
+  
   try
   {
+   conn = createConnection();
    SubmissionReport rep = new SubmissionReport();
 
    if( q.getTotal() <= 0 )
@@ -899,16 +1080,42 @@ public class H2SubmissionDB extends SubmissionDB
    condExpr.append(" OFFSET ").append(q.getOffset());
    
    
-   rep.setSubmissions( extractSubmission(condExpr.toString(), null) );
+   rep.setSubmissions( extractSubmission(conn, condExpr.toString(), null) );
    
    return rep;
   }
-  catch(SQLException e)
+  catch(Exception e)
   {
+   if( conn != null )
+   {
+    try
+    {
+     conn.rollback();
+    }
+    catch(SQLException e1)
+    {
+     e1.printStackTrace();
+    }
+   }
+   
    e.printStackTrace();
+   
    throw new SubmissionDBException("System error", e);
   }
-  
+  finally
+  {
+   if( conn != null )
+   {
+    try
+    {
+     releaseConnection(conn);
+    }
+    catch(SQLException e)
+    {
+     e.printStackTrace();
+    }
+   }
+  }
   
   
   //select * from FTL_SEARCH_DATA('Hello seva world', 0, 0) FT join tbl S ON  S.ID=FT.KEYS[0] left join stbl M on S.id=m.pid  where  FT.TABLE='TBL' and m.txt like '%va%';
@@ -933,7 +1140,7 @@ public class H2SubmissionDB extends SubmissionDB
   }
  }
 
- private List<SubmissionMeta> extractSubmission( String sql, SubmissionMeta sMeta ) throws SQLException
+ private List<SubmissionMeta> extractSubmission( Connection conn, String sql, SubmissionMeta sMeta ) throws SQLException
  {
   Statement s = null;
   PreparedStatement mstmt = null;
@@ -1051,16 +1258,33 @@ public class H2SubmissionDB extends SubmissionDB
 
   SubmissionMeta sm = Factory.createSubmissionMeta();
   
+  Connection conn = null;
+  
   try
   {
-   extractSubmission(sb.toString(), sm);
+   conn = createConnection();
+   
+   extractSubmission(conn, sb.toString(), sm);
   }
   catch(SQLException e)
   {
    e.printStackTrace();
    throw new SubmissionDBException("System error", e);
   }
-  
+  finally
+  {
+   if(conn != null)
+   {
+    try
+    {
+     releaseConnection(conn);
+    }
+    catch(SQLException e)
+    {
+     e.printStackTrace();
+    }
+   }
+  }
   return sm;
  }
 
@@ -1069,8 +1293,13 @@ public class H2SubmissionDB extends SubmissionDB
  {
   PreparedStatement pstsmt = null;
   ResultSet rst = null;
+  
+  Connection conn = null;
+  
   try
   {
+   conn = createConnection();
+   
    pstsmt = conn.prepareStatement(selectSubmissionIDSQL);
    
    pstsmt.setString(1, id);
@@ -1101,8 +1330,21 @@ public class H2SubmissionDB extends SubmissionDB
    {
     e1.printStackTrace();
    }
+   
+   if( conn != null )
+   {
+    try
+    {
+     releaseConnection(conn);
+    }
+    catch(SQLException e)
+    {
+     e.printStackTrace();
+    }
+   }
   }
-  
+
+
  }
 
  @Override

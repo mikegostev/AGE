@@ -21,7 +21,6 @@ import uk.ac.ebi.age.entity.CommonID;
 import uk.ac.ebi.age.entity.EntityDomain;
 import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.LogNode.Level;
-import uk.ac.ebi.age.ext.log.SimpleLogNode;
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
 import uk.ac.ebi.age.ext.submission.Factory;
 import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
@@ -1607,9 +1606,18 @@ public class SubmissionManager
   return res;
  }
  
- 
- 
  public boolean removeSubmission( String sbmID, LogNode logRoot )
+ {
+  return removeSubmission(sbmID, false, logRoot);
+ }
+ 
+ 
+ public boolean tranklucateSubmission(String sbmID, LogNode logRoot)
+ {
+  return removeSubmission(sbmID, true, logRoot);
+ }
+ 
+ private boolean removeSubmission( String sbmID, boolean wipeOut, LogNode logRoot )
  {
   SubmissionMeta sMeta = null;
   
@@ -1643,7 +1651,8 @@ public class SubmissionManager
     mm.meta = dmm;
     mm.origModule = ageStorage.getDataModule( sbmID, dmm.getId() );
     
-    cstMeta.mod4Del.put(dmm.getId(), mm);
+    if( mm.origModule != null  )
+     cstMeta.mod4Del.put(dmm.getId(), mm);
    }
   }
   
@@ -1744,34 +1753,39 @@ public class SubmissionManager
    }
    
  
-   
-   LogNode updtLog = logRoot.branch("Updating storage");
-
-   try
+   if( cstMeta.mod4Upd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0 )
    {
-    if( cstMeta.mod4Upd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0 )
+    LogNode updtLog = logRoot.branch("Updating storage");
+
+    try
     {
-     
-     ageStorage.update( null, new ExtractorCollection<ModMeta, ModuleKey>(cstMeta.mod4Del.values(), modkeyExtractor) );
-     
+     ageStorage.update(null, new ExtractorCollection<ModMeta, ModuleKey>(cstMeta.mod4Del.values(), modkeyExtractor));
+
      updtLog.success();
     }
-   }
-   catch (Exception e)
-   {
-    updtLog.log(Level.ERROR, "Exception: "+e.getClass().getName()+" Message: "+e.getMessage());
-    
-    e.printStackTrace();
-    
-    res = false;
- 
-    return false;
+    catch(Exception e)
+    {
+     updtLog.log(Level.ERROR, "Exception: " + e.getClass().getName() + " Message: " + e.getMessage());
+
+     e.printStackTrace();
+
+     res = false;
+
+     return false;
+    }
    }
    
    
+   LogNode updtLog = logRoot.branch("Updating submission DB");
    try
    {
-    submissionDB.removeSubmission(sbmID);
+
+    if( wipeOut )
+     submissionDB.tranklucateSubmission(sbmID);
+    else
+     submissionDB.removeSubmission(sbmID);
+
+    updtLog.success();
    }
    catch(SubmissionDBException e)
    {
@@ -1805,13 +1819,7 @@ public class SubmissionManager
   return res;
  }
 
- 
- public void tranklucateSubmission(String id, SimpleLogNode rootNode)
- {
-  // TODO Auto-generated method stub
-  throw new dev.NotImplementedYetException();
-  //
- }
+
  
  
  private boolean connectNewExternalRelations( ClustMeta cstMeta, AgeStorageAdm stor, Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap, LogNode rootNode )

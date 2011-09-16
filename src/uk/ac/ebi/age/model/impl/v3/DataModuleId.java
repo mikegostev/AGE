@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.model.impl.v3;
 
+import uk.ac.ebi.age.entity.ComposedID;
 import uk.ac.ebi.age.entity.EntityDomain;
 import uk.ac.ebi.age.entity.ID;
 import uk.ac.ebi.age.model.DataModule;
@@ -44,18 +45,7 @@ public class DataModuleId implements ID
  @Override
  public String getId()
  {
-  StringBuilder sb = new StringBuilder(100);
-  
-  String xid = dmod.getClusterId();
-  
-  sb.append( xid.length() ).append(xid);
-
-  xid = dmod.getId();
-  
-  sb.append( xid.length() ).append(xid);
-  
-  
-  return sb.toString();
+  return ComposedID.createComponentId(dmod.getClusterId(), dmod.getId());
  }
 
  @Override
