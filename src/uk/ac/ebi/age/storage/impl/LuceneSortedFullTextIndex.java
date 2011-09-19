@@ -1,5 +1,7 @@
 package uk.ac.ebi.age.storage.impl;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,9 +38,9 @@ public class LuceneSortedFullTextIndex<KeyT> extends LuceneFullTextIndex impleme
  public KeyExtractor<KeyT> keyExtractor;
  public Comparator<KeyT> keyComparator;
 
- public LuceneSortedFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> kext, Comparator<KeyT> keyComp)
+ public LuceneSortedFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> kext, Comparator<KeyT> keyComp, File path) throws IOException
  {
-  super(qury,exts);
+  super(qury,exts, path);
   
   keyExtractor = kext;
   keyComparator = keyComp;

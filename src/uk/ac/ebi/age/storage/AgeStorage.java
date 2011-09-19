@@ -8,6 +8,7 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.query.AgeQuery;
+import uk.ac.ebi.age.storage.exeption.IndexIOException;
 import uk.ac.ebi.age.storage.index.KeyExtractor;
 import uk.ac.ebi.age.storage.index.SortedTextIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
@@ -45,7 +46,8 @@ public interface AgeStorage
 
  boolean isFileIdGlobal(String fileID);
 
- TextIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> cb );
- public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator);
+ TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> cb ) throws IndexIOException;
+ public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts,
+   KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator) throws IndexIOException;
 
 }

@@ -45,6 +45,7 @@ import uk.ac.ebi.age.storage.DataModuleReaderWriter;
 import uk.ac.ebi.age.storage.ModuleKey;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
+import uk.ac.ebi.age.storage.exeption.IndexIOException;
 import uk.ac.ebi.age.storage.exeption.ModelStoreException;
 import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
@@ -82,6 +83,7 @@ public class SerializedStorage implements AgeStorageAdm
  private Log log = LogFactory.getLog(this.getClass());
  
  private static final String modelPath = "model";
+ private static final String indexPath = "index";
  private static final String dmStoragePath = "data";
  private static final String fileStoragePath = "files";
  private static final String modelFileName = "model.ser";
@@ -89,13 +91,14 @@ public class SerializedStorage implements AgeStorageAdm
  private File modelFile;
  private File dataDir;
  private File filesDir;
+ private File indexDir;
  
  private Map<String, AgeObjectWritable> globalIndexMap = new HashMap<String, AgeObjectWritable>();
  private Map<String, Map<String,AgeObjectWritable>> clusterIndexMap = new HashMap<String, Map<String,AgeObjectWritable>>();
  
  private Map<ModuleKey, DataModuleWritable> moduleMap = new HashMap<ModuleKey, DataModuleWritable>();
 
- private List<AgeIndexWritable> indexList = new ArrayList<AgeIndexWritable>();
+ private Map<String,AgeIndexWritable> indexMap = new HashMap<String, AgeIndexWritable>();
 
  private SemanticModel model;
  
@@ -159,9 +162,22 @@ public class SerializedStorage implements AgeStorageAdm
  }
 
  
- public TextIndex createTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts)
+ public TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts) throws IndexIOException
  {
-  TextIndexWritable ti = IndexFactory.getInstance().createFullTextIndex(qury,exts);
+  File dir = new File( indexDir, M2codec.encode(name) );
+  
+  if( ! dir.exists() )
+   dir.mkdirs();
+  
+  TextIndexWritable ti = null ;
+  try
+  {
+   ti = IndexFactory.getInstance().createFullTextIndex( qury, exts, dir );
+  }
+  catch(IOException e)
+  {
+   throw new IndexIOException(e.getMessage(),e);
+  }
 
   try
   {
@@ -169,7 +185,7 @@ public class SerializedStorage implements AgeStorageAdm
 
    ti.index( executeQuery(qury), false );
 
-   indexList.add(ti);
+   indexMap.put(name, ti);
 
    return ti;
   }
@@ -180,9 +196,22 @@ public class SerializedStorage implements AgeStorageAdm
 
  }
  
- public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator)
+ public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator) throws IndexIOException
  {
-  SortedTextIndexWritable<KeyT> ti = IndexFactory.getInstance().createSortedFullTextIndex(qury,exts,keyExtractor, comparator);
+  File dir = new File( indexDir, M2codec.encode(name) );
+  
+  if( ! dir.exists() )
+   dir.mkdirs();
+
+  SortedTextIndexWritable<KeyT> ti;
+  try
+  {
+   ti = IndexFactory.getInstance().createSortedFullTextIndex(qury,exts,keyExtractor, comparator, dir);
+  }
+  catch(IOException e)
+  {
+   throw new IndexIOException(e.getMessage(),e);
+  }
 
   try
   {
@@ -190,7 +219,7 @@ public class SerializedStorage implements AgeStorageAdm
 
    ti.index( executeQuery(qury), false );
 
-   indexList.add(ti);
+   indexMap.put(name,ti);
 
    return ti;
   }
@@ -205,7 +234,7 @@ public class SerializedStorage implements AgeStorageAdm
  {
   ArrayList<AgeObject> res = new ArrayList<AgeObject>();
 
-  for( AgeIndexWritable idx : indexList )
+  for( AgeIndexWritable idx : indexMap.values() )
   {
    
    if( ! fullreset )
@@ -403,6 +432,7 @@ public class SerializedStorage implements AgeStorageAdm
   modelFile = new File(modelDir, modelFileName );
   dataDir = new File( baseDir, dmStoragePath ); 
   filesDir = new File( baseDir, fileStoragePath ); 
+  indexDir = new File( baseDir, indexPath ); 
   
 
   if( baseDir.isFile() )
@@ -416,7 +446,7 @@ public class SerializedStorage implements AgeStorageAdm
   
   try
   {
-   dataDepot = new FileDepot(dataDir);
+   dataDepot = new FileDepot(dataDir, true);
   }
   catch(IOException e)
   {

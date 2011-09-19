@@ -1,5 +1,6 @@
 package uk.ac.ebi.age.storage.impl;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,6 +19,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
@@ -33,7 +35,7 @@ public class LuceneFullTextIndex implements TextIndexWritable
 // private static final String AGEOBJECTFIELD="AgeObject";
  private String defaultFieldName;
  
- private Directory index = new RAMDirectory();
+ private Directory index;
  private StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_30);
  
  private List<AgeObject> objectList = Collections.emptyList();
@@ -41,10 +43,21 @@ public class LuceneFullTextIndex implements TextIndexWritable
  private AgeQuery query;
  private Collection<TextFieldExtractor> extractors;
  
- public LuceneFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts)
+
+ public LuceneFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts) throws IOException
+ {
+  this(qury,exts,null);
+ }
+
+ public LuceneFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, File path) throws IOException
  {
   query=qury;
   extractors=exts;
+  
+  if( path == null )
+   index = new RAMDirectory();
+  else
+   index = new NIOFSDirectory( path );
  }
 
  
