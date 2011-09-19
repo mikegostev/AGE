@@ -2,5 +2,6 @@ package uk.ac.ebi.age.entity;
 
 public interface Entity
 {
- ID getEntityID();
+ String getEntityID();
+ EntityDomain getEntityDomain();
 }
