@@ -16,7 +16,7 @@ abstract class AgeAbstractClassImpl extends AgeSemanticElementImpl implements  A
 {
  private static final long serialVersionUID = 1L;
 
- private Collection<AgeAnnotation> annotations = new ArrayList<AgeAnnotation>(8);
+ private Collection<AgeAnnotation> annotations;
  
  private Collection<AttributeAttachmentRule> atatRules;
 
@@ -54,6 +54,9 @@ abstract class AgeAbstractClassImpl extends AgeSemanticElementImpl implements  A
 
  public void addAnnotation(AgeAnnotation annt)
  {
+  if( annotations == null )
+   annotations = new ArrayList<AgeAnnotation>(8);
+  
   annotations.add(annt);
  }
  

@@ -151,19 +151,23 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, ContextSemanticModel sm, AgeClass owner)
  {
-  throw new UnsupportedOperationException();
+  if( type == DataType.OBJECT )
+   return new CustomObjectAgeAttributeClassImpl(name, sm, owner);
+  
+  return new CustomAgeAttributeClassImpl(name, type, sm, owner);
  }
+
 
  @Override
  public AgeClassWritable createCustomAgeClass(String name, String pfx, ContextSemanticModel sm)
  {
-  throw new UnsupportedOperationException();
+  return new CustomAgeClassImpl(name, pfx, sm);
  }
 
  @Override
  public AgeRelationClassWritable createCustomAgeRelationClass(String name, ContextSemanticModel sm, AgeClass range, AgeClass owner)
  {
-  throw new UnsupportedOperationException();
+  return new CustomAgeRelationClassImpl(name, sm, range, owner);
  }
 
  @Override

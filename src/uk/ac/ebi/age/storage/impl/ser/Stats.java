@@ -1,0 +1,168 @@
+package uk.ac.ebi.age.storage.impl.ser;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import uk.ac.ebi.age.model.AgeAttribute;
+import uk.ac.ebi.age.model.AgeObject;
+import uk.ac.ebi.age.model.AgeRelation;
+import uk.ac.ebi.age.model.Attributed;
+import uk.ac.ebi.age.model.DataType;
+
+public class Stats
+{
+
+ private Map<String,String> strMap = new HashMap<String,String>();
+ 
+ private int modulesCount;
+ private int fileCount;
+ private long fileSize;
+ private int objectsCount;
+ private int attributesCount;
+ private int stringsCached;
+ private int stringsUnique;
+ private int stringsCount;
+ private long stringsSize;
+ private int relationsCount;
+
+ public void incFileCount(int i)
+ {
+  fileCount+=i;
+ }
+
+ public void incFileSize(long length)
+ {
+  fileSize+=length;
+ }
+
+ public void incObjects(int i)
+ {
+  objectsCount += i;
+ }
+
+ public void incModules(int i)
+ {
+  modulesCount += i;
+ }
+
+ 
+ public void collectObjectStats(AgeObject obj)
+ {
+  collectAttributedStats( obj );
+  
+  if( obj.getRelations() != null )
+  {
+   relationsCount +=  obj.getRelations().size();
+
+   for( AgeRelation rel : obj.getRelations() )
+    collectAttributedStats(rel);
+  }
+ }
+ 
+ public void collectAttributedStats(Attributed obj)
+ {
+  if( obj.getAttributes() != null  )
+  {
+   attributesCount += obj.getAttributes().size();
+ 
+   for( AgeAttribute attr : obj.getAttributes() )
+   {
+    DataType typ = attr.getAgeElClass().getDataType();
+    
+    if( typ == DataType.STRING || typ == DataType.TEXT || typ == DataType.URI )
+    {
+     stringsCount++;
+     
+     String val =  attr.getValue().toString();
+     
+     stringsSize += val.length();
+     
+     String mapped = strMap.get(val);
+
+     if(mapped == null)
+     {
+      strMap.put(val, null);
+      stringsUnique++;
+     }
+
+//     String intrn = val.intern();
+//     
+//     
+//     if( val != intrn )
+//     {
+//      ((AgeAttributeWritable)attr).setValue(attr.getValue().toString().intern());
+//
+//      String mapped = strMap.get(intrn);
+//      
+//      if( mapped == null )
+//      {
+//       strMap.put(intrn, null);
+//       stringsUnique++;
+//      }
+//      else if( mapped != intrn )
+//       stringsUnique++;
+//
+//      
+//      stringsCached++;
+//     }
+     
+    }
+    
+    
+    collectAttributedStats(attr);
+   }
+  }
+
+ }
+
+ public long getFileSize()
+ {
+  return fileSize;
+ }
+
+ public int getFileCount()
+ {
+  return fileCount;
+ }
+
+ public int getObjectCount()
+ {
+  return objectsCount;
+ }
+
+ public int getAttributesCount()
+ {
+  return attributesCount;
+ }
+
+ public int getStringsCount()
+ {
+  return stringsCount;
+ }
+
+ public long getStringsSize()
+ {
+  return stringsSize;
+ }
+
+ public int getRelationsCount()
+ {
+  return relationsCount;
+ }
+
+ public long getStringsCached()
+ {
+  return stringsCached;
+ }
+
+ public int getModulesCount()
+ {
+  return modulesCount;
+ }
+
+ public int getStringsUnique()
+ {
+  return stringsUnique;
+ }
+
+}

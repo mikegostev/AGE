@@ -476,20 +476,38 @@ public class SerializedStorage implements AgeStorageAdm
  {
   Map<AgeRelationClass, RelationClassRef> relRefMap = new HashMap<AgeRelationClass, RelationClassRef>();
 
+  Stats totals = new Stats();
+  
+  long freeMem = Runtime.getRuntime().freeMemory();
+  
   try
   {
    dbLock.writeLock().lock();
+
    
    for( File f : dataDepot.listFiles() )
    {
+    long modFreeMem = Runtime.getRuntime().freeMemory();
+
+    long fLen = f.length();
+    totals.incFileCount(1);
+    totals.incModules(1);
+    totals.incFileSize( fLen );
+    
     DataModuleWritable dm = submRW.read(f);
     
     moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), dm);
     
     Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
 
+    dm.setMasterModel(model);
+
     for(AgeObjectWritable obj : dm.getObjects())
     {
+     totals.incObjects( 1 );
+     
+     totals.collectObjectStats( obj );
+     
      if( obj.getIdScope() == IdScope.MODULE )
       continue;
      
@@ -503,8 +521,9 @@ public class SerializedStorage implements AgeStorageAdm
 
     }    
 
-    
-    dm.setMasterModel(model);
+    long cfmem = Runtime.getRuntime().freeMemory();
+    System.out.printf("Loaded: %,d (total: %,d) Free mem: %,d Max mem: %,d Total mem: %,d\n",
+      fLen,totals.getFileSize(),cfmem,Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory());
    }
    
    for( DataModuleWritable mod : moduleMap.values() )
@@ -638,6 +657,25 @@ public class SerializedStorage implements AgeStorageAdm
     
     connectObjectAttributes( obj, clustMap );
    }
+   
+   System.out.println("Loaded"
+     +"\nmodules: "+totals.getModulesCount()
+     +"\nobjects: "+totals.getObjectCount()
+     +"\nattributes: "+totals.getAttributesCount()
+     +"\nrelations: "+totals.getRelationsCount()
+     +"\nstrings: "+totals.getStringsCount()
+     +"\nstrings cached: "+totals.getStringsCached()
+     +"\nstrings unique: "+totals.getStringsUnique()
+     +"\nstrings total length: "+totals.getStringsSize()
+     +"\nstrings average length: "+(totals.getStringsSize()/totals.getStringsCount())
+     );
+   
+   totals = null;
+   
+   System.gc();
+   System.out.printf("Free mem: %,d Max mem: %,d Total mem: %,d\n",
+     Runtime.getRuntime().freeMemory(),Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory());
+
   }
   catch(Exception e)
   {

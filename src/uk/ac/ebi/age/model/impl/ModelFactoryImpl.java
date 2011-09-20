@@ -119,19 +119,19 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, ContextSemanticModel sm, AgeClass owner)
  {
-  return v1factory.createCustomAgeAttributeClass(name, type, sm, owner);
+  return v3factory.createCustomAgeAttributeClass(name, type, sm, owner);
  }
 
  @Override
  public AgeClassWritable createCustomAgeClass(String name, String pfx, ContextSemanticModel sm)
  {
-  return v1factory.createCustomAgeClass(name, pfx, sm);
+  return v3factory.createCustomAgeClass(name, pfx, sm);
  }
 
  @Override
  public AgeRelationClassWritable createCustomAgeRelationClass(String name, ContextSemanticModel sm, AgeClass range, AgeClass owner)
  {
-  return v1factory.createCustomAgeRelationClass(name, sm, range, owner);
+  return v3factory.createCustomAgeRelationClass(name, sm, range, owner);
  }
 
  @Override
