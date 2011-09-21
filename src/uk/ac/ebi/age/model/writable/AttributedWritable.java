@@ -17,7 +17,7 @@ public interface AttributedWritable extends Attributed
  
  Collection<? extends AgeAttributeWritable> getAttributes();
 
- Collection< ? extends AgeAttributeWritable> getAttributes(AgeAttributeClass cls);
+// Collection< ? extends AgeAttributeWritable> getAttributes(AgeAttributeClass cls);
 
  Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls);
 

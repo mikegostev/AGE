@@ -8,6 +8,8 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.DataType;
+import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
+import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 
 public class Stats
 {
@@ -19,11 +21,12 @@ public class Stats
  private long fileSize;
  private int objectsCount;
  private int attributesCount;
- private int stringsCached;
+ private int stringsObjects;
  private int stringsUnique;
  private int stringsCount;
  private long stringsSize;
  private int relationsCount;
+ private int longStrings;
 
  public void incFileCount(int i)
  {
@@ -57,6 +60,11 @@ public class Stats
    for( AgeRelation rel : obj.getRelations() )
     collectAttributedStats(rel);
   }
+  
+  String intrnid =  obj.getId().intern();
+     
+  if( intrnid != obj.getId() )
+   ((AgeObjectWritable)obj).setId(intrnid);
  }
  
  public void collectAttributedStats(Attributed obj)
@@ -77,13 +85,25 @@ public class Stats
      
      stringsSize += val.length();
      
+     if( val.length() > 100 )
+      longStrings++;
+     
+     String intrnval = val.intern();
+     
      String mapped = strMap.get(val);
 
-     if(mapped == null)
+     if( mapped == null )
      {
-      strMap.put(val, null);
+      strMap.put(val, val);
       stringsUnique++;
+      stringsObjects++;
      }
+     else if( mapped != val )
+      stringsObjects++;
+      
+     if( intrnval != val )
+      ((AgeAttributeWritable)attr).setValue(intrnval);
+     
 
 //     String intrn = val.intern();
 //     
@@ -150,9 +170,9 @@ public class Stats
   return relationsCount;
  }
 
- public long getStringsCached()
+ public long getStringObjects()
  {
-  return stringsCached;
+  return stringsObjects;
  }
 
  public int getModulesCount()
@@ -163,6 +183,11 @@ public class Stats
  public int getStringsUnique()
  {
   return stringsUnique;
+ }
+
+ public int getLongStringsCount()
+ {
+  return longStrings;
  }
 
 }

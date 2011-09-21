@@ -154,5 +154,25 @@ class CustomAgeAttributeClassImpl extends AgeAbstractClassImpl implements AgeCon
  {
   return null;
  }
+ 
+ public void unplug()
+ {
+ }
+ 
+ public boolean plug()
+ {
+  return true;
+ }
+ 
+ public AgeAttributeClass getAgeAttributeClass()
+ {
+  return this;
+ }
+
+ @Override
+ public boolean isPlugged()
+ {
+  return true;
+ }
 }
 

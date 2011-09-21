@@ -2,7 +2,6 @@ package uk.ac.ebi.age.model.impl.v1;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -45,17 +44,17 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  
  private transient SemanticModel masterModel;
  
- private Map<String,AgeClassPlug> classPlugs = new TreeMap<String, AgeClassPlug>();
- private Map<String,AgeAttributeClassPlug> attrClassPlugs = new TreeMap<String, AgeAttributeClassPlug>();
- private Map<String,AgeRelationClassPlug> relClassPlugs = new TreeMap<String, AgeRelationClassPlug>();
- private Map<String,AgeRelationClassPlug> relImplicitClassPlugs = new TreeMap<String, AgeRelationClassPlug>();
+ private Map<String,AgeClassPlug> classPlugs;
+ private Map<String,AgeAttributeClassPlug> attrClassPlugs;
+ private Map<String,AgeRelationClassPlug> relClassPlugs;
+ private Map<String,AgeRelationClassPlug> relImplicitClassPlugs;
 
  
- private Map<String,AgeClassWritable> customClassMap = new TreeMap<String, AgeClassWritable>();
- private Map<String,AgeRelationClassWritable> customRelationClassMap = new TreeMap<String, AgeRelationClassWritable>();
-// private Map<String,AgeAttributeClass> customAttributeClassMap = new TreeMap<String, AgeAttributeClass>();
+ private Map<String,AgeClassWritable> customClassMap;
+ private Map<String,AgeRelationClassWritable> customRelationClassMap;
  
- private Map<AgeClass,Map<String,AgeAttributeClassWritable>> class2CustomAttrMap = new HashMap<AgeClass,Map<String,AgeAttributeClassWritable>>();
+ private Map<String,Map<String,AgeAttributeClassWritable>> definedClass2CustomAttrMap;
+ private Map<String,Map<String,AgeAttributeClassWritable>> customClass2CustomAttrMap;
 // private Map<AgeClass,Map<String,AgeRelationClass>> class2CustomRelationMap = new TreeMap<AgeClass,Map<String,AgeRelationClass>>();
 
  
@@ -74,12 +73,41 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  {
   AgeAttributeClassWritable acls = null;
 
-  Map<String,AgeAttributeClassWritable> clsattr = class2CustomAttrMap.get(cls);
+  Map<String,AgeAttributeClassWritable> clsattr = null;
+  Map<String,Map<String,AgeAttributeClassWritable>> map = null;
+  
+  if( cls.isCustom() )
+  {
+   if( customClass2CustomAttrMap == null )
+    map=customClass2CustomAttrMap=new TreeMap<String, Map<String,AgeAttributeClassWritable>>();
+   else
+   {
+    map=customClass2CustomAttrMap;
+    clsattr = map.get(cls.getName());
+   }
+  }
+  else
+  {
+   if( definedClass2CustomAttrMap == null )
+    map=definedClass2CustomAttrMap=new TreeMap<String, Map<String,AgeAttributeClassWritable>>();
+   else
+   {
+    map=definedClass2CustomAttrMap;
+    clsattr = map.get(cls.getName());
+   }
+  }
+  
   
   if( clsattr == null )
   {
    clsattr=new TreeMap<String,AgeAttributeClassWritable>();
-   class2CustomAttrMap.put(cls, clsattr);
+   map.put(cls.getName(), clsattr);
+   
+//   if( cls.getAliases() != null )
+//   {
+//    for( String alias : cls.getAliases() )
+//     map.put(alias, clsattr);
+//   }
   }
   else
    acls = clsattr.get(name);
@@ -99,12 +127,12 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  @Override
  public AgeRelationClassWritable getOrCreateCustomAgeRelationClass(String name, AgeClass range, AgeClass owner, AgeRelationClass supCls)
  {
-//  AgeRelationClassWritable rCls = masterModel.getModelFactory().createCustomAgeRelationClass(name, this, range, owner);
-//  customRelationClassMap.put(name, rCls);
-//  
-//  return rCls;
+  AgeRelationClassWritable cls = null;
   
-  AgeRelationClassWritable cls = customRelationClassMap.get(name);
+  if( customRelationClassMap == null )
+   customRelationClassMap = new TreeMap<String, AgeRelationClassWritable>();
+  else
+   cls = customRelationClassMap.get(name);
   
   if( cls == null )
   {
@@ -153,7 +181,12 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  
  public AgeClassWritable getOrCreateCustomAgeClass(String name, String pfx, AgeClass parent)
  {
-  AgeClassWritable cls = customClassMap.get(name);
+  AgeClassWritable cls = null;
+  
+  if( customClassMap == null )
+   customClassMap = new TreeMap<String, AgeClassWritable>();
+  else
+   cls = customClassMap.get(name);
   
   if( cls == null )
   {
@@ -210,6 +243,9 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  @Override
  public AgeClass getCustomAgeClass(String name)
  {
+  if( customClassMap == null )
+   return null;
+  
   return customClassMap.get(name);
  }
 
@@ -238,13 +274,21 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  @Override
  public AgeRelationClass getCustomAgeRelationClass(String name)
  {
+  if( customRelationClassMap == null )
+   return null;
+  
   return customRelationClassMap.get(name);
  }
 
  @Override
  public AgeAttributeClass getCustomAgeAttributeClass(String name, AgeClass cls)
  {
-  Map<String,AgeAttributeClassWritable> atclMap = class2CustomAttrMap.get(cls);
+  Map<String,AgeAttributeClassWritable> atclMap = null;
+  
+  if( cls.isCustom() )
+   atclMap = customClass2CustomAttrMap != null? customClass2CustomAttrMap.get(cls.getName()) : null;
+  else
+   atclMap = definedClass2CustomAttrMap != null? definedClass2CustomAttrMap.get(cls.getName()) : null;
   
   if( atclMap == null )
    return null;
@@ -336,27 +380,46 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  public void setMasterModel(SemanticModel newModel)
  {
   masterModel = newModel;
-  
-  for( AgeClassPlug plg: classPlugs.values() )
-   plg.unplug();
 
-  for( AgeAttributeClassPlug plg: attrClassPlugs.values() )
-   plg.unplug();
-  
-  for( AgeRelationClassPlug plg: relClassPlugs.values() )
-   plg.unplug();
+  if(classPlugs != null)
+  {
+   for(AgeClassPlug plg : classPlugs.values())
+    plg.unplug();
+  }
 
-  for( AgeRelationClassPlug plg: relImplicitClassPlugs.values() )
-   plg.unplug();
+  if(attrClassPlugs != null)
+  {
+   for(AgeAttributeClassPlug plg : attrClassPlugs.values())
+    plg.unplug();
+  }
+
+  if(relClassPlugs != null)
+  {
+   for(AgeRelationClassPlug plg : relClassPlugs.values())
+    plg.unplug();
+  }
+
+  if(relImplicitClassPlugs != null)
+  {
+   for(AgeRelationClassPlug plg : relImplicitClassPlugs.values())
+    plg.unplug();
+  }
  }
 
  @Override
  public AgeClassPlug getAgeClassPlug(AgeClass cls)
  {
-  AgeClassPlug plug = classPlugs.get(cls.getId());
+  AgeClassPlug plug = null;
   
-  if( plug != null )
-   return plug;
+  if( classPlugs == null )
+   classPlugs = new TreeMap<String, AgeClassPlug>();
+  else
+  {
+   plug = classPlugs.get(cls.getId());
+   
+   if( plug != null )
+    return plug;
+  }
   
   if( cls.isCustom() )
    plug = new AgeClassPlugFixed(cls);
@@ -379,10 +442,18 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  {
   if( cls.isImplicit() )
   {
-   AgeRelationClassPlug plug = relImplicitClassPlugs.get(cls.getInverseRelationClass().getId());
-
-   if( plug != null )
-    return plug;
+   AgeRelationClassPlug plug = null;
+   
+   if( relImplicitClassPlugs == null )
+    relImplicitClassPlugs = new TreeMap<String, AgeRelationClassPlug>();
+   else
+   {
+    plug = relImplicitClassPlugs.get(cls.getInverseRelationClass().getId());
+    
+    if( plug != null )
+     return plug;
+   }
+   
 
    if( cls.getInverseRelationClass().isCustom() )
     plug = new AgeRelationClassPlugFixed(cls);
@@ -395,18 +466,25 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   }
   else
   {
-   AgeRelationClassPlug plug = relClassPlugs.get(cls.getId());
-   
-   if( plug != null )
-    return plug;
-   
-   if( cls.isCustom() )
+   AgeRelationClassPlug plug = null;
+
+   if(relClassPlugs == null)
+    relClassPlugs = new TreeMap<String, AgeRelationClassPlug>();
+   else
+   {
+    plug = relClassPlugs.get(cls.getId());
+
+    if(plug != null)
+     return plug;
+   }
+
+   if(cls.isCustom())
     plug = new AgeRelationClassPlugFixed(cls);
    else
-    plug = masterModel.getModelFactory().createAgeRelationClassPlug(cls,this);
-   
+    plug = masterModel.getModelFactory().createAgeRelationClassPlug(cls, this);
+
    relClassPlugs.put(cls.getId(), plug);
-   
+
    return plug;
   }
  }
@@ -421,15 +499,22 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  @Override
  public AgeAttributeClassPlug getAgeAttributeClassPlug(AgeAttributeClass cls)
  {
-  AgeAttributeClassPlug plug = attrClassPlugs.get(cls.getId());
-  
-  if( plug != null )
-   return plug;
-  
   if( cls.isCustom() )
-   plug = new AgeAttributeClassPlugFixed(cls);
+   return cls;
+  
+  AgeAttributeClassPlug plug = null;
+  
+  if( attrClassPlugs == null )
+   attrClassPlugs = new TreeMap<String, AgeAttributeClassPlug>();
   else
-   plug = masterModel.getModelFactory().createAgeAttributeClassPlug(cls,this);
+  {
+   plug = attrClassPlugs.get(cls.getId());
+  
+   if( plug != null )
+    return plug;
+  }
+  
+  plug = masterModel.getModelFactory().createAgeAttributeClassPlug(cls,this);
   
   attrClassPlugs.put(cls.getId(), plug);
   
@@ -445,6 +530,9 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  @Override
  public Collection<? extends AgeClass> getAgeClasses()
  {
+  if( customClassMap == null )
+   return null;
+  
   return customClassMap.values();
  }
 

@@ -477,17 +477,18 @@ public class SerializedStorage implements AgeStorageAdm
   Map<AgeRelationClass, RelationClassRef> relRefMap = new HashMap<AgeRelationClass, RelationClassRef>();
 
   Stats totals = new Stats();
-  
-  long freeMem = Runtime.getRuntime().freeMemory();
+ 
+  System.out.printf("Free mem: %,d Max mem: %,d Total mem: %,d\n",Runtime.getRuntime().freeMemory(),Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory());
+ 
+  long stTime = System.currentTimeMillis();
   
   try
   {
    dbLock.writeLock().lock();
 
-   
    for( File f : dataDepot.listFiles() )
    {
-    long modFreeMem = Runtime.getRuntime().freeMemory();
+    long modStTime = System.currentTimeMillis();
 
     long fLen = f.length();
     totals.incFileCount(1);
@@ -522,8 +523,9 @@ public class SerializedStorage implements AgeStorageAdm
     }    
 
     long cfmem = Runtime.getRuntime().freeMemory();
-    System.out.printf("Loaded: %,d (total: %,d) Free mem: %,d Max mem: %,d Total mem: %,d\n",
-      fLen,totals.getFileSize(),cfmem,Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory());
+    System.out.printf("Loaded: %,d (total: %,d) Free mem: %,d Max mem: %,d Total mem: %,d Time: %dms (total: %dms)\n",
+      fLen,totals.getFileSize(),cfmem,Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory(),
+      System.currentTimeMillis()-modStTime,System.currentTimeMillis()-stTime);
    }
    
    for( DataModuleWritable mod : moduleMap.values() )
@@ -658,23 +660,25 @@ public class SerializedStorage implements AgeStorageAdm
     connectObjectAttributes( obj, clustMap );
    }
    
+   
    System.out.println("Loaded"
      +"\nmodules: "+totals.getModulesCount()
      +"\nobjects: "+totals.getObjectCount()
      +"\nattributes: "+totals.getAttributesCount()
      +"\nrelations: "+totals.getRelationsCount()
      +"\nstrings: "+totals.getStringsCount()
-     +"\nstrings cached: "+totals.getStringsCached()
+     +"\nlong strings (>100): "+totals.getLongStringsCount()
+     +"\nstrings objects: "+totals.getStringObjects()
      +"\nstrings unique: "+totals.getStringsUnique()
      +"\nstrings total length: "+totals.getStringsSize()
-     +"\nstrings average length: "+(totals.getStringsSize()/totals.getStringsCount())
+     +"\nstrings average length: "+(totals.getStringsCount()==0?0:totals.getStringsSize()/totals.getStringsCount())
      );
    
    totals = null;
    
    System.gc();
-   System.out.printf("Free mem: %,d Max mem: %,d Total mem: %,d\n",
-     Runtime.getRuntime().freeMemory(),Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory());
+   System.out.printf("Free mem: %,d Max mem: %,d Total mem: %,d Time: %dms\n",
+     Runtime.getRuntime().freeMemory(),Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory(),System.currentTimeMillis()-stTime);
 
   }
   catch(Exception e)

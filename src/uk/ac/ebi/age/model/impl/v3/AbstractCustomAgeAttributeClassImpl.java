@@ -200,5 +200,25 @@ abstract class AbstractCustomAgeAttributeClassImpl implements AgeContextSemantic
  {
   throw new UnsupportedOperationException();
  }
+ 
+ public void unplug()
+ {
+ }
+ 
+ public boolean plug()
+ {
+  return true;
+ }
+ 
+ public AgeAttributeClass getAgeAttributeClass()
+ {
+  return this;
+ }
+
+ @Override
+ public boolean isPlugged()
+ {
+  return true;
+ }
 }
 

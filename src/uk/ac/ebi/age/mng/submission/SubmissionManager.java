@@ -286,7 +286,7 @@ public class SubmissionManager
 //
 //    cstMeta.incomeMods.add(mm);
 
-    DataModuleWritable exstMod = dm.getId() == null && sMeta.getId() != null ? null : ageStorage.getDataModule(sMeta.getId(), dm.getId());
+    DataModuleWritable exstMod = dm.getId() == null || sMeta.getId() == null ? null : ageStorage.getDataModule(sMeta.getId(), dm.getId());
     
     if( modAux.getStatus() == Status.UPDATEORNEW )
     {

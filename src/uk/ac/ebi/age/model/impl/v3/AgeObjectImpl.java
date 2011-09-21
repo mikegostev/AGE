@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -277,16 +276,12 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  @Override
  public Object getAttributeValue(AgeAttributeClass cls)
  {
-  Collection<? extends AgeAttribute> atVals = getAttributes(cls);
+  AgeAttribute attr = getAttribute(cls);
   
-  if( atVals == null || atVals.size() == 0 )
+  if( attr == null )
    return null;
   
-   Iterator<? extends AgeAttribute> it = atVals.iterator();
-   if( it.hasNext() )
-    return it.next().getValue();
-
-  return null;
+  return attr.getValue();
  }
 
  @Override

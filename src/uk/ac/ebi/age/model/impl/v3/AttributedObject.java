@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
@@ -23,7 +23,7 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
 
  private List<AgeAttributeWritable> attributes = com.pri.util.collection.Collections.emptyList();
  
- private transient Map<AgeAttributeClass,List<AgeAttributeWritable>> attribMap; // = new HashMap<String,List<AgeAttributeWritable>>();
+// private transient Map<AgeAttributeClass,List<AgeAttributeWritable>> attribMap; // = new HashMap<String,List<AgeAttributeWritable>>();
 
  
 // private transient List<AgeAttributeClass> atClasses = null;
@@ -92,8 +92,8 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
   
   attributes.add(attr);
   
-  if( attribMap != null )
-   addAttribToMap(attr);
+//  if( attribMap != null )
+//   addAttribToMap(attr);
  }
 
  @Override
@@ -106,72 +106,73 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
    attributes = com.pri.util.collection.Collections.emptyList();
 
   
-  if( attribMap == null )
-   return;
-  
-  Collection<AgeAttributeWritable> coll = attribMap.get(attr.getAgeElClass());
-  
-  if( coll == null )
-   return;
-  
-  coll.remove(attr);
-  
-  if( coll.size() == 0 )
-   attribMap.remove(attr.getAgeElClass());
+//  if( attribMap == null )
+//   return;
+//  
+//  Collection<AgeAttributeWritable> coll = attribMap.get(attr.getAgeElClass());
+//  
+//  if( coll == null )
+//   return;
+//  
+//  coll.remove(attr);
+//  
+//  if( coll.size() == 0 )
+//   attribMap.remove(attr.getAgeElClass());
  }
 
- @Override
- public synchronized Collection< ? extends AgeAttributeWritable> getAttributes(AgeAttributeClass cls)
- {
-  return getAttribMap().get(cls);
- }
+// @Override
+// public synchronized Collection< ? extends AgeAttributeWritable> getAttributes(AgeAttributeClass cls)
+// {
+//  return getAttribMap().get(cls);
+// }
 
  @Override
  public synchronized AgeAttribute getAttribute(AgeAttributeClass cls)
  {
-  List<? extends AgeAttribute> lst = getAttribMap().get(cls);
+  for( AgeAttributeWritable  at : attributes )
+  {
+   if( at.getAgeElClass().equals(cls) )
+    return at;
+  }
   
-  if( lst == null )
-   return null;
-  
-  return lst.get(0);
+  return null;
  }
 
 
  
- private Map<AgeAttributeClass,List<AgeAttributeWritable>> getAttribMap()
- {
-  if( attribMap != null )
-   return attribMap;
-  
-  attribMap = new HashMap<AgeAttributeClass, List<AgeAttributeWritable>>();
-  
-  if( attributes != null )
-  {
-   for( AgeAttributeWritable attr : attributes )
-    addAttribToMap(attr);
-  }
-  
-  return attribMap;
- }
-
- private void addAttribToMap( AgeAttributeWritable attr )
- {
-  List<AgeAttributeWritable> coll = attribMap.get(attr.getAgeElClass());
-  
-  if( coll == null )
-   attribMap.put(attr.getAgeElClass(),Collections.singletonList(attr));
-  else if( coll instanceof ArrayList<?> )
-   coll.add(attr);
-  else
-  {
-   ArrayList<AgeAttributeWritable> nc = new ArrayList<AgeAttributeWritable>(3);
-   nc.addAll(coll);
-   nc.add(attr);
-   
-   attribMap.put(attr.getAgeElClass(),nc);
-  }
- }
+// private Map<AgeAttributeClass,List<AgeAttributeWritable>> getAttribMap()
+// {
+//  if( attribMap != null )
+//   return attribMap;
+//  
+//  attribMap = new HashMap<AgeAttributeClass, List<AgeAttributeWritable>>();
+//  
+//  if( attributes != null )
+//  {
+//   for( AgeAttributeWritable attr : attributes )
+//    addAttribToMap(attr);
+//  }
+//  
+//  return attribMap;
+// }
+//
+// private void addAttribToMap( AgeAttributeWritable attr )
+// {
+//  List<AgeAttributeWritable> coll = attribMap.get(attr.getAgeElClass());
+//  
+//  if( coll == null )
+//   attribMap.put(attr.getAgeElClass(),Collections.singletonList(attr));
+//  else if( coll instanceof ArrayList<?> )
+//   coll.add(attr);
+//  else
+//  {
+//   ArrayList<AgeAttributeWritable> nc = new ArrayList<AgeAttributeWritable>(3);
+//   nc.addAll(coll);
+//   nc.add(attr);
+//   
+//   attribMap.put(attr.getAgeElClass(),nc);
+//  }
+// }
 
 // @Override
 // public Collection<String> getAttributeClassesIds()
@@ -189,17 +190,17 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
  @Override
  public synchronized Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
  {
-  Map<AgeAttributeClass,List<AgeAttributeWritable>> map = getAttribMap();
-  
-  if( ! wSubCls )
-   return map.get(cls);
+//  Map<AgeAttributeClass,List<AgeAttributeWritable>> map = getAttribMap();
+//  
+//  if( ! wSubCls )
+//   return map.get(cls);
   
   List< AgeAttributeWritable > lst = new ArrayList<AgeAttributeWritable>();
   
-  for( Map.Entry<AgeAttributeClass,List<AgeAttributeWritable>> me : map.entrySet() )
+  for( AgeAttributeWritable  at : attributes )
   {
-   if( me.getKey().isClassOrSubclass(cls) )
-    lst.addAll(me.getValue());
+   if( at.getAgeElClass().isClassOrSubclass(cls) )
+    lst.add(at);
   }
   
   return lst;
@@ -208,18 +209,24 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
  @Override
  public synchronized Collection<? extends AgeAttributeClass> getAttributeClasses()
  {
-  return getAttribMap().keySet();
+  Set<AgeAttributeClass> res = new HashSet<AgeAttributeClass>();
+  
+  for( AgeAttributeWritable  at : attributes )
+   res.add(at.getAgeElClass());
+
+  
+  return res;
  }
 
  @Override
  public synchronized void reset()
  {
-  attribMap=null;
+//  attribMap=null;
  }
  
  protected synchronized void cloneAttributes( AttributedObject objClone )
  {
-  attribMap=null;
+//  attribMap=null;
   
   if( attributes != null )
   {

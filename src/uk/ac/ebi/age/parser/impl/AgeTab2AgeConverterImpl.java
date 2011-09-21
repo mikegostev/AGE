@@ -1520,9 +1520,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    AgeAttributeWritable attr = null;
    boolean exstAttr=false;
    
-   if( classRef.getAttributeClass().getDataType().isMultiline())
+   if( classRef.getAttributeClass().getDataType().isMultiline() )
    {
-    Collection<? extends AgeAttributeWritable> atcoll = hostObject.getAttributes(classRef.getAttributeClass());
+    Collection<? extends AgeAttributeWritable> atcoll = hostObject.getAttributesByClass(classRef.getAttributeClass(), false);
     
     if( atcoll == null || atcoll.size() == 0 )
      attr = hostObject.createAgeAttribute(classRef);
