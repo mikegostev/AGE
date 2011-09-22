@@ -86,7 +86,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     return fl;
    }
    
-   List<String> line = reader.readLine(parts);
+   List<String> line = reader.readRow(parts);
    
    if( line == null )
     return null;
@@ -116,7 +116,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 
    lines.add(line);
    
-   while( ( line = reader.readLine(null) ) != null && ! isEmptyLine(line) )
+   while( ( line = reader.readRow(null) ) != null && ! isEmptyLine(line) )
    {
     lines.add(line);
    
@@ -179,7 +179,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
  
   BlockSupplier block;
   
-  while( reader.readLine(parts) != null )
+  while( reader.readRow(parts) != null )
   {
    if( isEmptyLine(parts) )
     continue;

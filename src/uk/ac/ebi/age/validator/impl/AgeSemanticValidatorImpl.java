@@ -63,43 +63,23 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
  {
   boolean valid = true;
 
-//  log.log(Level.INFO, "Validating object ID="+obj.getId()+" (OrigId="+obj.getId()+") with class '"+cls.getName()+"'");
-  
-//  if( cls.getSuperClasses() != null )
-//  {
-//   LogNode ln = log.branch("Validating against super classes");
-//   
-//   for( AgeClass supCls : cls.getSuperClasses() )
-//    valid = validateObject(obj,supCls,ln) && valid;
-//  }
-  
   boolean res;
-  
-  if( obj.getAttributes() != null && obj.getAttributes().size() > 0 )
-  {
-   LogNode ln = log.branch("Validating object's attributes");
-   res = validateAttributed( obj, 0,mod, ln );
-   valid = res && valid;
-   
-   if( res )
-    ln.success();
-  }
-  
 
-  
-  if( obj.getRelations() != null && obj.getRelations().size() > 0 )
-  {
-   LogNode ln = log.branch("Validating object's relations");
-   res = validateRelations( obj, null, null, mod, ln );
-   
-   valid = res && valid;
-   
-   if( res )
-    ln.success();
-  }
-  
+  LogNode ln = log.branch("Validating object's attributes");
+  res = validateAttributed(obj, 0, mod, ln);
+  valid = res && valid;
 
-  
+  if(res)
+   ln.success();
+
+  ln = log.branch("Validating object's relations");
+  res = validateRelations(obj, null, null, mod, ln);
+
+  valid = res && valid;
+
+  if(res)
+   ln.success();
+
   return valid;
  }
 
@@ -208,7 +188,8 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    boolean rrulOk = true;
    for(RelationRule rlRl : cls.getRelationRules())
    {
-    LogNode rlln = ln.branch("Validating rule: "+rlRl.getRuleId()+" of class: '"+cls.getName()+"'");
+    LogNode rlln = ln.branch("Validating rule: "+rlRl.getRuleId()+" of class: '"+cls.getName()
+      +"' Relation class: '"+rlRl.getRelationClass().getName()+"' Target class: '"+rlRl.getTargetClass().getName()+"'");
 
     boolean res = isRelationRuleSatisfied(rlRl, obj, auxRels, remRels, mod, rlln);
     
@@ -323,7 +304,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    boolean rlres = true;
    for( AttributeAttachmentRule atRl : cls.getAttributeAttachmentRules() )
    {
-    LogNode sln = ln.branch("Validating rule "+atRl.getRuleId()+". Type: "+atRl.getType().name());
+    LogNode sln = ln.branch("Validating rule "+atRl.getRuleId()+". Type: "+atRl.getType().name()+". Target class: '"+atRl.getAttributeClass().getName()+"'");
 
     boolean res = isAttributeRuleSatisfied( atRl, obj, rslv, sln );
     
@@ -389,7 +370,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   
   for(AttributeAttachmentRule rul : atRules)
   {
-   LogNode ln = log.branch("Validating rule "+rul.getRuleId());
+   LogNode ln = log.branch("Validating rule "+rul.getRuleId()+". Target class: '"+rul.getAttributeClass().getName()+"'");
 
    if(rul.getType() == RestrictionType.MUSTNOT)
    {
@@ -399,7 +380,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    
    if(!((rul.isSubclassesIncluded() && rslvAtCls.isClassOrSubclass(rul.getAttributeClass())) || rul.getAttributeClass().equals(rslvAtCls)))
    {
-    ln.log(Level.DEBUG, "Rule doesn't belong to attribute class. Skiping rule.");
+    ln.log(Level.DEBUG, "Rule doesn't match attribute class ("+rslvAtCls.getName()+"). Skiping rule.");
     continue;
    }
    
@@ -458,7 +439,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   
   for(RelationRule rul : relRules)
   {
-   LogNode ln = log.branch("Validating rule "+rul.getRuleId());
+   LogNode ln = log.branch("Validating rule "+rul.getRuleId()+" Relation class: '"+rul.getRelationClass().getName()+"' Target class: '"+rul.getTargetClass().getName()+"'");
 
    if(!((rul.isSubclassesIncluded() && rslvRlCls.isClassOrSubclass(rul.getRelationClass())) || rul.getRelationClass().equals(rslvRlCls)))
    {
@@ -575,15 +556,18 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
 
   if( attrs == null || attrs.size() == 0 )
   {
-   log.log(atRl.getType() == RestrictionType.MUSTNOT?Level.DEBUG:Level.ERROR, "No attributes of rule's class");
+   log.log(Level.DEBUG, "No attributes of rule's class ("+reslInvRuleCls.getName()+")");
 
-   return atRl.getType() == RestrictionType.MUSTNOT;
+   if( atRl.getType() == RestrictionType.MUSTNOT )
+    return true;
+
+   attrs = Collections.emptyList();
   }
   
   LogNode ln = log.branch("Validating cardinality");
   if( ! matchCardinality( atRl, attrs.size() ) )
   {
-   log.log(atRl.getType() == RestrictionType.MUSTNOT?Level.INFO:Level.ERROR,
+   ln.log(atRl.getType() == RestrictionType.MUSTNOT?Level.INFO:Level.ERROR,
      "Rule "+atRl.getRuleId()+" cardinality requirement failed. Cardinality: "+atRl.getCardinalityType().name()+":"+atRl.getCardinality()
      +" Attributes: "+attrs.size());
    
@@ -642,7 +626,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
 
   if( rels == null || rels.size() == 0 )
   {
-   log.log(Level.DEBUG, "No relations of rule's class");
+   log.log(Level.DEBUG, "No relations of rule's class ("+origRelCls.getName()+")");
 
    if( rlRl.getType() == RestrictionType.MUSTNOT )
     return true;
