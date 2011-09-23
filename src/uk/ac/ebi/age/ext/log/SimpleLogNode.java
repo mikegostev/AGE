@@ -2,6 +2,7 @@ package uk.ac.ebi.age.ext.log;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -116,6 +117,11 @@ public class SimpleLogNode implements LogNode,Serializable
 
  public static void setLevels( LogNode ln )
  {
+  setLevels(ln, Level.getMinLevel());
+ }
+
+ public static void setLevels(LogNode ln, Level reqLevel)
+ {
   if( ln.getSubNodes() == null )
   {
    if( ln.getLevel() == null )
@@ -128,12 +134,25 @@ public class SimpleLogNode implements LogNode,Serializable
   
   for( LogNode snd : ln.getSubNodes() )
   {
-   setLevels(snd);
+   setLevels(snd,reqLevel);
    
    if( snd.getLevel().getPriority() > maxLevel.getPriority() )
     maxLevel = snd.getLevel();
   }
   
   ln.setLevel(maxLevel);
+  
+  if( maxLevel.getPriority() >= reqLevel.getPriority()  )
+  {
+   Iterator< ? extends LogNode> lnIter = ln.getSubNodes().iterator();
+
+   while(lnIter.hasNext())
+   {
+    LogNode iln = lnIter.next();
+
+    if(iln.getLevel().getPriority() < reqLevel.getPriority())
+     lnIter.remove();
+   }
+  }
  }
 }

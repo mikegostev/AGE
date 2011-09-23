@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import uk.ac.ebi.age.conf.Constants;
 import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.LogNode.Level;
+import uk.ac.ebi.age.ext.log.SimpleLogNode;
 import uk.ac.ebi.age.log.BufferLogger;
 import uk.ac.ebi.age.log.TooManyErrorsException;
 import uk.ac.ebi.age.mng.SemanticManager;
@@ -857,6 +858,8 @@ public class SerializedStorage implements AgeStorageAdm
     
     try
     {
+     long tm = System.currentTimeMillis();
+     
      vldRes = validator.validate(sbm, sm, ln);
      
      res = res && vldRes;
@@ -868,12 +871,13 @@ public class SerializedStorage implements AgeStorageAdm
     {
      res = false;
      ln.log(Level.ERROR,"Too many errors: "+e.getErrorCount());
-
-     vldBranch.append( ln );
     }
 
     if( ! vldRes )
+    {
+     SimpleLogNode.setLevels( ln, Level.WARN );
      vldBranch.append( ln );
+    }
     
    }
    
