@@ -36,7 +36,6 @@ public class SerializedDataModuleReaderWriter implements DataModuleReaderWriter
   oos.writeObject(s);
   
   oos.close();
-  fileOut.close();
  }
 
  @Override

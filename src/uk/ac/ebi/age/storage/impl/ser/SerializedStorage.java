@@ -496,7 +496,18 @@ public class SerializedStorage implements AgeStorageAdm
     totals.incModules(1);
     totals.incFileSize( fLen );
     
-    DataModuleWritable dm = submRW.read(f);
+    DataModuleWritable dm = null;
+    
+    try
+    {
+     dm = submRW.read(f);
+    }
+    catch (IOException e)
+    {
+     System.out.println("Can't load data module from file: "+f.getAbsolutePath()+" Error: "+e.getMessage());
+     continue;
+    }
+    
     
     moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), dm);
     
@@ -768,7 +779,7 @@ public class SerializedStorage implements AgeStorageAdm
 
  private void saveDataModule(DataModuleWritable sm) throws ModuleStoreException
  {
-  File modFile = dataDepot.getFilePath( sm.getId() );
+  File modFile = dataDepot.getFilePath( M2codec.encode( sm.getId() ) );
   
   try
   {

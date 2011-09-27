@@ -391,6 +391,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     return null;
    }
    
+   if( cls.isAbstract() )
+   {
+    blkLog.log(Level.ERROR, "Abstract class instantiation '"+colHdr.getName()+"'. Row: "+colHdr.getRow()+" Col: "+colHdr.getCol());
+
+    return null;
+   }
+
+   
    return cls;
   }
  }
@@ -885,6 +893,15 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       continue;
 //      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Unknown attribute class (qualifier): '"+qualif.getName()+"'");
      }
+     
+     if( qClass.isAbstract() )
+     {
+      log.log(Level.ERROR, "Abstract class instantiation (qualifier): '"+qualif.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      addConverter(convs, new InvalidColumnConvertor(attHd) );
+      result = false;
+      continue;
+     }
+
     }
     
     int dupCol = -1;
@@ -1033,6 +1050,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 //     throw new SemanticException(attHd.getRow(), attHd.getCol(), "Unknown object property: '"+attHd.getName()+"'");
     }
     
+    
 //    if( ! sm.isValidProperty( prop, blck.ageClass ) )
 //     throw new SemanticException(attHd.getRow(), attHd.getCol(), "Defined property '"+attHd.getName()+"' is not valid for class '"+blck.ageClass.getName()+"'");
 
@@ -1040,6 +1058,15 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     {
      AgeAttributeClass attClass = (AgeAttributeClass)prop;
 
+     if( attClass.isAbstract() )
+     {
+      log.log(Level.ERROR, "Abstract class instantiation '"+attHd.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
+      addConverter(convs, new InvalidColumnConvertor(attHd) );
+      result = false;
+      continue;
+     }
+
+     
      int dupCol = -1;
      
      if( attClass.getDataType() == DataType.OBJECT )
@@ -1072,6 +1099,15 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     else
     {
      AgeRelationClass rCls = (AgeRelationClass)prop;
+     
+     if( rCls.isAbstract() )
+     {
+      log.log(Level.ERROR, "Abstract class instantiation '"+attHd.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
+      addConverter(convs, new InvalidColumnConvertor(attHd) );
+      result = false;
+      continue;
+     }
+
      
      if( rCls.getDomain() != null && rCls.getDomain().size() > 0 )
      {
