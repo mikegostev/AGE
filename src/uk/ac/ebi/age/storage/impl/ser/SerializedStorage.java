@@ -357,7 +357,7 @@ public class SerializedStorage implements AgeStorageAdm
     
    }
    
-   updateIndices(mods2Ins, changed);
+//   updateIndices(mods2Ins, changed);
 
    for(DataChangeListener chls : chgListeners)
     chls.dataChanged();
@@ -535,9 +535,9 @@ public class SerializedStorage implements AgeStorageAdm
     }    
 
     long cfmem = Runtime.getRuntime().freeMemory();
-    System.out.printf("Loaded: %,d (total: %,d) Free mem: %,d Max mem: %,d Total mem: %,d Time: %dms (total: %dms)\n",
-      fLen,totals.getFileSize(),cfmem,Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory(),
-      System.currentTimeMillis()-modStTime,System.currentTimeMillis()-stTime);
+//    System.out.printf("Loaded: %,d (total: %,d) Free mem: %,d Max mem: %,d Total mem: %,d Time: %dms (total: %dms)\n",
+//      fLen,totals.getFileSize(),cfmem,Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory(),
+//      System.currentTimeMillis()-modStTime,System.currentTimeMillis()-stTime);
    }
    
    for( DataModuleWritable mod : moduleMap.values() )

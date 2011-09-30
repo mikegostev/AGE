@@ -90,16 +90,16 @@ public class Stats
      
      String intrnval = val.intern();
      
-     String mapped = strMap.get(val);
-
-     if( mapped == null )
-     {
-      strMap.put(val, val);
-      stringsUnique++;
-      stringsObjects++;
-     }
-     else if( mapped != val )
-      stringsObjects++;
+//     String mapped = strMap.get(val);
+//
+//     if( mapped == null )
+//     {
+//      strMap.put(val, val);
+//      stringsUnique++;
+//      stringsObjects++;
+//     }
+//     else if( mapped != val )
+//      stringsObjects++;
       
      if( intrnval != val )
       ((AgeAttributeWritable)attr).setValue(intrnval);

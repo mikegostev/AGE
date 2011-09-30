@@ -122,7 +122,7 @@ public class H2SubmissionDB extends SubmissionDB
    
    initSubmissionDb();
    
-   docDepot = new FileDepot( new File(sbmDbRoot,docDepotPath) );
+   docDepot = new FileDepot( new File(sbmDbRoot,docDepotPath), true );
    attachmentDepot = new FileDepot( new File(sbmDbRoot,attDepotPath), true );
   }
   catch(Exception e)
