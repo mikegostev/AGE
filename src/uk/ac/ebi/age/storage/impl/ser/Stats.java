@@ -27,6 +27,7 @@ public class Stats
  private long stringsSize;
  private int relationsCount;
  private int longStrings;
+ private int failedMoules;
 
  public void incFileCount(int i)
  {
@@ -48,6 +49,10 @@ public class Stats
   modulesCount += i;
  }
 
+ public void incFailedModules(int i)
+ {
+  failedMoules+=i;
+ }
  
  public void collectObjectStats(AgeObject obj)
  {
@@ -103,28 +108,8 @@ public class Stats
       
      if( intrnval != val )
       ((AgeAttributeWritable)attr).setValue(intrnval);
-     
-
-//     String intrn = val.intern();
-//     
-//     
-//     if( val != intrn )
-//     {
-//      ((AgeAttributeWritable)attr).setValue(attr.getValue().toString().intern());
-//
-//      String mapped = strMap.get(intrn);
-//      
-//      if( mapped == null )
-//      {
-//       strMap.put(intrn, null);
-//       stringsUnique++;
-//      }
-//      else if( mapped != intrn )
-//       stringsUnique++;
-//
-//      
-//      stringsCached++;
-//     }
+     else
+      stringsUnique++;
      
     }
     
@@ -189,5 +174,12 @@ public class Stats
  {
   return longStrings;
  }
+
+ public int getFailedModulesCount()
+ {
+  return failedMoules;
+ }
+
+
 
 }

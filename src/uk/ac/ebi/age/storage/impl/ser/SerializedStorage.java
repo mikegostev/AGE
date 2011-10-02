@@ -13,6 +13,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -473,6 +476,128 @@ public class SerializedStorage implements AgeStorageAdm
  }
 
  
+ private class ModuleLoader implements Runnable
+ {
+  private BlockingQueue<File> queue;
+  private Stats               totals;
+  
+  private CountDownLatch latch;
+  
+  ModuleLoader( BlockingQueue<File> qu, Stats st, CountDownLatch ltch )
+  {
+   queue=qu;
+   totals=st;
+   latch=ltch;
+  }
+  
+  @Override
+  public void run()
+  {
+   while(true)
+   {
+    File modFile = null;
+
+    try
+    {
+     modFile = queue.take();
+    }
+    catch(InterruptedException e1)
+    {
+     continue;
+    }
+
+    if(modFile.getName().length() == 0)
+    {
+     while(true)
+     {
+      try
+      {
+       queue.put(modFile);
+       
+       latch.countDown();
+       
+       return;
+      }
+      catch(InterruptedException e)
+      {
+      }
+     }
+
+    }
+
+    long fLen = modFile.length();
+    totals.incFileCount(1);
+    totals.incModules(1);
+    totals.incFileSize(fLen);
+
+    DataModuleWritable dm = null;
+
+    try
+    {
+     dm = submRW.read(modFile);
+    }
+    catch(Exception e)
+    {
+     totals.incFailedModules(1);
+     System.out.println("Can't load data module from file: " + modFile.getAbsolutePath() + " Error: " + e.getMessage());
+     continue;
+    }
+
+    synchronized(moduleMap)
+    {
+     moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), dm);
+    }
+    
+    Map<String, AgeObjectWritable> clustMap = null;
+
+    synchronized(clusterIndexMap)
+    {
+     clustMap = clusterIndexMap.get(dm.getClusterId());
+    }
+
+    
+    dm.setMasterModel(model);
+
+    for(AgeObjectWritable obj : dm.getObjects())
+    {
+     totals.incObjects(1);
+
+     totals.collectObjectStats(obj);
+
+     if(obj.getIdScope() == IdScope.MODULE)
+      continue;
+
+     if(clustMap == null)
+     {
+      synchronized(clusterIndexMap)
+      {
+       clustMap = clusterIndexMap.get(dm.getClusterId());
+       
+       if( clustMap == null )
+        clusterIndexMap.put(dm.getClusterId(), clustMap = new HashMap<String, AgeObjectWritable>());
+      }
+     }
+      
+     synchronized(clustMap)
+     {
+      clustMap.put(obj.getId(), obj);
+     }
+     
+
+     if(obj.getIdScope() == IdScope.GLOBAL)
+     {
+      synchronized(globalIndexMap)
+      {
+       globalIndexMap.put(obj.getId(), obj);
+      }
+     }
+
+    }
+   }
+  }
+
+ }
+ 
  private void loadData() throws StorageInstantiationException
  {
   Map<AgeRelationClass, RelationClassRef> relRefMap = new HashMap<AgeRelationClass, RelationClassRef>();
@@ -482,63 +607,51 @@ public class SerializedStorage implements AgeStorageAdm
   System.out.printf("Free mem: %,d Max mem: %,d Total mem: %,d\n",Runtime.getRuntime().freeMemory(),Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory());
  
   long stTime = System.currentTimeMillis();
+  long stMem = Runtime.getRuntime().totalMemory();
   
   try
   {
    dbLock.writeLock().lock();
 
-   for( File f : dataDepot.listFiles() )
+   int nCores = Runtime.getRuntime().availableProcessors();
+   
+   CountDownLatch latch = new CountDownLatch(nCores);
+   BlockingQueue<File> queue = new LinkedBlockingDeque<File>(100);
+   
+   System.out.println("Starting "+nCores+" parallel loaders");
+   
+   for( int i=1; i <= nCores; i++ )
+    new Thread( new ModuleLoader(queue,totals,latch), "Data Loader "+i).start();
+   
+   for( File modFile : dataDepot )
    {
-    long modStTime = System.currentTimeMillis();
-
-    long fLen = f.length();
-    totals.incFileCount(1);
-    totals.incModules(1);
-    totals.incFileSize( fLen );
-    
-    DataModuleWritable dm = null;
-    
+    while(true)
+    {
+     try
+     {
+      queue.put(modFile);
+      break;
+     }
+     catch(InterruptedException e)
+     {
+     }
+    }
+   }
+   
+   while(true)
+   {
     try
     {
-     dm = submRW.read(f);
+     queue.put(new File(""));
+     break;
     }
-    catch (IOException e)
+    catch(InterruptedException e)
     {
-     System.out.println("Can't load data module from file: "+f.getAbsolutePath()+" Error: "+e.getMessage());
-     continue;
     }
-    
-    
-    moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), dm);
-    
-    Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
-
-    dm.setMasterModel(model);
-
-    for(AgeObjectWritable obj : dm.getObjects())
-    {
-     totals.incObjects( 1 );
-     
-     totals.collectObjectStats( obj );
-     
-     if( obj.getIdScope() == IdScope.MODULE )
-      continue;
-     
-     if( clustMap == null )
-      clusterIndexMap.put(dm.getClusterId(),clustMap = new HashMap<String, AgeObjectWritable>());
-     
-     clustMap.put(obj.getId(), obj);
-
-     if( obj.getIdScope() == IdScope.GLOBAL )
-      globalIndexMap.put(obj.getId(), obj);
-
-    }    
-
-    long cfmem = Runtime.getRuntime().freeMemory();
-//    System.out.printf("Loaded: %,d (total: %,d) Free mem: %,d Max mem: %,d Total mem: %,d Time: %dms (total: %dms)\n",
-//      fLen,totals.getFileSize(),cfmem,Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory(),
-//      System.currentTimeMillis()-modStTime,System.currentTimeMillis()-stTime);
    }
+   
+   latch.await();
+
    
    for( DataModuleWritable mod : moduleMap.values() )
    {
@@ -672,23 +785,27 @@ public class SerializedStorage implements AgeStorageAdm
     connectObjectAttributes( obj, clustMap );
    }
    
+   long totTime = System.currentTimeMillis()-stTime;
    
    System.out.println("Loaded"
      +"\nmodules: "+totals.getModulesCount()
+     +"\nfailed modules: "+totals.getFailedModulesCount()
      +"\nobjects: "+totals.getObjectCount()
      +"\nattributes: "+totals.getAttributesCount()
      +"\nrelations: "+totals.getRelationsCount()
      +"\nstrings: "+totals.getStringsCount()
      +"\nlong strings (>100): "+totals.getLongStringsCount()
      +"\nstrings objects: "+totals.getStringObjects()
-     +"\nstrings unique: "+totals.getStringsUnique()
+     +"\nstrings unique (only for J7): "+totals.getStringsUnique()
      +"\nstrings total length: "+totals.getStringsSize()
      +"\nstrings average length: "+(totals.getStringsCount()==0?0:totals.getStringsSize()/totals.getStringsCount())
+     +"\ntotal time: "+totTime+"ms"
+     +"\ntime per module: "+(totTime/totals.getModulesCount())+"ms"
+     +"\nmemory delta: "+(Runtime.getRuntime().totalMemory()-stMem)+"bytes"
      );
    
    totals = null;
    
-   System.gc();
    System.out.printf("Free mem: %,d Max mem: %,d Total mem: %,d Time: %dms\n",
      Runtime.getRuntime().freeMemory(),Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory(),System.currentTimeMillis()-stTime);
 

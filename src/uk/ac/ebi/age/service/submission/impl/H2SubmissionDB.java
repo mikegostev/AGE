@@ -43,6 +43,8 @@ import com.pri.util.StringUtils;
 
 public class H2SubmissionDB extends SubmissionDB
 {
+ private static final int REQUEST_LIMIT = 100;
+
  private static final String submissionDB = "SUBMISSIONDB";
  private static final String submissionTable = "SUBMISSION";
  private static final String moduleTable = "MODULE";
@@ -1076,6 +1078,9 @@ public class H2SubmissionDB extends SubmissionDB
    else
     rep.setTotalSubmissions( q.getTotal() );
 
+   if( q.getLimit() <= 0 || q.getLimit() > REQUEST_LIMIT )
+    q.setLimit(REQUEST_LIMIT);
+   
    condExpr.append(" LIMIT ").append(q.getLimit());
    condExpr.append(" OFFSET ").append(q.getOffset());
    

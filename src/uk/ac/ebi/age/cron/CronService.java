@@ -27,8 +27,11 @@ public class CronService implements Runnable,Cron
  long lastEventMon;
  volatile int runningTasks=0;
  volatile boolean hasDelayed=false;
+
  private ExecutorService exeSrv;
+ 
  private List<TickListenerInfo> tickListeners=new LinkedList<TickListenerInfo>();
+ 
  private ObjectRecycler<Task> taskCache=new ObjectRecycler<Task>(4);
  
  private int avrgLoad=0;
@@ -165,9 +168,9 @@ public class CronService implements Runnable,Cron
  }
 */
  
- public synchronized void addTicListener(TickListener tl, int secInterval)
+ public synchronized void addTicListener(TickListener tl, int secInterval, boolean repeating)
  {
-  tickListeners.add( new TickListenerInfo(tl,secInterval) );
+  tickListeners.add( new TickListenerInfo(tl,secInterval,repeating) );
   
   if( thr == null )
   {
@@ -177,12 +180,17 @@ public class CronService implements Runnable,Cron
   else
    thr.interrupt();
  }
-
+ 
  public synchronized void removeTicListener(TickListener tl)
  {
   for(Iterator<TickListenerInfo> tlii = tickListeners.iterator(); tlii.hasNext();)
+  {
    if( tlii.next().getListener() == tl )
+   {
     tlii.remove();
+    break;
+   }
+  }
   
   if( tickListeners.size() == 0 )
   {
@@ -225,6 +233,8 @@ public class CronService implements Runnable,Cron
  {
   Task task = newTask();
   task.setListener(tli);
+  tli.scheduleNext();
+
   try
   {
    exeSrv.execute(task);
@@ -239,7 +249,6 @@ public class CronService implements Runnable,Cron
   sumRunningTasks+=runningTasks;
   runCount++;
   avrgLoad=(sumRunningTasks+runCount/2)/runCount;
-  tli.scheduleNext();
  }
  
  private Task newTask()
@@ -268,10 +277,15 @@ public class CronService implements Runnable,Cron
 
   public void run()
   {
+   Thread.currentThread().setName("Cron task");
+   
    runningTasks++;
    tli.getListener().clockTick();
    runningTasks--;
 
+   if( !tli.isRepeating() )
+    removeTicListener(tli.getListener());
+   
    while(hasDelayed && thr != null)
    {
     tli = null;
@@ -297,6 +311,8 @@ public class CronService implements Runnable,Cron
    
    tli=null;
    recycleTask( this );
+   
+   Thread.currentThread().setName("Idle thread");
   }
  }
  
@@ -309,14 +325,17 @@ public class CronService implements Runnable,Cron
   private int interval;
   private long schedTime;
   private long tlrDelay;
+  private boolean repeating;
   
-  public TickListenerInfo(TickListener tl, int ival)
+  public TickListenerInfo(TickListener tl, int ival, boolean rept )
   {
    listener=tl;
    interval=ival;
    
    schedTime=System.currentTimeMillis()+Random.randInt(0,interval)*1000;
    tlrDelay=interval*10*TLR_DELAY_PERCENT;
+   
+   repeating = rept;
   }
 
   public int getInterval()
@@ -347,6 +366,11 @@ public class CronService implements Runnable,Cron
   public boolean isDelayTolerant()
   {
    return schedTime+tlrDelay > System.currentTimeMillis();
+  }
+
+  public boolean isRepeating()
+  {
+   return repeating;
   }
  }
 }
