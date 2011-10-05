@@ -8,7 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import uk.ac.ebi.age.entity.ID;
+import uk.ac.ebi.age.entity.Entity;
+import uk.ac.ebi.age.entity.EntityDomain;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
@@ -311,15 +312,29 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  }
 
  @Override
- public ID getEntityID()
+ public String getEntityID()
  {
-  return new AgeObjectID( this );
+  return getId();
  }
 
  @Override
  public ContextSemanticModel getSemanticModel()
  {
   return classRef.getSemanticModel();
+ }
+
+
+ @Override
+ public EntityDomain getEntityDomain()
+ {
+  return EntityDomain.AGEOBJECT;
+ }
+
+
+ @Override
+ public Entity getParentEntity()
+ {
+  return module;
  }
  
 }

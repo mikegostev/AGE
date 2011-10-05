@@ -15,10 +15,12 @@ import uk.ac.ebi.age.authz.SessionManager;
 import uk.ac.ebi.age.authz.Tag;
 import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.authz.exception.TagException;
-import uk.ac.ebi.age.entity.ID;
+import uk.ac.ebi.age.entity.Entity;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 import uk.ac.ebi.age.ext.authz.TagRef;
 import uk.ac.ebi.age.transaction.ReadLock;
+
+import com.sun.xml.internal.bind.v2.model.core.ID;
 
 public class PermissionManagerImpl implements PermissionManager
 {
@@ -116,14 +118,14 @@ public class PermissionManagerImpl implements PermissionManager
  }
  
  @Override
- public Permit checkPermission( SystemAction act, ID objId )
+ public Permit checkPermission( SystemAction act, Entity objId )
  {
   return checkPermission(act, null, objId);
  }
  
  @Override
  @SuppressWarnings("unchecked")
- public Permit checkPermission( SystemAction act, String objOwner, ID objId )
+ public Permit checkPermission( SystemAction act, String objOwner, Entity objId )
  {
   Session sess = sessMgr.getSession();
   
@@ -214,7 +216,7 @@ public class PermissionManagerImpl implements PermissionManager
 
  @SuppressWarnings("unchecked")
  @Override
- public Collection<TagRef> getEffectiveTags( ID objId )
+ public Collection<TagRef> getEffectiveTags( Entity objId )
  {
   Collection<TagRef> tags = null;
   ID oid = objId;
