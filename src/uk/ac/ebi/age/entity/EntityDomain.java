@@ -6,5 +6,6 @@ public enum EntityDomain
  DATAMODULE,
  ATTACHMENT,
  AGEOBJECT,
- AGECLASS;
+ AGECLASS,
+ GRAPH;
 }

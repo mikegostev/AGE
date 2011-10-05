@@ -7,5 +7,6 @@ public interface TransactionalDB
  
  Transaction startTransaction();
  void commitTransaction( Transaction t ) throws TransactionException;
+ void prepareTransaction( Transaction t ) throws TransactionException;
  void rollbackTransaction( Transaction t ) throws TransactionException;
 }

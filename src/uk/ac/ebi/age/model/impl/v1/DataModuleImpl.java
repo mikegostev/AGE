@@ -4,7 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import uk.ac.ebi.age.entity.ID;
+import uk.ac.ebi.age.entity.Entity;
+import uk.ac.ebi.age.entity.EntityDomain;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.SemanticModel;
@@ -220,8 +221,22 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
 
 
  @Override
- public ID getEntityID()
+ public String getEntityID()
  {
-  return null;
+  return getId();
+ }
+
+
+ @Override
+ public EntityDomain getEntityDomain()
+ {
+  return EntityDomain.AGEOBJECT;
+ }
+
+
+ @Override
+ public Entity getParentEntity()
+ {
+  throw new UnsupportedOperationException();
  }
 }
