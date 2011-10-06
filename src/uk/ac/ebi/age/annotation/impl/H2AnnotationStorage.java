@@ -127,9 +127,12 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    
    Object annot = null;
    
+   sb.append(selectAnnotationSQL).append(tpc.name()).append("' AND id='");
+   int pos = sb.length();
+   
    do
    {
-    sb.append(selectAnnotationSQL).append(tpc.name()).append("' AND id='");
+    sb.setLength(pos);
     StringUtils.appendEscaped(sb, createEntityId(ce), '\'', '\'');
     sb.append('\'');
 
@@ -254,6 +257,14 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  {
   // TODO Auto-generated method stub
 
+ }
+
+ @Override
+ public void prepareTransaction(Transaction t) throws TransactionException
+ {
+  // TODO Auto-generated method stub
+  throw new dev.NotImplementedYetException();
+  //
  }
 
 }

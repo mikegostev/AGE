@@ -16,6 +16,20 @@ public abstract class AbstractAnnotationStorage implements AnnotationManager
 
  protected String createEntityId( Entity ett )
  {
+  StringBuilder sb = sbRecycler.getObject();
+
+  appendEntityId(ett, sb);
+  
+  String id = sb.toString();
+  
+  sb.setLength(0);
+  sbRecycler.recycleObject(sb);
+  
+  return id;
+ }
+
+ protected void appendEntityId( Entity ett, StringBuilder sb )
+ {
   Deque<Entity> dq = dqRecycler.getObject();
   
   if( dq == null )
@@ -30,8 +44,6 @@ public abstract class AbstractAnnotationStorage implements AnnotationManager
    cEnt=cEnt.getParentEntity();
   }
   while( cEnt != null );
-  
-  StringBuilder sb = sbRecycler.getObject();
   
   if( sb == null )
    sb = new StringBuilder(300);
@@ -48,15 +60,10 @@ public abstract class AbstractAnnotationStorage implements AnnotationManager
      .append(e.getEntityID());
   }
   
-  String id = sb.toString();
-  
-  sb.setLength(0);
-  sbRecycler.recycleObject(sb);
-  
+ 
   dq.clear();
   dqRecycler.recycleObject(dq);
   
-  return id;
  }
-
+ 
 }
