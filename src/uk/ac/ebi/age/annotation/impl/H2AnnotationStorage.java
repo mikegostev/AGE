@@ -1,40 +1,56 @@
 package uk.ac.ebi.age.annotation.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import uk.ac.ebi.age.annotation.AnnotationDBException;
 import uk.ac.ebi.age.annotation.Topic;
 import uk.ac.ebi.age.entity.Entity;
+import uk.ac.ebi.age.transaction.InvalidStateException;
 import uk.ac.ebi.age.transaction.ReadLock;
 import uk.ac.ebi.age.transaction.Transaction;
 import uk.ac.ebi.age.transaction.TransactionException;
+import uk.ac.ebi.mg.rwarbiter.InvalidTokenException;
+import uk.ac.ebi.mg.rwarbiter.RWArbiter;
+import uk.ac.ebi.mg.rwarbiter.TokenFactory;
+import uk.ac.ebi.mg.rwarbiter.TokenW;
 
 import com.pri.util.ObjectRecycler;
-import com.pri.util.StringUtils;
 
 public class H2AnnotationStorage extends AbstractAnnotationStorage
 {
  private static final String annotationDB = "ANNOTATIONDB";
  private static final String annotationTable = "ANNOTATION";
 
- private static final String selectAnnotationSQL = " SELECT data FROM " + annotationDB + '.' + annotationTable + " WHERE topic=";
+ private static final String selectAnnotationSQL = "SELECT data FROM " + annotationDB + '.' + annotationTable + " WHERE topic='";
+ private static final String deleteAnnotationSQL = "DELETE FROM " + annotationDB + '.' + annotationTable + " WHERE topic='";
+ private static final String insertAnnotationSQL = "MERGE INTO " + annotationDB + '.' + annotationTable + " (id,topic,data) VALUES (?,?,?)";
 
  private String connectionString;
  
  private Connection permConn;
- private AtomicBoolean permConnFree = new AtomicBoolean( true );
 
  private ObjectRecycler< StringBuilder > sbRecycler = new ObjectRecycler<StringBuilder>(3);
  
  private static final String h2DbPath = "h2db";
+ 
+ private RWArbiter<TrnInfo> arbiter = new RWArbiter<TrnInfo>( new TokenFactory<TrnInfo>()
+ {
+  @Override
+  public TrnInfo createToken()
+  {
+   return new TrnInfo();
+  }
+ });
 
  public H2AnnotationStorage( File anntDbRoot)
  {
@@ -45,7 +61,6 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    connectionString = "jdbc:h2:"+new File(anntDbRoot,h2DbPath).getAbsolutePath();
    
    permConn = DriverManager.getConnection(connectionString, "sa", "");
-   permConn.setAutoCommit(false);
    
    initAnnotationDb();
 
@@ -58,70 +73,73 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   }
  }
  
- private Connection createConnection() throws SQLException
+ private Statement getStatement( TrnInfo ti ) throws SQLException
  {
-  if( permConnFree.compareAndSet(true, false) )
-   return permConn;
- 
-  Connection conn = DriverManager.getConnection(connectionString, "sa", "");
-  conn.setAutoCommit(false);
+  if( ti.getStatement() != null )
+   return ti.getStatement();
 
-  return conn;
- }
-
- private void releaseConnection( Connection conn ) throws SQLException
- {
-  if( permConn == conn )
-  {
-   permConnFree.set(true);
-   return;
-  }
+  Statement s = permConn.createStatement();
   
-  conn.close();
+  ti.setStatement(s);
+  
+  return s;
  }
+
  
  private void initAnnotationDb() throws SQLException
  {
-  Connection conn = createConnection();
+  Statement stmt = permConn.createStatement();
 
-  try
-  {
+  stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS " + annotationDB);
 
-   Statement stmt = conn.createStatement();
+  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS " + annotationDB + '.' + annotationTable + " (" + "id VARCHAR, topic VARCHAR, data BINARY, PRIMARY KEY (id,topic))");
 
-   stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS " + annotationDB);
+  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS topicIdx ON " + annotationDB + '.' + annotationTable + "(topic)");
 
-   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS " + annotationDB + '.' + annotationTable + " ("
-     + "id VARCHAR PRIMARY KEY, topic VARCHAR, data BINARY)");
+  permConn.commit();
 
-   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS topicIdx ON " + annotationDB + '.' + annotationTable + "(topic)");
-
-   conn.commit();
-
-   stmt.close();
-  }
-  finally
-  {
-   releaseConnection(conn);
-  }
+  stmt.close();
  }
 
  @Override
- public Object getAnnotation(Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
+ public Object getAnnotation( Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
  {
+  TrnInfo ti = arbiter.getReadLock();
+  
+  try
+  {
+   return getAnnotation(ti, tpc, objId, recurs);
+  }
+  finally
+  {
+   try
+   {
+    arbiter.releaseLock(ti);
+   }
+   catch(InvalidTokenException e)
+   {
+    e.printStackTrace();
+   }
+  }
+ }
+ 
+ @Override
+ public Object getAnnotation(ReadLock lock, Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
+ {
+  if( ! ((TrnInfo)lock).isActive() )
+   throw new InvalidStateException();
+  
   StringBuilder sb = sbRecycler.getObject();
   
   if( sb == null )
    sb = new StringBuilder(200);
 
-  Connection conn = null;
   Statement stmt = null;
   
   try
   {
-   conn = createConnection();
    
-   stmt = conn.createStatement();
+   stmt = getStatement( (TrnInfo)lock );
    
    Entity ce = objId;
    
@@ -133,28 +151,37 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    do
    {
     sb.setLength(pos);
-    StringUtils.appendEscaped(sb, createEntityId(ce), '\'', '\'');
+    appendEntityId(ce, sb, true, '\'', '\'');
     sb.append('\'');
 
     String req = sb.toString();    
     sb.setLength(0);
     
     ResultSet rst = stmt.executeQuery(req);
-    
-    if( ! rst.next() )
+
+    try
     {
-     if( ! recurs )
-      return null;
+
+     if(!rst.next())
+     {
+      if(!recurs)
+       return null;
+      else
+       ce = ce.getParentEntity();
+     }
      else
-      ce = ce.getParentEntity();
+     {
+      ObjectInputStream ois = new ObjectInputStream(rst.getBinaryStream(1));
+
+      annot = ois.readObject();
+
+      break;
+     }
+     
     }
-    else
+    finally
     {
-     ObjectInputStream ois = new ObjectInputStream( rst.getBinaryStream(1) );
-     
-     annot = ois.readObject();
-     
-     break;
+     rst.close();
     }
     
    }
@@ -174,26 +201,82 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   }
   finally
   {
-
+   sb.setLength(0);
    sbRecycler.recycleObject(sb);
+  }
+ }
 
-   if(stmt != null)
+ @Override
+ public boolean addAnnotation(Topic tpc, Entity objId, Serializable value) throws AnnotationDBException
+ {
+  TrnInfo ti = arbiter.getWriteLock();
+  
+  try
+  {
+   boolean res = addAnnotation(ti, tpc, objId, value);
+   
+   permConn.commit();
+   
+   return res;
+  }
+  catch(SQLException e)
+  {
+   e.printStackTrace();
+   throw new AnnotationDBException("System error", e);
+  }
+  finally
+  {
+   try
    {
-    try
-    {
-     stmt.close();
-    }
-    catch(SQLException e)
-    {
-     e.printStackTrace();
-    }
+    arbiter.releaseLock(ti);
+   }
+   catch(InvalidTokenException e)
+   {
+    e.printStackTrace();
    }
    
-   if(conn != null)
+  }
+  
+ }
+
+ @Override
+ public boolean addAnnotation(Transaction trn, Topic tpc, Entity objId, Serializable value) throws AnnotationDBException
+ {
+  if(!((TrnInfo) trn).isActive())
+   throw new InvalidStateException();
+
+  PreparedStatement pstmt = null;
+  
+  try
+  {
+   pstmt = permConn.prepareStatement(insertAnnotationSQL);
+   
+   pstmt.setString(1, createEntityId(objId));
+   pstmt.setString(2, tpc.name());
+   
+   ByteArrayOutputStream baos = new ByteArrayOutputStream();
+   ObjectOutputStream oos = new ObjectOutputStream( baos );
+   
+   oos.writeObject(value);
+   oos.close();
+   
+   pstmt.setBytes(3, baos.toByteArray());
+   
+   return pstmt.executeUpdate() > 0 ;
+   
+  }
+  catch(Exception e)
+  {
+   e.printStackTrace();
+   throw new AnnotationDBException("System error", e);
+  }
+  finally
+  {
+   if( pstmt != null )
    {
     try
     {
-     releaseConnection(conn);
+     pstmt.close();
     }
     catch(SQLException e)
     {
@@ -204,67 +287,200 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  }
 
  @Override
- public boolean addAnnotation(Topic tpc, Entity objId, Serializable value)
+ public boolean removeAnnotation(Transaction trn, Topic tpc, Entity objId, boolean rec) throws AnnotationDBException
  {
-  // TODO Auto-generated method stub
-  return false;
- }
+  if( ! ((TrnInfo)trn).isActive() )
+   throw new InvalidStateException();
+  
+  StringBuilder sb = sbRecycler.getObject();
+  
+  if( sb == null )
+   sb = new StringBuilder(200);
 
- @Override
- public boolean addAnnotation(Transaction trn, Topic tpc, Entity objId, Serializable value)
- {
-  // TODO Auto-generated method stub
-  return false;
- }
-
- @Override
- public boolean removeAnnotation(Transaction trn, Topic tpc, Entity objId, boolean rec)
- {
-  // TODO Auto-generated method stub
-  return false;
+  Statement stmt = null;
+  
+  try
+  {
+   
+   stmt = getStatement( (TrnInfo)trn );
+   
+   
+   sb.append(deleteAnnotationSQL).append( tpc.name() );
+   
+   if( rec )
+   {
+    sb.append("' AND id LIKE '");
+    appendEntityId(objId, sb, true, '\'', '\'');
+    sb.append("%'");
+   }
+   else
+   {
+    sb.append("' AND id='");
+    appendEntityId(objId, sb, true, '\'', '\'');
+    sb.append('\'');
+   }
+   
+   return stmt.executeUpdate(sb.toString()) > 0;
+   
+  }
+  catch(Exception e)
+  {
+   e.printStackTrace();
+   throw new AnnotationDBException("System error", e);
+  }
+  finally
+  {
+   sb.setLength(0);
+   sbRecycler.recycleObject(sb);
+  }
  }
 
  @Override
  public ReadLock getReadLock()
  {
-  // TODO Auto-generated method stub
-  return null;
+  return arbiter.getReadLock();
  }
 
  @Override
  public void releaseLock(ReadLock l)
  {
-  // TODO Auto-generated method stub
+  if( ! ((TrnInfo)l).isActive())
+   throw new InvalidStateException();
 
+  if( arbiter.isWriteToken((TrnInfo)l) )
+   throw new InvalidStateException("Use commit or rollback for transactions");
+  
+  try
+  {
+   arbiter.releaseLock((TrnInfo)l);
+  }
+  catch(InvalidTokenException e)
+  {
+   throw new InvalidStateException();
+  }
+  
+  Statement s = ((TrnInfo)l).getStatement();
+  
+  try
+  {
+   if(s != null)
+    s.close();
+  }
+  catch(SQLException e)
+  {
+   e.printStackTrace();
+  } 
  }
 
  @Override
  public Transaction startTransaction()
  {
-  // TODO Auto-generated method stub
-  return null;
+  return arbiter.getWriteLock();
  }
 
  @Override
  public void commitTransaction(Transaction t) throws TransactionException
  {
-  // TODO Auto-generated method stub
+  if( ! ((TrnInfo)t).isActive() )
+   throw new InvalidStateException();
 
+  try
+  {
+   Statement s = getStatement( (TrnInfo)t );
+   
+   s.executeQuery("COMMIT TRANSACTION T1");
+   
+   s.close();
+  }
+  catch(SQLException e)
+  {
+   throw new TransactionException("Commit failed", e);
+  }
+  finally
+  {
+   try
+   {
+    arbiter.releaseLock((TrnInfo)t);
+   }
+   catch(InvalidTokenException e)
+   {
+    throw new TransactionException("Invalid token type",e);
+   }
+  }
+  
  }
 
  @Override
  public void rollbackTransaction(Transaction t) throws TransactionException
  {
-  // TODO Auto-generated method stub
+  if( ! ((TrnInfo)t).isActive() )
+   throw new InvalidStateException();
 
+  try
+  {
+   Statement s = getStatement( (TrnInfo)t );
+   
+   s.executeQuery("ROLLBACK TRANSACTION T1");
+   
+   s.close();
+  }
+  catch(SQLException e)
+  {
+   throw new TransactionException("Rollback failed", e);
+  }
+  finally
+  {
+   try
+   {
+    arbiter.releaseLock((TrnInfo)t);
+   }
+   catch(InvalidTokenException e)
+   {
+    throw new TransactionException("Invalid token type",e);
+   }
+  }
  }
 
  @Override
  public void prepareTransaction(Transaction t) throws TransactionException
  {
-  // TODO Auto-generated method stub
-  throw new dev.NotImplementedYetException();
-  //
+  try
+  {
+   Statement s = getStatement( (TrnInfo)t );
+   
+   s.executeQuery("PREPARE COMMIT T1");
+  }
+  catch(SQLException e)
+  {
+   throw new TransactionException("Commit preparation failed", e);
+  }
  }
 
+ private static class TrnInfo implements TokenW, Transaction
+ {
+  private boolean active = true;
+  private Statement stmt;
+  
+
+  public boolean isActive()
+  {
+   return active;
+  }
+
+  public void setActive(boolean active)
+  {
+   this.active = active;
+  }
+
+  public Statement getStatement()
+  {
+   return stmt;
+  }
+
+  public void setStatement(Statement stmt)
+  {
+   this.stmt = stmt;
+  }
+
+ }
 }

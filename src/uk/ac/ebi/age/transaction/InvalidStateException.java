@@ -6,4 +6,10 @@ public class InvalidStateException extends RuntimeException
  {
   super("Transaction/lock is inactive");
  }
+
+ public InvalidStateException(String string)
+ {
+  super(string);
+ }
 }
+
