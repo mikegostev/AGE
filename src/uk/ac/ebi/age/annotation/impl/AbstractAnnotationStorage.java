@@ -8,6 +8,7 @@ import uk.ac.ebi.age.annotation.AnnotationManager;
 import uk.ac.ebi.age.entity.Entity;
 
 import com.pri.util.ObjectRecycler;
+import com.pri.util.StringUtils;
 
 public abstract class AbstractAnnotationStorage implements AnnotationManager
 {
@@ -18,7 +19,7 @@ public abstract class AbstractAnnotationStorage implements AnnotationManager
  {
   StringBuilder sb = sbRecycler.getObject();
 
-  appendEntityId(ett, sb);
+  appendEntityId(ett, sb, false, '0', '0');
   
   String id = sb.toString();
   
@@ -28,7 +29,7 @@ public abstract class AbstractAnnotationStorage implements AnnotationManager
   return id;
  }
 
- protected void appendEntityId( Entity ett, StringBuilder sb )
+ protected void appendEntityId( Entity ett, StringBuilder sb, boolean esc, char shch, char escch )
  {
   Deque<Entity> dq = dqRecycler.getObject();
   
@@ -56,8 +57,12 @@ public abstract class AbstractAnnotationStorage implements AnnotationManager
    
    sb.append('/')
      .append(e.getEntityDomain().name()).append(':')
-     .append(e.getEntityID().length()).append(':')
-     .append(e.getEntityID());
+     .append(e.getEntityID().length()).append(':');
+   
+     if( esc )
+      StringUtils.appendEscaped(sb, e.getEntityID(), shch, escch);
+     else
+      sb.append(e.getEntityID());
   }
   
  

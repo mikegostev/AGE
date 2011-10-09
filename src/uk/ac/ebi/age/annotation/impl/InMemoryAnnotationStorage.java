@@ -12,12 +12,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.transaction.file.FileResourceManager;
 import org.apache.commons.transaction.file.ResourceManagerException;
 
+import uk.ac.ebi.age.annotation.AnnotationDBException;
 import uk.ac.ebi.age.annotation.DBInitException;
 import uk.ac.ebi.age.annotation.Topic;
 import uk.ac.ebi.age.entity.Entity;
@@ -26,6 +25,10 @@ import uk.ac.ebi.age.transaction.InvalidStateException;
 import uk.ac.ebi.age.transaction.ReadLock;
 import uk.ac.ebi.age.transaction.Transaction;
 import uk.ac.ebi.age.transaction.TransactionException;
+import uk.ac.ebi.mg.rwarbiter.InvalidTokenException;
+import uk.ac.ebi.mg.rwarbiter.RWArbiter;
+import uk.ac.ebi.mg.rwarbiter.TokenFactory;
+import uk.ac.ebi.mg.rwarbiter.TokenW;
 
 public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
 {
@@ -33,37 +36,34 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
 
  private Map< Topic, SortedMap<String,Serializable> > annotMap;
 
- private ReadWriteLock lock = new ReentrantReadWriteLock();
+ private static class TrnImp implements Transaction, TokenW
+ {
+  boolean active = true;
+
+  public boolean isActive()
+  {
+   return active;
+  }
+
+  public void setActive(boolean active)
+  {
+   this.active = active;
+  }
+ }
+ 
+ private RWArbiter<TrnImp> arbiter = new RWArbiter<TrnImp>( new TokenFactory<TrnImp>()
+ {
+  @Override
+  public TrnImp createToken()
+  {
+   return new TrnImp();
+  }
+ });
  
  private FileResourceManager txManager;
  private String serialFileRelPath;
  private File serialFile;
  
- private ReadLock readLock = new ReadLock() {
-
-  public void release()
-  {
-   releaseLock( this );
-  }};
-  
- private Transaction transaction  = new Transaction()
- {
-  
-  @Override
-  public void release()
-  {
-   try
-   {
-    rollbackTransaction(this);
-   }
-   catch(TransactionException e)
-   {
-    e.printStackTrace();
-   }
-  }
- };
- 
- private Thread lockOwner;
  private boolean dirty = false;
  
  public InMemoryAnnotationStorage(FileResourceManager frm, String annRelPath) throws DBInitException
@@ -142,6 +142,7 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
   
   try
   {
+   prepareTransaction(t);
    commitTransaction(t);
   }
   catch(TransactionException e2)
@@ -154,39 +155,18 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
 
 
  @Override
- public Object getAnnotation(Topic tpc, Entity objId, boolean recurs)
+ public Object getAnnotation(Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
  {
+  ReadLock lck = getReadLock();
+  
   try
   {
-   lock.readLock().lock();
-   
-   SortedMap<String,Serializable> tMap = annotMap.get(tpc);
-   
-   if( tMap == null )
-    return null;
-   
-   Entity cEnt = objId;
-   
-   do
-   {
-    String id = createEntityId(cEnt);
-    
-    Object annt = tMap.get(id);
-    
-    if( annt != null || ! recurs )
-     return annt;
-    
-    cEnt = cEnt.getParentEntity();
-   }
-   while( cEnt != null );
-   
-   return null;
+   return getAnnotation(lck, tpc, objId, recurs);
   }
   finally
   {
-   lock.readLock().unlock();
+   releaseLock(lck);
   }
-  
  }
 
  private void sync() throws ResourceManagerException, IOException
@@ -213,31 +193,32 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
  @Override
  public ReadLock getReadLock()
  {
-  lock.readLock().lock();
-  
-  return readLock;
+  return arbiter.getReadLock();
  }
 
  @Override
  public void releaseLock(ReadLock l)
  {
-  lock.readLock().unlock();
+  try
+  {
+   arbiter.releaseLock((TrnImp) l);
+  }
+  catch(InvalidTokenException e)
+  {
+   e.printStackTrace();
+  }
  }
 
  @Override
  public Transaction startTransaction()
  {
-  lock.writeLock().lock();
-
-  lockOwner = Thread.currentThread();
-  
-  return transaction;
+  return arbiter.getWriteLock();
  }
 
  @Override
  public void commitTransaction(Transaction t) throws TransactionException
  {
-  if( lockOwner != Thread.currentThread() )
+  if(!((TrnImp) t).isActive())
    throw new InvalidStateException();
   
   
@@ -264,15 +245,21 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
   }
   finally
   {
-   lockOwner=null;
-   lock.writeLock().unlock();
+   try
+   {
+    arbiter.releaseLock((TrnImp) t);
+   }
+   catch(InvalidTokenException e)
+   {
+    throw new InvalidStateException("Invalid transaction token");
+   }
   }
  }
 
  @Override
  public void rollbackTransaction(Transaction t) throws TransactionException
  {
-  if( lockOwner != Thread.currentThread() )
+  if(!((TrnImp) t).isActive())
    throw new InvalidStateException();
 
   try
@@ -291,8 +278,14 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
   }
   finally
   {
-   lockOwner=null;
-   lock.writeLock().unlock();
+   try
+   {
+    arbiter.releaseLock((TrnImp) t);
+   }
+   catch(InvalidTokenException e)
+   {
+    throw new InvalidStateException("Invalid transaction token");
+   }
   }
   
  
@@ -301,7 +294,7 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
  @Override
  public boolean addAnnotation(Transaction trn, Topic tpc, Entity objId, Serializable value)
  {
-  if(lockOwner != Thread.currentThread())
+  if(!((TrnImp) trn).isActive())
    throw new InvalidStateException();
 
   dirty = true;
@@ -324,7 +317,7 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
  @Override
  public boolean removeAnnotation(Transaction trn, Topic tpc, Entity objId, boolean rec)
  {
-  if(lockOwner != Thread.currentThread())
+  if(!((TrnImp) trn).isActive())
    throw new InvalidStateException();
 
   dirty = true;
@@ -364,5 +357,40 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
 
   }
 
+ }
+
+ @Override
+ public Object getAnnotation(ReadLock lock, Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
+ {
+  if(!((TrnImp) lock).isActive())
+   throw new InvalidStateException();
+
+  SortedMap<String, Serializable> tMap = annotMap.get(tpc);
+
+  if(tMap == null)
+   return null;
+
+  Entity cEnt = objId;
+
+  do
+  {
+   String id = createEntityId(cEnt);
+
+   Object annt = tMap.get(id);
+
+   if(annt != null || !recurs)
+    return annt;
+
+   cEnt = cEnt.getParentEntity();
+  } while(cEnt != null);
+
+  return null;
+ }
+
+ @Override
+ public void prepareTransaction(Transaction t) throws TransactionException
+ {
+  if(!((TrnImp) t).isActive())
+   throw new InvalidStateException();
  }
 }
