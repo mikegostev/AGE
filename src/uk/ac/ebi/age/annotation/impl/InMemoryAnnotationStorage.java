@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,6 +30,8 @@ import uk.ac.ebi.mg.rwarbiter.InvalidTokenException;
 import uk.ac.ebi.mg.rwarbiter.RWArbiter;
 import uk.ac.ebi.mg.rwarbiter.TokenFactory;
 import uk.ac.ebi.mg.rwarbiter.TokenW;
+
+import com.pri.util.collection.Collections;
 
 public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
 {
@@ -321,42 +324,56 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
    throw new InvalidStateException();
 
   dirty = true;
-  
-  SortedMap<String, Serializable> tMap = annotMap.get(tpc);
 
-  if(tMap == null)
-   return false;
+  Collection<SortedMap<String, Serializable>> maps;
 
-  String id = createEntityId(objId);
-  
-  if( ! rec )
-   return tMap.remove(id) != null ;
+  if(tpc == null)
+   maps = annotMap.values();
   else
   {
-   Map<String, Serializable> smp = tMap.tailMap(id);
-   
-   Iterator<String> keys = smp.keySet().iterator();
-   
-   boolean removed = false;
-   
-   while( keys.hasNext() )
+   SortedMap<String, Serializable> tMap = annotMap.get(tpc);
+
+   if(tMap != null)
+    maps = java.util.Collections.singleton(tMap);
+   else
+    maps = Collections.emptyList();
+  }
+
+  boolean removed = false;
+
+  String id = createEntityId(objId);
+
+  for(SortedMap<String, Serializable> tMap : maps)
+  {
+
+   if(!rec)
+    return tMap.remove(id) != null;
+   else
    {
-    String key = keys.next();
-    
-    if( key.startsWith(id) )
+    Map<String, Serializable> smp = tMap.tailMap(id);
+
+    Iterator<String> keys = smp.keySet().iterator();
+
+    while(keys.hasNext())
     {
-     keys.remove();
-    
-     removed = true;
+     String key = keys.next();
+
+     if(key.startsWith(id))
+     {
+      keys.remove();
+
+      removed = true;
+     }
+     else
+      break;
     }
-    else
-     break;
+
    }
-  
-   return removed;
+
 
   }
 
+  return removed;
  }
 
  @Override

@@ -14,11 +14,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import uk.ac.ebi.age.annotation.AnnotationDBException;
 import uk.ac.ebi.age.annotation.AnnotationManager;
 import uk.ac.ebi.age.annotation.Topic;
 import uk.ac.ebi.age.conf.Constants;
-import uk.ac.ebi.age.entity.CommonID;
-import uk.ac.ebi.age.entity.EntityDomain;
+import uk.ac.ebi.age.entity.AttachmentEntity;
+import uk.ac.ebi.age.entity.ClusterEntity;
 import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.LogNode.Level;
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
@@ -687,7 +688,6 @@ public class SubmissionManager
    
    if( mm.newModule != null )
     convLog.success();
-//   convLog.log(Level.SUCCESS, "Success");
    else
    {
     convLog.log(Level.ERROR, "Conversion failed");
@@ -1168,29 +1168,68 @@ public class SubmissionManager
   if( ! verifyOnly  )
   {
    Transaction trn = annotationManager.startTransaction();
+ 
+   ClusterEntity cEnt = new ClusterEntity(sMeta.getId());
 
    try
    {
     if(sMeta.getStatus() == Status.NEW)
+     annotationManager.addAnnotation(trn, Topic.OWNER, cEnt, sMeta.getModifier());
+    else
     {
-     CommonID id = new CommonID();
+     for(ModMeta mm : cstMeta.mod4Del.values())
+      annotationManager.removeAnnotation(trn, Topic.OWNER, mm.newModule, true);
 
-     id.setDomain(EntityDomain.CLUSTER);
-     id.setId(sMeta.getId());
+     AttachmentEntity ate = new AttachmentEntity(cEnt, null);
 
-     annotationManager.addAnnotation(trn, Topic.OWNER, id, sMeta.getModifier());
+     for(FileAttachmentMeta fatm : cstMeta.att4Del.values())
+     {
+      ate.setEntityId(fatm.getId());
+      annotationManager.removeAnnotation(trn, Topic.OWNER, ate, true);
+     }
+
+     String cstOwner = (String) annotationManager.getAnnotation(trn, Topic.OWNER, cEnt, false);
+
+     if(!sMeta.getModifier().equals(cstOwner))
+     {
+      for(ModMeta mm : cstMeta.mod4Ins)
+       annotationManager.addAnnotation(trn, Topic.OWNER, mm.newModule, sMeta.getModifier());
+
+      for(FileAttachmentMeta fatm : cstMeta.att4Ins.values())
+      {
+       ate.setEntityId(fatm.getId());
+       annotationManager.addAnnotation(trn, Topic.OWNER, ate, sMeta.getModifier());
+      }
+     }
+
     }
-
+    
    }
-   finally
+   catch(AnnotationDBException e)
    {
     try
     {
-     annotationManager.commitTransaction(trn);
+     annotationManager.rollbackTransaction(trn);
     }
-    catch(TransactionException e)
+    catch(TransactionException e1)
     {
-     e.printStackTrace();
+     e1.printStackTrace();
+    }
+    
+    trn=null;
+   }
+   finally
+   {
+    if( trn != null )
+    {
+     try
+     {
+      annotationManager.commitTransaction(trn);
+     }
+     catch(TransactionException e)
+     {
+      e.printStackTrace();
+     }
     }
    }
 
@@ -1816,6 +1855,44 @@ public class SubmissionManager
    ageStorage.unlockWrite();
   }
 
+   Transaction trn = annotationManager.startTransaction();
+ 
+   ClusterEntity cEnt = new ClusterEntity(sMeta.getId());
+
+   try
+   {
+    annotationManager.removeAnnotation(trn, null, cEnt, true);
+   }
+   catch(AnnotationDBException e)
+   {
+    try
+    {
+     annotationManager.rollbackTransaction(trn);
+    }
+    catch(TransactionException e1)
+    {
+     e1.printStackTrace();
+    }
+    
+    trn=null;
+   }
+   finally
+   {
+    if( trn != null )
+    {
+     try
+     {
+      annotationManager.commitTransaction(trn);
+     }
+     catch(TransactionException e)
+     {
+      e.printStackTrace();
+     }
+    }
+   }
+
+
+  
   return res;
  }
 
