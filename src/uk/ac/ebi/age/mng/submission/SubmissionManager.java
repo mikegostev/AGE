@@ -1659,140 +1659,131 @@ public class SubmissionManager
  private boolean removeSubmission( String sbmID, boolean wipeOut, LogNode logRoot )
  {
   SubmissionMeta sMeta = null;
-  
+
   try
   {
-   sMeta = submissionDB.getSubmission( sbmID );
+   sMeta = submissionDB.getSubmission(sbmID);
   }
   catch(SubmissionDBException e)
   {
-   logRoot.log(Level.ERROR, "Method removeSubmission error: "+e.getMessage());
-   
+   logRoot.log(Level.ERROR, "Method removeSubmission error: " + e.getMessage());
+
    return false;
   }
-  
-  if( sMeta == null )
+
+  if(sMeta == null)
   {
-   logRoot.log(Level.ERROR, "Submission with ID='"+sbmID+"' is not found to be removed");
+   logRoot.log(Level.ERROR, "Submission with ID='" + sbmID + "' is not found to be removed");
    return false;
   }
-  
-  
+
   ClustMeta cstMeta = new ClustMeta();
   cstMeta.id = sbmID;
 
-  if( sMeta.getDataModules() != null )
+  if(sMeta.getDataModules() != null)
   {
-   for( DataModuleMeta dmm : sMeta.getDataModules() )
+   for(DataModuleMeta dmm : sMeta.getDataModules())
    {
     ModMeta mm = new ModMeta();
-    
+
     mm.meta = dmm;
-    mm.origModule = ageStorage.getDataModule( sbmID, dmm.getId() );
-    
-    if( mm.origModule != null  )
+    mm.origModule = ageStorage.getDataModule(sbmID, dmm.getId());
+
+    if(mm.origModule != null)
      cstMeta.mod4Del.put(dmm.getId(), mm);
    }
   }
-  
-  if( sMeta.getAttachments() != null )
+
+  if(sMeta.getAttachments() != null)
   {
-   for(FileAttachmentMeta fatt : sMeta.getAttachments() )
+   for(FileAttachmentMeta fatt : sMeta.getAttachments())
     cstMeta.att4Del.put(fatt.getId(), fatt);
   }
 
   boolean res = true;
-  
+
   try
   {
    ageStorage.lockWrite();
 
-   
    // XXX connection to main graph
-   
-   
-   
-   Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject> > extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable,AgeObject>>();
-   Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable> > relConnections = null;
-   Map<AgeObjectWritable,Set<AgeRelationWritable> > relationDetachMap = null;
-   
-   if( cstMeta.mod4Del.size() != 0 )
+
+   Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable, AgeObject>>();
+   Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable>> relConnections = null;
+   Map<AgeObjectWritable, Set<AgeRelationWritable>> relationDetachMap = null;
+
+   if(cstMeta.mod4Del.size() != 0)
    {
-    relConnections = new ArrayList<Pair<AgeExternalRelationWritable,AgeObjectWritable>>();
+    relConnections = new ArrayList<Pair<AgeExternalRelationWritable, AgeObjectWritable>>();
     relationDetachMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
-    
-    if( ! reconnectExternalObjectAttributes(cstMeta, extAttrConnector, ageStorage, logRoot))
+
+    if(!reconnectExternalObjectAttributes(cstMeta, extAttrConnector, ageStorage, logRoot))
     {
      return false;
     }
-    
-    
-    if( ! reconnectExternalRelations(cstMeta, relConnections, relationDetachMap, ageStorage, logRoot) )
+
+    if(!reconnectExternalRelations(cstMeta, relConnections, relationDetachMap, ageStorage, logRoot))
     {
      return false;
     }
    }
-   
 
-   if( cstMeta.att4Del.size() != 0 )
+   if(cstMeta.att4Del.size() != 0)
    {
-    if( ! checkRemovedDataFiles(cstMeta, ageStorage, logRoot) )
+    if(!checkRemovedDataFiles(cstMeta, ageStorage, logRoot))
     {
      return false;
     }
    }
 
-   if( relationDetachMap != null )
+   if(relationDetachMap != null)
    {
     boolean invRelRes = true;
     LogNode invRelLog = logRoot.branch("Validating externaly related object semantic");
-    
-    for( AgeObject obj :  relationDetachMap.keySet() )
+
+    for(AgeObject obj : relationDetachMap.keySet())
     {
-     LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
-     
-     if( validator.validateRelations(obj, null, relationDetachMap.get(obj), objLogNode) )
+     LogNode objLogNode = invRelLog.branch("Validating object Id: " + obj.getId() + " Class: " + obj.getAgeElClass());
+
+     if(validator.validateRelations(obj, null, relationDetachMap.get(obj), objLogNode))
       objLogNode.success();
      else
       invRelRes = false;
     }
-    
+
     if(invRelRes)
      invRelLog.success();
     else
-     invRelRes =false;
+     invRelRes = false;
 
     res = res && invRelRes;
    }
-   
-   if( ! res )
+
+   if(!res)
     return false;
-   
-   
-   
-   if( cstMeta.att4Del.size() > 0 )
+
+   if(cstMeta.att4Del.size() > 0)
    {
     LogNode fdelLog = logRoot.branch("Deleting files");
-    
+
     boolean delRes = true;
-    
-    for( FileAttachmentMeta fam : cstMeta.att4Del.values() )
+
+    for(FileAttachmentMeta fam : cstMeta.att4Del.values())
     {
-     fdelLog.log(Level.INFO, "Deleting file: '"+fam.getId()+"' (scope "+(fam.isGlobal()?"global":"cluster")+")");
-     
-     if( ! ageStorage.deleteAttachment(fam.getId(),cstMeta.id,fam.isGlobal() ) )
+     fdelLog.log(Level.INFO, "Deleting file: '" + fam.getId() + "' (scope " + (fam.isGlobal() ? "global" : "cluster") + ")");
+
+     if(!ageStorage.deleteAttachment(fam.getId(), cstMeta.id, fam.isGlobal()))
      {
       fdelLog.log(Level.WARN, "File deletion failed");
       delRes = false;
      }
     }
-    
-    if( delRes )
+
+    if(delRes)
      fdelLog.success();
    }
-   
- 
-   if( cstMeta.mod4Upd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0 )
+
+   if(cstMeta.mod4Upd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0)
    {
     LogNode updtLog = logRoot.branch("Updating storage");
 
@@ -1813,13 +1804,12 @@ public class SubmissionManager
      return false;
     }
    }
-   
-   
+
    LogNode updtLog = logRoot.branch("Updating submission DB");
    try
    {
 
-    if( wipeOut )
+    if(wipeOut)
      submissionDB.tranklucateSubmission(sbmID);
     else
      submissionDB.removeSubmission(sbmID);
@@ -1828,21 +1818,20 @@ public class SubmissionManager
    }
    catch(SubmissionDBException e)
    {
-    logRoot.log(Level.ERROR, "Method removeSubmission error: "+e.getMessage());
+    logRoot.log(Level.ERROR, "Method removeSubmission error: " + e.getMessage());
 
     res = false;
-    
+
     return false;
    }
-   
-   
-   if( relConnections != null )
+
+   if(relConnections != null)
    {
-    for( Pair<AgeExternalRelationWritable, AgeObjectWritable> cn : relConnections )
+    for(Pair<AgeExternalRelationWritable, AgeObjectWritable> cn : relConnections)
      cn.getFirst().setTargetObject(cn.getSecond());
    }
-   
-   if( relationDetachMap != null )
+
+   if(relationDetachMap != null)
    {
     for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : relationDetachMap.entrySet())
      for(AgeRelationWritable rel : me.getValue())
@@ -1855,44 +1844,45 @@ public class SubmissionManager
    ageStorage.unlockWrite();
   }
 
-   Transaction trn = annotationManager.startTransaction();
- 
-   ClusterEntity cEnt = new ClusterEntity(sMeta.getId());
+  if(!wipeOut)
+   return res;
 
+  Transaction trn = annotationManager.startTransaction();
+
+  ClusterEntity cEnt = new ClusterEntity(sMeta.getId());
+
+  try
+  {
+   annotationManager.removeAnnotation(trn, null, cEnt, true);
+  }
+  catch(AnnotationDBException e)
+  {
    try
    {
-    annotationManager.removeAnnotation(trn, null, cEnt, true);
+    annotationManager.rollbackTransaction(trn);
    }
-   catch(AnnotationDBException e)
+   catch(TransactionException e1)
+   {
+    e1.printStackTrace();
+   }
+
+   trn = null;
+  }
+  finally
+  {
+   if(trn != null)
    {
     try
     {
-     annotationManager.rollbackTransaction(trn);
+     annotationManager.commitTransaction(trn);
     }
-    catch(TransactionException e1)
+    catch(TransactionException e)
     {
-     e1.printStackTrace();
-    }
-    
-    trn=null;
-   }
-   finally
-   {
-    if( trn != null )
-    {
-     try
-     {
-      annotationManager.commitTransaction(trn);
-     }
-     catch(TransactionException e)
-     {
-      e.printStackTrace();
-     }
+     e.printStackTrace();
     }
    }
+  }
 
-
-  
   return res;
  }
 

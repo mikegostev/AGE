@@ -18,7 +18,7 @@ import org.apache.commons.transaction.file.FileResourceManager;
 import org.apache.commons.transaction.file.ResourceManagerException;
 
 import uk.ac.ebi.age.annotation.AnnotationDBException;
-import uk.ac.ebi.age.annotation.DBInitException;
+import uk.ac.ebi.age.annotation.AnnotationDBInitException;
 import uk.ac.ebi.age.annotation.Topic;
 import uk.ac.ebi.age.entity.Entity;
 import uk.ac.ebi.age.transaction.InconsistentStateException;
@@ -69,7 +69,7 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
  
  private boolean dirty = false;
  
- public InMemoryAnnotationStorage(FileResourceManager frm, String annRelPath) throws DBInitException
+ public InMemoryAnnotationStorage(FileResourceManager frm, String annRelPath) throws AnnotationDBInitException
  {
   txManager=frm;
  
@@ -85,7 +85,7 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
    }
    catch(IOException e)
    {
-    throw new DBInitException(e);
+    throw new AnnotationDBInitException(e);
    }
   }
   else
@@ -110,7 +110,7 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
    }
    catch(Exception e)
    {
-    throw new DBInitException(e);
+    throw new AnnotationDBInitException(e);
    }
 
   }

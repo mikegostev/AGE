@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import uk.ac.ebi.age.annotation.AnnotationDBException;
+import uk.ac.ebi.age.annotation.AnnotationDBInitException;
 import uk.ac.ebi.age.annotation.Topic;
 import uk.ac.ebi.age.entity.Entity;
 import uk.ac.ebi.age.transaction.InvalidStateException;
@@ -52,7 +53,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   }
  });
 
- public H2AnnotationStorage( File anntDbRoot)
+ public H2AnnotationStorage( File anntDbRoot ) throws AnnotationDBInitException
  {
   try
   {
@@ -69,7 +70,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   {
    e.printStackTrace();
    
-   throw new RuntimeException("Database initialization error: "+e.getMessage(),e);
+   throw new AnnotationDBInitException(e);
   }
  }
  

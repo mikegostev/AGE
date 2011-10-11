@@ -1,17 +1,17 @@
 package uk.ac.ebi.age.annotation;
 
 
-public class DBInitException extends Exception
+public class AnnotationDBInitException extends Exception
 {
 
  private static final long serialVersionUID = 1L;
 
- public DBInitException()
+ public AnnotationDBInitException()
  {
   super("Annotation database initialization exception");
  }
 
- public DBInitException(Exception e)
+ public AnnotationDBInitException(Exception e)
  {
   super("Annotation database initialization exception", e);
  }

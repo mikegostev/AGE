@@ -800,7 +800,7 @@ public class SerializedStorage implements AgeStorageAdm
      +"\nstrings total length: "+totals.getStringsSize()
      +"\nstrings average length: "+(totals.getStringsCount()==0?0:totals.getStringsSize()/totals.getStringsCount())
      +"\ntotal time: "+totTime+"ms"
-     +"\ntime per module: "+(totTime/totals.getModulesCount())+"ms"
+     +"\ntime per module: "+(totals.getModulesCount()==0?0:totTime/totals.getModulesCount())+"ms"
      +"\nmemory delta: "+(Runtime.getRuntime().totalMemory()-stMem)+"bytes"
      );
    
