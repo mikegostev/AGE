@@ -95,8 +95,6 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS " + annotationDB + '.' + annotationTable + " (" + "id VARCHAR, topic VARCHAR, data BINARY, PRIMARY KEY (id,topic))");
 
-  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS topicIdx ON " + annotationDB + '.' + annotationTable + "(topic)");
-
   permConn.commit();
 
   stmt.close();
@@ -156,7 +154,6 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
     sb.append('\'');
 
     String req = sb.toString();    
-    sb.setLength(0);
     
     ResultSet rst = stmt.executeQuery(req);
 
@@ -390,7 +387,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
   try
   {
-   if( ((TrnInfo)t).isPrepared() )
+   if( ! ((TrnInfo)t).isPrepared() )
    {
     permConn.commit();
     return;
@@ -398,7 +395,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    
    Statement s = getStatement( (TrnInfo)t );
    
-   s.executeQuery("COMMIT TRANSACTION T1");
+   s.executeUpdate("COMMIT TRANSACTION T1");
   }
   catch(SQLException e)
   {
@@ -440,7 +437,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
   try
   {
-   if( ((TrnInfo)t).isPrepared() )
+   if( ! ((TrnInfo)t).isPrepared() )
    {
     permConn.rollback();
     return;
@@ -448,7 +445,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    
    Statement s = getStatement( (TrnInfo)t );
    
-   s.executeQuery("ROLLBACK TRANSACTION T1");
+   s.executeUpdate("ROLLBACK TRANSACTION T1");
   }
   catch(SQLException e)
   {
@@ -489,7 +486,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   {
    Statement s = getStatement( (TrnInfo)t );
    
-   s.executeQuery("PREPARE COMMIT T1");
+   s.executeUpdate("PREPARE COMMIT T1");
    
    ((TrnInfo)t).setPrepared( true );
   }

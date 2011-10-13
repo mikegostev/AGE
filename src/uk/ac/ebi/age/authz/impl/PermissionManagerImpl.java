@@ -171,7 +171,7 @@ public class PermissionManagerImpl implements PermissionManager
    {
     try
     {
-     tags = (Collection<TagRef>) annotMngr.getAnnotation( anntLock, Topic.TAG, objId, true );
+     tags = (Collection<TagRef>) annotMngr.getAnnotation( anntLock, Topic.TAG, objId, false );
     }
     catch(AnnotationDBException e1)
     {
@@ -243,7 +243,7 @@ public class PermissionManagerImpl implements PermissionManager
    {
     try
     {
-     tags = (Collection<TagRef>) annotMngr.getAnnotation(anntLck, Topic.TAG, cEnt, true );
+     tags = (Collection<TagRef>) annotMngr.getAnnotation(anntLck, Topic.TAG, cEnt, false );
     }
     catch(AnnotationDBException e1)
     {

@@ -14,6 +14,11 @@ public class ClusterEntity implements Entity
  {
   return id;
  }
+ 
+ public void setEntityID( String id )
+ {
+  this.id=id;
+ }
 
  @Override
  public EntityDomain getEntityDomain()

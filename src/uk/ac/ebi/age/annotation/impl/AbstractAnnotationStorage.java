@@ -19,6 +19,9 @@ public abstract class AbstractAnnotationStorage implements AnnotationManager
  {
   StringBuilder sb = sbRecycler.getObject();
 
+  if( sb == null )
+   sb = new StringBuilder(300);
+  
   appendEntityId(ett, sb, false, '0', '0');
   
   String id = sb.toString();
@@ -45,9 +48,6 @@ public abstract class AbstractAnnotationStorage implements AnnotationManager
    cEnt=cEnt.getParentEntity();
   }
   while( cEnt != null );
-  
-  if( sb == null )
-   sb = new StringBuilder(300);
   
   Iterator<Entity> etItr = dq.descendingIterator();
   
