@@ -1,7 +1,9 @@
 package uk.ac.ebi.age.ext.submission.v1;
 
 import java.io.Serializable;
+import java.util.Collection;
 
+import uk.ac.ebi.age.ext.authz.TagRef;
 import uk.ac.ebi.age.ext.submission.DataModuleMeta;
 
 public class DataModuleMetaImpl implements Serializable, DataModuleMeta
@@ -15,9 +17,12 @@ public class DataModuleMetaImpl implements Serializable, DataModuleMeta
  private String submitter;
  private String modifier;
  private long docVersion;
+ private Collection<TagRef> tags;
  
  private transient String text;
  private transient Object aux;
+ 
+ 
  
  DataModuleMetaImpl()
  {}
@@ -184,7 +189,17 @@ public class DataModuleMetaImpl implements Serializable, DataModuleMeta
  {
   this.docVersion = docVersion;
  }
- 
 
+ @Override
+ public Collection<TagRef> getTags()
+ {
+  return tags;
+ }
+
+ @Override
+ public void setTags(Collection<TagRef> tags)
+ {
+  this.tags = tags;
+ }
 
 }

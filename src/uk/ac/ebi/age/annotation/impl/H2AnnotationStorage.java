@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import uk.ac.ebi.age.annotation.AnnotationDBException;
+import uk.ac.ebi.age.annotation.AnnotationDBInitException;
 import uk.ac.ebi.age.annotation.Topic;
 import uk.ac.ebi.age.entity.Entity;
 import uk.ac.ebi.age.transaction.InvalidStateException;
@@ -32,7 +33,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  private static final String annotationTable = "ANNOTATION";
 
  private static final String selectAnnotationSQL = "SELECT data FROM " + annotationDB + '.' + annotationTable + " WHERE topic='";
- private static final String deleteAnnotationSQL = "DELETE FROM " + annotationDB + '.' + annotationTable + " WHERE topic='";
+ private static final String deleteAnnotationSQL = "DELETE FROM " + annotationDB + '.' + annotationTable + " WHERE ";
  private static final String insertAnnotationSQL = "MERGE INTO " + annotationDB + '.' + annotationTable + " (id,topic,data) VALUES (?,?,?)";
 
  private String connectionString;
@@ -52,7 +53,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   }
  });
 
- public H2AnnotationStorage( File anntDbRoot)
+ public H2AnnotationStorage( File anntDbRoot ) throws AnnotationDBInitException
  {
   try
   {
@@ -69,7 +70,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   {
    e.printStackTrace();
    
-   throw new RuntimeException("Database initialization error: "+e.getMessage(),e);
+   throw new AnnotationDBInitException(e);
   }
  }
  
@@ -93,8 +94,6 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS " + annotationDB);
 
   stmt.executeUpdate("CREATE TABLE IF NOT EXISTS " + annotationDB + '.' + annotationTable + " (" + "id VARCHAR, topic VARCHAR, data BINARY, PRIMARY KEY (id,topic))");
-
-  stmt.executeUpdate("CREATE INDEX IF NOT EXISTS topicIdx ON " + annotationDB + '.' + annotationTable + "(topic)");
 
   permConn.commit();
 
@@ -155,7 +154,6 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
     sb.append('\'');
 
     String req = sb.toString();    
-    sb.setLength(0);
     
     ResultSet rst = stmt.executeQuery(req);
 
@@ -305,17 +303,20 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    stmt = getStatement( (TrnInfo)trn );
    
    
-   sb.append(deleteAnnotationSQL).append( tpc.name() );
+   sb.append(deleteAnnotationSQL);
+   
+   if( tpc != null )
+    sb.append("topic='").append( tpc.name() ).append("' AND ");
    
    if( rec )
    {
-    sb.append("' AND id LIKE '");
+    sb.append("id LIKE '");
     appendEntityId(objId, sb, true, '\'', '\'');
     sb.append("%'");
    }
    else
    {
-    sb.append("' AND id='");
+    sb.append("id='");
     appendEntityId(objId, sb, true, '\'', '\'');
     sb.append('\'');
    }
@@ -386,11 +387,15 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
   try
   {
+   if( ! ((TrnInfo)t).isPrepared() )
+   {
+    permConn.commit();
+    return;
+   }
+   
    Statement s = getStatement( (TrnInfo)t );
    
-   s.executeQuery("COMMIT TRANSACTION T1");
-   
-   s.close();
+   s.executeUpdate("COMMIT TRANSACTION T1");
   }
   catch(SQLException e)
   {
@@ -406,6 +411,20 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    {
     throw new TransactionException("Invalid token type",e);
    }
+   
+   Statement s = ((TrnInfo)t).getStatement();
+   
+   if( s != null )
+   {
+    try
+    {
+     s.close();
+    }
+    catch(SQLException e)
+    {
+     e.printStackTrace();
+    }
+   }
   }
   
  }
@@ -418,11 +437,15 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
   try
   {
+   if( ! ((TrnInfo)t).isPrepared() )
+   {
+    permConn.rollback();
+    return;
+   }
+   
    Statement s = getStatement( (TrnInfo)t );
    
-   s.executeQuery("ROLLBACK TRANSACTION T1");
-   
-   s.close();
+   s.executeUpdate("ROLLBACK TRANSACTION T1");
   }
   catch(SQLException e)
   {
@@ -438,6 +461,21 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    {
     throw new TransactionException("Invalid token type",e);
    }
+   
+   Statement s = ((TrnInfo)t).getStatement();
+   
+   if( s != null )
+   {
+    try
+    {
+     s.close();
+    }
+    catch(SQLException e)
+    {
+     e.printStackTrace();
+    }
+   }
+
   }
  }
 
@@ -448,7 +486,9 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   {
    Statement s = getStatement( (TrnInfo)t );
    
-   s.executeQuery("PREPARE COMMIT T1");
+   s.executeUpdate("PREPARE COMMIT T1");
+   
+   ((TrnInfo)t).setPrepared( true );
   }
   catch(SQLException e)
   {
@@ -459,6 +499,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  private static class TrnInfo implements TokenW, Transaction
  {
   private boolean active = true;
+  private boolean prepared = false;
   private Statement stmt;
   
 
@@ -480,6 +521,16 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   public void setStatement(Statement stmt)
   {
    this.stmt = stmt;
+  }
+
+  public boolean isPrepared()
+  {
+   return prepared;
+  }
+
+  public void setPrepared(boolean prepared)
+  {
+   this.prepared = prepared;
   }
 
  }

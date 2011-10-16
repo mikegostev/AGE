@@ -53,4 +53,5 @@ public class SubmissionReport implements Serializable
  {
   this.totalMatchedSamples = totalMatchedSamples;
  }
+
 }

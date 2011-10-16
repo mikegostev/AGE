@@ -84,11 +84,9 @@ public class SerializedAuthDBImpl implements AuthDB
  private class RLock implements ReadLock
  {
   boolean active = true;
-  TransactionalDB db;
   
-  RLock( TransactionalDB db )
+  RLock( )
   {
-   this.db=db;
   }
   
   void setActive( boolean a )
@@ -100,19 +98,13 @@ public class SerializedAuthDBImpl implements AuthDB
   {
    return active;
   }
-
-  @Override
-  public void release()
-  {
-   db.releaseLock(this);
-  }
  }
  
  private class Tran extends RLock implements Transaction
  {
   Tran( TransactionalDB db )
   {
-   super(db);
+   super();
   }
 
  }
@@ -369,7 +361,7 @@ public class SerializedAuthDBImpl implements AuthDB
  public ReadLock getReadLock()
  {
   lock.readLock().lock();
-  return new RLock( this );
+  return new RLock();
  }
 
  @Override
@@ -1506,7 +1498,6 @@ public class SerializedAuthDBImpl implements AuthDB
    @Override
    public int size()
    {
-    // TODO Auto-generated method stub
     return 0;
    }
   };
@@ -1987,6 +1978,11 @@ public class SerializedAuthDBImpl implements AuthDB
    for( SecurityChangedListener l : listeners )
     l.securityChanged();
   }
+ }
+
+ @Override
+ public void prepareTransaction(Transaction t) throws TransactionException
+ {
  }
  
 }

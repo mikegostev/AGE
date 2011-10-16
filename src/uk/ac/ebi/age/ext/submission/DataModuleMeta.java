@@ -1,5 +1,9 @@
 package uk.ac.ebi.age.ext.submission;
 
+import java.util.Collection;
+
+import uk.ac.ebi.age.ext.authz.TagRef;
+
 public interface DataModuleMeta
 {
 
@@ -38,5 +42,9 @@ public interface DataModuleMeta
  long getDocVersion();
 
  void setDocVersion(long docVersion);
+
+ Collection<TagRef> getTags();
+
+ void setTags(Collection<TagRef> annotation);
 
 }
