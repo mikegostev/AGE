@@ -2,7 +2,7 @@ package uk.ac.ebi.age.annotation;
 
 import java.io.Serializable;
 
-import uk.ac.ebi.age.entity.Entity;
+import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.transaction.ReadLock;
 import uk.ac.ebi.age.transaction.Transaction;
 import uk.ac.ebi.age.transaction.TransactionalDB;

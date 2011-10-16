@@ -3,9 +3,9 @@ package uk.ac.ebi.age.authz;
 import java.util.Collection;
 
 import uk.ac.ebi.age.authz.ACR.Permit;
-import uk.ac.ebi.age.entity.Entity;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 import uk.ac.ebi.age.ext.authz.TagRef;
+import uk.ac.ebi.age.ext.entity.Entity;
 
 public interface PermissionManager
 {

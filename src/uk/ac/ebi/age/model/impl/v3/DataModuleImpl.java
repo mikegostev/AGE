@@ -8,9 +8,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import uk.ac.ebi.age.entity.ClusterEntity;
-import uk.ac.ebi.age.entity.Entity;
-import uk.ac.ebi.age.entity.EntityDomain;
+import uk.ac.ebi.age.ext.entity.ClusterEntity;
+import uk.ac.ebi.age.ext.entity.Entity;
+import uk.ac.ebi.age.ext.entity.EntityDomain;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.ContextSemanticModel;

@@ -4,8 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import uk.ac.ebi.age.entity.Entity;
-import uk.ac.ebi.age.entity.EntityDomain;
+import uk.ac.ebi.age.ext.entity.Entity;
+import uk.ac.ebi.age.ext.entity.EntityDomain;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.SemanticModel;

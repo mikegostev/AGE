@@ -20,7 +20,7 @@ import org.apache.commons.transaction.file.ResourceManagerException;
 import uk.ac.ebi.age.annotation.AnnotationDBException;
 import uk.ac.ebi.age.annotation.AnnotationDBInitException;
 import uk.ac.ebi.age.annotation.Topic;
-import uk.ac.ebi.age.entity.Entity;
+import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.transaction.InconsistentStateException;
 import uk.ac.ebi.age.transaction.InvalidStateException;
 import uk.ac.ebi.age.transaction.ReadLock;

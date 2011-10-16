@@ -1,7 +1,12 @@
-package uk.ac.ebi.age.entity;
+package uk.ac.ebi.age.ext.entity;
 
-public class AttachmentEntity implements Entity
+import java.io.Serializable;
+
+public class AttachmentEntity implements Entity, Serializable
 {
+
+ private static final long serialVersionUID = 1L;
+
  private String id;
  private ClusterEntity clusterEntity;
  

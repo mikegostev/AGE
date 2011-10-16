@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import uk.ac.ebi.age.entity.Entity;
-import uk.ac.ebi.age.entity.EntityDomain;
+import uk.ac.ebi.age.ext.entity.Entity;
+import uk.ac.ebi.age.ext.entity.EntityDomain;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;

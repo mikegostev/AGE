@@ -16,9 +16,9 @@ import uk.ac.ebi.age.authz.SessionManager;
 import uk.ac.ebi.age.authz.Tag;
 import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.authz.exception.TagException;
-import uk.ac.ebi.age.entity.Entity;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 import uk.ac.ebi.age.ext.authz.TagRef;
+import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.transaction.ReadLock;
 
 public class PermissionManagerImpl implements PermissionManager

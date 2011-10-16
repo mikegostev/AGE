@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.entity;
+package uk.ac.ebi.age.ext.entity;
 
 public interface Entity
 {

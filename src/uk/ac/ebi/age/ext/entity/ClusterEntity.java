@@ -1,7 +1,12 @@
-package uk.ac.ebi.age.entity;
+package uk.ac.ebi.age.ext.entity;
 
-public class ClusterEntity implements Entity
+import java.io.Serializable;
+
+public class ClusterEntity implements Entity, Serializable
 {
+
+ private static final long serialVersionUID = 1L;
+
  private String id;
  
  public ClusterEntity( String id )

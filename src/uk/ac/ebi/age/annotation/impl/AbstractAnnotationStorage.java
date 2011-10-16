@@ -5,7 +5,7 @@ import java.util.Deque;
 import java.util.Iterator;
 
 import uk.ac.ebi.age.annotation.AnnotationManager;
-import uk.ac.ebi.age.entity.Entity;
+import uk.ac.ebi.age.ext.entity.Entity;
 
 import com.pri.util.ObjectRecycler;
 import com.pri.util.StringUtils;

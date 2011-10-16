@@ -1,7 +1,12 @@
-package uk.ac.ebi.age.entity;
+package uk.ac.ebi.age.ext.entity;
 
-public class GraphEntity implements Entity
+import java.io.Serializable;
+
+public class GraphEntity implements Entity, Serializable
 {
+
+ private static final long serialVersionUID = 1L;
+
  private static GraphEntity instance = new GraphEntity(); 
  
  private GraphEntity()
