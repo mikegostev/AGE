@@ -14,10 +14,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import uk.ac.ebi.age.annotation.AnnotationDBException;
 import uk.ac.ebi.age.annotation.AnnotationManager;
 import uk.ac.ebi.age.annotation.Topic;
 import uk.ac.ebi.age.conf.Constants;
+import uk.ac.ebi.age.ext.annotation.AnnotationDBException;
 import uk.ac.ebi.age.ext.entity.AttachmentEntity;
 import uk.ac.ebi.age.ext.entity.ClusterEntity;
 import uk.ac.ebi.age.ext.log.LogNode;

@@ -9,6 +9,9 @@ public class ClusterEntity implements Entity, Serializable
 
  private String id;
  
+ public ClusterEntity()
+ {}
+ 
  public ClusterEntity( String id )
  {
   this.id=id;

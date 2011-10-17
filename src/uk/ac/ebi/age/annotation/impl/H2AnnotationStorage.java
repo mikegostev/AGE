@@ -12,9 +12,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import uk.ac.ebi.age.annotation.AnnotationDBException;
 import uk.ac.ebi.age.annotation.AnnotationDBInitException;
 import uk.ac.ebi.age.annotation.Topic;
+import uk.ac.ebi.age.ext.annotation.AnnotationDBException;
 import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.transaction.InvalidStateException;
 import uk.ac.ebi.age.transaction.ReadLock;

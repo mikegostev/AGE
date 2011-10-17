@@ -3,7 +3,6 @@ package uk.ac.ebi.age.authz.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import uk.ac.ebi.age.annotation.AnnotationDBException;
 import uk.ac.ebi.age.annotation.AnnotationManager;
 import uk.ac.ebi.age.annotation.Topic;
 import uk.ac.ebi.age.authz.ACR.Permit;
@@ -16,6 +15,7 @@ import uk.ac.ebi.age.authz.SessionManager;
 import uk.ac.ebi.age.authz.Tag;
 import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.authz.exception.TagException;
+import uk.ac.ebi.age.ext.annotation.AnnotationDBException;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 import uk.ac.ebi.age.ext.authz.TagRef;
 import uk.ac.ebi.age.ext.entity.Entity;

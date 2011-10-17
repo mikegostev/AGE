@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.annotation;
+package uk.ac.ebi.age.ext.annotation;
 
 public class AnnotationDBException extends Exception
 {
