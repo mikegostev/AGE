@@ -10,6 +10,9 @@ public class AttachmentEntity implements Entity, Serializable
  private String id;
  private ClusterEntity clusterEntity;
  
+ AttachmentEntity()
+ {}
+
  public AttachmentEntity( ClusterEntity ce, String id )
  {
   this.id=id;

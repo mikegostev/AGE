@@ -9,7 +9,10 @@ public class ModuleEntity implements Entity, Serializable
 
  private String id;
  private ClusterEntity clusterEntity;
- 
+
+ ModuleEntity()
+ {}
+
  public ModuleEntity( ClusterEntity ce, String id )
  {
   this.id=id;
