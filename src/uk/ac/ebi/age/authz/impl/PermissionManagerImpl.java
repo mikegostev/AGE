@@ -15,9 +15,10 @@ import uk.ac.ebi.age.authz.SessionManager;
 import uk.ac.ebi.age.authz.Tag;
 import uk.ac.ebi.age.authz.User;
 import uk.ac.ebi.age.authz.exception.TagException;
-import uk.ac.ebi.age.entity.ID;
+import uk.ac.ebi.age.ext.annotation.AnnotationDBException;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 import uk.ac.ebi.age.ext.authz.TagRef;
+import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.transaction.ReadLock;
 
 public class PermissionManagerImpl implements PermissionManager
@@ -75,7 +76,7 @@ public class PermissionManagerImpl implements PermissionManager
   }
   finally
   {
-   lck.release();
+   authDB.releaseLock(lck);
   }
 
  }
@@ -111,19 +112,19 @@ public class PermissionManagerImpl implements PermissionManager
   }
   finally
   {
-   lck.release();
+   authDB.releaseLock(lck);
   }
  }
  
  @Override
- public Permit checkPermission( SystemAction act, ID objId )
+ public Permit checkPermission( SystemAction act, Entity objId )
  {
   return checkPermission(act, null, objId);
  }
  
  @Override
  @SuppressWarnings("unchecked")
- public Permit checkPermission( SystemAction act, String objOwner, ID objId )
+ public Permit checkPermission( SystemAction act, String objOwner, Entity objId )
  {
   Session sess = sessMgr.getSession();
   
@@ -132,32 +133,31 @@ public class PermissionManagerImpl implements PermissionManager
   if( user.equals(BuiltInUsers.SUPERVISOR.getName()) )
    return Permit.ALLOW;
   
-  if( objOwner == null )
+  ReadLock anntLock = annotMngr.getReadLock();
+  ReadLock lck = authDB.getReadLock();
+  
+  try
   {
-   ID oid = objId;
-   
-   while( oid != null )
+
+   if( objOwner == null )
    {
-    objOwner = (String) annotMngr.getAnnotation(Topic.OWNER, objId );
-   
-    if( objOwner != null )
-     break;
-    
-    oid = oid.getParentObjectID();
+    try
+    {
+     objOwner = (String) annotMngr.getAnnotation(anntLock, Topic.OWNER, objId, true );
+    }
+    catch(AnnotationDBException e)
+    {
+     e.printStackTrace();
+     return Permit.UNDEFINED;
+    }
    }
-  }
   
   if( objOwner != null && objOwner.equals(user) )
    return Permit.ALLOW;
   
   Collection<TagRef> tags = null;
-  ID oid = objId;
-
    
-  ReadLock lck = authDB.getReadLock();
   
-  try
-  {
    User usr = authDB.getUser(lck, user);
 
    if(usr == null)
@@ -165,9 +165,19 @@ public class PermissionManagerImpl implements PermissionManager
    
    boolean gotRes = false;
    
-   while( oid != null )
+   Entity cEnt = objId;
+   
+   while( cEnt != null )
    {
-    tags = (Collection<TagRef>) annotMngr.getAnnotation(Topic.TAG, objId );
+    try
+    {
+     tags = (Collection<TagRef>) annotMngr.getAnnotation( anntLock, Topic.TAG, objId, false );
+    }
+    catch(AnnotationDBException e1)
+    {
+     e1.printStackTrace();
+     return Permit.UNDEFINED;
+    }
    
     if( tags != null )
     {
@@ -193,6 +203,7 @@ public class PermissionManagerImpl implements PermissionManager
       }
       catch(TagException e)
       {
+       e.printStackTrace();
       }
      }     
 
@@ -201,37 +212,47 @@ public class PermissionManagerImpl implements PermissionManager
     }
     
     
-    oid = oid.getParentObjectID();
+    cEnt = cEnt.getParentEntity();
    }
 
    return Permit.UNDEFINED;
   }
   finally
   {
-   lck.release();
+   annotMngr.releaseLock(anntLock);
+   authDB.releaseLock(lck);
   }
  }
 
  @SuppressWarnings("unchecked")
  @Override
- public Collection<TagRef> getEffectiveTags( ID objId )
+ public Collection<TagRef> getEffectiveTags( Entity objId )
  {
   Collection<TagRef> tags = null;
-  ID oid = objId;
 
    
   ReadLock lck = authDB.getReadLock();
+  ReadLock anntLck = annotMngr.getReadLock();
   
   try
   {
-   while( oid != null )
+   
+   Entity cEnt = objId;
+   
+   while( cEnt != null )
    {
-    tags = (Collection<TagRef>) annotMngr.getAnnotation(Topic.TAG, oid );
+    try
+    {
+     tags = (Collection<TagRef>) annotMngr.getAnnotation(anntLck, Topic.TAG, cEnt, false );
+    }
+    catch(AnnotationDBException e1)
+    {
+     e1.printStackTrace();
+     return null;
+    }
    
     if( tags != null )
     {
-     boolean allow = true;
-     
      for( TagRef tagrf : tags )
      {
       try
@@ -250,14 +271,15 @@ public class PermissionManagerImpl implements PermissionManager
     }
     
     
-    oid = oid.getParentObjectID();
+    cEnt = cEnt.getParentEntity();
    }
 
    return null;
   }
   finally
   {
-   lck.release();
+   authDB.releaseLock(lck);
+   annotMngr.releaseLock(anntLck);
   }
  }
 

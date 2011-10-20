@@ -8,7 +8,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import uk.ac.ebi.age.entity.ID;
+import uk.ac.ebi.age.ext.entity.ClusterEntity;
+import uk.ac.ebi.age.ext.entity.Entity;
+import uk.ac.ebi.age.ext.entity.EntityDomain;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.ContextSemanticModel;
@@ -297,8 +299,22 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
 
 
  @Override
- public ID getEntityID()
+ public String getEntityID()
  {
-  return new DataModuleId( this );
+  return getId();
+ }
+
+
+ @Override
+ public EntityDomain getEntityDomain()
+ {
+  return EntityDomain.DATAMODULE;
+ }
+
+
+ @Override
+ public Entity getParentEntity()
+ {
+  return new ClusterEntity(clusterId);
  }
 }

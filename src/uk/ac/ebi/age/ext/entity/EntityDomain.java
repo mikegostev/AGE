@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.entity;
+package uk.ac.ebi.age.ext.entity;
 
 public enum EntityDomain
 {
@@ -6,5 +6,6 @@ public enum EntityDomain
  DATAMODULE,
  ATTACHMENT,
  AGEOBJECT,
- AGECLASS;
+ AGECLASS,
+ GRAPH;
 }

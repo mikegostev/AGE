@@ -360,10 +360,7 @@ public class SerializedStorage implements AgeStorageAdm
     
    }
    
-//   updateIndices(mods2Ins, changed);
-
-   for(DataChangeListener chls : chgListeners)
-    chls.dataChanged();
+   updateIndices(mods2Ins, changed);
 
   }
   finally
@@ -371,6 +368,8 @@ public class SerializedStorage implements AgeStorageAdm
    dbLock.writeLock().unlock();
   }
 
+  for(DataChangeListener chls : chgListeners)
+   chls.dataChanged();
  }
  
  public void storeDataModule(DataModuleWritable dm) throws RelationResolveException, ModuleStoreException

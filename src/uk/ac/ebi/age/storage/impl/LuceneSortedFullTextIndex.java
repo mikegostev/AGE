@@ -90,10 +90,21 @@ public class LuceneSortedFullTextIndex<KeyT> extends LuceneFullTextIndex impleme
  @Override
  public void index(List<AgeObject> aol, boolean append)
  {
-  ArrayList<AgeObject> naol = new ArrayList<AgeObject>( aol.size() + getObjectList().size() );
-
-  naol.addAll(getObjectList());
-  naol.addAll(aol);
+  List<AgeObject> naol = null;
+  
+  if( append )
+  {
+   naol = new ArrayList<AgeObject>( aol.size() + getObjectList().size() );
+   
+   naol.addAll( getObjectList() );
+   naol.addAll(aol);
+  }
+  else
+  {
+   naol = new ArrayList<AgeObject>( aol.size() );
+   
+   naol.addAll(aol);
+  }
 
   Collections.sort(naol, objectComparator );
 

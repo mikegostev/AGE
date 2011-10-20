@@ -22,7 +22,7 @@ public class SubmissionMetaImpl implements Serializable, SubmissionMeta
  private String submitter;
  private String modifier;
  
- private transient Collection<TagRef> tags;
+ private Collection<TagRef> tags;
  
  private long submissionTime;
  private long modificationTime;
@@ -165,6 +165,12 @@ public class SubmissionMetaImpl implements Serializable, SubmissionMeta
  public Collection<TagRef> getTags()
  {
   return tags;
+ }
+
+ @Override
+ public void setTags(Collection<TagRef> tgs)
+ {
+  tags=tgs;
  }
 
 }

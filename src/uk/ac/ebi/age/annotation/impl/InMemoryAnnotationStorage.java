@@ -7,65 +7,69 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.apache.commons.transaction.file.FileResourceManager;
 import org.apache.commons.transaction.file.ResourceManagerException;
 
-import uk.ac.ebi.age.annotation.AnnotationManager;
-import uk.ac.ebi.age.annotation.DBInitException;
+import uk.ac.ebi.age.annotation.AnnotationDBInitException;
 import uk.ac.ebi.age.annotation.Topic;
-import uk.ac.ebi.age.entity.EntityDomain;
-import uk.ac.ebi.age.entity.ID;
+import uk.ac.ebi.age.ext.annotation.AnnotationDBException;
+import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.transaction.InconsistentStateException;
 import uk.ac.ebi.age.transaction.InvalidStateException;
 import uk.ac.ebi.age.transaction.ReadLock;
 import uk.ac.ebi.age.transaction.Transaction;
 import uk.ac.ebi.age.transaction.TransactionException;
+import uk.ac.ebi.mg.rwarbiter.InvalidTokenException;
+import uk.ac.ebi.mg.rwarbiter.RWArbiter;
+import uk.ac.ebi.mg.rwarbiter.TokenFactory;
+import uk.ac.ebi.mg.rwarbiter.TokenW;
 
-public class InMemoryAnnotationStorage implements AnnotationManager
+import com.pri.util.collection.Collections;
+
+public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
 {
  private static final String serialFileName = "annotdb.ser";
 
- private Map< Topic, Map<EntityDomain, Map<String,Serializable> > > annotMap;
+ private Map< Topic, SortedMap<String,Serializable> > annotMap;
 
- private ReadWriteLock lock = new ReentrantReadWriteLock();
+ private static class TrnImp implements Transaction, TokenW
+ {
+  boolean active = true;
+
+  public boolean isActive()
+  {
+   return active;
+  }
+
+  public void setActive(boolean active)
+  {
+   this.active = active;
+  }
+ }
+ 
+ private RWArbiter<TrnImp> arbiter = new RWArbiter<TrnImp>( new TokenFactory<TrnImp>()
+ {
+  @Override
+  public TrnImp createToken()
+  {
+   return new TrnImp();
+  }
+ });
  
  private FileResourceManager txManager;
  private String serialFileRelPath;
  private File serialFile;
  
- private ReadLock readLock = new ReadLock() {
-
-  public void release()
-  {
-   releaseLock( this );
-  }};
-  
- private Transaction transaction  = new Transaction()
- {
-  
-  @Override
-  public void release()
-  {
-   try
-   {
-    rollbackTransaction(this);
-   }
-   catch(TransactionException e)
-   {
-    e.printStackTrace();
-   }
-  }
- };
- 
- private Thread lockOwner;
  private boolean dirty = false;
  
- public InMemoryAnnotationStorage(FileResourceManager frm, String annRelPath) throws DBInitException
+ public InMemoryAnnotationStorage(FileResourceManager frm, String annRelPath) throws AnnotationDBInitException
  {
   txManager=frm;
  
@@ -81,12 +85,12 @@ public class InMemoryAnnotationStorage implements AnnotationManager
    }
    catch(IOException e)
    {
-    throw new DBInitException(e);
+    throw new AnnotationDBInitException(e);
    }
   }
   else
   {
-   annotMap = new HashMap<Topic, Map<EntityDomain,Map<String,Serializable>>>();
+   annotMap = new HashMap<Topic, SortedMap<String,Serializable>>();
 
    String txId;
 
@@ -106,7 +110,7 @@ public class InMemoryAnnotationStorage implements AnnotationManager
    }
    catch(Exception e)
    {
-    throw new DBInitException(e);
+    throw new AnnotationDBInitException(e);
    }
 
   }
@@ -120,7 +124,7 @@ public class InMemoryAnnotationStorage implements AnnotationManager
   
   try
   {
-   annotMap = (Map< Topic, Map<EntityDomain, Map<String,Serializable> > >)ois.readObject();
+   annotMap = (Map<Topic, SortedMap<String,Serializable>>)ois.readObject();
   }
   catch(ClassNotFoundException e)
   {
@@ -132,7 +136,7 @@ public class InMemoryAnnotationStorage implements AnnotationManager
  }
 
  @Override
- public boolean addAnnotation(Topic tpc, ID objId, Serializable value)
+ public boolean addAnnotation(Topic tpc, Entity objId, Serializable value)
  {
   
   Transaction t = startTransaction();
@@ -141,6 +145,7 @@ public class InMemoryAnnotationStorage implements AnnotationManager
   
   try
   {
+   prepareTransaction(t);
    commitTransaction(t);
   }
   catch(TransactionException e2)
@@ -153,30 +158,18 @@ public class InMemoryAnnotationStorage implements AnnotationManager
 
 
  @Override
- public Object getAnnotation(Topic tpc, ID objId)
+ public Object getAnnotation(Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
  {
+  ReadLock lck = getReadLock();
+  
   try
   {
-   lock.readLock().lock();
-   
-   Map<EntityDomain, Map<String,Serializable> >  tMap = annotMap.get(tpc);
-   
-   if( tMap == null )
-    return null;
-   
-   Map<String,Serializable> eMap = tMap.get(objId.getDomain());
-   
-   if( eMap == null )
-    return null;
-   
-   return eMap.get(objId.getId());
-
+   return getAnnotation(lck, tpc, objId, recurs);
   }
   finally
   {
-   lock.readLock().unlock();
+   releaseLock(lck);
   }
-  
  }
 
  private void sync() throws ResourceManagerException, IOException
@@ -187,7 +180,7 @@ public class InMemoryAnnotationStorage implements AnnotationManager
 
   txManager.startTransaction(txId);
 
-  txManager.moveResource(txId, serialFileRelPath, serialFileRelPath + "." + System.currentTimeMillis(), true);
+  txManager.moveResource(txId, serialFileRelPath, serialFileRelPath + ".bak", true);
 
   OutputStream outputStream = txManager.writeResource(txId, serialFileRelPath);
 
@@ -203,31 +196,32 @@ public class InMemoryAnnotationStorage implements AnnotationManager
  @Override
  public ReadLock getReadLock()
  {
-  lock.readLock().lock();
-  
-  return readLock;
+  return arbiter.getReadLock();
  }
 
  @Override
  public void releaseLock(ReadLock l)
  {
-  lock.readLock().unlock();
+  try
+  {
+   arbiter.releaseLock((TrnImp) l);
+  }
+  catch(InvalidTokenException e)
+  {
+   e.printStackTrace();
+  }
  }
 
  @Override
  public Transaction startTransaction()
  {
-  lock.writeLock().lock();
-
-  lockOwner = Thread.currentThread();
-  
-  return transaction;
+  return arbiter.getWriteLock();
  }
 
  @Override
  public void commitTransaction(Transaction t) throws TransactionException
  {
-  if( lockOwner != Thread.currentThread() )
+  if(!((TrnImp) t).isActive())
    throw new InvalidStateException();
   
   
@@ -254,15 +248,21 @@ public class InMemoryAnnotationStorage implements AnnotationManager
   }
   finally
   {
-   lockOwner=null;
-   lock.writeLock().unlock();
+   try
+   {
+    arbiter.releaseLock((TrnImp) t);
+   }
+   catch(InvalidTokenException e)
+   {
+    throw new InvalidStateException("Invalid transaction token");
+   }
   }
  }
 
  @Override
  public void rollbackTransaction(Transaction t) throws TransactionException
  {
-  if( lockOwner != Thread.currentThread() )
+  if(!((TrnImp) t).isActive())
    throw new InvalidStateException();
 
   try
@@ -281,47 +281,133 @@ public class InMemoryAnnotationStorage implements AnnotationManager
   }
   finally
   {
-   lockOwner=null;
-   lock.writeLock().unlock();
+   try
+   {
+    arbiter.releaseLock((TrnImp) t);
+   }
+   catch(InvalidTokenException e)
+   {
+    throw new InvalidStateException("Invalid transaction token");
+   }
   }
   
  
  }
 
  @Override
- public boolean addAnnotation(Transaction trn, Topic tpc, ID objId, Serializable value)
+ public boolean addAnnotation(Transaction trn, Topic tpc, Entity objId, Serializable value)
  {
-  if(lockOwner != Thread.currentThread())
+  if(!((TrnImp) trn).isActive())
    throw new InvalidStateException();
 
   dirty = true;
   
-  Map<EntityDomain, Map<String, Serializable>> tMap = annotMap.get(tpc);
-
-  Map<String, Serializable> eMap = null;
+  SortedMap<String, Serializable> tMap = annotMap.get(tpc);
 
   if(tMap == null)
   {
-   tMap = new HashMap<EntityDomain, Map<String, Serializable>>();
+   tMap = new TreeMap<String, Serializable>();
 
    annotMap.put(tpc, tMap);
-
-   eMap = new HashMap<String, Serializable>();
-
-   tMap.put(objId.getDomain(), eMap);
-  }
-  else
-  {
-   eMap = tMap.get(objId.getDomain());
-
-   if(eMap == null)
-    eMap = new HashMap<String, Serializable>();
-
-   tMap.put(objId.getDomain(), eMap);
   }
 
-  eMap.put(objId.getId(), value);
+
+  tMap.put(createEntityId(objId), value);
 
   return true;
+ }
+
+ @Override
+ public boolean removeAnnotation(Transaction trn, Topic tpc, Entity objId, boolean rec)
+ {
+  if(!((TrnImp) trn).isActive())
+   throw new InvalidStateException();
+
+  dirty = true;
+
+  Collection<SortedMap<String, Serializable>> maps;
+
+  if(tpc == null)
+   maps = annotMap.values();
+  else
+  {
+   SortedMap<String, Serializable> tMap = annotMap.get(tpc);
+
+   if(tMap != null)
+    maps = java.util.Collections.singleton(tMap);
+   else
+    maps = Collections.emptyList();
+  }
+
+  boolean removed = false;
+
+  String id = createEntityId(objId);
+
+  for(SortedMap<String, Serializable> tMap : maps)
+  {
+
+   if(!rec)
+    return tMap.remove(id) != null;
+   else
+   {
+    Map<String, Serializable> smp = tMap.tailMap(id);
+
+    Iterator<String> keys = smp.keySet().iterator();
+
+    while(keys.hasNext())
+    {
+     String key = keys.next();
+
+     if(key.startsWith(id))
+     {
+      keys.remove();
+
+      removed = true;
+     }
+     else
+      break;
+    }
+
+   }
+
+
+  }
+
+  return removed;
+ }
+
+ @Override
+ public Object getAnnotation(ReadLock lock, Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
+ {
+  if(!((TrnImp) lock).isActive())
+   throw new InvalidStateException();
+
+  SortedMap<String, Serializable> tMap = annotMap.get(tpc);
+
+  if(tMap == null)
+   return null;
+
+  Entity cEnt = objId;
+
+  do
+  {
+   String id = createEntityId(cEnt);
+
+   Object annt = tMap.get(id);
+
+   if(annt != null || !recurs)
+    return annt;
+
+   cEnt = cEnt.getParentEntity();
+  } while(cEnt != null);
+
+  return null;
+ }
+
+ @Override
+ public void prepareTransaction(Transaction t) throws TransactionException
+ {
+  if(!((TrnImp) t).isActive())
+   throw new InvalidStateException();
  }
 }

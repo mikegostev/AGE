@@ -48,5 +48,6 @@ public interface SubmissionMeta
  void setRemoved(boolean rm);
  boolean isRemoved();
 
+ void setTags( Collection<TagRef> tgs );
  Collection<TagRef> getTags();
 }

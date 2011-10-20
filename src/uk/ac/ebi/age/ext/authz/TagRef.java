@@ -2,7 +2,7 @@ package uk.ac.ebi.age.ext.authz;
 
 import java.io.Serializable;
 
-public class TagRef implements Serializable
+public class TagRef implements Serializable, Comparable<TagRef>
 {
 
  private static final long serialVersionUID = 1L;
@@ -48,5 +48,16 @@ public class TagRef implements Serializable
  public void setTagValue(String tagValue)
  {
   this.tagValue = tagValue;
+ }
+
+ @Override
+ public int compareTo(TagRef o)
+ {
+  int dif = getClassiferName().compareTo( o.getClassiferName() );
+  
+  if( dif != 0 )
+   return dif;
+  
+  return getTagName().compareTo(o.getTagName());
  }
 }

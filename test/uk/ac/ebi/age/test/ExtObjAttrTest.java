@@ -4,9 +4,9 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.authz.ACR.Permit;
 import uk.ac.ebi.age.authz.PermissionManager;
-import uk.ac.ebi.age.entity.ID;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 import uk.ac.ebi.age.ext.authz.TagRef;
+import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
@@ -101,13 +101,13 @@ public class ExtObjAttrTest
   }
 
   @Override
-  public Permit checkPermission(SystemAction act, ID objId)
+  public Permit checkPermission(SystemAction act, Entity objId)
   {
    return Permit.ALLOW;
   }
 
   @Override
-  public Permit checkPermission(SystemAction act, String objOwner, ID objId)
+  public Permit checkPermission(SystemAction act, String objOwner, Entity objId)
   {
    return Permit.ALLOW;
   }
@@ -119,7 +119,7 @@ public class ExtObjAttrTest
   }
 
   @Override
-  public Collection<TagRef> getEffectiveTags(ID objId)
+  public Collection<TagRef> getEffectiveTags(Entity objId)
   {
    // TODO Auto-generated method stub
    return null;

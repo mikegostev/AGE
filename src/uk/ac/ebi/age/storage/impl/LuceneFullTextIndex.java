@@ -204,10 +204,21 @@ public class LuceneFullTextIndex implements TextIndexWritable
  @Override
  public void index(List<AgeObject> aol, boolean append)
  {
-  List<AgeObject> naol = new ArrayList<AgeObject>( aol.size() + objectList.size() );
+  List<AgeObject> naol = null;
   
-  naol.addAll(objectList);
-  naol.addAll(aol);
+  if( append )
+  {
+   naol = new ArrayList<AgeObject>( aol.size() + objectList.size() );
+   
+   naol.addAll(objectList);
+   naol.addAll(aol);
+  }
+  else
+  {
+   naol = new ArrayList<AgeObject>( aol.size() );
+   
+   naol.addAll(aol);
+  }
   
   objectList = naol;
   
