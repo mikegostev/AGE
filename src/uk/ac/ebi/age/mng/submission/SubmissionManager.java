@@ -4,9 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,6 +20,7 @@ import uk.ac.ebi.age.annotation.AnnotationManager;
 import uk.ac.ebi.age.annotation.Topic;
 import uk.ac.ebi.age.conf.Constants;
 import uk.ac.ebi.age.ext.annotation.AnnotationDBException;
+import uk.ac.ebi.age.ext.authz.TagRef;
 import uk.ac.ebi.age.ext.entity.AttachmentEntity;
 import uk.ac.ebi.age.ext.entity.ClusterEntity;
 import uk.ac.ebi.age.ext.log.LogNode;
@@ -166,7 +169,7 @@ public class SubmissionManager
  @SuppressWarnings("unchecked")
  public boolean storeSubmission( SubmissionMeta sMeta,  String updateDescr, LogNode logRoot, boolean verifyOnly )
  {
-
+ 
   SubmissionMeta origSbm = null;
 
   if(sMeta.getStatus() == Status.UPDATEORNEW)
@@ -1204,6 +1207,64 @@ public class SubmissionManager
 
     }
     
+    if( sMeta.getTags() != null )
+    {
+     List<TagRef> tgs = sMeta.getTags();
+     
+     if( ! ( tgs instanceof ArrayList ) )
+     {
+      tgs = new ArrayList<TagRef>( tgs.size() );
+      tgs.addAll(sMeta.getTags());
+     }
+     
+     Collections.sort(tgs);
+     
+     annotationManager.addAnnotation(trn, Topic.TAG, cEnt, (Serializable)tgs);
+    }
+    
+    for( ModMeta mm : cstMeta.incomingMods )
+    {
+     if( mm.meta.getTags() != null )
+     {
+      List<TagRef> tgs = mm.meta.getTags();
+      
+      if( ! ( tgs instanceof ArrayList ) )
+      {
+       tgs = new ArrayList<TagRef>( tgs.size() );
+       tgs.addAll(mm.meta.getTags());
+      }
+      
+      Collections.sort(tgs);
+      
+      annotationManager.addAnnotation(trn, Topic.TAG, mm.newModule, (Serializable)tgs);
+     }
+    }
+    
+    if( sMeta.getAttachments() != null )
+    {
+     AttachmentEntity ate = new AttachmentEntity(cEnt, null);
+
+     for( FileAttachmentMeta att : sMeta.getAttachments() )
+     {
+      List<TagRef> tgs = att.getTags();
+
+      if( tgs != null )
+      {
+       if( ! ( tgs instanceof ArrayList ) )
+       {
+        tgs = new ArrayList<TagRef>( tgs.size() );
+        tgs.addAll(att.getTags());
+       }
+       
+       Collections.sort(tgs);
+       
+       ate.setEntityId(att.getId());
+       
+       annotationManager.addAnnotation(trn, Topic.TAG, ate, (Serializable)tgs);      }
+     }
+    }
+
+    
    }
    catch(AnnotationDBException e)
    {
@@ -1241,8 +1302,6 @@ public class SubmissionManager
   return res;
  }
 
- 
- 
  
  public boolean restoreSubmission( String sbmID, LogNode logRoot )
  {

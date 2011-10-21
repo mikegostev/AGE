@@ -1,6 +1,6 @@
 package uk.ac.ebi.age.ext.submission;
 
-import java.util.Collection;
+import java.util.List;
 
 import uk.ac.ebi.age.ext.authz.TagRef;
 
@@ -47,7 +47,7 @@ public interface FileAttachmentMeta
 
  void setFileVersion(long fileVersion);
 
- Collection<TagRef> getTags( );
- void setTags(Collection<TagRef> annotation);
+ List<TagRef> getTags( );
+ void setTags(List<TagRef> annotation);
 
 }

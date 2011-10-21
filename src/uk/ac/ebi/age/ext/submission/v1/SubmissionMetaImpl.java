@@ -2,7 +2,6 @@ package uk.ac.ebi.age.ext.submission.v1;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import uk.ac.ebi.age.ext.authz.TagRef;
@@ -22,7 +21,7 @@ public class SubmissionMetaImpl implements Serializable, SubmissionMeta
  private String submitter;
  private String modifier;
  
- private Collection<TagRef> tags;
+ private List<TagRef> tags;
  
  private long submissionTime;
  private long modificationTime;
@@ -162,13 +161,13 @@ public class SubmissionMetaImpl implements Serializable, SubmissionMeta
  }
 
  @Override
- public Collection<TagRef> getTags()
+ public List<TagRef> getTags()
  {
   return tags;
  }
 
  @Override
- public void setTags(Collection<TagRef> tgs)
+ public void setTags(List<TagRef> tgs)
  {
   tags=tgs;
  }
