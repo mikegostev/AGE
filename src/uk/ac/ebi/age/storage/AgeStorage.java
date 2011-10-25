@@ -36,6 +36,7 @@ public interface AgeStorage
  boolean hasDataModule(ModuleKey mk);
 
  void addDataChangeListener(DataChangeListener dataChangeListener);
+ void addMaintenanceModeListener(MaintenanceModeListener mmListener);
  
  File getAttachment(String id, String clustId, boolean global);
  File getAttachmentBySysRef(String sysid);
@@ -49,5 +50,6 @@ public interface AgeStorage
  TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> cb ) throws IndexIOException;
  public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts,
    KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator) throws IndexIOException;
+
 
 }

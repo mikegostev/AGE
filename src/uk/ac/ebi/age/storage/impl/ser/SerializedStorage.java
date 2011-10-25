@@ -46,6 +46,7 @@ import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.storage.DataChangeListener;
 import uk.ac.ebi.age.storage.DataModuleReaderWriter;
+import uk.ac.ebi.age.storage.MaintenanceModeListener;
 import uk.ac.ebi.age.storage.ModuleKey;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
@@ -111,11 +112,14 @@ public class SerializedStorage implements AgeStorageAdm
  private DataModuleReaderWriter submRW = new SerializedDataModuleReaderWriter();
 
  private Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
+ private Collection<MaintenanceModeListener> mmodListeners = new ArrayList<MaintenanceModeListener>(3);
  
  private FileDepot dataDepot; 
  private FileDepot fileDepot; 
  
  private boolean master = false;
+ 
+ private boolean maintenanceMode = false;
  
  public SerializedStorage()
  {
@@ -368,8 +372,11 @@ public class SerializedStorage implements AgeStorageAdm
    dbLock.writeLock().unlock();
   }
 
-  for(DataChangeListener chls : chgListeners)
-   chls.dataChanged();
+  synchronized(chgListeners)
+  {
+   for(DataChangeListener chls : chgListeners )
+    chls.dataChanged();
+  }
  }
  
  public void storeDataModule(DataModuleWritable dm) throws RelationResolveException, ModuleStoreException
@@ -409,8 +416,12 @@ public class SerializedStorage implements AgeStorageAdm
  
    updateIndices( Collections.singletonList(dm), changed );
    
-   for(DataChangeListener chls : chgListeners )
-    chls.dataChanged();
+   synchronized(chgListeners)
+   {
+    for(DataChangeListener chls : chgListeners )
+     chls.dataChanged();
+   }
+   
    
   }
   finally
@@ -1089,8 +1100,21 @@ public class SerializedStorage implements AgeStorageAdm
  @Override
  public void addDataChangeListener(DataChangeListener dataChangeListener)
  {
-  chgListeners.add(dataChangeListener);
+  synchronized(chgListeners)
+  {
+   chgListeners.add(dataChangeListener);
+  }
  }
+ 
+ @Override
+ public void addMaintenanceModeListener(MaintenanceModeListener mmListener)
+ {
+  synchronized(mmodListeners)
+  {
+   mmodListeners.add(mmListener);
+  }
+ }
+
 
  @Override
  public void lockWrite()
@@ -1201,6 +1225,43 @@ public class SerializedStorage implements AgeStorageAdm
  public void rebuildIndices()
  {
   updateIndices(null, true);
+ }
+
+
+ @Override
+ public void setMaintenanceMode(boolean mmode)
+ {
+  if( maintenanceMode == mmode )
+   return;
+  
+  if( mmode == true )
+  {
+   Thread wdT = new Thread()
+   {
+    
+    @Override
+    public void run()
+    {
+     setName("MaintenanceMode watch dog timer");      
+    }
+   };
+  }
+  
+  maintenanceMode = mmode;
+  
+  
+  
+  synchronized(mmodListeners)
+  {
+   for( MaintenanceModeListener mml : mmodListeners )
+   {
+    if( mmode )
+     mml.enterMaintenanceMode();
+    else
+     mml.exitMaintenanceMode();
+   }
+  }
+  
  }
  
 }
