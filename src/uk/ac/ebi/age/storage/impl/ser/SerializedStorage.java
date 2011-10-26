@@ -121,8 +121,64 @@ public class SerializedStorage implements AgeStorageAdm
  
  private boolean maintenanceMode = false;
  
- public SerializedStorage()
+ private long mModeTimeout;
+
+ private long lastUpdate;
+ 
+ private boolean dataDirty = false;
+ 
+ 
+ 
+ public SerializedStorage( SerializedStorageConfiguration conf ) throws StorageInstantiationException
  {
+  master = conf.isMaster();
+  
+  mModeTimeout = conf.getMaintenanceModeTimeout();
+  
+  File baseDir = conf.getStorageBaseDir();
+
+  File modelDir = new File( baseDir, modelPath );
+  
+  modelFile = new File(modelDir, modelFileName );
+  dataDir = new File( baseDir, dmStoragePath ); 
+  filesDir = new File( baseDir, fileStoragePath ); 
+  indexDir = new File( baseDir, indexPath ); 
+  
+
+  if( baseDir.isFile() )
+   throw new StorageInstantiationException("The initial path must be directory: "+baseDir.getAbsolutePath());
+  
+  if( ! baseDir.exists() )
+   baseDir.mkdirs();
+
+  if( ! modelDir.exists() )
+   modelDir.mkdirs();
+  
+  try
+  {
+   dataDepot = new FileDepot(dataDir, true);
+  }
+  catch(IOException e)
+  {
+   throw new StorageInstantiationException( "Data depot init error: "+e.getMessage(),e);
+  }
+ 
+  try
+  {
+   fileDepot = new FileDepot(filesDir, true);
+  }
+  catch(IOException e)
+  {
+   throw new StorageInstantiationException( "File depot init error: "+e.getMessage(),e);
+  }
+
+
+  if( modelFile.canRead() )
+   loadModel();
+  else
+   model = SemanticManager.getInstance().createMasterModel();
+  
+  loadData();
  }
  
  public SemanticModel getSemanticModel()
@@ -130,10 +186,6 @@ public class SerializedStorage implements AgeStorageAdm
   return model;
  }
  
- public void setMaster( boolean m )
- {
-  master=m;
- }
 // public AgeIndex createTextIndex(AgeQuery qury, TextValueExtractor cb)
 // {
 //  AgeIndex idx = new AgeIndex();
@@ -327,6 +379,9 @@ public class SerializedStorage implements AgeStorageAdm
   {
    dbLock.writeLock().lock();
 
+   dataDirty = true;
+   lastUpdate = System.currentTimeMillis();
+   
    boolean changed = false;
 
    if( mods2Del != null )
@@ -364,7 +419,8 @@ public class SerializedStorage implements AgeStorageAdm
     
    }
    
-   updateIndices(mods2Ins, changed);
+   if( ! maintenanceMode )
+    updateIndices(mods2Ins, changed);
 
   }
   finally
@@ -372,14 +428,18 @@ public class SerializedStorage implements AgeStorageAdm
    dbLock.writeLock().unlock();
   }
 
-  synchronized(chgListeners)
+  if( ! maintenanceMode )
   {
-   for(DataChangeListener chls : chgListeners )
-    chls.dataChanged();
+   synchronized(chgListeners)
+   {
+    for(DataChangeListener chls : chgListeners)
+     chls.dataChanged();
+   }
   }
+  
  }
  
- public void storeDataModule(DataModuleWritable dm) throws RelationResolveException, ModuleStoreException
+ private void storeDataModule(DataModuleWritable dm) throws RelationResolveException, ModuleStoreException
  {
   if( ! master )
    throw new ModuleStoreException("Only the master instance can store data");
@@ -435,54 +495,6 @@ public class SerializedStorage implements AgeStorageAdm
  public Collection<? extends AgeObjectWritable> getAllObjects()
  {
   return new CollectionsUnion<AgeObjectWritable>( new ExtractorCollection<DataModuleWritable, Collection<AgeObjectWritable>>( moduleMap.values(), objExtractor) );
- }
-
- public void init(String initStr) throws StorageInstantiationException
- {
-  File baseDir = new File( initStr );
-
-  File modelDir = new File( baseDir, modelPath );
-  
-  modelFile = new File(modelDir, modelFileName );
-  dataDir = new File( baseDir, dmStoragePath ); 
-  filesDir = new File( baseDir, fileStoragePath ); 
-  indexDir = new File( baseDir, indexPath ); 
-  
-
-  if( baseDir.isFile() )
-   throw new StorageInstantiationException("The initial path must be directory: "+initStr);
-  
-  if( ! baseDir.exists() )
-   baseDir.mkdirs();
-
-  if( ! modelDir.exists() )
-   modelDir.mkdirs();
-  
-  try
-  {
-   dataDepot = new FileDepot(dataDir, true);
-  }
-  catch(IOException e)
-  {
-   throw new StorageInstantiationException( "Data depot init error: "+e.getMessage(),e);
-  }
- 
-  try
-  {
-   fileDepot = new FileDepot(filesDir, true);
-  }
-  catch(IOException e)
-  {
-   throw new StorageInstantiationException( "File depot init error: "+e.getMessage(),e);
-  }
-
-
-  if( modelFile.canRead() )
-   loadModel();
-  else
-   model = SemanticManager.getInstance().createMasterModel();
-  
-  loadData();
  }
 
  
@@ -996,8 +1008,6 @@ public class SerializedStorage implements AgeStorageAdm
     
     try
     {
-     long tm = System.currentTimeMillis();
-     
      vldRes = validator.validate(sbm, sm, ln);
      
      res = res && vldRes;
@@ -1229,39 +1239,92 @@ public class SerializedStorage implements AgeStorageAdm
 
 
  @Override
- public void setMaintenanceMode(boolean mmode)
+ public boolean setMaintenanceMode(boolean mmode)
  {
-  if( maintenanceMode == mmode )
-   return;
+  lockWrite();
+
+  boolean dataModified = false;
   
-  if( mmode == true )
+  try
   {
-   Thread wdT = new Thread()
+   if(maintenanceMode == mmode)
+    return false;
+
+   if(mmode == true)
    {
-    
-    @Override
-    public void run()
+    Thread wdT = new Thread()
     {
-     setName("MaintenanceMode watch dog timer");      
-    }
-   };
+
+     @Override
+     public void run()
+     {
+      long wtCycle = mModeTimeout + 500;
+
+      setName("MaintenanceMode watch dog timer");
+
+      while(true)
+      {
+       try
+       {
+        sleep(wtCycle);
+       }
+       catch(InterruptedException e)
+       {
+       }
+
+       if(!maintenanceMode)
+        return;
+
+       if((System.currentTimeMillis() - lastUpdate) > mModeTimeout)
+       {
+        setMaintenanceMode(false);
+        return;
+       }
+
+      }
+     }
+    };
+
+    wdT.start();
+   }
+
+   maintenanceMode = mmode;
+
+   if( dataDirty )
+   {
+    updateIndices(null, true);
+    dataModified = true;
+   
+    dataDirty = false;
+   }
+  
   }
-  
-  maintenanceMode = mmode;
-  
-  
-  
+  finally
+  {
+   unlockWrite();
+  }
+
   synchronized(mmodListeners)
   {
-   for( MaintenanceModeListener mml : mmodListeners )
+   for(MaintenanceModeListener mml : mmodListeners)
    {
-    if( mmode )
+    if(mmode)
      mml.enterMaintenanceMode();
     else
      mml.exitMaintenanceMode();
    }
   }
   
+  if( dataModified )
+  {
+   synchronized(chgListeners)
+   {
+    for(DataChangeListener chls : chgListeners )
+     chls.dataChanged();
+   }
+  }
+
+  return true;
  }
  
 }

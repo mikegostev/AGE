@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 
 import uk.ac.ebi.age.authz.ACR.Permit;
 import uk.ac.ebi.age.authz.PermissionManager;
@@ -22,7 +23,9 @@ import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
 import uk.ac.ebi.age.parser.impl.AgeTabSyntaxParserImpl;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
+import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
 import uk.ac.ebi.age.storage.impl.ser.SerializedStorage;
+import uk.ac.ebi.age.storage.impl.ser.SerializedStorageConfiguration;
 
 import com.pri.util.stream.StreamPump;
 
@@ -64,10 +67,14 @@ public class Test
     return;
    }
    
-//   AgeStorageGrafImpl str = new AgeStorageGrafImpl();
-   SerializedStorage str = new SerializedStorage();
+   SerializedStorageConfiguration cfg = new SerializedStorageConfiguration();
    
-   str.storeDataModule(dblock);
+   cfg.setStorageBaseDir( new File(".") );
+   cfg.setMaintenanceModeTimeout(30000);
+   
+   SerializedStorage str = new SerializedStorage( cfg );
+   
+   str.update(Collections.singletonList(dblock), null);
    
    System.out.println("Done");
    
@@ -99,6 +106,11 @@ public class Test
    e.printStackTrace();
   }
   catch(ModuleStoreException e)
+  {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+  }
+  catch(StorageInstantiationException e)
   {
    // TODO Auto-generated catch block
    e.printStackTrace();

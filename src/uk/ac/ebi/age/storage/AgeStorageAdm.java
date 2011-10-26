@@ -9,7 +9,6 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
 import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
-import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
 
 public interface AgeStorageAdm extends AgeStorage
 {
@@ -24,7 +23,7 @@ public interface AgeStorageAdm extends AgeStorage
 
  boolean updateSemanticModel( SemanticModel sm, LogNode log ); // throws ModelStoreException;
 
- void init( String initStr) throws StorageInstantiationException;
+// void init( String initStr) throws StorageInstantiationException;
  void shutdown();
 
  void lockWrite();
@@ -36,7 +35,7 @@ public interface AgeStorageAdm extends AgeStorage
  DataModuleWritable getDataModule(String clstId, String name);
  Collection<? extends DataModuleWritable> getDataModules();
 
- void setMaster(boolean master);
+// void setMaster(boolean master);
 
 // String makeGlobalFileID(String id);
 // String makeLocalFileID(String id, String clustID);
@@ -50,7 +49,7 @@ public interface AgeStorageAdm extends AgeStorage
 
  void rebuildIndices();
 
- void setMaintenanceMode( boolean mmode);
+ boolean setMaintenanceMode( boolean mmode);
  
  //void renameAttachment(String id, String id2) throws AttachmentIOException;
 
