@@ -7,9 +7,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.apache.commons.transaction.file.FileResourceManager;
 import org.apache.commons.transaction.file.ResourceManagerException;
@@ -28,7 +31,9 @@ import uk.ac.ebi.mg.rwarbiter.RWArbiter;
 import uk.ac.ebi.mg.rwarbiter.TokenFactory;
 import uk.ac.ebi.mg.rwarbiter.TokenW;
 
-public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
+import com.pri.util.collection.Collections;
+
+public abstract class AbstractInMemoryAnnotationStorage extends AbstractAnnotationStorage
 {
  private static final String serialFileName = "annotdb.ser";
 
@@ -64,7 +69,7 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
  
  private boolean dirty = false;
  
- public InMemoryAnnotationStorage(FileResourceManager frm, String annRelPath) throws AnnotationDBInitException
+ public AbstractInMemoryAnnotationStorage(FileResourceManager frm, String annRelPath) throws AnnotationDBInitException
  {
   txManager=frm;
  
@@ -289,6 +294,115 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
  
  }
 
+ @Override
+ public boolean addAnnotation(Transaction trn, Topic tpc, Entity objId, Serializable value)
+ {
+  if(!((TrnImp) trn).isActive())
+   throw new InvalidStateException();
+
+  dirty = true;
+  
+  SortedMap<String, Serializable> tMap = annotMap.get(tpc);
+
+  if(tMap == null)
+  {
+   tMap = new TreeMap<String, Serializable>();
+
+   annotMap.put(tpc, tMap);
+  }
+
+
+  tMap.put(createEntityId(objId), value);
+
+  return true;
+ }
+
+ @Override
+ public boolean removeAnnotation(Transaction trn, Topic tpc, Entity objId, boolean rec)
+ {
+  if(!((TrnImp) trn).isActive())
+   throw new InvalidStateException();
+
+  dirty = true;
+
+  Collection<SortedMap<String, Serializable>> maps;
+
+  if(tpc == null)
+   maps = annotMap.values();
+  else
+  {
+   SortedMap<String, Serializable> tMap = annotMap.get(tpc);
+
+   if(tMap != null)
+    maps = java.util.Collections.singleton(tMap);
+   else
+    maps = Collections.emptyList();
+  }
+
+  boolean removed = false;
+
+  String id = createEntityId(objId);
+
+  for(SortedMap<String, Serializable> tMap : maps)
+  {
+
+   if(!rec)
+    return tMap.remove(id) != null;
+   else
+   {
+    Map<String, Serializable> smp = tMap.tailMap(id);
+
+    Iterator<String> keys = smp.keySet().iterator();
+
+    while(keys.hasNext())
+    {
+     String key = keys.next();
+
+     if(key.startsWith(id))
+     {
+      keys.remove();
+
+      removed = true;
+     }
+     else
+      break;
+    }
+
+   }
+
+
+  }
+
+  return removed;
+ }
+
+ @Override
+ public Object getAnnotation(ReadLock lock, Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
+ {
+  if(!((TrnImp) lock).isActive())
+   throw new InvalidStateException();
+
+  SortedMap<String, Serializable> tMap = annotMap.get(tpc);
+
+  if(tMap == null)
+   return null;
+
+  Entity cEnt = objId;
+
+  do
+  {
+   String id = createEntityId(cEnt);
+
+   Object annt = tMap.get(id);
+
+   if(annt != null || !recurs)
+    return annt;
+
+   cEnt = cEnt.getParentEntity();
+  } while(cEnt != null);
+
+  return null;
+ }
 
  @Override
  public void prepareTransaction(Transaction t) throws TransactionException
