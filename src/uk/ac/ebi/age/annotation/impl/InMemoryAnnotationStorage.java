@@ -7,9 +7,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedMap;
 
 import org.apache.commons.transaction.file.FileResourceManager;
 import org.apache.commons.transaction.file.ResourceManagerException;
@@ -32,7 +29,8 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
 {
  private static final String serialFileName = "annotdb.ser";
 
- private Map< Topic, SortedMap<String,Serializable> > annotMap;
+ private AnnotationCache cache;
+// private Map< Topic, SortedMap<String,Serializable> > annotMap;
 
  private static class TrnImp implements Transaction, TokenW
  {
@@ -85,8 +83,8 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
   }
   else
   {
-   annotMap = new HashMap<Topic, SortedMap<String,Serializable>>();
-
+   cache = new AnnotationCache();
+   
    String txId;
 
    try
@@ -97,7 +95,7 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
     
     ObjectOutputStream oos = new ObjectOutputStream(outputStream);
     
-    oos.writeObject(annotMap);
+    oos.writeObject(cache);
     
     oos.close();
     
@@ -111,7 +109,6 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
   }
  }
  
- @SuppressWarnings("unchecked")
  private void readData() throws IOException
  {
   FileInputStream fis = new FileInputStream(serialFile);
@@ -119,7 +116,7 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
   
   try
   {
-   annotMap = (Map<Topic, SortedMap<String,Serializable>>)ois.readObject();
+   cache = (AnnotationCache)ois.readObject();
   }
   catch(ClassNotFoundException e)
   {
@@ -131,7 +128,7 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
  }
 
  @Override
- public boolean addAnnotation(Topic tpc, Entity objId, Serializable value)
+ public boolean addAnnotation(Topic tpc, Entity objId, Serializable value) throws AnnotationDBException
  {
   
   Transaction t = startTransaction();
@@ -181,7 +178,7 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
 
   ObjectOutputStream oos = new ObjectOutputStream(outputStream);
 
-  oos.writeObject(annotMap);
+  oos.writeObject(cache);
   
   oos.close();
 
@@ -295,5 +292,54 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
  {
   if(!((TrnImp) t).isActive())
    throw new InvalidStateException();
+ }
+
+ @Override
+ public Object getAnnotation(ReadLock lock, Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
+ {
+  if(!((TrnImp) lock).isActive())
+   throw new InvalidStateException();
+
+
+  Entity cEnt = objId;
+
+  do
+  {
+   String id = createEntityId(cEnt);
+
+   Object annt = cache.getAnnotation(tpc, id);
+
+   if(annt != null || !recurs)
+    return annt;
+
+   cEnt = cEnt.getParentEntity();
+  } while(cEnt != null);
+
+  return null;
+ }
+
+
+ @Override
+ public boolean addAnnotation(Transaction trn, Topic tpc, Entity objId, Serializable value) throws AnnotationDBException
+ {
+  if(!((TrnImp) trn).isActive())
+   throw new InvalidStateException();
+
+  dirty = true;
+  
+  return cache.addAnnotation(tpc, createEntityId(objId), value);
+ }
+
+ @Override
+ public boolean removeAnnotation(Transaction trn, Topic tpc, Entity objId, boolean rec) throws AnnotationDBException
+ {
+  if(!((TrnImp) trn).isActive())
+   throw new InvalidStateException();
+
+  dirty = true;
+
+  String id = createEntityId(objId);
+
+  return cache.removeAnnotation(tpc, id, rec);
  }
 }

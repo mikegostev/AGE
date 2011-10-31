@@ -2,6 +2,7 @@ package uk.ac.ebi.age.annotation.impl;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
@@ -9,20 +10,27 @@ import java.util.TreeMap;
 
 import uk.ac.ebi.age.annotation.Topic;
 
-public class AnnotationCache
+public class AnnotationCache implements Serializable
 {
+
+ private static final long serialVersionUID = 1L;
+
  private long verison;
 
- private Map< Topic, SortedMap<String, Serializable> > annotMap;
+ private Map< Topic, SortedMap<String, Object> > annotMap;
 
- 
- public boolean addAnnotation(Topic tpc, String objId, Serializable value)
+ public AnnotationCache()
  {
-  SortedMap<String, Serializable> tMap = annotMap.get(tpc);
+  annotMap = new HashMap<Topic, SortedMap<String,Object>>();
+ }
+ 
+ public boolean addAnnotation(Topic tpc, String objId, Object value)
+ {
+  SortedMap<String, Object> tMap = annotMap.get(tpc);
 
   if(tMap == null)
   {
-   tMap = new TreeMap<String, Serializable>();
+   tMap = new TreeMap<String, Object>();
 
    annotMap.put(tpc, tMap);
   }
@@ -35,13 +43,13 @@ public class AnnotationCache
 
  public boolean removeAnnotation(Topic tpc, String id, boolean rec)
  {
-  Collection<SortedMap<String, Serializable>> maps;
+  Collection<SortedMap<String, Object>> maps;
 
   if(tpc == null)
    maps = annotMap.values();
   else
   {
-   SortedMap<String, Serializable> tMap = annotMap.get(tpc);
+   SortedMap<String, Object> tMap = annotMap.get(tpc);
 
    if(tMap != null)
     maps = java.util.Collections.singleton(tMap);
@@ -51,14 +59,14 @@ public class AnnotationCache
 
   boolean removed = false;
 
-  for(SortedMap<String, Serializable> tMap : maps)
+  for(SortedMap<String, Object> tMap : maps)
   {
 
    if(!rec)
     return tMap.remove(id) != null;
    else
    {
-    Map<String, Serializable> smp = tMap.tailMap(id);
+    Map<String, Object> smp = tMap.tailMap(id);
 
     Iterator<String> keys = smp.keySet().iterator();
 
@@ -85,7 +93,7 @@ public class AnnotationCache
 
  public Object getAnnotation(Topic tpc, String id)
  {
-  SortedMap<String, Serializable> tMap = annotMap.get(tpc);
+  SortedMap<String, Object> tMap = annotMap.get(tpc);
 
   if(tMap == null)
    return null;

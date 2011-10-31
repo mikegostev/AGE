@@ -2,6 +2,7 @@ package uk.ac.ebi.age.annotation.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -11,6 +12,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.apache.commons.transaction.file.FileResourceManager;
 
 import uk.ac.ebi.age.annotation.AnnotationDBInitException;
 import uk.ac.ebi.age.annotation.Topic;
@@ -29,71 +32,186 @@ import com.pri.util.ObjectRecycler;
 
 public class H2AnnotationStorage extends AbstractAnnotationStorage
 {
- private static final String annotationDB = "ANNOTATIONDB";
- private static final String annotationTable = "ANNOTATION";
+ private static final String           serialFileName      = "annotdb.ser";
+ private static final String           h2DbPath            = "h2db";
 
- private static final String selectAnnotationSQL = "SELECT data FROM " + annotationDB + '.' + annotationTable + " WHERE topic='";
- private static final String deleteAnnotationSQL = "DELETE FROM " + annotationDB + '.' + annotationTable + " WHERE ";
- private static final String insertAnnotationSQL = "MERGE INTO " + annotationDB + '.' + annotationTable + " (id,topic,data) VALUES (?,?,?)";
+ private static final String           annotationDB        = "ANNOTATIONDB";
+ private static final String           annotationTable     = "ANNOTATION";
 
- private String connectionString;
- 
- private Connection permConn;
+ private static final String           selectAnnotationSQL = "SELECT data FROM " + annotationDB + '.' + annotationTable + " WHERE topic='";
+ private static final String           deleteAnnotationSQL = "DELETE FROM " + annotationDB + '.' + annotationTable + " WHERE ";
+ private static final String           insertAnnotationSQL = "MERGE INTO " + annotationDB + '.' + annotationTable + " (id,topic,data) VALUES (?,?,?)";
+ private static final String           getDBVerSQL         = "SELECT LAST_MODIFICATION FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_CATALOG='" + h2DbPath
+                                                             + "' AND TABLE_SCHEMA='" + annotationDB + "' AND TABLE_NAME='" + annotationTable + "'";
 
- private ObjectRecycler< StringBuilder > sbRecycler = new ObjectRecycler<StringBuilder>(3);
- 
- private static final String h2DbPath = "h2db";
- 
- private RWArbiter<TrnInfo> arbiter = new RWArbiter<TrnInfo>( new TokenFactory<TrnInfo>()
+ private String                        connectionString;
+
+ private Connection                    permConn;
+
+ private AnnotationCache               cache;
+
+ private ObjectRecycler<StringBuilder> sbRecycler          = new ObjectRecycler<StringBuilder>(3);
+
+ private FileResourceManager           txManager;
+ private String                        cacheFileRelPath;
+ private File                          cacheFile;
+
+ private boolean                       cacheDirty          = false;
+
+ private RWArbiter<TrnInfo>            arbiter             = new RWArbiter<TrnInfo>(new TokenFactory<TrnInfo>()
+                                                           {
+                                                            @Override
+                                                            public TrnInfo createToken()
+                                                            {
+                                                             return new TrnInfo();
+                                                            }
+                                                           });
+
+ public H2AnnotationStorage(FileResourceManager frm, String annRelPath) throws AnnotationDBInitException
  {
-  @Override
-  public TrnInfo createToken()
-  {
-   return new TrnInfo();
-  }
- });
+  File annotDir = new File(frm.getStoreDir(), annRelPath);
 
- public H2AnnotationStorage( File anntDbRoot ) throws AnnotationDBInitException
- {
   try
   {
    Class.forName("org.h2.Driver");
-   
-   connectionString = "jdbc:h2:"+new File(anntDbRoot,h2DbPath).getAbsolutePath();
-   
+
+   connectionString = "jdbc:h2:" + new File(annotDir, h2DbPath).getAbsolutePath();
+
    permConn = DriverManager.getConnection(connectionString, "sa", "");
-   
+
    initAnnotationDb();
 
   }
   catch(Exception e)
   {
    e.printStackTrace();
-   
+
    throw new AnnotationDBInitException(e);
   }
+
+  txManager = frm;
+
+  cacheFileRelPath = annRelPath + "/" + serialFileName;
+
+  cacheFile = new File(frm.getStoreDir(), cacheFileRelPath);
+
+  if(cacheFile.exists())
+  {
+   try
+   {
+    FileInputStream fis = new FileInputStream(cacheFile);
+    ObjectInputStream ois = new ObjectInputStream(fis);
+
+    cache = (AnnotationCache) ois.readObject();
+
+    fis.close();
+   }
+   catch(Exception e)
+   {
+    throw new AnnotationDBInitException(e);
+   }
+
+   long ver = -1;
+   Statement stmt;
+   try
+   {
+    stmt = permConn.createStatement();
+
+    ResultSet rst = stmt.executeQuery(getDBVerSQL);
+
+    if(rst.next())
+     ver = rst.getLong(1);
+    else
+     throw new Exception("Can't get database version");
+   }
+   catch(Exception e)
+   {
+    throw new AnnotationDBInitException(e);
+   }
+
+   if(ver != cache.getVerison())
+    buildCache();
+
+  }
+  else
+   buildCache();
  }
- 
- private Statement getStatement( TrnInfo ti ) throws SQLException
+
+ private void buildCache() throws AnnotationDBInitException
  {
-  if( ti.getStatement() != null )
+  cache = new AnnotationCache();
+
+  Statement stmt;
+  try
+  {
+   stmt = permConn.createStatement();
+
+   ResultSet rst = stmt.executeQuery("SELECT * FROM " + annotationDB + '.' + annotationTable);
+
+   boolean hasData = false;
+
+   while(rst.next())
+   {
+    hasData = true;
+
+    Topic tpc = Topic.valueOf(rst.getString("topic"));
+
+    ObjectInputStream ois = new ObjectInputStream(rst.getBinaryStream("data"));
+
+    Object ann = ois.readObject();
+
+    cache.addAnnotation(tpc, rst.getString("id"), ann);
+   }
+
+   rst.close();
+
+   rst = stmt.executeQuery(getDBVerSQL);
+
+   if(rst.next())
+    cache.setVerison(rst.getLong(1));
+   else
+    throw new Exception("Can't get database version");
+
+   if(hasData)
+    setCacheDirty();
+
+   rst.close();
+   stmt.close();
+  }
+  catch(Exception e)
+  {
+   throw new AnnotationDBInitException(e);
+  }
+
+ }
+
+ private void setCacheDirty()
+ {
+  // TODO Auto-generated method stub
+  throw new dev.NotImplementedYetException();
+  //
+ }
+
+ private Statement getStatement(TrnInfo ti) throws SQLException
+ {
+  if(ti.getStatement() != null)
    return ti.getStatement();
 
   Statement s = permConn.createStatement();
-  
+
   ti.setStatement(s);
-  
+
   return s;
  }
 
- 
  private void initAnnotationDb() throws SQLException
  {
   Statement stmt = permConn.createStatement();
 
   stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS " + annotationDB);
 
-  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS " + annotationDB + '.' + annotationTable + " (" + "id VARCHAR, topic VARCHAR, data BINARY, PRIMARY KEY (id,topic))");
+  stmt.executeUpdate("CREATE TABLE IF NOT EXISTS " + annotationDB + '.' + annotationTable + " ("
+    + "id VARCHAR, topic VARCHAR, data BINARY, PRIMARY KEY (id,topic))");
 
   permConn.commit();
 
@@ -101,10 +219,10 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  }
 
  @Override
- public Object getAnnotation( Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
+ public Object getAnnotation(Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
  {
   TrnInfo ti = arbiter.getReadLock();
-  
+
   try
   {
    return getAnnotation(ti, tpc, objId, recurs);
@@ -121,40 +239,40 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    }
   }
  }
- 
+
  @Override
  public Object getAnnotation(ReadLock lock, Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
  {
-  if( ! ((TrnInfo)lock).isActive() )
+  if(!((TrnInfo) lock).isActive())
    throw new InvalidStateException();
-  
+
   StringBuilder sb = sbRecycler.getObject();
-  
-  if( sb == null )
+
+  if(sb == null)
    sb = new StringBuilder(200);
 
   Statement stmt = null;
-  
+
   try
   {
-   
-   stmt = getStatement( (TrnInfo)lock );
-   
+
+   stmt = getStatement((TrnInfo) lock);
+
    Entity ce = objId;
-   
+
    Object annot = null;
-   
+
    sb.append(selectAnnotationSQL).append(tpc.name()).append("' AND id='");
    int pos = sb.length();
-   
+
    do
    {
     sb.setLength(pos);
     appendEntityId(ce, sb, true, '\'', '\'');
     sb.append('\'');
 
-    String req = sb.toString();    
-    
+    String req = sb.toString();
+
     ResultSet rst = stmt.executeQuery(req);
 
     try
@@ -175,16 +293,15 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
       break;
      }
-     
+
     }
     finally
     {
      rst.close();
     }
-    
-   }
-   while( ce != null );
-   
+
+   } while(ce != null);
+
    return annot;
   }
   catch(ClassNotFoundException e)
@@ -208,13 +325,13 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  public boolean addAnnotation(Topic tpc, Entity objId, Serializable value) throws AnnotationDBException
  {
   TrnInfo ti = arbiter.getWriteLock();
-  
+
   try
   {
    boolean res = addAnnotation(ti, tpc, objId, value);
-   
+
    permConn.commit();
-   
+
    return res;
   }
   catch(SQLException e)
@@ -232,9 +349,9 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    {
     e.printStackTrace();
    }
-   
+
   }
-  
+
  }
 
  @Override
@@ -244,24 +361,24 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    throw new InvalidStateException();
 
   PreparedStatement pstmt = null;
-  
+
   try
   {
    pstmt = permConn.prepareStatement(insertAnnotationSQL);
-   
+
    pstmt.setString(1, createEntityId(objId));
    pstmt.setString(2, tpc.name());
-   
+
    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-   ObjectOutputStream oos = new ObjectOutputStream( baos );
-   
+   ObjectOutputStream oos = new ObjectOutputStream(baos);
+
    oos.writeObject(value);
    oos.close();
-   
+
    pstmt.setBytes(3, baos.toByteArray());
-   
-   return pstmt.executeUpdate() > 0 ;
-   
+
+   return pstmt.executeUpdate() > 0;
+
   }
   catch(Exception e)
   {
@@ -270,7 +387,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   }
   finally
   {
-   if( pstmt != null )
+   if(pstmt != null)
    {
     try
     {
@@ -287,28 +404,27 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  @Override
  public boolean removeAnnotation(Transaction trn, Topic tpc, Entity objId, boolean rec) throws AnnotationDBException
  {
-  if( ! ((TrnInfo)trn).isActive() )
+  if(!((TrnInfo) trn).isActive())
    throw new InvalidStateException();
-  
+
   StringBuilder sb = sbRecycler.getObject();
-  
-  if( sb == null )
+
+  if(sb == null)
    sb = new StringBuilder(200);
 
   Statement stmt = null;
-  
+
   try
   {
-   
-   stmt = getStatement( (TrnInfo)trn );
-   
-   
+
+   stmt = getStatement((TrnInfo) trn);
+
    sb.append(deleteAnnotationSQL);
-   
-   if( tpc != null )
-    sb.append("topic='").append( tpc.name() ).append("' AND ");
-   
-   if( rec )
+
+   if(tpc != null)
+    sb.append("topic='").append(tpc.name()).append("' AND ");
+
+   if(rec)
    {
     sb.append("id LIKE '");
     appendEntityId(objId, sb, true, '\'', '\'');
@@ -320,9 +436,9 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
     appendEntityId(objId, sb, true, '\'', '\'');
     sb.append('\'');
    }
-   
+
    return stmt.executeUpdate(sb.toString()) > 0;
-   
+
   }
   catch(Exception e)
   {
@@ -345,23 +461,23 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  @Override
  public void releaseLock(ReadLock l)
  {
-  if( ! ((TrnInfo)l).isActive())
+  if(!((TrnInfo) l).isActive())
    throw new InvalidStateException();
 
-  if( arbiter.isWriteToken((TrnInfo)l) )
+  if(arbiter.isWriteToken((TrnInfo) l))
    throw new InvalidStateException("Use commit or rollback for transactions");
-  
+
   try
   {
-   arbiter.releaseLock((TrnInfo)l);
+   arbiter.releaseLock((TrnInfo) l);
   }
   catch(InvalidTokenException e)
   {
    throw new InvalidStateException();
   }
-  
-  Statement s = ((TrnInfo)l).getStatement();
-  
+
+  Statement s = ((TrnInfo) l).getStatement();
+
   try
   {
    if(s != null)
@@ -370,7 +486,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   catch(SQLException e)
   {
    e.printStackTrace();
-  } 
+  }
  }
 
  @Override
@@ -382,19 +498,19 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  @Override
  public void commitTransaction(Transaction t) throws TransactionException
  {
-  if( ! ((TrnInfo)t).isActive() )
+  if(!((TrnInfo) t).isActive())
    throw new InvalidStateException();
 
   try
   {
-   if( ! ((TrnInfo)t).isPrepared() )
+   if(!((TrnInfo) t).isPrepared())
    {
     permConn.commit();
     return;
    }
-   
-   Statement s = getStatement( (TrnInfo)t );
-   
+
+   Statement s = getStatement((TrnInfo) t);
+
    s.executeUpdate("COMMIT TRANSACTION T1");
   }
   catch(SQLException e)
@@ -405,16 +521,16 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   {
    try
    {
-    arbiter.releaseLock((TrnInfo)t);
+    arbiter.releaseLock((TrnInfo) t);
    }
    catch(InvalidTokenException e)
    {
-    throw new TransactionException("Invalid token type",e);
+    throw new TransactionException("Invalid token type", e);
    }
-   
-   Statement s = ((TrnInfo)t).getStatement();
-   
-   if( s != null )
+
+   Statement s = ((TrnInfo) t).getStatement();
+
+   if(s != null)
    {
     try
     {
@@ -426,25 +542,25 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
     }
    }
   }
-  
+
  }
 
  @Override
  public void rollbackTransaction(Transaction t) throws TransactionException
  {
-  if( ! ((TrnInfo)t).isActive() )
+  if(!((TrnInfo) t).isActive())
    throw new InvalidStateException();
 
   try
   {
-   if( ! ((TrnInfo)t).isPrepared() )
+   if(!((TrnInfo) t).isPrepared())
    {
     permConn.rollback();
     return;
    }
-   
-   Statement s = getStatement( (TrnInfo)t );
-   
+
+   Statement s = getStatement((TrnInfo) t);
+
    s.executeUpdate("ROLLBACK TRANSACTION T1");
   }
   catch(SQLException e)
@@ -455,16 +571,16 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   {
    try
    {
-    arbiter.releaseLock((TrnInfo)t);
+    arbiter.releaseLock((TrnInfo) t);
    }
    catch(InvalidTokenException e)
    {
-    throw new TransactionException("Invalid token type",e);
+    throw new TransactionException("Invalid token type", e);
    }
-   
-   Statement s = ((TrnInfo)t).getStatement();
-   
-   if( s != null )
+
+   Statement s = ((TrnInfo) t).getStatement();
+
+   if(s != null)
    {
     try
     {
@@ -484,11 +600,11 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  {
   try
   {
-   Statement s = getStatement( (TrnInfo)t );
-   
+   Statement s = getStatement((TrnInfo) t);
+
    s.executeUpdate("PREPARE COMMIT T1");
-   
-   ((TrnInfo)t).setPrepared( true );
+
+   ((TrnInfo) t).setPrepared(true);
   }
   catch(SQLException e)
   {
@@ -498,10 +614,9 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
  private static class TrnInfo implements TokenW, Transaction
  {
-  private boolean active = true;
-  private boolean prepared = false;
+  private boolean   active   = true;
+  private boolean   prepared = false;
   private Statement stmt;
-  
 
   public boolean isActive()
   {
