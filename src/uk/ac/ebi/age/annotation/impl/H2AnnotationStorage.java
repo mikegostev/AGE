@@ -3,8 +3,10 @@ package uk.ac.ebi.age.annotation.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -12,8 +14,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.transaction.file.FileResourceManager;
+import org.apache.commons.transaction.file.ResourceManagerException;
 
 import uk.ac.ebi.age.annotation.AnnotationDBInitException;
 import uk.ac.ebi.age.annotation.Topic;
@@ -23,6 +27,8 @@ import uk.ac.ebi.age.transaction.InvalidStateException;
 import uk.ac.ebi.age.transaction.ReadLock;
 import uk.ac.ebi.age.transaction.Transaction;
 import uk.ac.ebi.age.transaction.TransactionException;
+import uk.ac.ebi.mg.assertlog.Log;
+import uk.ac.ebi.mg.assertlog.LogFactory;
 import uk.ac.ebi.mg.rwarbiter.InvalidTokenException;
 import uk.ac.ebi.mg.rwarbiter.RWArbiter;
 import uk.ac.ebi.mg.rwarbiter.TokenFactory;
@@ -32,6 +38,10 @@ import com.pri.util.ObjectRecycler;
 
 public class H2AnnotationStorage extends AbstractAnnotationStorage
 {
+ private static long CACHE_DUMP_DELAY = 30000;
+ 
+ private static Log log = LogFactory.getLog(H2AnnotationStorage.class);
+ 
  private static final String           serialFileName      = "annotdb.ser";
  private static final String           h2DbPath            = "h2db";
 
@@ -56,7 +66,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  private String                        cacheFileRelPath;
  private File                          cacheFile;
 
- private boolean                       cacheDirty          = false;
+ private AtomicBoolean                 cacheDirty          = new AtomicBoolean(false);
 
  private RWArbiter<TrnInfo>            arbiter             = new RWArbiter<TrnInfo>(new TokenFactory<TrnInfo>()
                                                            {
@@ -66,6 +76,8 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
                                                              return new TrnInfo();
                                                             }
                                                            });
+
+ private long lastUpdateTime;
 
  public H2AnnotationStorage(FileResourceManager frm, String annRelPath) throws AnnotationDBInitException
  {
@@ -95,6 +107,8 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
   cacheFile = new File(frm.getStoreDir(), cacheFileRelPath);
 
+  lastUpdateTime = System.currentTimeMillis();
+  
   if(cacheFile.exists())
   {
    try
@@ -105,16 +119,10 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
     cache = (AnnotationCache) ois.readObject();
 
     fis.close();
-   }
-   catch(Exception e)
-   {
-    throw new AnnotationDBInitException(e);
-   }
 
-   long ver = -1;
-   Statement stmt;
-   try
-   {
+    long ver = -1;
+    Statement stmt;
+
     stmt = permConn.createStatement();
 
     ResultSet rst = stmt.executeQuery(getDBVerSQL);
@@ -122,18 +130,25 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
     if(rst.next())
      ver = rst.getLong(1);
     else
-     throw new Exception("Can't get database version");
+     throw new SQLException("Can't get database version");
+
+    stmt.close();
+
+    if(ver != cache.getVerison())
+     buildCache();
+    
+   }
+   catch( AnnotationDBInitException ae )
+   {
+    throw ae;
    }
    catch(Exception e)
    {
     throw new AnnotationDBInitException(e);
    }
-
-   if(ver != cache.getVerison())
-    buildCache();
-
   }
-  else
+
+  if( cache == null ) 
    buildCache();
  }
 
@@ -187,10 +202,96 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
  private void setCacheDirty()
  {
-  // TODO Auto-generated method stub
-  throw new dev.NotImplementedYetException();
-  //
+  if( cacheDirty.getAndSet(true) )
+   return;
+  
+  new Thread()
+  {
+   @Override
+   public void run()
+   {
+    setName("Annotation Db cache sync");
+    
+    while( true )
+    {
+     if( System.currentTimeMillis()-lastUpdateTime > CACHE_DUMP_DELAY )
+     {
+      TokenW wtok = arbiter.getWriteLock();
+      
+      try
+      {
+       syncCache();
+       cacheDirty.set(false);
+      }
+      catch(Exception e)
+      {
+       log.error("Can't sync cache",e);
+      }
+      finally
+      {
+       try
+       {
+        arbiter.releaseLock(wtok);
+       }
+       catch(InvalidTokenException e)
+       {
+       }
+      }
+      
+      return;
+     }
+     
+     try
+     {
+      Thread.sleep(CACHE_DUMP_DELAY);
+     }
+     catch(InterruptedException e)
+     {
+     }
+    }
+   }
+  }
+  .start();
+  
  }
+ 
+ private void syncCache() throws ResourceManagerException, IOException, SQLException
+ {
+  long ver = -1;
+  Statement stmt;
+
+  stmt = permConn.createStatement();
+
+  ResultSet rst = stmt.executeQuery(getDBVerSQL);
+
+  if(rst.next())
+   ver = rst.getLong(1);
+  else
+   throw new SQLException("Can't get database version");
+
+  stmt.close();
+
+  cache.setVerison(ver);
+  
+  String txId;
+
+  txId = txManager.generatedUniqueTxId();
+
+  txManager.startTransaction(txId);
+
+  txManager.moveResource(txId, cacheFileRelPath, cacheFileRelPath + ".bak", true);
+
+  OutputStream outputStream = txManager.writeResource(txId, cacheFileRelPath);
+
+  ObjectOutputStream oos = new ObjectOutputStream(outputStream);
+
+  oos.writeObject(cache);
+  
+  oos.close();
+
+  txManager.commitTransaction(txId);
+ }
+
 
  private Statement getStatement(TrnInfo ti) throws SQLException
  {
@@ -242,6 +343,28 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
  @Override
  public Object getAnnotation(ReadLock lock, Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
+ {
+  if(!((TrnInfo) lock).isActive())
+   throw new InvalidStateException();
+
+  Entity cEnt = objId;
+
+  do
+  {
+   String id = createEntityId(cEnt);
+
+   Object annt = cache.getAnnotation(tpc, id);
+
+   if(annt != null || !recurs)
+    return annt;
+
+   cEnt = cEnt.getParentEntity();
+  } while(cEnt != null);
+
+  return null;
+ }
+ 
+ public Object getAnnotationNC(ReadLock lock, Topic tpc, Entity objId, boolean recurs) throws AnnotationDBException
  {
   if(!((TrnInfo) lock).isActive())
    throw new InvalidStateException();
@@ -366,7 +489,9 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   {
    pstmt = permConn.prepareStatement(insertAnnotationSQL);
 
-   pstmt.setString(1, createEntityId(objId));
+   String entId = createEntityId(objId);
+   
+   pstmt.setString(1, entId);
    pstmt.setString(2, tpc.name());
 
    ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -377,8 +502,14 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
    pstmt.setBytes(3, baos.toByteArray());
 
-   return pstmt.executeUpdate() > 0;
+   if( pstmt.executeUpdate() == 0 )
+    return false;
+   
+   lastUpdateTime = System.currentTimeMillis();
+   
+   setCacheDirty();
 
+   return cache.addAnnotation(tpc, entId, value);
   }
   catch(Exception e)
   {
@@ -436,9 +567,13 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
     appendEntityId(objId, sb, true, '\'', '\'');
     sb.append('\'');
    }
+   
+   stmt.executeUpdate(sb.toString());
 
-   return stmt.executeUpdate(sb.toString()) > 0;
-
+   lastUpdateTime = System.currentTimeMillis();
+   setCacheDirty();
+   
+   return cache.removeAnnotation(tpc, createEntityId(objId), rec);
   }
   catch(Exception e)
   {
@@ -562,8 +697,10 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    Statement s = getStatement((TrnInfo) t);
 
    s.executeUpdate("ROLLBACK TRANSACTION T1");
+   
+   buildCache();
   }
-  catch(SQLException e)
+  catch(Exception e)
   {
    throw new TransactionException("Rollback failed", e);
   }
