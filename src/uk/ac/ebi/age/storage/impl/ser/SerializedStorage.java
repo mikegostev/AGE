@@ -19,9 +19,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import uk.ac.ebi.age.conf.Constants;
 import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.LogNode.Level;
@@ -66,11 +63,14 @@ import uk.ac.ebi.age.storage.index.TextIndexWritable;
 import uk.ac.ebi.age.util.FileUtil;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
+import uk.ac.ebi.mg.assertlog.Log;
+import uk.ac.ebi.mg.assertlog.LogFactory;
 import uk.ac.ebi.mg.filedepot.FileDepot;
 import uk.ac.ebi.mg.time.UniqTime;
 
 import com.pri.util.Extractor;
 import com.pri.util.M2codec;
+import com.pri.util.StringUtils;
 import com.pri.util.collection.CollectionsUnion;
 import com.pri.util.collection.ExtractorCollection;
 
@@ -85,7 +85,7 @@ public class SerializedStorage implements AgeStorageAdm
   }
  };
  
- private Log log = LogFactory.getLog(this.getClass());
+ private static Log log = LogFactory.getLog(SerializedStorage.class);
  
  private static final String modelPath = "model";
  private static final String indexPath = "index";
@@ -626,7 +626,7 @@ public class SerializedStorage implements AgeStorageAdm
 
   Stats totals = new Stats();
  
-  System.out.printf("Free mem: %,d Max mem: %,d Total mem: %,d\n",Runtime.getRuntime().freeMemory(),Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory());
+  assert log.info( String.format("Free mem: %,d Max mem: %,d Total mem: %,d",Runtime.getRuntime().freeMemory(),Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory() ) );
  
   long stTime = System.currentTimeMillis();
   long stMem = Runtime.getRuntime().totalMemory();
@@ -635,13 +635,17 @@ public class SerializedStorage implements AgeStorageAdm
   {
    dbLock.writeLock().lock();
 
-   int nCores = Runtime.getRuntime().availableProcessors();
+   int nCores = Runtime.getRuntime().availableProcessors()+2;
    
    CountDownLatch latch = new CountDownLatch(nCores);
    BlockingQueue<File> queue = new LinkedBlockingDeque<File>(100);
    
-   System.out.println("Starting "+nCores+" parallel loaders");
+   log.info("Starting "+nCores+" parallel loaders");
    
+   long startTime=0;
+   
+   assert ( startTime = System.currentTimeMillis() ) != 0;
+
    for( int i=1; i <= nCores; i++ )
     new Thread( new ModuleLoader(queue,totals,latch), "Data Loader "+i).start();
    
@@ -674,7 +678,10 @@ public class SerializedStorage implements AgeStorageAdm
    
    latch.await();
 
-   
+   assert log.info( "Module files load time: "+StringUtils.millisToString(System.currentTimeMillis()-startTime));
+
+   assert ( startTime = System.currentTimeMillis() ) != 0;
+
    for( DataModuleWritable mod : moduleMap.values() )
    {
     Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(mod.getClusterId());
@@ -807,9 +814,12 @@ public class SerializedStorage implements AgeStorageAdm
     connectObjectAttributes( obj, clustMap );
    }
    
+   assert log.info( "Module linking time: "+StringUtils.millisToString(System.currentTimeMillis()-startTime));
+
+   
    long totTime = System.currentTimeMillis()-stTime;
    
-   System.out.println("Loaded"
+   log.info("Loaded:"
      +"\nmodules: "+totals.getModulesCount()
      +"\nfailed modules: "+totals.getFailedModulesCount()
      +"\nobjects: "+totals.getObjectCount()
@@ -828,8 +838,8 @@ public class SerializedStorage implements AgeStorageAdm
    
    totals = null;
    
-   System.out.printf("Free mem: %,d Max mem: %,d Total mem: %,d Time: %dms\n",
-     Runtime.getRuntime().freeMemory(),Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory(),System.currentTimeMillis()-stTime);
+   assert log.info(String.format("Free mem: %,d Max mem: %,d Total mem: %,d Time: %dms",
+     Runtime.getRuntime().freeMemory(),Runtime.getRuntime().maxMemory(),Runtime.getRuntime().totalMemory(),System.currentTimeMillis()-stTime));
 
   }
   catch(Exception e)
@@ -871,6 +881,10 @@ public class SerializedStorage implements AgeStorageAdm
  
  private void loadModel() throws StorageInstantiationException
  {
+  long startTime=0;
+  
+  assert ( startTime = System.currentTimeMillis() ) != 0;
+
   try
   {
    ObjectInputStream ois = new ObjectInputStream( new FileInputStream(modelFile) );
@@ -886,6 +900,8 @@ public class SerializedStorage implements AgeStorageAdm
   {
    throw new StorageInstantiationException("Can't read model. System error", e);
   }
+  
+  assert log.info("Model load time: "+(System.currentTimeMillis()-startTime)+"ms");
  }
  
  private void saveModel(SemanticModel sm) throws ModelStoreException

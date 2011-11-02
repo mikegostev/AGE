@@ -51,7 +51,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
  private static final String           selectAnnotationSQL = "SELECT data FROM " + annotationDB + '.' + annotationTable + " WHERE topic='";
  private static final String           deleteAnnotationSQL = "DELETE FROM " + annotationDB + '.' + annotationTable + " WHERE ";
  private static final String           insertAnnotationSQL = "MERGE INTO " + annotationDB + '.' + annotationTable + " (id,topic,data) VALUES (?,?,?)";
- private static final String           getDBVerSQL         = "SELECT LAST_MODIFICATION FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_CATALOG='" + h2DbPath
+ private static final String           getDBVerSQL         = "SELECT LAST_MODIFICATION FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_CATALOG='" + h2DbPath.toUpperCase()
                                                              + "' AND TABLE_SCHEMA='" + annotationDB + "' AND TABLE_NAME='" + annotationTable + "'";
 
  private String                        connectionString;
@@ -81,6 +81,8 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
  public H2AnnotationStorage(FileResourceManager frm, String annRelPath) throws AnnotationDBInitException
  {
+  long startTime=0;
+  
   File annotDir = new File(frm.getStoreDir(), annRelPath);
 
   try
@@ -111,14 +113,19 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   
   if(cacheFile.exists())
   {
+
    try
    {
+    assert ( startTime = System.currentTimeMillis() ) != 0;
+
     FileInputStream fis = new FileInputStream(cacheFile);
     ObjectInputStream ois = new ObjectInputStream(fis);
 
     cache = (AnnotationCache) ois.readObject();
 
     fis.close();
+
+    assert log.info("Cache read time: "+(System.currentTimeMillis()-startTime)+"ms");
 
     long ver = -1;
     Statement stmt;
@@ -154,6 +161,11 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
  private void buildCache() throws AnnotationDBInitException
  {
+  long startTime=0;
+  int annotCount=0;
+  
+  assert ( startTime = System.currentTimeMillis() ) != 0;
+  
   cache = new AnnotationCache();
 
   Statement stmt;
@@ -176,6 +188,8 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
     Object ann = ois.readObject();
 
     cache.addAnnotation(tpc, rst.getString("id"), ann);
+    
+    assert ++annotCount > 0;
    }
 
    rst.close();
@@ -198,9 +212,16 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
    throw new AnnotationDBInitException(e);
   }
 
+  assert log.info("Cache build time: "+(System.currentTimeMillis()-startTime)+"ms Annotations: "+annotCount);
+  
  }
 
  private void setCacheDirty()
+ {
+  cacheDirty.set(true);
+ }
+
+ private void setCacheDirty2()
  {
   if( cacheDirty.getAndSet(true) )
    return;
@@ -279,7 +300,8 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
   txManager.startTransaction(txId);
 
-  txManager.moveResource(txId, cacheFileRelPath, cacheFileRelPath + ".bak", true);
+  if( cacheFile.exists() )
+   txManager.moveResource(txId, cacheFileRelPath, cacheFileRelPath + ".bak", true);
 
   OutputStream outputStream = txManager.writeResource(txId, cacheFileRelPath);
 

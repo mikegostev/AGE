@@ -120,8 +120,6 @@ public class H2SubmissionDB extends SubmissionDB
    permConn = DriverManager.getConnection(connectionString, "sa", "");
    permConn.setAutoCommit(false);
    
-   System.out.println("DB URL: "+"jdbc:h2:"+new File(sbmDbRoot,h2DbPath).getAbsolutePath());
-   
    initSubmissionDb();
    
    docDepot = new FileDepot( new File(sbmDbRoot,docDepotPath), true );
