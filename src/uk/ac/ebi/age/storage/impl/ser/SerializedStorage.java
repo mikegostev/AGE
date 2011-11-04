@@ -1320,6 +1320,15 @@ public class SerializedStorage implements AgeStorageAdm
    unlockWrite();
   }
 
+  if( dataModified )
+  {
+   synchronized(chgListeners)
+   {
+    for(DataChangeListener chls : chgListeners )
+     chls.dataChanged();
+   }
+  }
+
   synchronized(mmodListeners)
   {
    for(MaintenanceModeListener mml : mmodListeners)
@@ -1331,15 +1340,6 @@ public class SerializedStorage implements AgeStorageAdm
    }
   }
   
-  if( dataModified )
-  {
-   synchronized(chgListeners)
-   {
-    for(DataChangeListener chls : chgListeners )
-     chls.dataChanged();
-   }
-  }
-
   return true;
  }
  

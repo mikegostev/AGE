@@ -119,7 +119,7 @@ public class StringUtil
   
   while( cpos < len )
   {
-   int pos = line.indexOf(sep);
+   int pos = line.indexOf(sep, cpos);
    
    if( pos == -1 )
    {

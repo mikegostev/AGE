@@ -175,6 +175,7 @@ public class H2SubmissionDB extends SubmissionDB
    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS mtimeIdx ON "+submissionDB+'.'+submissionTable+"(mtime)");
    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS creatorIdx ON "+submissionDB+'.'+submissionTable+"(creator)");
    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS modifierIdx ON "+submissionDB+'.'+submissionTable+"(modifier)");
+   stmt.executeUpdate("CREATE INDEX IF NOT EXISTS removedIdx ON "+submissionDB+'.'+submissionTable+"(removed)");
  
    stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+moduleTable+" ("+
      "id VARCHAR PRIMARY KEY, submid VARCHAR NOT NULL, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL," +
