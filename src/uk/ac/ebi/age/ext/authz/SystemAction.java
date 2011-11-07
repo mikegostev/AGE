@@ -12,7 +12,8 @@ public enum SystemAction
  CUSTQUALCLASSDEF("Define custom qualifier class", ActionGroup.CUSTCLASSDEF),
  CUSTRELCLASSDEF("Define custom relation class", ActionGroup.CUSTCLASSDEF),
  
- CREATESUBM("Create submission", ActionGroup.SUBMISSION );
+ CREATESUBM("Create submission", ActionGroup.SUBMISSION ),
+ EXPORT_GRAPH_DATA("Export full data graph", ActionGroup.EXPORT );
 
  
  public static enum ActionGroup
@@ -20,7 +21,8 @@ public enum SystemAction
   OBJECT_ACCESS("Common object access"),
   INSTANTATION("Object instantation"),
   CUSTCLASSDEF("Custom class definition"),
-  SUBMISSION("Submissions");
+  SUBMISSION("Submissions"), 
+  EXPORT("Data export");
 
   String description;
   
