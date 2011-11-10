@@ -26,4 +26,6 @@ public interface DataModuleWritable extends DataModule
 
  
  void registerExternalRelation( AgeExternalRelationWritable rel );
+ 
+ void pack();
 }

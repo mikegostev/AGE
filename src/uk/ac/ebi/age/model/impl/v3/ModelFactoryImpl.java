@@ -142,9 +142,9 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeRelationWritable createRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
+ public AgeRelationWritable createRelation(RelationClassRef rClsR, AgeObjectWritable targetObj)
  {
-  return new AgeRelationImpl(rClsR, sourceObj, targetObj);
+  return new AgeRelationImpl(rClsR, targetObj);
  }
 
 

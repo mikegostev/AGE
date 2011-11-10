@@ -317,4 +317,39 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  {
   return new ClusterEntity(clusterId);
  }
+
+
+ @Override
+ public void pack()
+ {
+  for( AgeObjectWritable obj : objects )
+   obj.pack();
+    
+  objects = new ArrayList<AgeObjectWritable>( objects ); 
+    
+  if( extRels!= null  )
+  {
+   for( AgeExternalRelationWritable extr : extRels )
+    extr.pack();
+   
+   extRels = new ArrayList<AgeExternalRelationWritable>( extRels ); 
+  }
+  
+  if( extObjAttrs!= null  )
+  {
+   for( AgeExternalObjectAttributeWritable extoa : extObjAttrs )
+    extoa.pack();
+   
+   extObjAttrs = new ArrayList<AgeExternalObjectAttributeWritable>( extObjAttrs ); 
+  }
+
+  if( fileRefs!= null  )
+  {
+   for( AgeFileAttributeWritable extfa : fileRefs )
+    extfa.pack();
+   
+   fileRefs = new ArrayList<AgeFileAttributeWritable>( fileRefs ); 
+  }
+ 
+ }
 }

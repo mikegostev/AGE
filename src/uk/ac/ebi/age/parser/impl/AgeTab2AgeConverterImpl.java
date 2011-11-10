@@ -262,12 +262,12 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
   if( ! result )
   {
-//   log.log(Level.ERROR, "Conversion failed");
    return null;
   }
   
 
-//  attributeAttachmentClass = new AttrAttchRel(sm.getAttributeAttachmentClass());
+  
+  imputeInverseRelations( res );
   
   finalizeValues( res.getObjects() );
   
@@ -306,7 +306,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
 //  validateData(res);
   
-  imputeInverseRelations( res );
   
   return res;
  }
@@ -417,6 +416,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 //   
 //  return  sm.getOrCreateCustomAgeClass(colHdr.getName(),null,parent);
 // }
+ 
  
  private void finalizeValues( Collection<? extends AttributedWritable> data ) //TODO
  {

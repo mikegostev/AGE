@@ -221,7 +221,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  @Override
  public AgeRelationWritable createRelation(RelationClassRef relClsR, AgeObjectWritable targetObj)
  {
-  AgeRelationWritable rel = getSemanticModel().createAgeRelation(relClsR, this, targetObj);
+  AgeRelationWritable rel = getSemanticModel().createAgeRelation(relClsR, targetObj);
   
   addRelation(rel);
   

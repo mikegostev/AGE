@@ -43,6 +43,8 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  void setIdScope( IdScope scp );
 // void setOriginalId(String nId);
 
+ void pack();
+
 
  
 // void resetModel();

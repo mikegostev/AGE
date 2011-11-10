@@ -9,7 +9,5 @@ public interface AgeRelation extends AgeObjectProperty, Attributed
  AgeRelationClass getAgeElClass();
  AgeRelation getInverseRelation();
  
-// int getOrder();
- 
  boolean isInferred();
 }

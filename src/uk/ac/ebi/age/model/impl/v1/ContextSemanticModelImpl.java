@@ -364,9 +364,9 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 
  
  @Override
- public AgeRelationWritable createAgeRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
+ public AgeRelationWritable createAgeRelation(RelationClassRef rClsR, AgeObjectWritable targetObj)
  {
-  return masterModel.getModelFactory().createRelation(rClsR,sourceObj, targetObj);
+  return masterModel.getModelFactory().createRelation(rClsR, targetObj);
  }
 
 

@@ -14,15 +14,13 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  private static final long serialVersionUID = 3L;
  
  private RelationClassRef relClassRef;
- private AgeObjectWritable source;
  private AgeObjectWritable target;
  private AgeRelationWritable invRelation;
  private boolean inferred=false;
  
- public AgeRelationImpl(RelationClassRef cref, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
+ public AgeRelationImpl(RelationClassRef cref, AgeObjectWritable targetObj)
  {
   relClassRef= cref;
-  source=sourceObj;
   target=targetObj;
  }
 
@@ -41,7 +39,7 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  @Override
  public AgeObjectWritable getSourceObject()
  {
-  return source;
+  return invRelation.getTargetObject();
  }
 
  @Override
@@ -79,9 +77,10 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  @Override
  public AgeRelationWritable createClone( AgeObjectWritable src )
  {
-  AgeRelationImpl clone = new AgeRelationImpl(relClassRef, src, getTargetObject());
+  AgeRelationImpl clone = new AgeRelationImpl(relClassRef, getTargetObject());
   
   cloneAttributes(clone);
+  clone.setInferred( isInferred() );
   
   return clone;
  }
@@ -101,6 +100,6 @@ class AgeRelationImpl extends AttributedObject implements AgeRelationWritable, S
  @Override
  public ContextSemanticModel getSemanticModel()
  {
-  return source.getSemanticModel();
+  return getSourceObject().getSemanticModel();
  }
 }

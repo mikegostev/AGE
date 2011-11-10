@@ -36,7 +36,7 @@ public abstract class ModelFactory
  public abstract AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host);
 
 
- public abstract AgeRelationWritable createRelation( RelationClassRef relClassRef, AgeObjectWritable sourceObj, AgeObjectWritable targetObj);
+ public abstract AgeRelationWritable createRelation( RelationClassRef relClassRef, AgeObjectWritable targetObj);
 
  
  public abstract AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, ContextSemanticModel sm);
