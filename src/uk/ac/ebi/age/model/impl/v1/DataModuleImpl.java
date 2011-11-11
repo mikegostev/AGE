@@ -239,4 +239,10 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  {
   throw new UnsupportedOperationException();
  }
+
+
+ @Override
+ public void pack()
+ {
+ }
 }

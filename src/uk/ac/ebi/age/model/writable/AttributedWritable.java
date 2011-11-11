@@ -28,4 +28,6 @@ public interface AttributedWritable extends Attributed
 
  void reset();
  void sortAttributes();
+ 
+ void pack();
 }

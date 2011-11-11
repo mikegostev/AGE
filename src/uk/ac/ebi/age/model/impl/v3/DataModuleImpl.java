@@ -23,16 +23,19 @@ import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
+import com.pri.util.collection.Collections;
+
 class DataModuleImpl  implements DataModuleWritable, Serializable
 {
  private static final long serialVersionUID = 3L;
  
 // private long version;
- private Collection<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
+ private List<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
+
  private ContextSemanticModel model;
- private Collection<AgeExternalRelationWritable> extRels ;
- private Collection<AgeExternalObjectAttributeWritable> extObjAttrs ;
- private Collection<AgeFileAttributeWritable> fileRefs ;
+ private List<AgeExternalRelationWritable> extRels ;
+ private List<AgeExternalObjectAttributeWritable> extObjAttrs ;
+ private List<AgeFileAttributeWritable> fileRefs ;
 
  private String id;
 // private String descr;
@@ -57,8 +60,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
 
  public void addObject(AgeObjectWritable obj)
  {
-
-  objects.add(obj);
+  objects = Collections.addToCompactList(objects, obj);
 
   if( obj.getRelations() != null )
   {
@@ -69,10 +71,13 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
      if(extRels == null)
       extRels = new ArrayList<AgeExternalRelationWritable>(10);
 
-     extRels.add((AgeExternalRelationWritable) rel);
+     extRels = Collections.addToCompactList(extRels, (AgeExternalRelationWritable) rel);
     }
    }
   }
+  
+  extObjAttrs = null;
+  fileRefs = null;
   
   obj.setDataModule( this );
  }
@@ -119,7 +124,9 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   if( extObjAttrs != null )
    return extObjAttrs;
   
-  return new SelectionCollection<AgeExternalObjectAttributeWritable>( new AttributedSelector()
+  extObjAttrs = new ArrayList<AgeExternalObjectAttributeWritable>();
+  
+  Collection<AgeExternalObjectAttributeWritable> sel =  new SelectionCollection<AgeExternalObjectAttributeWritable>( new AttributedSelector()
   {
    @Override
    public boolean select(Attributed at)
@@ -128,6 +135,13 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
    }
   });
 
+  
+  for( AgeExternalObjectAttributeWritable attr : sel )
+   extObjAttrs.add(attr);
+  
+  extObjAttrs = Collections.compactList(extObjAttrs);
+    
+  return extObjAttrs;
  }
 
  @Override
@@ -136,7 +150,10 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   if( fileRefs != null )
    return fileRefs;
   
-  return new SelectionCollection<AgeFileAttributeWritable>( new AttributedSelector()
+  
+  fileRefs = new ArrayList<AgeFileAttributeWritable>();
+  
+  Collection<AgeFileAttributeWritable> sel =  new SelectionCollection<AgeFileAttributeWritable>( new AttributedSelector()
   {
    @Override
    public boolean select(Attributed at)
@@ -145,6 +162,13 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
    }
   });
 
+  
+  for( AgeFileAttributeWritable attr : sel )
+   fileRefs.add(attr);
+  
+  fileRefs = Collections.compactList(fileRefs);
+    
+  return fileRefs;
  }
 
  
@@ -198,6 +222,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   this.clusterId = clusterId;
  }
  
+ //Collection of all attributes (recursively!) in the module filtered by the selector
  private class SelectionCollection<T extends AttributedWritable> extends AbstractCollection<T>
  {
   private AttributedSelector selector;
@@ -294,7 +319,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   if(extRels == null)
    extRels = new ArrayList<AgeExternalRelationWritable>(10);
 
-  extRels.add((AgeExternalRelationWritable) rel);
+  extRels = Collections.addToCompactList(extRels, (AgeExternalRelationWritable) rel);
  }
 
 
@@ -328,28 +353,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   objects = new ArrayList<AgeObjectWritable>( objects ); 
     
   if( extRels!= null  )
-  {
-   for( AgeExternalRelationWritable extr : extRels )
-    extr.pack();
-   
-   extRels = new ArrayList<AgeExternalRelationWritable>( extRels ); 
-  }
-  
-  if( extObjAttrs!= null  )
-  {
-   for( AgeExternalObjectAttributeWritable extoa : extObjAttrs )
-    extoa.pack();
-   
-   extObjAttrs = new ArrayList<AgeExternalObjectAttributeWritable>( extObjAttrs ); 
-  }
+   extRels = Collections.compactList( extRels ); 
 
-  if( fileRefs!= null  )
-  {
-   for( AgeFileAttributeWritable extfa : fileRefs )
-    extfa.pack();
-   
-   fileRefs = new ArrayList<AgeFileAttributeWritable>( fileRefs ); 
-  }
- 
  }
 }

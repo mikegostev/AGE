@@ -45,6 +45,14 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
 //  return attr;
 // }
  
+ @Override
+ public void pack()
+ {
+  for(AgeAttributeWritable attr : attributes )
+   attr.pack();
+    
+  attributes = com.pri.util.collection.Collections.compactList(attributes); 
+ }
  
  @Override
  public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass)
@@ -87,13 +95,7 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
  @Override
  public synchronized void addAttribute(AgeAttributeWritable attr)
  {
-  if( attributes.isEmpty() )
-   attributes = new ArrayList<AgeAttributeWritable>(15);
-  
-  attributes.add(attr);
-  
-//  if( attribMap != null )
-//   addAttribToMap(attr);
+  attributes = com.pri.util.collection.Collections.addToCompactList(attributes, attr);
  }
 
  @Override
@@ -102,22 +104,7 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
   if( ! attributes.remove(attr) )
    return;
   
-  if( attributes.isEmpty() )
-   attributes = com.pri.util.collection.Collections.emptyList();
-
-  
-//  if( attribMap == null )
-//   return;
-//  
-//  Collection<AgeAttributeWritable> coll = attribMap.get(attr.getAgeElClass());
-//  
-//  if( coll == null )
-//   return;
-//  
-//  coll.remove(attr);
-//  
-//  if( coll.size() == 0 )
-//   attribMap.remove(attr.getAgeElClass());
+  attributes = com.pri.util.collection.Collections.compactList(attributes);
  }
 
 // @Override

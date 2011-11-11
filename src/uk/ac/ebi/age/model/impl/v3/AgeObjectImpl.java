@@ -52,6 +52,18 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
 
 
  @Override
+ public void pack()
+ {
+  super.pack();
+  
+  for( AgeRelationWritable rel : relations )
+   rel.pack();
+  
+  relations = com.pri.util.collection.Collections.compactList(relations);
+ }
+
+ 
+ @Override
  public String getId()
  {
   return id;
@@ -68,11 +80,8 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  @Override
  public synchronized void addRelation(AgeRelationWritable rl)
  {
+  relations = com.pri.util.collection.Collections.addToCompactList(relations, rl);
   
-  if( relations.isEmpty() )
-   relations = new ArrayList<AgeRelationWritable>(5);
-  
-  relations.add(rl);
   
   if( relationMap != null )
    addRelToMap(rl);
@@ -92,9 +101,9 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   if( ! relations.remove(rel) )
    return;
   
-  if( relations.isEmpty() )
-   relations = com.pri.util.collection.Collections.emptyList();
-  
+  relations = com.pri.util.collection.Collections.compactList(relations);
+
+
   if( relationMap == null )
    return;
   

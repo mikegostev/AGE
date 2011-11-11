@@ -1067,12 +1067,18 @@ public class SubmissionManager
     LogNode updtLog = logRoot.branch("Updating storage");
 
     try
-    { 
+    {
+     
+     Collection<DataModuleWritable> chgMods =        new CollectionsUnion<DataModuleWritable>(
+       new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Upd.values(), modExtractor),
+       new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Ins, modExtractor));
 
-     ageStorage.update(
-       new CollectionsUnion<DataModuleWritable>(
-         new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Upd.values(), modExtractor),
-         new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Ins, modExtractor)),
+
+     for( DataModuleWritable mod :  chgMods)
+      mod.pack();
+     
+     ageStorage.update( 
+       chgMods,
 
       new CollectionsUnion<ModuleKey>(
         new ExtractorCollection<ModMeta, ModuleKey>(cstMeta.mod4Upd.values(), modkeyExtractor),
