@@ -4,22 +4,19 @@ import uk.ac.ebi.age.ext.log.LogNode;
 import uk.ac.ebi.age.ext.log.SimpleLogNode;
 
 import com.pri.util.StringUtils;
+import com.pri.util.StringUtils.Output;
 
 public class Log2JSON
 {
  
- public static String convert( LogNode nd )
+ public static void convert( LogNode nd, Output out )
  {
-  StringBuilder sb = new StringBuilder();
-  
   SimpleLogNode.setLevels( nd );
   
-  convertNode(nd, sb, 0);
-  
-  return sb.toString();
+  convertNode(nd, out, 0);
  }
  
- private static void convertNode( LogNode ln, StringBuilder sb, int lyr )
+ private static void convertNode( LogNode ln, Output sb, int lyr )
  {
   sb.append("{\n");
   sb.append(" level: \"").append(ln.getLevel().name()).append("\",\n");
