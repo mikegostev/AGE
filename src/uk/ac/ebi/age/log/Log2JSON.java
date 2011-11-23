@@ -1,7 +1,6 @@
 package uk.ac.ebi.age.log;
 
 import uk.ac.ebi.age.ext.log.LogNode;
-import uk.ac.ebi.age.ext.log.SimpleLogNode;
 
 import com.pri.util.StringUtils;
 import com.pri.util.StringUtils.Output;
@@ -11,8 +10,6 @@ public class Log2JSON
  
  public static void convert( LogNode nd, Output out )
  {
-  SimpleLogNode.setLevels( nd );
-  
   convertNode(nd, out, 0);
  }
  
