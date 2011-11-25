@@ -138,11 +138,14 @@ public class LuceneFullTextIndex implements TextIndexWritable
   final List<AgeObject> res = new ArrayList<AgeObject>();
   
   Query q;
+  
+  IndexSearcher searcher=null;
+  
   try
   {
    q = new QueryParser( Version.LUCENE_30, defaultFieldName, analyzer).parse(query);
-
-   final IndexSearcher searcher = new IndexSearcher(index, true);
+   
+   searcher = new IndexSearcher(index, true);
    
    //TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
    searcher.search(q, new Collector()
@@ -187,6 +190,21 @@ public class LuceneFullTextIndex implements TextIndexWritable
   {
    // TODO Auto-generated catch block
    e.printStackTrace();
+  }
+  finally
+  {
+   if( searcher != null )
+   {
+    try
+    {
+     searcher.close();
+    }
+    catch(IOException e)
+    {
+     // TODO Auto-generated catch block
+     e.printStackTrace();
+    }
+   }
   }
 
   

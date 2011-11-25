@@ -425,6 +425,8 @@ public class SerializedStorage implements AgeStorageAdm
   }
   finally
   {
+   lastUpdate = System.currentTimeMillis();
+
    dbLock.writeLock().unlock();
   }
 
@@ -437,6 +439,7 @@ public class SerializedStorage implements AgeStorageAdm
    }
   }
   
+
  }
  
  private void storeDataModule(DataModuleWritable dm) throws RelationResolveException, ModuleStoreException
@@ -1291,7 +1294,7 @@ public class SerializedStorage implements AgeStorageAdm
        if(!maintenanceMode)
         return;
 
-       if((System.currentTimeMillis() - lastUpdate) > mModeTimeout)
+       if((System.currentTimeMillis() - lastUpdate) > mModeTimeout &&   dbLock.writeLock().tryLock() )
        {
         setMaintenanceMode(false);
         return;
