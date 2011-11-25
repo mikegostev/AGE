@@ -122,4 +122,6 @@ public interface AuthDB extends TransactionalDB
  void addSysActionForUserACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
  Collection< ? extends ACR> getSysACL(ReadLock rl) throws AuthDBException;
 
+ void shutdown();
+
 }

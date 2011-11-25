@@ -19,4 +19,6 @@ public interface AnnotationManager extends TransactionalDB
  boolean addAnnotation(Transaction trn, Topic tpc, Entity objId, Serializable value) throws AnnotationDBException;
 
  boolean removeAnnotation(Transaction trn, Topic tpc, Entity objId, boolean rec) throws AnnotationDBException;
+ 
+ void shutdown();
 }

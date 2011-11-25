@@ -37,6 +37,8 @@ public class LuceneFullTextIndex implements TextIndexWritable
  
  private Directory index;
  private StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_30);
+ private QueryParser queryParser;
+ private IndexSearcher searcher;
  
  private List<AgeObject> objectList = Collections.emptyList();
  
@@ -58,8 +60,27 @@ public class LuceneFullTextIndex implements TextIndexWritable
    index = new RAMDirectory();
   else
    index = new NIOFSDirectory( path );
+  
+  defaultFieldName = extractors.iterator().next().getName();
+  
+  queryParser = new QueryParser( Version.LUCENE_30, defaultFieldName, analyzer);
+  
+  searcher = new IndexSearcher(index, true);
+
  }
 
+ public void close()
+ {
+  try
+  {
+   searcher.close();
+  }
+  catch(IOException e)
+  {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+  }
+ }
  
 // public void index(List<AgeObject> aol, Collection<TextFieldExtractor> extf)
 // {
@@ -106,9 +127,8 @@ public class LuceneFullTextIndex implements TextIndexWritable
   Query q;
   try
   {
-   q = new QueryParser( Version.LUCENE_30, defaultFieldName, analyzer).parse(query);
+   q = queryParser.parse(query);
 
-   final IndexSearcher searcher = new IndexSearcher(index, true);
    
    CountCollector cc = new CountCollector();
    searcher.search(q,cc);
@@ -139,15 +159,11 @@ public class LuceneFullTextIndex implements TextIndexWritable
   
   Query q;
   
-  IndexSearcher searcher=null;
-  
   try
   {
-   q = new QueryParser( Version.LUCENE_30, defaultFieldName, analyzer).parse(query);
+   q = queryParser.parse(query);
    
-   searcher = new IndexSearcher(index, true);
    
-   //TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
    searcher.search(q, new Collector()
    {
     int base;
@@ -191,22 +207,6 @@ public class LuceneFullTextIndex implements TextIndexWritable
    // TODO Auto-generated catch block
    e.printStackTrace();
   }
-  finally
-  {
-   if( searcher != null )
-   {
-    try
-    {
-     searcher.close();
-    }
-    catch(IOException e)
-    {
-     // TODO Auto-generated catch block
-     e.printStackTrace();
-    }
-   }
-  }
-
   
   //ScoreDoc[] hits = collector.topDocs().scoreDocs;
   
@@ -269,7 +269,8 @@ public class LuceneFullTextIndex implements TextIndexWritable
 
    iWriter.close();
    
-   defaultFieldName = extractors.iterator().next().getName();
+   searcher.close();
+   searcher = new IndexSearcher(index, true);
   }
   catch(CorruptIndexException e)
   {

@@ -995,7 +995,8 @@ public class SerializedStorage implements AgeStorageAdm
  
  public void shutdown()
  {
-
+  for( AgeIndexWritable idx : indexMap.values() )
+   idx.close();
  }
 
  @Override

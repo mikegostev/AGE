@@ -1984,5 +1984,10 @@ public class SerializedAuthDBImpl implements AuthDB
  public void prepareTransaction(Transaction t) throws TransactionException
  {
  }
+
+ @Override
+ public void shutdown()
+ {
+ }
  
 }

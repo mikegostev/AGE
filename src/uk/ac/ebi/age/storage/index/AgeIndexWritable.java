@@ -12,6 +12,7 @@ public interface AgeIndexWritable extends AgeIndex
 
  void index(List<AgeObject> res, boolean append);
 
+ void close();
 // void reset();
  
 }

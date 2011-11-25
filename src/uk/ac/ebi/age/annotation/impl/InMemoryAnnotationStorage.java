@@ -109,6 +109,12 @@ public class InMemoryAnnotationStorage extends AbstractAnnotationStorage
   }
  }
  
+ @Override
+ public void shutdown()
+ {
+ }
+
+ 
  private void readData() throws IOException
  {
   FileInputStream fis = new FileInputStream(serialFile);

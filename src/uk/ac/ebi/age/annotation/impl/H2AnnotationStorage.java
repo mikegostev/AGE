@@ -158,6 +158,23 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   if( cache == null ) 
    buildCache();
  }
+ 
+ @Override
+ public void shutdown()
+ {
+  if( permConn == null )
+   return;
+  
+  try
+  {
+   permConn.close();
+  }
+  catch(SQLException e)
+  {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+  }
+ }
 
  private void buildCache() throws AnnotationDBInitException
  {
