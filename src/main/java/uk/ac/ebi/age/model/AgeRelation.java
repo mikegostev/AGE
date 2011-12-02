@@ -7,7 +7,7 @@ public interface AgeRelation extends AgeObjectProperty, Attributed
  AgeObject getTargetObject();
 
  AgeRelationClass getAgeElClass();
- AgeRelation getInverseRelation();
+ <IR extends AgeRelation> IR getInverseRelation(); 
  
  boolean isInferred();
 }
