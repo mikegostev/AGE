@@ -56,16 +56,22 @@ public class LuceneFullTextIndex implements TextIndexWritable
   query=qury;
   extractors=exts;
   
-  if( path == null )
-   index = new RAMDirectory();
-  else
-   index = new NIOFSDirectory( path );
-  
   defaultFieldName = extractors.iterator().next().getName();
   
   queryParser = new QueryParser( Version.LUCENE_30, defaultFieldName, analyzer);
+
   
-  searcher = new IndexSearcher(index, true);
+  if( path == null )
+   index = new RAMDirectory();
+  else
+  {
+   index = new NIOFSDirectory( path );
+
+   
+   if( index.listAll().length != 0  )
+    searcher = new IndexSearcher(index, true);
+  }
+  
 
  }
 
@@ -73,7 +79,8 @@ public class LuceneFullTextIndex implements TextIndexWritable
  {
   try
   {
-   searcher.close();
+   if( searcher != null )
+    searcher.close();
   }
   catch(IOException e)
   {
@@ -123,6 +130,8 @@ public class LuceneFullTextIndex implements TextIndexWritable
  
  public int count(String query)
  {
+  if( searcher == null )
+   return 0;
   
   Query q;
   try
@@ -155,6 +164,9 @@ public class LuceneFullTextIndex implements TextIndexWritable
  
  public List<AgeObject> select(String query)
  {
+  if( searcher == null )
+   return Collections.emptyList();
+  
   final List<AgeObject> res = new ArrayList<AgeObject>();
   
   Query q;
@@ -247,7 +259,7 @@ public class LuceneFullTextIndex implements TextIndexWritable
  {
   try
   {
-   IndexWriter iWriter = new IndexWriter(index, analyzer, ! append,
+   IndexWriter iWriter = new IndexWriter(index, analyzer, ! append || searcher == null ,
      IndexWriter.MaxFieldLength.UNLIMITED);
 
    for(AgeObject ao : aol )
@@ -269,7 +281,9 @@ public class LuceneFullTextIndex implements TextIndexWritable
 
    iWriter.close();
    
-   searcher.close();
+   if( searcher != null )
+    searcher.close();
+   
    searcher = new IndexSearcher(index, true);
   }
   catch(CorruptIndexException e)
