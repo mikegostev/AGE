@@ -321,7 +321,7 @@ public class SerializedStorage implements AgeStorageAdm
     res.add(nd);
 
    
-   if(res.size() > 0)
+   if(res.size() > 0 || fullreset )
     idx.index( res, ! fullreset );
   }
  }
@@ -989,6 +989,8 @@ public class SerializedStorage implements AgeStorageAdm
   
   moduleMap.remove(mk);
  
+  updateIndices(null, true);
+  
   return true;
  }
 
