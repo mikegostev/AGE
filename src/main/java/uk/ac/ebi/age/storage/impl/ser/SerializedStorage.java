@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import uk.ac.ebi.age.conf.Constants;
@@ -107,7 +106,7 @@ public class SerializedStorage implements AgeStorageAdm
 
  private SemanticModel model;
  
- private ReadWriteLock dbLock = new ReentrantReadWriteLock();
+ private ReentrantReadWriteLock dbLock = new ReentrantReadWriteLock();
  
  private DataModuleReaderWriter submRW = new SerializedDataModuleReaderWriter();
 
@@ -1297,7 +1296,7 @@ public class SerializedStorage implements AgeStorageAdm
        if(!maintenanceMode)
         return;
 
-       if((System.currentTimeMillis() - lastUpdate) > mModeTimeout &&   dbLock.writeLock().tryLock() )
+       if((System.currentTimeMillis() - lastUpdate) > mModeTimeout && ! dbLock.isWriteLocked() )
        {
         setMaintenanceMode(false);
         return;
