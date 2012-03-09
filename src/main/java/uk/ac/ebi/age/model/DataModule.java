@@ -17,6 +17,7 @@ public interface DataModule extends Entity
 // long getVersion();
  String getClusterId();
 
+ AgeObject getObject( String id );
  Collection<? extends AgeObject> getObjects();
  
 // String getDescription();

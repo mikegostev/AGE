@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -24,10 +25,28 @@ import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 
 import com.pri.util.collection.Collections;
+import com.pri.util.collection.Collections.Mapper;
 
 class DataModuleImpl  implements DataModuleWritable, Serializable
 {
  private static final long serialVersionUID = 3L;
+ 
+ private static Comparator<AgeObjectWritable> ageObjectComparator = new Comparator<AgeObjectWritable>() {
+
+  @Override
+  public int compare(AgeObjectWritable arg0, AgeObjectWritable arg1)
+  {
+   return arg0.getId().compareTo( arg1.getId() );
+  }};
+  
+ private static Mapper<AgeObjectWritable, String> idMapper = new Mapper<AgeObjectWritable, String>()
+ {
+  @Override
+  public String map(AgeObjectWritable key)
+  {
+   return key.getId();
+  }
+ };
  
 // private long version;
  private List<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
@@ -352,8 +371,23 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
     
   objects = new ArrayList<AgeObjectWritable>( objects ); 
     
+  java.util.Collections.sort(objects, ageObjectComparator);
+    
   if( extRels!= null  )
    extRels = Collections.compactList( extRels ); 
 
+ }
+ 
+
+
+ @Override
+ public AgeObjectWritable getObject(String id)
+ {
+  int pos = Collections.indexedBinarySearch(objects, id, idMapper);
+  
+  if( pos >= 0 )
+   return objects.get(pos);
+  
+  return null;
  }
 }

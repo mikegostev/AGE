@@ -15,6 +15,7 @@ public interface DataModuleWritable extends DataModule
 // void addClass(AgeClass cls);
  void addObject( AgeObjectWritable obj );
 
+ AgeObjectWritable getObject( String id );
  Collection<AgeObjectWritable> getObjects();
  
  void setMasterModel(SemanticModel newModel);

@@ -245,4 +245,15 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  public void pack()
  {
  }
+
+
+ @Override
+ public AgeObjectWritable getObject(String id)
+ {
+  for( AgeObjectWritable obj : objects )
+   if( obj.getId().equals(id) )
+    return obj;
+    
+  return null;
+ }
 }

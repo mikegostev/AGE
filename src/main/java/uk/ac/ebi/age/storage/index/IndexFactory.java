@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.Comparator;
 
 import uk.ac.ebi.age.query.AgeQuery;
-import uk.ac.ebi.age.storage.impl.LuceneFullTextIndex;
-import uk.ac.ebi.age.storage.impl.LuceneSortedFullTextIndex;
+import uk.ac.ebi.age.storage.impl.ser.LuceneFullTextIndex;
+import uk.ac.ebi.age.storage.impl.ser.LuceneSortedFullTextIndex;
 
 public class IndexFactory
 {

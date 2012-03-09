@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.storage.impl;
+package uk.ac.ebi.age.storage.impl.ser;
 
 import java.io.File;
 import java.io.IOException;
