@@ -7,7 +7,7 @@ import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
 import uk.ac.ebi.age.model.impl.v1.ContextSemanticModelImpl;
 import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
 
-public class SemanticManager
+class SemanticManager
 {
  
  private static SemanticManager instance = new SemanticManager();

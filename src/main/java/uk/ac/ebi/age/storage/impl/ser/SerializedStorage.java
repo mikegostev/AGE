@@ -24,7 +24,6 @@ import uk.ac.ebi.age.ext.log.LogNode.Level;
 import uk.ac.ebi.age.ext.log.SimpleLogNode;
 import uk.ac.ebi.age.log.BufferLogger;
 import uk.ac.ebi.age.log.TooManyErrorsException;
-import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -32,6 +31,8 @@ import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
+import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
@@ -175,7 +176,7 @@ public class SerializedStorage implements AgeStorageAdm
   if( modelFile.canRead() )
    loadModel();
   else
-   model = SemanticManager.getInstance().createMasterModel();
+   model = new SemanticModelImpl( ModelFactoryImpl.getInstance() );
   
   loadData();
  }
