@@ -197,4 +197,10 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
   throw new UnsupportedOperationException();
  }
 
+ @Override
+ public ContextSemanticModel createContextSemanticModel( SemanticModel mm )
+ {
+  return new ContextSemanticModelImpl(mm);
+ }
+
 }

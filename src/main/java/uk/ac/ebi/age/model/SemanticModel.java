@@ -38,9 +38,10 @@ public interface SemanticModel
  AgeAnnotationClassWritable createAgeAnnotationClass(String name, Collection<String> aliases, String id, AgeAnnotationClass parent);
 
  
- 
  AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls);
 // AgeAttributeWritable createAgeAttribute(AgeAttributeClass attr);
+
+ ContextSemanticModel createContextSemanticModel();
 
 
  AttributeAttachmentRuleWritable createAttributeAttachmentRule(RestrictionType type);

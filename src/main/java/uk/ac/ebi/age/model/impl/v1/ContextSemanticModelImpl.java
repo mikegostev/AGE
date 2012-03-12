@@ -613,6 +613,12 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   getMasterModel().setModelFactory(mf);
  }
 
+ @Override
+ public ContextSemanticModel createContextSemanticModel()
+ {
+  return masterModel.createContextSemanticModel();
+ }
+
 // @Override
 // public void setRootAgeClass(AgeClass cls)
 // {

@@ -12,6 +12,7 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.RestrictionType;
@@ -413,6 +414,12 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  public void setIdGen(int id)
  {
   idGen = id;
+ }
+
+ @Override
+ public ContextSemanticModel createContextSemanticModel()
+ {
+  return new ContextSemanticModelImpl(this);
  }
 
 

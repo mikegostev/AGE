@@ -236,5 +236,11 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
   return new RelClassRef(plug, order, heading);
  }
 
+ @Override
+ public ContextSemanticModel createContextSemanticModel(SemanticModel mm)
+ {
+  throw new UnsupportedOperationException();
+ }
+
 
 }

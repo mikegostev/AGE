@@ -27,7 +27,6 @@ import uk.ac.ebi.age.ext.log.LogNode.Level;
 import uk.ac.ebi.age.ext.log.SimpleLogNode;
 import uk.ac.ebi.age.log.BufferLogger;
 import uk.ac.ebi.age.log.TooManyErrorsException;
-import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -35,6 +34,8 @@ import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
+import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
@@ -109,7 +110,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
   private Map<String, Map<String,AgeObjectWritable>> clusterIndexMap = new HashMap<String, Map<String,AgeObjectWritable>>();
   
   private static volatile boolean iterateModulesDirect=true;  
-  private TreeMap<ModuleKey, SoftReference<DataModuleWritable> > moduleMap = new TreeMap<ModuleKey, SoftReference<DataModuleWritable> >();
+  private TreeMap<ModuleKey, ModuleRef > moduleMap = new TreeMap<ModuleKey, ModuleRef >();
 
   private Map<String,AgeIndexWritable> indexMap = new HashMap<String, AgeIndexWritable>();
 
@@ -184,7 +185,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
    if( modelFile.canRead() )
     loadModel();
    else
-    model = SemanticManager.getInstance().createMasterModel();
+    model = new SemanticModelImpl( new SwapModelFactory( ModelFactoryImpl.getInstance() ) );
    
    loadData();
   }
@@ -194,39 +195,30 @@ public class SerializedSwapStorage implements AgeStorageAdm
    return model;
   }
   
-//  public AgeIndex createTextIndex(AgeQuery qury, TextValueExtractor cb)
-//  {
-//   AgeIndex idx = new AgeIndex();
- //
-//   TextIndex ti = IndexFactory.getInstance().createFullTextIndex();
- //
-//   try
-//   {
-//    dbLock.readLock().lock();
-//    
-//    ti.index(executeQuery(qury), cb);
- //
-//    indexMap.put(idx, ti);
- //
-//    return idx;
- //
-//   }
-//   finally
-//   {
-//    dbLock.readLock().unlock();
-//   }
-//  }
+
 
   @Override
   public DataModuleWritable getDataModule( String clustName, String modname )
   {
-   return moduleMap.get( new ModuleKey(clustName, modname) );
+   ModuleKey modK = new ModuleKey(clustName, modname);
+   
+   ModuleRef ref = moduleMap.get( modK );
+   
+   if( ref == null )
+    return null;
+   
+   DataModuleWritable mod = ref.getModule();
+   
+   if( mod == null )
+    mod = loadModule(modK);
+   
+   return mod;
   }
   
   @Override
   public Collection<? extends DataModuleWritable> getDataModules()
   {
-   return moduleMap.values();
+   return new ModulesCollection();
   }
 
   
@@ -318,7 +310,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
     }
     
     if( fullreset )
-     mods = moduleMap.values();
+     mods = new ModulesCollection();
     
     
     Iterable<AgeObject> trv = traverse(idx.getQuery(), mods);
@@ -341,7 +333,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
    {
     dbLock.readLock().lock();
 
-    Iterable<AgeObject> trv = traverse(qury, moduleMap.values());
+    Iterable<AgeObject> trv = traverse(qury, new ModulesCollection());
 
     ArrayList<AgeObject> res = new ArrayList<AgeObject>();
 
@@ -362,19 +354,6 @@ public class SerializedSwapStorage implements AgeStorageAdm
    return new InMemoryQueryProcessor(query,sbms);
   }
 
-//  public List<AgeObject> queryTextIndex(IndexID idx, String query)
-//  {
-//   TextIndex ti = (TextIndex)indexList.get(idx);
-//   
-//   return ti.select(query);
-//  }
- // 
-//  public int queryTextIndexCount(IndexID idx, String query)
-//  {
-//   TextIndex ti = (TextIndex)indexList.get(idx);
-//   
-//   return ti.count(query);
-//  }
 
   @Override
   public void update( Collection<DataModuleWritable> mods2Ins, Collection<ModuleKey> mods2Del ) throws RelationResolveException, ModuleStoreException
@@ -406,7 +385,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
       
       saveDataModule(dm);
       
-      moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), dm);
+      moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), new SoftReference<DataModuleWritable>(dm));
       
       Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
       
@@ -466,7 +445,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
   
     saveDataModule(dm);
     
-    moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), dm);
+    moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), new SoftReference<DataModuleWritable>(dm));
 
     Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
     
@@ -505,7 +484,9 @@ public class SerializedSwapStorage implements AgeStorageAdm
   @Override
   public Collection<? extends AgeObjectWritable> getAllObjects()
   {
-   return new CollectionsUnion<AgeObjectWritable>( new ExtractorCollection<DataModuleWritable, Collection<AgeObjectWritable>>( moduleMap.values(), objExtractor) );
+   return new CollectionsUnion<AgeObjectWritable>( 
+     new ExtractorCollection<DataModuleWritable, Collection<AgeObjectWritable>>( 
+       new ModulesCollection(), objExtractor) );
   }
 
   
@@ -563,11 +544,11 @@ public class SerializedSwapStorage implements AgeStorageAdm
      totals.incModules(1);
      totals.incFileSize(fLen);
 
-     DataModuleWritable dm = null;
+     SwapDataModule dm = null;
 
      try
      {
-      dm = submRW.read(modFile);
+      dm = (SwapDataModule)submRW.read(modFile);
      }
      catch(Exception e)
      {
@@ -578,9 +559,14 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
      ModuleKey modKey = new ModuleKey(dm.getClusterId(), dm.getId());
      
+     ModuleRef modRef = new ModuleRef();
+
+     modRef.setModuleKey(modKey);
+     modRef.setModule(dm);
+     
      synchronized(moduleMap)
      {
-      moduleMap.put( modKey, new SoftReference<DataModuleWritable>(dm) );
+      moduleMap.put( modKey, modRef );
      }
      
      Map<String, AgeObjectWritable> clustMap = null;
@@ -599,8 +585,10 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
       totals.collectObjectStats(obj);
 
-      if(obj.getIdScope() == IdScope.MODULE)
-       continue;
+//      if(obj.getIdScope() == IdScope.MODULE)
+//       continue;
+
+      AgeObjectProxy pxObj = new AgeObjectProxy(obj, modKey, SerializedSwapStorage.this);
 
       if(clustMap == null)
       {
@@ -612,8 +600,6 @@ public class SerializedSwapStorage implements AgeStorageAdm
          clusterIndexMap.put(dm.getClusterId(), clustMap = new HashMap<String, AgeObjectWritable>());
        }
       }
-       
-      AgeObjectProxy pxObj = new AgeObjectProxy(obj, modKey, SerializedSwapStorage.this);
       
       synchronized(clustMap)
       {
@@ -628,7 +614,8 @@ public class SerializedSwapStorage implements AgeStorageAdm
         globalIndexMap.put(obj.getId(), pxObj);
        }
       }
-
+      
+      modRef.addObject( obj.getId(), pxObj );
      }
     }
    }
@@ -737,9 +724,9 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
     assert ( startTime = System.currentTimeMillis() ) != 0;
 
-    for( SoftReference<DataModuleWritable> modref : moduleMap.values() )
+    for( ModuleRef modref : moduleMap.values() )
     {
-     DataModuleWritable mod = modref.get();
+     DataModuleWritable mod = modref.getModule();
      
      if( mod == null )
       continue;
@@ -956,8 +943,9 @@ public class SerializedSwapStorage implements AgeStorageAdm
     
     ois.close();
     
-    SemanticManager.getInstance().setMasterModel( model );
-    model.setModelFactory(SemanticManager.getModelFactory());
+//    SemanticManager.getInstance().setMasterModel( model );
+//    model.setModelFactory(SemanticManager.getModelFactory());
+    model.setModelFactory( new SwapModelFactory( ModelFactoryImpl.getInstance() ) );
    }
    catch(Exception e)
    {
@@ -1411,7 +1399,12 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
   public AgeObjectWritable getLowLevelObject(ModuleKey moduleId, String objectId)
   {
-   DataModuleWritable mod = moduleMap.get(moduleId).get();
+   ModuleRef mr =  moduleMap.get(moduleId);
+   
+   if( mr == null )
+    return null;
+   
+   DataModuleWritable mod = mr.getModule();
    
    if( mod == null )
     mod = loadModule(moduleId);
@@ -1459,7 +1452,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
      {
       ModuleKey key = iterator.next();
       
-      DataModuleWritable mod = moduleMap.get( key ).get();
+      DataModuleWritable mod = moduleMap.get( key ).getModule();
       
       if( mod == null )
        mod = loadModule(key);
@@ -1479,13 +1472,15 @@ public class SerializedSwapStorage implements AgeStorageAdm
    @Override
    public Object[] toArray()
    {
-    return moduleMap.values().toArray();
+    throw new UnsupportedOperationException();
+//    return moduleMap.values().toArray();
    }
 
    @Override
    public <T> T[] toArray(T[] a)
    {
-    return moduleMap.values().toArray(a);
+    throw new UnsupportedOperationException();
+//    return moduleMap.values().toArray(a);
    }
 
    @Override

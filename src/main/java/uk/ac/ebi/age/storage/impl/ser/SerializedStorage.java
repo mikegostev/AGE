@@ -896,8 +896,9 @@ public class SerializedStorage implements AgeStorageAdm
    
    ois.close();
    
-   SemanticManager.getInstance().setMasterModel( model );
-   model.setModelFactory(SemanticManager.getModelFactory());
+//   SemanticManager.getInstance().setMasterModel( model );
+//   model.setModelFactory(SemanticManager.getModelFactory());
+   model.setModelFactory(ModelFactoryImpl.getInstance());
   }
   catch(Exception e)
   {
@@ -1079,7 +1080,7 @@ public class SerializedStorage implements AgeStorageAdm
 
    model = sm;
 
-   SemanticManager.getInstance().setMasterModel(model);
+//   SemanticManager.getInstance().setMasterModel(model);
    
    setupBranch.success();
   }
