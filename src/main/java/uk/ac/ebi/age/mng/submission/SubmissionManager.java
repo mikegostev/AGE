@@ -31,7 +31,6 @@ import uk.ac.ebi.age.ext.submission.FileAttachmentMeta;
 import uk.ac.ebi.age.ext.submission.Status;
 import uk.ac.ebi.age.ext.submission.SubmissionDBException;
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
-import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -687,7 +686,7 @@ public class SubmissionManager
    }
    
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(), mm.atMod.getSyntaxProfile(), convLog );
+   mm.newModule = converter.convert(mm.atMod, ageStorage.getSemanticModel().createContextSemanticModel(), mm.atMod.getSyntaxProfile(), convLog );
    
    if( mm.newModule != null )
     convLog.success();
@@ -1430,7 +1429,7 @@ public class SubmissionManager
    }
    
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.newModule = converter.convert(mm.atMod, SemanticManager.getInstance().getContextModel(), mm.atMod.getSyntaxProfile(), convLog );
+   mm.newModule = converter.convert(mm.atMod, ageStorage.getSemanticModel().createContextSemanticModel(), mm.atMod.getSyntaxProfile(), convLog );
    
    if( mm.newModule != null )
     convLog.success();

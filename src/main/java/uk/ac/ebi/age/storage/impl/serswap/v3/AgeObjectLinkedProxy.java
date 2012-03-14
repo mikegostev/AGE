@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.storage.impl.serswap;
+package uk.ac.ebi.age.storage.impl.serswap.v3;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,6 +9,7 @@ import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.storage.ModuleKey;
+import uk.ac.ebi.age.storage.impl.serswap.SerializedSwapStorage;
 
 import com.pri.util.collection.CollectionsUnion;
 

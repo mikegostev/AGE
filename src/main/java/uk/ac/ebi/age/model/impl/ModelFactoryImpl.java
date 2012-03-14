@@ -200,4 +200,10 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
   return v3factory.createClassRef(plug, order, heading, hrz, modl );
  }
 
+ @Override
+ public ContextSemanticModel createContextSemanticModel(SemanticModel mm)
+ {
+  return v1factory.createContextSemanticModel(mm);
+ }
+
 }

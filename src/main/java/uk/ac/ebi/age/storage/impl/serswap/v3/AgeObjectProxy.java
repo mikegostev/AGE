@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.storage.impl.serswap;
+package uk.ac.ebi.age.storage.impl.serswap.v3;
 
 import java.lang.ref.SoftReference;
 import java.util.Collection;
@@ -20,6 +20,7 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.storage.ModuleKey;
+import uk.ac.ebi.age.storage.impl.serswap.SerializedSwapStorage;
 
 public class AgeObjectProxy implements AgeObjectWritable
 {

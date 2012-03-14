@@ -3,26 +3,26 @@ package uk.ac.ebi.age.model.impl.v3;
 import java.io.Serializable;
 
 import uk.ac.ebi.age.model.AgeAttribute;
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeObjectAttribute;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectAttributeWritable;
+import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
-class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjectAttributeWritable, Serializable
+public class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjectAttributeWritable, Serializable
 {
  private static final long serialVersionUID = 3L;
  
- private AgeObject value; 
+ private AgeObjectWritable value; 
 
- public AgeObjectAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
+ protected AgeObjectAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
  {
   super(attrClass, host);
  }
 
- public AgeObject getValue()
+ public AgeObjectWritable getValue()
  {
   return value;
  }
@@ -82,12 +82,12 @@ class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjectAttrib
  @Override
  public void setValue(Object val)
  {
-  if( val instanceof AgeObject )
-   value=(AgeObject)val;
+  if( val instanceof AgeObjectWritable )
+   value=(AgeObjectWritable)val;
  }
  
  @Override
- public void setValue( AgeObject val)
+ public void setValue( AgeObjectWritable val)
  {
   value=val;
  }
