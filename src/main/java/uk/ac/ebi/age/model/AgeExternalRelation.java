@@ -7,4 +7,6 @@ public interface AgeExternalRelation extends AgeRelation
  String getTargetObjectId();
  
  AgeExternalRelation getInverseRelation();
+ 
+ boolean isTargetGlobal();
 }

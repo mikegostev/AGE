@@ -28,7 +28,9 @@ import uk.ac.ebi.age.ext.log.SimpleLogNode;
 import uk.ac.ebi.age.log.BufferLogger;
 import uk.ac.ebi.age.log.TooManyErrorsException;
 import uk.ac.ebi.age.model.AgeAttribute;
+import uk.ac.ebi.age.model.AgeExternalRelation;
 import uk.ac.ebi.age.model.AgeObject;
+import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.IdScope;
@@ -59,6 +61,7 @@ import uk.ac.ebi.age.storage.impl.ser.InMemoryQueryProcessor;
 import uk.ac.ebi.age.storage.impl.ser.SerializedStorage;
 import uk.ac.ebi.age.storage.impl.ser.SerializedStorageConfiguration;
 import uk.ac.ebi.age.storage.impl.ser.Stats;
+import uk.ac.ebi.age.storage.impl.serswap.v3.AgeObjectLinkedProxy;
 import uk.ac.ebi.age.storage.impl.serswap.v3.AgeObjectProxy;
 import uk.ac.ebi.age.storage.impl.serswap.v3.SwapDataModule;
 import uk.ac.ebi.age.storage.index.AgeIndexWritable;
@@ -590,7 +593,38 @@ public class SerializedSwapStorage implements AgeStorageAdm
 //      if(obj.getIdScope() == IdScope.MODULE)
 //       continue;
 
-      AgeObjectProxy pxObj = new AgeObjectProxy(obj, modKey, SerializedSwapStorage.this);
+      boolean extLink = false;
+      
+      if( obj.getRelations() != null )
+      {
+       for( AgeRelation rel : obj.getRelations() )
+       {
+        if( rel instanceof AgeExternalRelation )
+        {
+         extLink = true;
+         break;
+        }
+       }
+      }
+      
+      AgeObjectProxy pxObj=null;
+      
+      if( extLink )
+      {
+       AgeObjectLinkedProxy lnPx = new AgeObjectLinkedProxy(obj, modKey, SerializedSwapStorage.this);
+       
+       for( AgeRelationWritable rel : obj.getRelations() )
+       {
+        if( rel instanceof AgeExternalRelationWritable )
+         ((AgeExternalRelationWritable)rel).setSourceObject(lnPx);
+        
+        lnPx.addRelation(rel);
+       }
+
+       pxObj = lnPx;
+      }
+      else
+       pxObj = new AgeObjectProxy(obj, modKey, SerializedSwapStorage.this);
 
       if(clustMap == null)
       {
@@ -619,6 +653,30 @@ public class SerializedSwapStorage implements AgeStorageAdm
       
       modRef.addObject( obj.getId(), pxObj );
      }
+     
+     if( dm.getFileAttributes() != null )
+     {
+      for(AgeFileAttributeWritable fattr : dm.getFileAttributes())
+      {
+       String fid = makeFileSysRef(fattr.getFileId(), dm.getClusterId());
+
+       if(fileDepot.getFilePath(fid).exists())
+        fattr.setFileSysRef(fid);
+       else
+       {
+        fid = makeFileSysRef(fattr.getFileId());
+
+        if(fileDepot.getFilePath(fid).exists())
+         fattr.setFileSysRef(fid);
+        else
+         synchronized(log)
+         {
+          log.error("Can't resolve file attribute: '" + fattr.getFileId() + "'. Cluster: " + dm.getClusterId()
+            + " Module: " + dm.getId());
+         }
+       }
+      }
+     }   
     }
    }
 
@@ -712,7 +770,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
     {
      try
      {
-      queue.put(new File(""));
+      queue.put(new File("")); // To terminate the queue
       break;
      }
      catch(InterruptedException e)
@@ -728,12 +786,41 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
     for( ModuleRef modref : moduleMap.values() )
     {
+     Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(modref.getModuleKey().getClusterId());
+     
+     for( AgeObjectProxy pxo : modref.getObjectProxies() )
+     {
+      if( pxo instanceof AgeObjectLinkedProxy )
+      {
+       for( AgeRelationWritable rel : ((AgeObjectLinkedProxy)pxo).getRelations() )
+       {
+        if( rel instanceof AgeExternalRelationWritable )
+        {
+         AgeExternalRelationWritable extr = (AgeExternalRelationWritable)rel;
+         
+         if( extr.getTargetObject() != null )
+          continue;
+         
+         AgeObjectWritable tgObj = null;
+         
+         if( extr.isTargetGlobal() )
+          tgObj = globalIndexMap.get( extr.getTargetObjectId() );
+         else
+         {
+          if( clustMap == null )
+           log.warn("Can't resolve external relation. Source: "+modref.getModuleKey().getClusterId()+":"+modref.getModuleKey().getModuleId()+":"+pxo.getId()
+             +" Target: "+extr.getTargetObjectId()+" Scope: "+(extr.isTargetGlobal()?"global":"target"));
+         }
+        }
+       }
+      }
+     }
+     
      DataModuleWritable mod = modref.getModule();
      
      if( mod == null )
       continue;
      
-     Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(mod.getClusterId());
 
      
      if( mod.getExternalRelations() != null )
@@ -822,26 +909,6 @@ public class SerializedSwapStorage implements AgeStorageAdm
       }
      }
     
-     if( mod.getFileAttributes() != null )
-     {
-      for(AgeFileAttributeWritable fattr : mod.getFileAttributes())
-      {
-       String fid = makeFileSysRef(fattr.getFileId(), mod.getClusterId());
-
-       if(fileDepot.getFilePath(fid).exists())
-        fattr.setFileSysRef(fid);
-       else
-       {
-        fid = makeFileSysRef(fattr.getFileId());
-
-        if(fileDepot.getFilePath(fid).exists())
-         fattr.setFileSysRef(fid);
-        else
-         log.error("Can't resolve file attribute: '" + fattr.getFileId() + "'. Cluster: " + mod.getClusterId()
-           + " Module: " + mod.getId());
-       }
-      }
-     }
     }
     
     String cClustID = null;

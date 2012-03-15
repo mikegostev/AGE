@@ -20,6 +20,7 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  private transient AgeExternalRelationWritable invRelation;
  private transient AgeObjectWritable target;
  private boolean infered;
+ private boolean targetGlobal=true;
 
  public AgeExternalRelationImpl(RelationClassRef cRef, AgeObjectWritable srcOb, String id)
  {
@@ -137,6 +138,18 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  public ContextSemanticModel getSemanticModel()
  {
   return sourceObject.getSemanticModel();
+ }
+
+ @Override
+ public boolean isTargetGlobal()
+ {
+  return targetGlobal;
+ }
+
+ @Override
+ public void setTargetGlobal(boolean targetGlobal)
+ {
+  this.targetGlobal = targetGlobal;
  }
 }
 

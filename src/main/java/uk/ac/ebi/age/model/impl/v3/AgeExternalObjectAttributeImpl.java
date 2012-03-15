@@ -17,6 +17,8 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
 
  private String objId;
  private transient AgeObject target;
+ private boolean targetGlobal=true;
+
  
  public AgeExternalObjectAttributeImpl(AttributeClassRef relClass, String id,  AttributedWritable host)
  {
@@ -147,6 +149,16 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
   return objId.compareTo( ((AgeObjectAttribute)ob).getValue().getId() );
  }
 
+ @Override
+ public boolean isTargetGlobal()
+ {
+  return targetGlobal;
+ }
 
+ @Override
+ public void setTargetGlobal(boolean targetGlobal)
+ {
+  this.targetGlobal = targetGlobal;
+ }
 }
 

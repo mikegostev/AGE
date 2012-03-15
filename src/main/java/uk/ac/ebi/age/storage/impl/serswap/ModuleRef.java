@@ -2,6 +2,7 @@ package uk.ac.ebi.age.storage.impl.serswap;
 
 import java.io.Serializable;
 import java.lang.ref.SoftReference;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,5 +49,10 @@ public class ModuleRef implements Serializable
  public AgeObjectProxy getObjectProxy( String id )
  {
   return objectProxyMap.get(id);
+ }
+ 
+ public Collection<AgeObjectProxy> getObjectProxies()
+ {
+  return objectProxyMap.values();
  }
 }

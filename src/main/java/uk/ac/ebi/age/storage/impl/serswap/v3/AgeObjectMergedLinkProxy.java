@@ -11,13 +11,13 @@ import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.storage.ModuleKey;
 import uk.ac.ebi.age.storage.impl.serswap.SerializedSwapStorage;
 
-import com.pri.util.collection.Collections;
+import com.pri.util.collection.CollectionsUnion;
 
-public class AgeObjectLinkedProxy extends AgeObjectProxy
+public class AgeObjectMergedLinkProxy extends AgeObjectProxy
 {
- private Collection< AgeRelationWritable > relations = null;
+ private Collection< AgeRelationWritable > relations = new ArrayList<AgeRelationWritable>(5);
  
- public AgeObjectLinkedProxy(AgeObjectWritable obj, ModuleKey mk, SerializedSwapStorage sss)
+ public AgeObjectMergedLinkProxy(AgeObjectWritable obj, ModuleKey mk, SerializedSwapStorage sss)
  {
   super(obj, mk, sss);
  }
@@ -25,10 +25,12 @@ public class AgeObjectLinkedProxy extends AgeObjectProxy
  @Override
  public Collection<? extends AgeRelationClass> getRelationClasses()
  {
-  if( relations == null )
-   return Collections.emptyList();
+  if( relations.size() == 0 )
+   super.getRelationClasses();
   
   Set<AgeRelationClass> set = new HashSet<AgeRelationClass>();
+  
+  set.addAll( super.getRelationClasses() );
   
   for( AgeRelationWritable r : relations )
    set.add( r.getAgeElClass() );
@@ -36,10 +38,11 @@ public class AgeObjectLinkedProxy extends AgeObjectProxy
   return set;
  }
  
+ @SuppressWarnings("unchecked")
  @Override
  public Collection< ? extends AgeRelationWritable> getRelations()
  {
-  return relations;
+  return new CollectionsUnion<AgeRelationWritable>( super.getRelations(), relations );
  }
 
  @Override
@@ -64,8 +67,14 @@ public class AgeObjectLinkedProxy extends AgeObjectProxy
     rels.add(r);
    }
   }
-
-  return rels!=null?rels:Collections.<AgeRelationWritable>emptyList();
+  
+  if( rels != null )
+  {
+   rels.addAll(super.getRelationsByClass(cls,wSbCl));
+   return rels;
+  }
+  
+  return super.getRelationsByClass(cls,wSbCl);
  }
 
  @Override
@@ -77,7 +86,8 @@ public class AgeObjectLinkedProxy extends AgeObjectProxy
  @Override
  public void removeRelation(AgeRelationWritable rel)
  {
-  relations.remove(rel);
+  if( !relations.remove(rel) )
+   super.removeRelation(rel);
  }
 
  public void addRelations(Collection< ? extends AgeRelationWritable> relations2)

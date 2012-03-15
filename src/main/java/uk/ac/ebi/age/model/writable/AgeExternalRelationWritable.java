@@ -12,4 +12,5 @@ public interface AgeExternalRelationWritable extends AgeExternalRelation, AgeRel
  
  void setInverseRelation( AgeExternalRelationWritable inrv );
 
+ void setTargetGlobal( boolean glb );
 }
