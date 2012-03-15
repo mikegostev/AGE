@@ -111,8 +111,8 @@ public class SerializedSwapStorage implements AgeStorageAdm
   private File filesDir;
   private File indexDir;
   
-  private Map<String, AgeObjectWritable> globalIndexMap = new HashMap<String, AgeObjectWritable>();
-  private Map<String, Map<String,AgeObjectWritable>> clusterIndexMap = new HashMap<String, Map<String,AgeObjectWritable>>();
+  private Map<String, AgeObjectLinkedProxy> globalIndexMap = new HashMap<String, AgeObjectLinkedProxy>();
+  private Map<String, Map<String,AgeObjectLinkedProxy>> clusterIndexMap = new HashMap<String, Map<String,AgeObjectLinkedProxy>>();
   
   private static volatile boolean iterateModulesDirect=true;  
   private TreeMap<ModuleKey, ModuleRef > moduleMap = new TreeMap<ModuleKey, ModuleRef >();
@@ -574,7 +574,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
       moduleMap.put( modKey, modRef );
      }
      
-     Map<String, AgeObjectWritable> clustMap = null;
+     Map<String, AgeObjectLinkedProxy> clustMap = null;
 
      synchronized(clusterIndexMap)
      {
@@ -593,9 +593,9 @@ public class SerializedSwapStorage implements AgeStorageAdm
 //      if(obj.getIdScope() == IdScope.MODULE)
 //       continue;
 
-      boolean extLink = false;
+      boolean extLink = obj.getIdScope() == IdScope.CLUSTER || obj.getIdScope() == IdScope.GLOBAL;
       
-      if( obj.getRelations() != null )
+      if( ! extLink && obj.getRelations() != null )
       {
        for( AgeRelation rel : obj.getRelations() )
        {
@@ -633,13 +633,16 @@ public class SerializedSwapStorage implements AgeStorageAdm
         clustMap = clusterIndexMap.get(dm.getClusterId());
         
         if( clustMap == null )
-         clusterIndexMap.put(dm.getClusterId(), clustMap = new HashMap<String, AgeObjectWritable>());
+         clusterIndexMap.put(dm.getClusterId(), clustMap = new HashMap<String, AgeObjectLinkedProxy>());
        }
       }
       
-      synchronized(clustMap)
+      if(obj.getIdScope() == IdScope.CLUSTER || obj.getIdScope() == IdScope.GLOBAL )
       {
-       clustMap.put(obj.getId(), pxObj );
+       synchronized(clustMap)
+       {
+        clustMap.put(obj.getId(), (AgeObjectLinkedProxy)pxObj );
+       }
       }
       
 
@@ -647,7 +650,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
       {
        synchronized(globalIndexMap)
        {
-        globalIndexMap.put(obj.getId(), pxObj);
+        globalIndexMap.put(obj.getId(), (AgeObjectLinkedProxy)pxObj);
        }
       }
       
@@ -719,6 +722,23 @@ public class SerializedSwapStorage implements AgeStorageAdm
    return dm;
   }
   
+  private AgeObjectLinkedProxy resolveTarget( AgeExternalRelationWritable extr )
+  {
+   if( extr.getTargetObject() != null )
+    return (AgeObjectLinkedProxy)extr.getTargetObject();
+   
+   AgeObjectLinkedProxy tgObj = null;
+   
+   if( extr.isTargetGlobal() )
+    return globalIndexMap.get( extr.getTargetObjectId() );
+   
+   Map<String,AgeObjectLinkedProxy> clustMap = clusterIndexMap.get( extr.getSourceObject().getDataModule().);
+   
+   else if( clustMap != null )
+    tgObj = clustMap.get( extr.getTargetObjectId() );
+
+  }
+  
   private void loadData() throws StorageInstantiationException
   {
    Map<AgeRelationClass, RelationClassRef> relRefMap = new HashMap<AgeRelationClass, RelationClassRef>();
@@ -786,7 +806,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
     for( ModuleRef modref : moduleMap.values() )
     {
-     Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(modref.getModuleKey().getClusterId());
+     Map<String, AgeObjectLinkedProxy> clustMap = clusterIndexMap.get(modref.getModuleKey().getClusterId());
      
      for( AgeObjectProxy pxo : modref.getObjectProxies() )
      {
@@ -801,16 +821,88 @@ public class SerializedSwapStorage implements AgeStorageAdm
          if( extr.getTargetObject() != null )
           continue;
          
-         AgeObjectWritable tgObj = null;
+         AgeObjectLinkedProxy tgObj = null;
          
          if( extr.isTargetGlobal() )
           tgObj = globalIndexMap.get( extr.getTargetObjectId() );
-         else
+         else if( clustMap != null )
+          tgObj = clustMap.get( extr.getTargetObjectId() );
+         
+         
+         if( tgObj == null )
          {
-          if( clustMap == null )
-           log.warn("Can't resolve external relation. Source: "+modref.getModuleKey().getClusterId()+":"+modref.getModuleKey().getModuleId()+":"+pxo.getId()
-             +" Target: "+extr.getTargetObjectId()+" Scope: "+(extr.isTargetGlobal()?"global":"target"));
+          log.warn("Can't resolve external relation. Source: "+modref.getModuleKey().getClusterId()+":"+modref.getModuleKey().getModuleId()+":"+pxo.getId()
+            +" Target: "+extr.getTargetObjectId()+" Scope: "+(extr.isTargetGlobal()?"global":"target"));
+         
+          continue;
          }
+         
+         AgeRelationClass invRCls = rel.getAgeElClass().getInverseRelationClass();
+         
+         if( invRCls == null ) //it should not be so as the implicit class must be generated if there is no explicit one
+         {
+          log.warn("There is inverse relation class for: "+rel.getAgeElClass().getName());
+          continue;
+         }
+         
+         boolean hasInv = false;
+         
+         if(tgObj.getRelations() != null)
+         {
+
+          for(AgeRelationWritable rl : tgObj.getRelations())
+          {
+           if(!rl.getAgeElClass().equals(invRCls))
+            continue;
+
+           if(rl.getTargetObject() == exr.getSourceObject())
+           {
+            exr.setInverseRelation(rl);
+            rl.setInverseRelation(exr);
+
+            hasInv = true;
+            break;
+           }
+           else if(rl instanceof AgeExternalRelationWritable)
+           {
+            AgeExternalRelationWritable invExR = (AgeExternalRelationWritable) rl;
+
+            if(invExR.getTargetObjectId().equals(exr.getSourceObject().getId()))
+            {
+             exr.setInverseRelation(rl);
+             rl.setInverseRelation(exr);
+
+             invExR.setTargetObject(exr.getSourceObject());
+             hasInv = true;
+             break;
+            }
+           }
+          }
+         }
+         if( ! hasInv )
+         {
+//          AgeRelationWritable iRel = tgObj.getAgeElClass().getSemanticModel().createAgeRelation(tgObj, invRCls);
+          RelationClassRef invCRef = relRefMap.get(invRCls);
+          
+          if( invCRef == null )
+          {
+           invCRef =tgObj.getDataModule().getContextSemanticModel().getModelFactory().createRelationClassRef(
+             tgObj.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(invRCls), 0, invRCls.getId());
+           
+           relRefMap.put(invRCls, invCRef);
+          }
+          
+          
+          AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId() );
+
+          invRel.setTargetObject(exr.getSourceObject());
+          invRel.setInverseRelation(exr);
+          invRel.setInferred(true);
+          exr.setInverseRelation(invRel);
+          
+          tgObj.addRelation(invRel);
+         }
+
         }
        }
       }

@@ -45,6 +45,9 @@ public class AgeObjectLinkedProxy extends AgeObjectProxy
  @Override
  public Collection< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSbCl)
  {
+  if( relations == null )
+   return Collections.emptyList();
+
   ArrayList<AgeRelationWritable> rels = null;
   
   for( AgeRelationWritable r : relations )
@@ -71,17 +74,24 @@ public class AgeObjectLinkedProxy extends AgeObjectProxy
  @Override
  public void addRelation(AgeRelationWritable r)
  {
+  if( relations == null )
+   relations = new ArrayList<AgeRelationWritable>(7);
+  
   relations.add(r);
  }
 
  @Override
  public void removeRelation(AgeRelationWritable rel)
  {
-  relations.remove(rel);
+  if( relations != null )
+   relations.remove(rel);
  }
 
  public void addRelations(Collection< ? extends AgeRelationWritable> relations2)
  {
+  if( relations == null )
+   relations = new ArrayList<AgeRelationWritable>(7);
+
   relations.addAll( relations2 );
  }
 
