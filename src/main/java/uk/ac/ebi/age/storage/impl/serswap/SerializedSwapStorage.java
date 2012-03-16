@@ -616,7 +616,12 @@ public class SerializedSwapStorage implements AgeStorageAdm
        for( AgeRelationWritable rel : obj.getRelations() )
        {
         if( rel instanceof AgeExternalRelationWritable )
+        {
          ((AgeExternalRelationWritable)rel).setSourceObject(lnPx);
+
+         if(  ! ((AgeExternalRelationWritable)rel).isTargetGlobal() )
+          rel = new TempClusterRelation( (AgeExternalRelationWritable)rel, dm.getClusterId() );
+        }
         
         lnPx.addRelation(rel);
        }
@@ -732,9 +737,10 @@ public class SerializedSwapStorage implements AgeStorageAdm
    if( extr.isTargetGlobal() )
     return globalIndexMap.get( extr.getTargetObjectId() );
    
-   Map<String,AgeObjectLinkedProxy> clustMap = clusterIndexMap.get( extr.getSourceObject().getDataModule().);
+   Map<String,AgeObjectLinkedProxy> clustMap = clusterIndexMap.get( ((TempClusterRelation)extr).getClusterId() );
    
-   else if( clustMap != null )
+   if( clustMap != null )
+    
     tgObj = clustMap.get( extr.getTargetObjectId() );
 
   }
@@ -825,14 +831,17 @@ public class SerializedSwapStorage implements AgeStorageAdm
          
          if( extr.isTargetGlobal() )
           tgObj = globalIndexMap.get( extr.getTargetObjectId() );
-         else if( clustMap != null )
-          tgObj = clustMap.get( extr.getTargetObjectId() );
+         else
+         {
+          if( clustMap != null )
+           tgObj = clustMap.get( extr.getTargetObjectId() );
+         }
          
          
          if( tgObj == null )
          {
           log.warn("Can't resolve external relation. Source: "+modref.getModuleKey().getClusterId()+":"+modref.getModuleKey().getModuleId()+":"+pxo.getId()
-            +" Target: "+extr.getTargetObjectId()+" Scope: "+(extr.isTargetGlobal()?"global":"target"));
+            +" Target: "+extr.getTargetObjectId()+" Scope: "+(extr.isTargetGlobal()?"global":"cluster"));
          
           continue;
          }
@@ -852,33 +861,38 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
           for(AgeRelationWritable rl : tgObj.getRelations())
           {
-           if(!rl.getAgeElClass().equals(invRCls))
+           if(! (rl.getAgeElClass().equals(invRCls) && (rl instanceof AgeExternalRelationWritable) ))
             continue;
 
-           if(rl.getTargetObject() == exr.getSourceObject())
+           AgeObjectProxy tgtg = (AgeObjectProxy)rl.getTargetObject();
+           
+           if( tgtg == null )
            {
-            exr.setInverseRelation(rl);
-            rl.setInverseRelation(exr);
+            if( ((AgeExternalRelationWritable)rl).isTargetGlobal() )
+             tgtg = globalIndexMap.get( extr.getTargetObjectId() );
+            else
+            {
+             Map<String,AgeObjectLinkedProxy> invTgclustMap = clusterIndexMap.get( ((TempClusterRelation)extr).getClusterId() );
+             
+             if( clustMap != null )
+              tgtg = clustMap.get( extr.getTargetObjectId() );
+            }
+           }
+           
+           if( tgtg == null ) // We will produce the warning later
+            continue;
+           
+           if( tgtg == pxo )
+           {
+            extr.setInverseRelation(rl);
+            rl.setInverseRelation(extr);
 
             hasInv = true;
             break;
            }
-           else if(rl instanceof AgeExternalRelationWritable)
-           {
-            AgeExternalRelationWritable invExR = (AgeExternalRelationWritable) rl;
-
-            if(invExR.getTargetObjectId().equals(exr.getSourceObject().getId()))
-            {
-             exr.setInverseRelation(rl);
-             rl.setInverseRelation(exr);
-
-             invExR.setTargetObject(exr.getSourceObject());
-             hasInv = true;
-             break;
-            }
-           }
           }
          }
+         
          if( ! hasInv )
          {
 //          AgeRelationWritable iRel = tgObj.getAgeElClass().getSemanticModel().createAgeRelation(tgObj, invRCls);
@@ -886,7 +900,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
           
           if( invCRef == null )
           {
-           invCRef =tgObj.getDataModule().getContextSemanticModel().getModelFactory().createRelationClassRef(
+           invCRef = model.getModelFactory().createRelationClassRef(
              tgObj.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(invRCls), 0, invRCls.getId());
            
            relRefMap.put(invRCls, invCRef);
