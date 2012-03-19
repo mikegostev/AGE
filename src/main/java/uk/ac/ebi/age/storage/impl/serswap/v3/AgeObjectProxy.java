@@ -249,6 +249,11 @@ public class AgeObjectProxy implements AgeObjectWritable
  {
   getObject().pack();
  }
+
+ public SerializedSwapStorage getStorage()
+ {
+  return storage;
+ }
  
  
 }

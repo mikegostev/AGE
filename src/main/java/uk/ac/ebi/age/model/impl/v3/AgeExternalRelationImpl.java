@@ -10,7 +10,7 @@ import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
-class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRelationWritable, Serializable
+public class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRelationWritable, Serializable
 {
  private static final long serialVersionUID = 3L;
 
@@ -22,7 +22,7 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  private boolean infered;
  private boolean targetGlobal=true;
 
- public AgeExternalRelationImpl(RelationClassRef cRef, AgeObjectWritable srcOb, String id)
+ protected AgeExternalRelationImpl(RelationClassRef cRef, AgeObjectWritable srcOb, String id)
  {
   relClassRef=cRef;
 
@@ -60,12 +60,7 @@ class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRel
  {
   return relClassRef.getOrder();
  }
-//
-// @Override
-// public void setOrder(int ord)
-// {
-//  order=ord;
-// }
+
 
  @Override
  public void setTargetObject(AgeObjectWritable obj)

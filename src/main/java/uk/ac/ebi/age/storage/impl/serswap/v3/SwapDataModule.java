@@ -13,11 +13,14 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.storage.impl.serswap.ModuleRef;
+import uk.ac.ebi.age.storage.impl.serswap.SerializedSwapStorage;
 
 public class SwapDataModule implements DataModuleWritable
 {
  private DataModuleWritable baseModule;
  private transient ModuleRef moduleRef;
+ private SerializedSwapStorage storage;
+
 
  public SwapDataModule( DataModuleWritable bs )
  {
@@ -122,5 +125,15 @@ public class SwapDataModule implements DataModuleWritable
  public void setModuleRef(ModuleRef moduleRef)
  {
   this.moduleRef = moduleRef;
+ }
+
+ public SerializedSwapStorage getStorage()
+ {
+  return storage;
+ }
+
+ public void setStorage(SerializedSwapStorage storage)
+ {
+  this.storage = storage;
  }
 }

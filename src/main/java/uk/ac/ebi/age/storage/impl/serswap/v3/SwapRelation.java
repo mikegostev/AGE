@@ -33,7 +33,7 @@ public class SwapRelation extends AttributedObject implements AgeRelationWritabl
  @Override
  public AgeObjectWritable getTargetObject()
  {
-  if( target instanceof AgeObjectProxy )
+  if( target.getClass() == AgeObjectProxy.class )
    return target;
   
   AgeObjectProxy pxObj = ((SwapDataModule)target.getDataModule()).getModuleRef().getObjectProxy(target.getId());

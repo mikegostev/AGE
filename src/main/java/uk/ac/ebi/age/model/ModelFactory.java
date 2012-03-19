@@ -35,7 +35,6 @@ public abstract class ModelFactory
 
  public abstract AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host);
 
-
  public abstract AgeRelationWritable createRelation( RelationClassRef relClassRef, AgeObjectWritable targetObj);
 
  
