@@ -35,6 +35,12 @@ abstract class AgeAttributeImpl extends AttributedObject implements AgeAttribute
  }
  
  @Override
+ public void setHostObject( AttributedWritable ho )
+ {
+  hostObject=ho;
+ }
+ 
+ @Override
  public ContextSemanticModel getSemanticModel()
  {
   return hostObject.getSemanticModel();

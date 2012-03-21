@@ -24,14 +24,22 @@ import uk.ac.ebi.age.storage.impl.serswap.SerializedSwapStorage;
 
 public class AgeObjectProxy implements AgeObjectWritable
 {
- private SoftReference<AgeObjectWritable> objectRef;
+ private transient SoftReference<AgeObjectWritable> objectRef;
 
- private SerializedSwapStorage storage;
+ private StoragePlug storage;
  
  private ModuleKey moduleId;
  private String objectId;
  
- public AgeObjectProxy(AgeObjectWritable obj, ModuleKey mk, SerializedSwapStorage sss)
+ public AgeObjectProxy(String objId, ModuleKey mk, StoragePlug sss)
+ {
+  storage = sss;
+  moduleId=mk;
+  objectId = objId;
+ }
+
+ 
+ public AgeObjectProxy(AgeObjectWritable obj, ModuleKey mk, StoragePlug sss)
  {
   storage = sss;
   moduleId=mk;
@@ -40,16 +48,27 @@ public class AgeObjectProxy implements AgeObjectWritable
 
  private AgeObjectWritable getObject()
  {
-  AgeObjectWritable obj = objectRef.get();
+  AgeObjectWritable obj = null;
+  
+  if( objectRef != null )
+   obj = objectRef.get();
   
   if( obj != null )
    return obj;
   
-  obj = storage.getLowLevelObject(moduleId,objectId);
+  obj = storage.getStorage().getLowLevelObject(moduleId,objectId);
   
   objectRef = new SoftReference<AgeObjectWritable>(obj);
   
   return obj;
+ }
+ 
+ public AgeObjectWritable tryGetObject()
+ {
+  if( objectRef == null )
+   return null;
+
+  return objectRef.get();
  }
  
  @Override
@@ -252,8 +271,12 @@ public class AgeObjectProxy implements AgeObjectWritable
 
  public SerializedSwapStorage getStorage()
  {
-  return storage;
+  return storage.getStorage();
  }
  
+ public ModuleKey getModuleKey()
+ {
+  return moduleId;
+ }
  
 }

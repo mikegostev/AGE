@@ -6,7 +6,6 @@ import java.util.Collection;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
-import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
@@ -17,19 +16,17 @@ import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
 import com.pri.util.collection.Collections;
 
-public class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
+abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
 {
  private AgeObjectProxy sourceObject;
  private AgeObjectProxy targetObject;
- private AgeRelationClassPlug classPlug;
  
  private SoftReference<AgeExternalRelationWritable> invRelRef;
  
- public SwapImplicitInvExtRelation( AgeObjectProxy src, AgeObjectProxy tgt, AgeRelationClassPlug clPlug )
+ public SwapImplicitInvExtRelation( AgeObjectProxy src, AgeObjectProxy tgt)
  {
   sourceObject = src;
   targetObject = tgt;
-  classPlug = clPlug;
  }
  
  @Override
@@ -57,10 +54,8 @@ public class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
  }
 
  @Override
- public AgeRelationClass getAgeElClass()
- {
-  return classPlug.getAgeRelationClass();
- }
+ abstract public AgeRelationClass getAgeElClass();
+
 
  @Override
  public boolean isInferred()

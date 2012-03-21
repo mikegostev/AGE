@@ -7,13 +7,13 @@ import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 
-class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWritable
+public class AgeIntegerAttributeImpl extends AgeAttributeImpl implements AgeAttributeWritable
 {
  private static final long serialVersionUID = 3L;
 
  private int value; 
 
- public AgeIntegerAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
+ protected AgeIntegerAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
  {
   super(attrClass, host);
  }

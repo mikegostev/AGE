@@ -9,15 +9,19 @@ import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.storage.ModuleKey;
-import uk.ac.ebi.age.storage.impl.serswap.SerializedSwapStorage;
 
 import com.pri.util.collection.CollectionsUnion;
 
 public class AgeObjectMergedLinkProxy extends AgeObjectProxy
 {
  private Collection< AgeRelationWritable > relations = new ArrayList<AgeRelationWritable>(5);
- 
- public AgeObjectMergedLinkProxy(AgeObjectWritable obj, ModuleKey mk, SerializedSwapStorage sss)
+
+ public AgeObjectMergedLinkProxy(String objId, ModuleKey mk, StoragePlug sss)
+ {
+  super(objId, mk, sss);
+ }
+
+ public AgeObjectMergedLinkProxy(AgeObjectWritable obj, ModuleKey mk, StoragePlug sss)
  {
   super(obj, mk, sss);
  }

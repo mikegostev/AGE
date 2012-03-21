@@ -6,14 +6,14 @@ import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
-class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttributeWritable
+public class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttributeWritable
 {
 
  private static final long serialVersionUID = 3L;
 
  private double value; 
 
- public AgeRealAttributeImpl(AttributeClassRef attrClass, AttributedWritable host )
+ protected AgeRealAttributeImpl(AttributeClassRef attrClass, AttributedWritable host )
  {
   super(attrClass, host);
  }

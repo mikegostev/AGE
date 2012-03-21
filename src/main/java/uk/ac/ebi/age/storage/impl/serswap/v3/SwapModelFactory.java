@@ -1,10 +1,11 @@
-package uk.ac.ebi.age.storage.impl.serswap;
+package uk.ac.ebi.age.storage.impl.serswap.v3;
 
 import uk.ac.ebi.age.model.AgeAnnotationClass;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
+import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
@@ -28,9 +29,6 @@ import uk.ac.ebi.age.model.writable.AttributeAttachmentRuleWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
-import uk.ac.ebi.age.storage.impl.serswap.v3.SwapDataModule;
-import uk.ac.ebi.age.storage.impl.serswap.v3.SwapObjectAttribute;
-import uk.ac.ebi.age.storage.impl.serswap.v3.SwapRelation;
 
 public class SwapModelFactory extends ModelFactory
 {
@@ -97,8 +95,44 @@ public class SwapModelFactory extends ModelFactory
  {
   if( attrClassRef.getAttributeClass().getDataType() == DataType.OBJECT )
    return new SwapObjectAttribute(attrClassRef, host);
+  
+  if( ! ( host instanceof AgeObject ) )
+    return baseFactory.createAgeAttribute(attrClassRef, host);
+  
+  AgeAttributeWritable attr=null;
+  
+  switch( attrClassRef.getAttributeClass().getDataType() )
+  {
+   case INTEGER:
+    attr = new SwapIntegerAttribute(attrClassRef, host);
+    break;
    
-  return baseFactory.createAgeAttribute(attrClassRef, host);
+   case REAL:
+    attr = new SwapRealAttribute(attrClassRef, host);
+    break;
+   
+   case BOOLEAN:
+    attr = new SwapBooleanAttribute(attrClassRef, host);
+    break;
+   
+   case URI:
+   case TEXT: 
+   case STRING:
+   case GUESS:
+    attr = new SwapStringAttribute(attrClassRef, host);
+    break;
+
+   case FILE:
+    attr = new SwapFileAttribute(attrClassRef, host);
+    break;
+    
+   case OBJECT: //See above
+  }
+  
+  
+  return attr;
+  
+
  }
 
  public AgeRelationWritable createRelation(RelationClassRef relClassRef, AgeObjectWritable targetObj)

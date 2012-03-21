@@ -11,7 +11,7 @@ import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
-class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExternalObjectAttributeWritable, Serializable
+public class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExternalObjectAttributeWritable, Serializable
 {
  private static final long serialVersionUID = 3L;
 
@@ -20,7 +20,7 @@ class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExte
  private boolean targetGlobal=true;
 
  
- public AgeExternalObjectAttributeImpl(AttributeClassRef relClass, String id,  AttributedWritable host)
+ protected AgeExternalObjectAttributeImpl(AttributeClassRef relClass, String id,  AttributedWritable host)
  {
   super(relClass, host);
   
