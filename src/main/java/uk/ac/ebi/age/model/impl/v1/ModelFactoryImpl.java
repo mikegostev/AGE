@@ -162,13 +162,13 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id)
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, boolean glb )
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, boolean glb )
  {
   throw new UnsupportedOperationException();
  }

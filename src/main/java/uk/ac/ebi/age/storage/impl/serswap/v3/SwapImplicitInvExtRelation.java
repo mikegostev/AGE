@@ -136,7 +136,7 @@ abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
  }
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val, boolean glb )
  {
   throw new UnsupportedOperationException();
  }

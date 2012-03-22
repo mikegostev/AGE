@@ -20,11 +20,12 @@ public class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements 
  private boolean targetGlobal=true;
 
  
- protected AgeExternalObjectAttributeImpl(AttributeClassRef relClass, String id,  AttributedWritable host)
+ protected AgeExternalObjectAttributeImpl(AttributeClassRef relClass, String id,  AttributedWritable host, boolean global)
  {
   super(relClass, host);
   
   objId=id;
+  targetGlobal = global;
  }
 
 
@@ -123,7 +124,7 @@ public class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements 
  @Override
  public AgeExternalObjectAttributeWritable createClone( AttributedWritable host )
  {
-  AgeExternalObjectAttributeImpl clone  = new AgeExternalObjectAttributeImpl(getClassRef(), objId, host);
+  AgeExternalObjectAttributeImpl clone  = new AgeExternalObjectAttributeImpl(getClassRef(), objId, host, targetGlobal);
   clone.target=this.target;
   
   cloneAttributes( clone );

@@ -81,14 +81,14 @@ public class SwapModelFactory extends ModelFactory
   return baseFactory.createCustomAgeAttributeClass(name, type, sm, owner);
  }
 
- public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id)
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, boolean glb )
  {
-  return baseFactory.createExternalRelation(ref, sourceObj, id);
+  return new SwapExternalRelation(ref, sourceObj, id, glb);
  }
 
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, boolean glb )
  {
-  return baseFactory.createExternalObjectAttribute(atCls, host, id);
+  return new SwapExternalObjectAttribute(atCls, id, host, glb);
  }
 
  public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, AttributedWritable host)

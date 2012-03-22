@@ -22,12 +22,13 @@ public class AgeExternalRelationImpl extends AttributedObject implements AgeExte
  private boolean infered;
  private boolean targetGlobal=true;
 
- protected AgeExternalRelationImpl(RelationClassRef cRef, AgeObjectWritable srcOb, String id)
+ protected AgeExternalRelationImpl(RelationClassRef cRef, AgeObjectWritable srcOb, String id, boolean global)
  {
   relClassRef=cRef;
 
   objId=id;
   sourceObject=srcOb;
+  targetGlobal=global;
  }
 
  @Override
@@ -97,7 +98,7 @@ public class AgeExternalRelationImpl extends AttributedObject implements AgeExte
  @Override
  public AgeRelationWritable createClone( AgeObjectWritable src )
  {
-  AgeExternalRelationImpl clone = new AgeExternalRelationImpl(relClassRef, src, getTargetObjectId());
+  AgeExternalRelationImpl clone = new AgeExternalRelationImpl(relClassRef, src, getTargetObjectId(), targetGlobal);
   clone.infered = infered;
   
   cloneAttributes(clone);

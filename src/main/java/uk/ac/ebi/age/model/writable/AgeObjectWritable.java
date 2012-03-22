@@ -30,7 +30,7 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  void removeRelation(AgeRelationWritable rel);
 
 
- AgeExternalRelationWritable createExternalRelation( RelationClassRef ref, String val);
+ AgeExternalRelationWritable createExternalRelation( RelationClassRef ref, String val, boolean glb );
 
  AgeRelationWritable createRelation(RelationClassRef ref, AgeObjectWritable targetObj);
 

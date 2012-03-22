@@ -68,9 +68,9 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
 
  
  @Override
- public AgeAttributeWritable createExternalObjectAttribute( AttributeClassRef attrClass, String val )
+ public AgeAttributeWritable createExternalObjectAttribute( AttributeClassRef attrClass, String val, boolean glb  )
  {
-  AgeAttributeWritable attr = getSemanticModel().createExternalObjectAttribute(  attrClass, this, val );
+  AgeAttributeWritable attr = getSemanticModel().createExternalObjectAttribute(  attrClass, this, val, glb );
 
   addAttribute(attr);
 

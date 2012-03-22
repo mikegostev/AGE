@@ -97,16 +97,16 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, String id)
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, String id, boolean glb )
  {
-  return v3factory.createExternalRelation(rClsR, sourceObj, id);
+  return v3factory.createExternalRelation(rClsR, sourceObj, id, glb);
  }
  
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, boolean glb )
  {
-  return v3factory.createExternalObjectAttribute(atCls, host, id);
+  return v3factory.createExternalObjectAttribute(atCls, host, id, glb);
  }
 
  @Override

@@ -12,7 +12,7 @@ public interface AttributedWritable extends Attributed
 // AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass);
  AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass);
 // AgeAttributeWritable createExternalObjectAttribute(String val, AgeAttributeClass attrClass);
- AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val );
+ AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val, boolean glb  );
 
  
  Collection<? extends AgeAttributeWritable> getAttributes();

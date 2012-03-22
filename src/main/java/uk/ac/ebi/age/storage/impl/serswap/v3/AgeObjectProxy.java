@@ -168,9 +168,9 @@ public class AgeObjectProxy implements AgeObjectWritable
  }
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val)
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val, boolean glb )
  {
-  return getObject().createExternalObjectAttribute(attrClass,val);
+  return getObject().createExternalObjectAttribute(attrClass,val, glb);
  }
 
  @Override
@@ -228,9 +228,9 @@ public class AgeObjectProxy implements AgeObjectWritable
  }
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, String val)
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, String val, boolean glb )
  {
-  return getObject().createExternalRelation(ref, val);
+  return getObject().createExternalRelation(ref, val, glb);
  }
 
  @Override

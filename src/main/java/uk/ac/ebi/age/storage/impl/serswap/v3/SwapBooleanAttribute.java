@@ -3,6 +3,7 @@ package uk.ac.ebi.age.storage.impl.serswap.v3;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.impl.v3.AgeBooleanAttributeImpl;
+import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 public class SwapBooleanAttribute extends AgeBooleanAttributeImpl
@@ -30,6 +31,17 @@ public class SwapBooleanAttribute extends AgeBooleanAttributeImpl
   return pxo;
  }
 
- 
+
+ @Override
+ public AgeAttributeWritable createClone( AttributedWritable host )
+ {
+  AgeBooleanAttributeImpl clone  = new SwapBooleanAttribute(getClassRef(), host);
+  
+  clone.setBooleanValue(getValueAsBoolean());
+  
+  cloneAttributes( clone );
+
+  return clone;
+ }
  
 }

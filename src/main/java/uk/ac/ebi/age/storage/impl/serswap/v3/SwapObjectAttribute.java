@@ -21,7 +21,7 @@ public class SwapObjectAttribute extends AgeObjectAttributeImpl
  {
   AgeObjectWritable obj = super.getValue();
   
-  if( obj.getClass() == AgeObjectProxy.class )
+  if( obj instanceof AgeObjectProxy )
    return obj;
   
   AgeObjectProxy pxObj = ((SwapDataModule)obj.getDataModule()).getModuleRef().getObjectProxy(obj.getId());
@@ -37,7 +37,7 @@ public class SwapObjectAttribute extends AgeObjectAttributeImpl
   AttributedWritable host = super.getHostObject();
   
   if( host instanceof AgeObjectProxy)
-   return super.getHostObject();
+   return host;
   
   AgeObjectProxy pxo = ((SwapDataModule)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   

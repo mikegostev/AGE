@@ -2066,7 +2066,7 @@ public class SubmissionManager
        }
        
        
-       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId() );
+       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId(), true);
        invRel.setTargetObject(exr.getSourceObject());
        invRel.setInferred(true);
 
@@ -2327,7 +2327,7 @@ public class SubmissionManager
          cstMeta.relRefMap.put(extRel.getAgeElClass(), invCRef);
         }
 
-        dirRel = replObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, replObj, target.getId());
+        dirRel = replObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, replObj, target.getId(), true);
 
         dirRel.setInferred(true);
         

@@ -15,17 +15,17 @@ public class SwapExternalRelation extends AgeExternalRelationImpl
 
  private SoftReference<AgeExternalRelationWritable> softInvRel;
  
- protected SwapExternalRelation(RelationClassRef cRef, AgeObjectWritable srcOb, String id)
+ protected SwapExternalRelation(RelationClassRef cRef, AgeObjectWritable srcOb, String id, boolean glb )
  {
-  super(cRef, srcOb, id);
+  super(cRef, srcOb, id, glb);
  }
 
  public AgeObjectProxy getSourceObject()
  {
   AgeObjectWritable src = super.getSourceObject();
   
-  if( src.getClass() == AgeObjectProxy.class )
-   return (AgeObjectProxy)super.getSourceObject();
+  if( src instanceof AgeObjectProxy )
+   return (AgeObjectProxy)src;
   
   AgeObjectProxy sObjPx = ((SwapDataModule)src.getDataModule()).getModuleRef().getObjectProxy(src.getId());
   
@@ -47,7 +47,7 @@ public class SwapExternalRelation extends AgeExternalRelationImpl
   if( isTargetGlobal() )
    tgt = stor.getGlobalObject( getTargetObjectId() );
   else
-   tgt = stor.getClusterObject(getSourceObject().getDataModule().getClusterId(), getTargetObjectId());
+   tgt = stor.getClusterObject(getSourceObject().getModuleKey().getClusterId(), getTargetObjectId());
   
   setTargetObject(tgt);
 
@@ -59,8 +59,14 @@ public class SwapExternalRelation extends AgeExternalRelationImpl
   if( super.getInverseRelation() != null )
    return super.getInverseRelation();
   
-  if( softInvRel != null && softInvRel.get() != null )
-   return softInvRel.get();
+  
+  if( softInvRel != null )
+  {
+   AgeExternalRelationWritable invRel = softInvRel.get();
+   
+   if(  invRel != null )
+    return invRel;
+  }
   
   for( AgeRelationWritable rel : getTargetObject().getRelations() )
   {

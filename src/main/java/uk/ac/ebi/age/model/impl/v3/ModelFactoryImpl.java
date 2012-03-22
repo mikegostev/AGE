@@ -129,16 +129,16 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id )
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, boolean global )
  {
-  return new AgeExternalRelationImpl(ref, sourceObj, id);
+  return new AgeExternalRelationImpl(ref, sourceObj, id, global);
  }
  
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host , String id )
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host , String id, boolean global )
  {
-  return new AgeExternalObjectAttributeImpl(atCls, id, host);
+  return new AgeExternalObjectAttributeImpl(atCls, id, host, global);
  }
 
  @Override
