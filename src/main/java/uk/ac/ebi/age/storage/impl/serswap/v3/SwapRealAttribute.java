@@ -3,6 +3,7 @@ package uk.ac.ebi.age.storage.impl.serswap.v3;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.impl.v3.AgeRealAttributeImpl;
+import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 public class SwapRealAttribute extends AgeRealAttributeImpl
@@ -28,5 +29,17 @@ public class SwapRealAttribute extends AgeRealAttributeImpl
   setHostObject(pxo);
   
   return pxo;
+ }
+ 
+ @Override
+ public AgeAttributeWritable createClone( AttributedWritable host )
+ {
+  SwapRealAttribute clone  = new SwapRealAttribute(getClassRef(), host);
+  
+  clone.setDoubleValue(getValueAsDouble());
+  
+  cloneAttributes( clone );
+
+  return clone;
  }
 }
