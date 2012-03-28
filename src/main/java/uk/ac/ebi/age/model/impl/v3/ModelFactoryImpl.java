@@ -242,5 +242,11 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
   throw new UnsupportedOperationException();
  }
 
+ @Override
+ public SemanticModel createModelInstance()
+ {
+  throw new UnsupportedOperationException();
+ }
+
 
 }

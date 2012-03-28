@@ -203,4 +203,10 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
   return new ContextSemanticModelImpl(mm);
  }
 
+ @Override
+ public SemanticModel createModelInstance()
+ {
+  return new SemanticModelImpl(this);
+ }
+
 }

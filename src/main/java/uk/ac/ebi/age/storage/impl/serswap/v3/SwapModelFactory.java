@@ -205,4 +205,14 @@ public class SwapModelFactory extends ModelFactory
  {
   return baseFactory.createContextSemanticModel(mm);
  }
+
+ @Override
+ public SemanticModel createModelInstance()
+ {
+  SemanticModel mod = baseFactory.createModelInstance();
+  
+  mod.setModelFactory( this );
+  
+  return mod;
+ }
 }

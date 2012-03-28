@@ -57,4 +57,6 @@ public abstract class ModelFactory
  public abstract RelationClassRef createRelationClassRef( AgeRelationClassPlug plug, int order, String heading);
 
  public abstract ContextSemanticModel createContextSemanticModel( SemanticModel mm );
+
+ public abstract SemanticModel createModelInstance();
 }

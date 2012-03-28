@@ -50,6 +50,15 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  private ModelFactory v1factory = uk.ac.ebi.age.model.impl.v1.ModelFactoryImpl.getInstance();
  private ModelFactory v3factory = uk.ac.ebi.age.model.impl.v3.ModelFactoryImpl.getInstance();
  
+ @Override
+ public SemanticModel createModelInstance()
+ {
+  SemanticModel mod = v1factory.createModelInstance();
+  
+  mod.setModelFactory( this );
+  
+  return mod;
+ }
  
  @Override
  public DataModuleWritable createDataModule( ContextSemanticModel sm )
