@@ -24,7 +24,7 @@ public class SwapBooleanAttribute extends AgeBooleanAttributeImpl
   if( host instanceof AgeObjectProxy)
    return super.getHostObject();
   
-  AgeObjectProxy pxo = ((SwapDataModule)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
+  AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   
   setHostObject(pxo);
   

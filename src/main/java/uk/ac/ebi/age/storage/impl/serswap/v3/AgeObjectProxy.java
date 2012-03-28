@@ -21,6 +21,7 @@ import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.storage.ModuleKey;
 import uk.ac.ebi.age.storage.impl.serswap.SerializedSwapStorage;
+import uk.ac.ebi.age.storage.impl.serswap.StoragePlug;
 
 public class AgeObjectProxy implements AgeObjectWritable
 {

@@ -714,7 +714,7 @@ public class SubmissionManager
   try
   {
    ageStorage.lockWrite();
-   // XXX connection to main graph
+   // XXX connection to the main graph
    
    if( ! checkUniqObjects(cstMeta, ageStorage, logRoot) )
    {

@@ -24,7 +24,7 @@ public class SwapRelation extends AgeRelationImpl
   if( target instanceof AgeObjectProxy )
    return target;
   
-  AgeObjectProxy pxObj = ((SwapDataModule)target.getDataModule()).getModuleRef().getObjectProxy(target.getId());
+  AgeObjectProxy pxObj = ((SwapDataModuleImpl)target.getDataModule()).getModuleRef().getObjectProxy(target.getId());
   
   target = pxObj;
   

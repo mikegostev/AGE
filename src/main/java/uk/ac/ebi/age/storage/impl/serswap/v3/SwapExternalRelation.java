@@ -27,7 +27,7 @@ public class SwapExternalRelation extends AgeExternalRelationImpl
   if( src instanceof AgeObjectProxy )
    return (AgeObjectProxy)src;
   
-  AgeObjectProxy sObjPx = ((SwapDataModule)src.getDataModule()).getModuleRef().getObjectProxy(src.getId());
+  AgeObjectProxy sObjPx = ((SwapDataModuleImpl)src.getDataModule()).getModuleRef().getObjectProxy(src.getId());
   
   super.setSourceObject(sObjPx);
   

@@ -13,16 +13,16 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.storage.impl.serswap.ModuleRef;
+import uk.ac.ebi.age.storage.impl.serswap.ProxyDataModule;
 import uk.ac.ebi.age.storage.impl.serswap.SerializedSwapStorage;
 
-public class SwapDataModule implements DataModuleWritable
+public class SwapDataModuleImpl implements DataModuleWritable, ProxyDataModule
 {
  private DataModuleWritable baseModule;
  private transient ModuleRef moduleRef;
- private SerializedSwapStorage storage;
 
 
- public SwapDataModule( DataModuleWritable bs )
+ public SwapDataModuleImpl( DataModuleWritable bs )
  {
   baseModule = bs;
  }
@@ -117,23 +117,22 @@ public class SwapDataModule implements DataModuleWritable
   baseModule.pack();
  }
 
+ @Override
  public ModuleRef getModuleRef()
  {
   return moduleRef;
  }
 
+ @Override
  public void setModuleRef(ModuleRef moduleRef)
  {
   this.moduleRef = moduleRef;
  }
 
+ @Override
  public SerializedSwapStorage getStorage()
  {
-  return storage;
+  return moduleRef.getStorage();
  }
 
- public void setStorage(SerializedSwapStorage storage)
- {
-  this.storage = storage;
- }
 }

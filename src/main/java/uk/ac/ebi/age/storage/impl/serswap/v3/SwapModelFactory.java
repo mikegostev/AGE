@@ -39,9 +39,9 @@ public class SwapModelFactory extends ModelFactory
   baseFactory = fct;
  }
  
- public SwapDataModule createDataModule(ContextSemanticModel sm)
+ public SwapDataModuleImpl createDataModule(ContextSemanticModel sm)
  {
-  return new SwapDataModule(baseFactory.createDataModule(sm));
+  return new SwapDataModuleImpl(baseFactory.createDataModule(sm));
  }
 
  public AgeClassWritable createAgeClass(String name, String id, String pfx, SemanticModel sm)

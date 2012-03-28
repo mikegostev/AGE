@@ -760,7 +760,7 @@ public class SerializedStorage implements AgeStorageAdm
        }
        
        
-       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId() );
+       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId(), true );
 
        invRel.setTargetObject(exr.getSourceObject());
        invRel.setInverseRelation(exr);

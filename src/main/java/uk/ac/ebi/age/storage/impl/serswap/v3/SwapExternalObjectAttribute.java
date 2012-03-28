@@ -27,7 +27,7 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
   if( host instanceof AgeObjectProxy)
    return (AgeObjectProxy)super.getHostObject();
   
-  AgeObjectProxy pxo = ((SwapDataModule)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
+  AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   
   setHostObject(pxo);
   

@@ -1280,7 +1280,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
    AgeRelationWritable rel = null;
    if(targetObj == null)
-    rel = hostObject.createExternalRelation( rClsRef, val );
+    rel = hostObject.createExternalRelation( rClsRef, val, true );
    else
     rel = hostObject.createRelation( rClsRef, targetObj);
 
@@ -1342,7 +1342,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    AgeAttributeWritable obAttr = null;
    if(targetObj == null)
    {
-    obAttr = hostObject.createExternalObjectAttribute( classRef, val );
+    obAttr = hostObject.createExternalObjectAttribute( classRef, val, true );
    }
    else
    {
@@ -1418,7 +1418,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
    AgeRelationWritable rel = null;
    if(targetObj == null)
-    rel = hostObject.createExternalRelation(rClsRef, val);
+    rel = hostObject.createExternalRelation(rClsRef, val, true);
    else
     rel = hostObject.createRelation(rClsRef, targetObj);
 
@@ -1784,7 +1784,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
    AgeAttributeWritable obAttr = null;
    if(targetObj == null)
-    obAttr = prop.createExternalObjectAttribute(classRef, val);
+    obAttr = prop.createExternalObjectAttribute(classRef, val, true);
    else
    {
     obAttr = prop.createAgeAttribute(classRef);

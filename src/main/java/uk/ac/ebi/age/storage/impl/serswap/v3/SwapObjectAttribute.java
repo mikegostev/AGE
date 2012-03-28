@@ -25,7 +25,7 @@ public class SwapObjectAttribute extends AgeObjectAttributeImpl
   if( obj instanceof AgeObjectProxy )
    return obj;
   
-  AgeObjectProxy pxObj = ((SwapDataModule)obj.getDataModule()).getModuleRef().getObjectProxy(obj.getId());
+  AgeObjectProxy pxObj = ((SwapDataModuleImpl)obj.getDataModule()).getModuleRef().getObjectProxy(obj.getId());
   
   setValue( pxObj );
   
@@ -40,7 +40,7 @@ public class SwapObjectAttribute extends AgeObjectAttributeImpl
   if( host instanceof AgeObjectProxy)
    return host;
   
-  AgeObjectProxy pxo = ((SwapDataModule)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
+  AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   
   setHostObject(pxo);
   
