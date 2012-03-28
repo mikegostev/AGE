@@ -714,7 +714,7 @@ public class SubmissionManager
   try
   {
    ageStorage.lockWrite();
-   // XXX connection to the main graph
+   // XXX storeSubmission: connection to the main graph
    
    if( ! checkUniqObjects(cstMeta, ageStorage, logRoot) )
    {
@@ -1980,7 +1980,7 @@ public class SubmissionManager
 
     AgeObjectWritable tgObj = cstMeta.clusterIdMap.get(ref);
     
-    // if there is no targer object within the cluster let's try to find global object but we have to keep in mind inverse relation!
+    // if there is no target object within the cluster let's try to find global object but we have to keep in mind inverse relation!
     if( tgObj == null )
     {
      if( !exr.getAgeElClass().getInverseRelationClass().isImplicit() && exr.getSourceObject().getIdScope() != IdScope.GLOBAL )
