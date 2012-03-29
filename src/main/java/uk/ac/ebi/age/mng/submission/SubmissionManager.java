@@ -111,14 +111,14 @@ public class SubmissionManager
  {
   List<ModMeta> incomingMods = new ArrayList<SubmissionManager.ModMeta>();  //New modules and modules with data update (Ins+Upd) but in original order
  
-  List<ModMeta> mod4Use = new ArrayList<SubmissionManager.ModMeta>(); //Ins+Upd+Hld convenience map
+  List<ModMeta> mod4Use = new ArrayList<SubmissionManager.ModMeta>(); //Ins+Upd+Hld+MetaUpd convenience map
  
   List<ModMeta> mod4Ins = new ArrayList<SubmissionManager.ModMeta>();
   
   Map<String,ModMeta> mod4MetaUpd = new HashMap<String, SubmissionManager.ModMeta>(); //Modules with meta (description) update only
-  Map<String,ModMeta> mod4Upd = new HashMap<String, SubmissionManager.ModMeta>();     //Modules with data update
+  Map<String,ModMeta> mod4DataUpd = new HashMap<String, SubmissionManager.ModMeta>(); //Modules with data update
   Map<String,ModMeta> mod4Del = new HashMap<String, SubmissionManager.ModMeta>();     //Modules to be deleted
-  Map<String,ModMeta> mod4Hld = new HashMap<String, SubmissionManager.ModMeta>();     //Modules to be retained
+  Map<String,ModMeta> mod4Hld = new HashMap<String, SubmissionManager.ModMeta>();     //Modules to be retained (fully untouched, even meta)
 
   Map<String,FileAttachmentMeta> att4Ins = new HashMap<String, FileAttachmentMeta>(); //New files
   Map<String,FileMeta> att4Upd = new HashMap<String, FileMeta>();                     //Files with content update   
@@ -337,7 +337,7 @@ public class SubmissionManager
      }
      else if( dm.getText() != null )
      {
-      cstMeta.mod4Upd.put(mm.meta.getId(), mm);
+      cstMeta.mod4DataUpd.put(mm.meta.getId(), mm);
       cstMeta.mod4Use.add(mm);
       cstMeta.incomingMods.add(mm);
      }
@@ -393,7 +393,7 @@ public class SubmissionManager
    {
     String modID = odm.getId();
 
-    ModMeta updMod = cstMeta.mod4Upd.get(modID);
+    ModMeta updMod = cstMeta.mod4DataUpd.get(modID);
     
     if( updMod == null )
      updMod = cstMeta.mod4MetaUpd.get(modID);
@@ -727,7 +727,7 @@ public class SubmissionManager
    Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable> > relConnections = null;
    Map<AgeObjectWritable,Set<AgeRelationWritable> > relationDetachMap = null;
    
-   if( cstMeta.mod4Upd.size() != 0 || ( cstMeta.mod4Ins.size() !=0 && cstMeta.mod4Del.size() != 0 ) )
+   if( cstMeta.mod4DataUpd.size() != 0 || ( cstMeta.mod4Ins.size() !=0 && cstMeta.mod4Del.size() != 0 ) )
    {
     relConnections = new ArrayList<Pair<AgeExternalRelationWritable,AgeObjectWritable>>();
     relationDetachMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
@@ -1061,7 +1061,7 @@ public class SubmissionManager
  
    
 
-   if( cstMeta.mod4Upd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0 )
+   if( cstMeta.mod4DataUpd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0 )
    {
     LogNode updtLog = logRoot.branch("Updating storage");
 
@@ -1069,7 +1069,7 @@ public class SubmissionManager
     {
      
      Collection<DataModuleWritable> chgMods =        new CollectionsUnion<DataModuleWritable>(
-       new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Upd.values(), modExtractor),
+       new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4DataUpd.values(), modExtractor),
        new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Ins, modExtractor));
 
 
@@ -1080,7 +1080,7 @@ public class SubmissionManager
        chgMods,
 
       new CollectionsUnion<ModuleKey>(
-        new ExtractorCollection<ModMeta, ModuleKey>(cstMeta.mod4Upd.values(), modkeyExtractor),
+        new ExtractorCollection<ModMeta, ModuleKey>(cstMeta.mod4DataUpd.values(), modkeyExtractor),
         new ExtractorCollection<ModMeta, ModuleKey>(cstMeta.mod4Del.values(), modkeyExtractor)));
 
      updtLog.success();
@@ -1600,7 +1600,7 @@ public class SubmissionManager
 
    try
    {
-    if( cstMeta.mod4Upd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0 )
+    if( cstMeta.mod4DataUpd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0 )
     {
      
      ageStorage.update( 
@@ -1847,7 +1847,7 @@ public class SubmissionManager
      fdelLog.success();
    }
 
-   if(cstMeta.mod4Upd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0)
+   if(cstMeta.mod4DataUpd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0)
    {
     LogNode updtLog = logRoot.branch("Updating storage");
 
@@ -1997,7 +1997,7 @@ public class SubmissionManager
 
      tgObj = (AgeObjectWritable) stor.getGlobalObject(ref);
 
-     if(tgObj == null || cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4Upd.containsKey(tgObj.getDataModule().getId()))
+     if(tgObj == null || cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()))
       tgObj = null;
     }
     
@@ -2115,7 +2115,16 @@ public class SubmissionManager
   for( ModMeta mm : cstMeta.mod4Use )
   {
    if( mm.newModule == null )
+   {
+    for( AgeObjectWritable obj : mm.origModule.getObjects() )
+    {
+     if( obj.getIdScope() == IdScope.CLUSTER )
+      cstMeta.clusterIdMap.put(obj.getId(),obj);
+     else if( obj.getIdScope() == IdScope.CLUSTER )
+     {}
+    }
     continue;
+   }
    
    modMap.put(mm.newModule, mm);
    
@@ -2185,15 +2194,22 @@ public class SubmissionManager
      
      if( clashObj != null )
      {
-      res = false;
-      
-     
-      logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the global scope. The first object: "
-        +( (mm.aux!=null?mm.aux.getOrder()+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
-        +". The second object: cluster ID='"+clashObj.getDataModule().getClusterId()+"' module ID='"+clashObj.getDataModule().getId()+"' Row: " + clashObj.getOrder()
-      );
-      
-      continue;
+      if( ! clashObj.getDataModule().getClusterId().equals(cstMeta.id) || ( !cstMeta.mod4Del.containsKey(mm.meta.getId()) && !cstMeta.mod4DataUpd.containsKey(mm.meta.getId()) ) )
+      {
+       
+      }
+      else
+      {
+       res = false;
+       
+       
+       logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the global scope. The first object: "
+         +( (mm.aux!=null?mm.aux.getOrder()+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
+         +". The second object: cluster ID='"+clashObj.getDataModule().getClusterId()+"' module ID='"+clashObj.getDataModule().getId()+"' Row: " + clashObj.getOrder()
+         );
+       
+       continue;
+      }
      }
 
      
@@ -2219,7 +2235,7 @@ public class SubmissionManager
   
   boolean res = true; 
   
-  for( ModMeta mm : new CollectionsUnion<ModMeta>(cstMeta.mod4Del.values(),cstMeta.mod4Upd.values()) )
+  for( ModMeta mm : new CollectionsUnion<ModMeta>(cstMeta.mod4Del.values(),cstMeta.mod4DataUpd.values()) )
   {
    if( mm.origModule == null ) //Skipping new modules, processing only update/delete modules (where original data are going away)
     continue;
@@ -2367,7 +2383,7 @@ public class SubmissionManager
   
   for( DataModule extDM : stor.getDataModules() )
   {
-   if( cstMeta.mod4Del.containsKey(extDM.getId()) || cstMeta.mod4Upd.containsKey(extDM.getId()) )
+   if( cstMeta.mod4Del.containsKey(extDM.getId()) || cstMeta.mod4DataUpd.containsKey(extDM.getId()) )
     continue;
    
    
@@ -2377,7 +2393,7 @@ public class SubmissionManager
     String refModId = extObjAttr.getValue().getDataModule().getId();
 
   
-    if( cstMeta.mod4Del.containsKey(refModId) || cstMeta.mod4Upd.containsKey(refModId) )
+    if( cstMeta.mod4Del.containsKey(refModId) || cstMeta.mod4DataUpd.containsKey(refModId) )
     {
      AgeObject replObj = extDM.getClusterId().equals(cstMeta.id)?
          cstMeta.clusterIdMap.get(extObjAttr.getTargetObjectId()) 
@@ -2393,7 +2409,7 @@ public class SubmissionManager
          + "') is referred by object attribute from the module '" + extDM.getId() + "' of the cluster '" + extDM.getClusterId() + "'");
       else
       {
-       errMod = cstMeta.mod4Upd.get(refModId);
+       errMod = cstMeta.mod4DataUpd.get(refModId);
        logRecon.log(Level.ERROR, "Module " + errMod.aux.getOrder() + " (ID='" + errMod.meta.getId() + "') is marked for update but some object (ID='" + extObjAttr.getValue().getId()
          + "') is referred by object attribute from module '" + extDM.getId() + "' of cluster '" + extDM.getClusterId() + "' and the reference can't be resolved anymore");
       }
@@ -2423,7 +2439,7 @@ public class SubmissionManager
   LogNode logCon = logRoot.branch("Connecting file attributes to files");
 
   
-  for(ModMeta mm : new CollectionsUnion<ModMeta>( cMeta.mod4Ins, cMeta.mod4Upd.values() ))
+  for(ModMeta mm : new CollectionsUnion<ModMeta>( cMeta.mod4Ins, cMeta.mod4DataUpd.values() ))
   {
    for(AgeFileAttributeWritable fattr : mm.newModule.getFileAttributes())
    {
@@ -2467,7 +2483,7 @@ public class SubmissionManager
   LogNode logCon = logRoot.branch("Checking file attributes to files connections");
 
   
-  for(ModMeta mm : new CollectionsUnion<ModMeta>( cMeta.mod4Ins, cMeta.mod4Upd.values() ))
+  for(ModMeta mm : new CollectionsUnion<ModMeta>( cMeta.mod4Ins, cMeta.mod4DataUpd.values() ))
   {
    for(AgeFileAttributeWritable fattr : mm.newModule.getFileAttributes())
    {
@@ -2702,7 +2718,7 @@ public class SubmissionManager
     {
      tgObj = stor.getGlobalObject( ref );
     
-     if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4Upd.containsKey(tgObj.getDataModule().getId()) ) ) //We don't want to get dead objects 
+     if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) ) //We don't want to get dead objects 
       tgObj = null;
     }
    

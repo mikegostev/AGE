@@ -8,18 +8,18 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import uk.ac.ebi.age.model.DataModule;
+import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.storage.DataModuleReaderWriter;
-import uk.ac.ebi.age.storage.impl.serswap.v3.SwapDataModuleImpl;
 
 public class SerializedDataModuleReaderWriter implements DataModuleReaderWriter
 {
 
  @Override
- public SwapDataModuleImpl read(File f) throws IOException, ClassNotFoundException
+ public DataModuleWritable read(File f) throws IOException, ClassNotFoundException
  {
   ObjectInputStream ois = new ObjectInputStream( new FileInputStream(f) );
   
-  SwapDataModuleImpl module = (SwapDataModuleImpl)ois.readObject();
+  DataModuleWritable module = (DataModuleWritable)ois.readObject();
   
   ois.close();
   
