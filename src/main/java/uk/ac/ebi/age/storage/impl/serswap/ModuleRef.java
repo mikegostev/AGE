@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import uk.ac.ebi.age.storage.ModuleKey;
+import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.storage.impl.serswap.v3.AgeObjectProxy;
 
 public class ModuleRef implements Serializable, StoragePlug

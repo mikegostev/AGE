@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Collection;
 
 import uk.ac.ebi.age.ext.log.LogNode;
+import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;

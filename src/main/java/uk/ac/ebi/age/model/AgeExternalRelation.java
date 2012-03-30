@@ -8,5 +8,5 @@ public interface AgeExternalRelation extends AgeRelation
  
  AgeExternalRelation getInverseRelation();
  
- boolean isTargetGlobal();
+ ResolveScope getTargetResolveScope();
 }

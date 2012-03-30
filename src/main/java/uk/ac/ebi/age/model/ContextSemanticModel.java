@@ -39,8 +39,8 @@ public interface ContextSemanticModel extends SemanticModel
  AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host);
  AgeObjectWritable createAgeObject( ClassRef clsR, String id);
  
- AgeExternalRelationWritable createExternalRelation(RelationClassRef clsRef, AgeObjectWritable sourceObj, String val, boolean glb );
- AgeAttributeWritable createExternalObjectAttribute( AttributeClassRef atCls, AttributedWritable host, String val, boolean glb  );
+ AgeExternalRelationWritable createExternalRelation(RelationClassRef clsRef, AgeObjectWritable sourceObj, String val, ResolveScope scope );
+ AgeAttributeWritable createExternalObjectAttribute( AttributeClassRef atCls, AttributedWritable host, String val, ResolveScope scope );
  AgeRelationWritable createAgeRelation(RelationClassRef clsRef, AgeObjectWritable targetObj);
 
 }

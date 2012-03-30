@@ -5,19 +5,17 @@ import java.util.Collection;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.Attributed;
+import uk.ac.ebi.age.model.ResolveScope;
 
 
 public interface AttributedWritable extends Attributed
 {
-// AgeAttributeWritable createAgeAttribute(AgeAttributeClass attrClass);
  AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass);
-// AgeAttributeWritable createExternalObjectAttribute(String val, AgeAttributeClass attrClass);
- AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val, boolean glb  );
+ AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val, ResolveScope scope );
 
  
  Collection<? extends AgeAttributeWritable> getAttributes();
 
-// Collection< ? extends AgeAttributeWritable> getAttributes(AgeAttributeClass cls);
 
  Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls);
 

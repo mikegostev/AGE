@@ -15,6 +15,7 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.RelationClassRef;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
@@ -162,13 +163,13 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  }
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, boolean glb )
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, ResolveScope scope)
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, boolean glb )
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, ResolveScope scope )
  {
   throw new UnsupportedOperationException();
  }

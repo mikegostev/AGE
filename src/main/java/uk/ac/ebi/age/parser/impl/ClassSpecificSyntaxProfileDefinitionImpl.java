@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.parser.impl;
 
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.parser.SyntaxProfileDefinition;
 
 public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
@@ -25,6 +26,9 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
  private IdScope defaultIdScope;
  private Boolean horizontalBlockDefault;
  private Boolean resetPrototype;
+ 
+ private ResolveScope defaultObjAttrReslvScope;
+ private ResolveScope defaultRelReslvScope;
 
  public ClassSpecificSyntaxProfileDefinitionImpl( SyntaxProfileDefinition comm )
  {
@@ -200,7 +204,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.defaultIdScope = defaultScope;
  }
 
- public boolean isHorizontalBlockDefault()
+ public Boolean isHorizontalBlockDefault()
  {
   if( horizontalBlockDefault != null )
   return horizontalBlockDefault;
@@ -213,7 +217,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.horizontalBlockDefault = defaultHorizontal;
  }
 
- public boolean isResetPrototype()
+ public Boolean isResetPrototype()
  {
   if( resetPrototype != null )
   return resetPrototype;
@@ -224,6 +228,18 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
  public void setResetPrototype(boolean resetPrototype)
  {
   this.resetPrototype = resetPrototype;
+ }
+
+ @Override
+ public ResolveScope getDefaultObjectAttributeResolveScope()
+ {
+  return defaultObjAttrReslvScope;
+ }
+
+ @Override
+ public ResolveScope getDefaultRelationResolveScope()
+ {
+  return defaultRelReslvScope;
  }
 
 }

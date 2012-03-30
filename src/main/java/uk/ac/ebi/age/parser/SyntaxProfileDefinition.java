@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.parser;
 
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.ResolveScope;
 
 public interface SyntaxProfileDefinition
 {
@@ -30,7 +31,11 @@ public interface SyntaxProfileDefinition
  
  public String getVerticalBlockPrefix();
  
- public boolean isHorizontalBlockDefault();
+ public Boolean isHorizontalBlockDefault();
  
- public boolean isResetPrototype();
+ public Boolean isResetPrototype();
+
+ public ResolveScope getDefaultObjectAttributeResolveScope();
+
+ public ResolveScope getDefaultRelationResolveScope();
 }

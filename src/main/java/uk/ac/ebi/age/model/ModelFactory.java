@@ -30,8 +30,8 @@ public abstract class ModelFactory
  public abstract AgeAttributeClassWritable  createAgeAttributeClass( String name, String id, DataType type, SemanticModel sm );
  public abstract AgeAttributeClassWritable createCustomAgeAttributeClass( String name, DataType type, ContextSemanticModel sm, AgeClass owner );
 
- public abstract AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, boolean global );
- public abstract AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, boolean global);
+ public abstract AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, ResolveScope scope );
+ public abstract AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, ResolveScope scope);
 
  public abstract AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host);
 

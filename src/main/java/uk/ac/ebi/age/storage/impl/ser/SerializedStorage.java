@@ -29,7 +29,9 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.model.RelationClassRef;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
 import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
@@ -44,7 +46,6 @@ import uk.ac.ebi.age.storage.AgeStorageAdm;
 import uk.ac.ebi.age.storage.DataChangeListener;
 import uk.ac.ebi.age.storage.DataModuleReaderWriter;
 import uk.ac.ebi.age.storage.MaintenanceModeListener;
-import uk.ac.ebi.age.storage.ModuleKey;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
 import uk.ac.ebi.age.storage.exeption.IndexIOException;
@@ -760,7 +761,8 @@ public class SerializedStorage implements AgeStorageAdm
        }
        
        
-       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId(), true );
+       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel()
+         .createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId(), ResolveScope.CASCADE_CLUSTER );
 
        invRel.setTargetObject(exr.getSourceObject());
        invRel.setInverseRelation(exr);

@@ -6,9 +6,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
-import uk.ac.ebi.age.storage.ModuleKey;
 import uk.ac.ebi.age.storage.impl.serswap.StoragePlug;
 
 import com.pri.util.collection.Collections;

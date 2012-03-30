@@ -6,6 +6,7 @@ import java.util.Comparator;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.DataModule;
+import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.storage.exeption.IndexIOException;

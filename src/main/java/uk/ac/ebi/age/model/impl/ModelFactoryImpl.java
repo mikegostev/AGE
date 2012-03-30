@@ -15,6 +15,7 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.RelationClassRef;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
@@ -49,6 +50,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  
  private ModelFactory v1factory = uk.ac.ebi.age.model.impl.v1.ModelFactoryImpl.getInstance();
  private ModelFactory v3factory = uk.ac.ebi.age.model.impl.v3.ModelFactoryImpl.getInstance();
+ private ModelFactory v4factory = uk.ac.ebi.age.model.impl.v4.ModelFactoryImpl.getInstance();
  
  @Override
  public SemanticModel createModelInstance()
@@ -63,7 +65,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public DataModuleWritable createDataModule( ContextSemanticModel sm )
  {
-  return v3factory.createDataModule( sm );
+  return v4factory.createDataModule( sm );
  }
 
  @Override
@@ -106,16 +108,16 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, String id, boolean glb )
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, String id, ResolveScope glb )
  {
-  return v3factory.createExternalRelation(rClsR, sourceObj, id, glb);
+  return v4factory.createExternalRelation(rClsR, sourceObj, id, glb);
  }
  
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, boolean glb )
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, ResolveScope glb )
  {
-  return v3factory.createExternalObjectAttribute(atCls, host, id, glb);
+  return v4factory.createExternalObjectAttribute(atCls, host, id, glb);
  }
 
  @Override

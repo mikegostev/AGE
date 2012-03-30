@@ -38,6 +38,7 @@ import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
@@ -52,7 +53,6 @@ import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.service.id.IdGenerator;
 import uk.ac.ebi.age.service.submission.SubmissionDB;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
-import uk.ac.ebi.age.storage.ModuleKey;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
 import uk.ac.ebi.age.transaction.Transaction;
 import uk.ac.ebi.age.transaction.TransactionException;
@@ -686,7 +686,7 @@ public class SubmissionManager
    }
    
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.newModule = converter.convert(mm.atMod, ageStorage.getSemanticModel().createContextSemanticModel(), mm.atMod.getSyntaxProfile(), convLog );
+   mm.newModule = converter.convert(mm.atMod, ageStorage.getSemanticModel().createContextSemanticModel(), convLog );
    
    if( mm.newModule != null )
     convLog.success();
@@ -1429,7 +1429,7 @@ public class SubmissionManager
    }
    
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.newModule = converter.convert(mm.atMod, ageStorage.getSemanticModel().createContextSemanticModel(), mm.atMod.getSyntaxProfile(), convLog );
+   mm.newModule = converter.convert(mm.atMod, ageStorage.getSemanticModel().createContextSemanticModel(), convLog );
    
    if( mm.newModule != null )
     convLog.success();

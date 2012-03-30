@@ -7,5 +7,5 @@ import uk.ac.ebi.age.model.writable.DataModuleWritable;
 public interface AgeTab2AgeConverter
 {
  
- public DataModuleWritable convert( AgeTabModule data, ContextSemanticModel sm, SyntaxProfile syntaxProfile, LogNode logNode );
+ public DataModuleWritable convert( AgeTabModule data, ContextSemanticModel sm, LogNode logNode );
 }

@@ -6,6 +6,7 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.RelationClassRef;
+import uk.ac.ebi.age.model.ResolveScope;
 
 
 
@@ -30,7 +31,7 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  void removeRelation(AgeRelationWritable rel);
 
 
- AgeExternalRelationWritable createExternalRelation( RelationClassRef ref, String val, boolean glb );
+ AgeExternalRelationWritable createExternalRelation( RelationClassRef ref, String val, ResolveScope scope );
 
  AgeRelationWritable createRelation(RelationClassRef ref, AgeObjectWritable targetObj);
 

@@ -8,6 +8,7 @@ import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.ext.entity.EntityDomain;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.ContextSemanticModel;
+import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
@@ -255,5 +256,19 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
     return obj;
     
   return null;
+ }
+
+
+ @Override
+ public ModuleKey getModuleKey()
+ {
+  throw new UnsupportedOperationException();
+ }
+
+
+ @Override
+ public void setModuleKey(ModuleKey key)
+ {
+  throw new UnsupportedOperationException();
  }
 }

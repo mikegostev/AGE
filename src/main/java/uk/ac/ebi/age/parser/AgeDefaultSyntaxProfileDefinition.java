@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.parser;
 
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.ResolveScope;
 
 public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinition
 {
@@ -20,8 +21,11 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
  public static final String verticalBlockPrefix="|";
  
  public static final IdScope defaultIdScope=IdScope.CLUSTER;
- public static final boolean horizontalBlockDefault = true;
- public static final boolean resetPrototype = true;
+ public static final Boolean horizontalBlockDefault = true;
+ public static final Boolean resetPrototype = true;
+ 
+ public static final ResolveScope defaultObjectAttributeResolveScope = ResolveScope.CASCADE_MODULE;
+ public static final ResolveScope defaultRelationResolveScope = ResolveScope.CASCADE_MODULE;
  
  private static AgeDefaultSyntaxProfileDefinition instance  = new AgeDefaultSyntaxProfileDefinition();
  
@@ -107,15 +111,27 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
  }
 
  @Override
- public boolean isHorizontalBlockDefault()
+ public Boolean isHorizontalBlockDefault()
  {
   return horizontalBlockDefault;
  }
 
  @Override
- public boolean isResetPrototype()
+ public Boolean isResetPrototype()
  {
   return resetPrototype;
+ }
+
+ @Override
+ public ResolveScope getDefaultObjectAttributeResolveScope()
+ {
+  return defaultObjectAttributeResolveScope;
+ }
+
+ @Override
+ public ResolveScope getDefaultRelationResolveScope()
+ {
+  return defaultRelationResolveScope;
  }
 
 }

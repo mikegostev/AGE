@@ -18,7 +18,9 @@ import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.model.RelationClassRef;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
@@ -217,9 +219,9 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
 
  
  @Override
- public AgeExternalRelationWritable createExternalRelation(RelationClassRef relr, String val, boolean glb )
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef relr, String val, ResolveScope scope )
  {
-  AgeExternalRelationWritable rel = getSemanticModel().createExternalRelation(relr, this, val, glb );
+  AgeExternalRelationWritable rel = getSemanticModel().createExternalRelation(relr, this, val, scope );
   
   addRelation(rel);
   
@@ -344,6 +346,13 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  public Entity getParentEntity()
  {
   return module;
+ }
+
+
+ @Override
+ public ModuleKey getModuleKey()
+ {
+  return getDataModule().getModuleKey();
  }
  
 }

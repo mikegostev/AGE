@@ -27,6 +27,7 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.RelationClassRef;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -46,18 +47,17 @@ import uk.ac.ebi.age.parser.SyntaxProfileDefinition;
 
 public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 {
-// private AttrAttchRel attributeAttachmentClass;
- 
-// private static final String prototypeId = "*";
  private PermissionManager permissionManager;
+ private SyntaxProfile syntaxProfile;
  
- public AgeTab2AgeConverterImpl( PermissionManager pMngr )
+ public AgeTab2AgeConverterImpl( PermissionManager pMngr, SyntaxProfile syntaxProfile )
  {
   permissionManager = pMngr;
+  this.syntaxProfile=syntaxProfile;
  }
  
  @Override
- public DataModuleWritable convert(AgeTabModule data, ContextSemanticModel sm, SyntaxProfile syntaxProfile, LogNode log )// throws SemanticException, ConvertionException
+ public DataModuleWritable convert(AgeTabModule data, ContextSemanticModel sm, LogNode log )// throws SemanticException, ConvertionException
  {
   boolean result = true;
   
@@ -655,8 +655,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
  }
 
-
-
  
  private AgeAttributeClass getCustomAttributeClass( ClassReference cr , AgeClass aCls, ContextSemanticModel sm, LogNode log)
  {
@@ -916,7 +914,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      }
      else
      {
-      dupCol = addConverter(convs, new ObjectQualifierConvertor(attHd, qClass, hostConverter, classMap.get(qClass.getTargetClass()), sm ) );
+      dupCol = addConverter(convs, new ObjectQualifierConvertor(attHd, qClass, hostConverter, classMap.get(qClass.getTargetClass()),
+        sm, syntaxProfile.getClassSpecificSyntaxProfile(blkCls.getName()) ) );
      }
     }
     else
@@ -1257,30 +1256,68 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
    int found = 0;
 
-   String val = atVal.getValue().trim();
+   atVal.trim();
+   
+   String val = null;
+   ResolveScope scope = null;
+   
+   SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass().getName());
+   
+   if( atVal.matchPrefix( profDef.getModuleIdPrefix() ) )
+   {
+    scope =  ResolveScope.MODULE;
+   
+    val = atVal.getValue().substring(profDef.getModuleIdPrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getClusterIdPrefix() ) )
+   {
+    scope =  ResolveScope.CLUSTER;
+   
+    val = atVal.getValue().substring(profDef.getClusterIdPrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getGlobalIdPrefix() ) )
+   {
+    scope =  ResolveScope.GLOBAL;
+   
+    val = atVal.getValue().substring(profDef.getGlobalIdPrefix().length());
+   }
+   else
+   {
+    scope = profDef.getDefaultObjectAttributeResolveScope();
+    
+    val = atVal.getValue();
+   }
 
    if(val.length() == 0)
     return;
 
    AgeObjectWritable targetObj = null;
 
-   for(Map<String, AgeObjectWritable> omap : rangeObjects)
+   if( scope == ResolveScope.MODULE || scope == ResolveScope.CASCADE_MODULE )
    {
-    AgeObjectWritable candObj = omap.get(val);
-
-    if(candObj != null)
+    for(Map<String, AgeObjectWritable> omap : rangeObjects)
     {
-     targetObj = candObj;
-     found++;
+     AgeObjectWritable candObj = omap.get(val);
+     
+     if(candObj != null)
+     {
+      targetObj = candObj;
+      found++;
+     }
     }
    }
+   
+
 
    if(found > 1)
     throw new ConvertionException(atVal.getRow(), atVal.getCol(), "Ambiguous reference");
+   
+   if( scope == ResolveScope.MODULE && targetObj == null )
+    throw new ConvertionException(atVal.getRow(), atVal.getCol(), "Unresolved relation target");
 
    AgeRelationWritable rel = null;
    if(targetObj == null)
-    rel = hostObject.createExternalRelation( rClsRef, val, true );
+    rel = hostObject.createExternalRelation( rClsRef, val, scope );
    else
     rel = hostObject.createRelation( rClsRef, targetObj);
 
@@ -1329,7 +1366,37 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    if(atVal == null )
     return;
    
-   String val = atVal.getValue().trim();
+   atVal.trim();
+   
+   String val = null;
+   ResolveScope scope = null;
+   
+   SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass().getName());
+   
+   if( atVal.matchPrefix( profDef.getModuleIdPrefix() ) )
+   {
+    scope =  ResolveScope.MODULE;
+   
+    val = atVal.getValue().substring(profDef.getModuleIdPrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getClusterIdPrefix() ) )
+   {
+    scope =  ResolveScope.CLUSTER;
+   
+    val = atVal.getValue().substring(profDef.getClusterIdPrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getGlobalIdPrefix() ) )
+   {
+    scope =  ResolveScope.GLOBAL;
+   
+    val = atVal.getValue().substring(profDef.getGlobalIdPrefix().length());
+   }
+   else
+   {
+    scope = profDef.getDefaultObjectAttributeResolveScope();
+    
+    val = atVal.getValue();
+   }
 
    if(val.length() == 0)
     return;
@@ -1342,7 +1409,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    AgeAttributeWritable obAttr = null;
    if(targetObj == null)
    {
-    obAttr = hostObject.createExternalObjectAttribute( classRef, val, true );
+    obAttr = hostObject.createExternalObjectAttribute( classRef, val, scope );
    }
    else
    {
@@ -1399,26 +1466,55 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
   
   @Override
-  public void convert(AgeTabValue atVal)
+  public void convert(AgeTabValue atVal) throws ConvertionException
   {
-//   setLastConvertedProperty(null);
-
    if(atVal == null )
     return;
    
-   String val = atVal.getValue().trim();
+   String val = null;
+   ResolveScope scope = null;
+   
+   SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass().getName());
+   
+   if( atVal.matchPrefix( profDef.getModuleIdPrefix() ) )
+   {
+    scope =  ResolveScope.MODULE;
+   
+    val = atVal.getValue().substring(profDef.getModuleIdPrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getClusterIdPrefix() ) )
+   {
+    scope =  ResolveScope.CLUSTER;
+   
+    val = atVal.getValue().substring(profDef.getClusterIdPrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getGlobalIdPrefix() ) )
+   {
+    scope =  ResolveScope.GLOBAL;
+   
+    val = atVal.getValue().substring(profDef.getGlobalIdPrefix().length());
+   }
+   else
+   {
+    scope = profDef.getDefaultObjectAttributeResolveScope();
+    
+    val = atVal.getValue();
+   }
 
    if(val.length() == 0)
     return;
 
    AgeObjectWritable targetObj = null;
 
-   if(rangeObjects != null)
+   if(rangeObjects != null && (scope == ResolveScope.MODULE || scope == ResolveScope.CASCADE_MODULE) )
     targetObj = rangeObjects.get(val);
 
+   if(scope == ResolveScope.MODULE && targetObj == null )
+    throw new ConvertionException(atVal.getRow(), atVal.getCol(), "Unresolved relation target");
+ 
    AgeRelationWritable rel = null;
    if(targetObj == null)
-    rel = hostObject.createExternalRelation(rClsRef, val, true);
+    rel = hostObject.createExternalRelation(rClsRef, val, scope);
    else
     rel = hostObject.createRelation(rClsRef, targetObj);
 
@@ -1749,12 +1845,15 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  private class ObjectQualifierConvertor extends QualifierConvertor
  {
   private Map<String, AgeObjectWritable> rangeObjects;
+  private SyntaxProfileDefinition profDef;
 
-  public ObjectQualifierConvertor(ClassReference attHd, AgeAttributeClass qClass, ValueConverter hc, Map<String, AgeObjectWritable> map, ContextSemanticModel sm)
+  public ObjectQualifierConvertor(ClassReference attHd, AgeAttributeClass qClass, ValueConverter hc, Map<String, AgeObjectWritable> rangeMap,
+    ContextSemanticModel sm, SyntaxProfileDefinition pd)
   {
    super(attHd, qClass, hc, sm);
 
-   rangeObjects=map;
+   rangeObjects=rangeMap;
+   profDef = pd;
   }
   
   
@@ -1764,7 +1863,34 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    if(atVal == null )
     return;
    
-   String val = atVal.getValue().trim();
+   String val = null;
+   ResolveScope scope = null;
+   
+   
+   if( atVal.matchPrefix( profDef.getModuleIdPrefix() ) )
+   {
+    scope =  ResolveScope.MODULE;
+   
+    val = atVal.getValue().substring(profDef.getModuleIdPrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getClusterIdPrefix() ) )
+   {
+    scope =  ResolveScope.CLUSTER;
+   
+    val = atVal.getValue().substring(profDef.getClusterIdPrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getGlobalIdPrefix() ) )
+   {
+    scope =  ResolveScope.GLOBAL;
+   
+    val = atVal.getValue().substring(profDef.getGlobalIdPrefix().length());
+   }
+   else
+   {
+    scope = profDef.getDefaultObjectAttributeResolveScope();
+    
+    val = atVal.getValue();
+   }
 
    if(val.length() == 0)
     return;
@@ -1779,12 +1905,16 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    AgeObjectWritable targetObj = null;
 
-   if(rangeObjects != null)
+   if(rangeObjects != null && (scope == ResolveScope.MODULE || scope == ResolveScope.CASCADE_MODULE) )
     targetObj = rangeObjects.get(val);
+
+   if(scope == ResolveScope.MODULE && targetObj == null )
+    throw new ConvertionException(atVal.getRow(), atVal.getCol(), "Unresolved object qualifier target");
+
 
    AgeAttributeWritable obAttr = null;
    if(targetObj == null)
-    obAttr = prop.createExternalObjectAttribute(classRef, val, true);
+    obAttr = prop.createExternalObjectAttribute(classRef, val, scope);
    else
    {
     obAttr = prop.createAgeAttribute(classRef);

@@ -5,5 +5,5 @@ public interface AgeExternalObjectAttribute extends AgeObjectAttribute
 {
 
  public String getTargetObjectId();
- boolean isTargetGlobal();
+ ResolveScope getTargetResolveScope();
 }

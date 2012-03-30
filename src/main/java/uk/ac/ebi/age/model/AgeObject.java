@@ -32,6 +32,7 @@ public interface AgeObject extends AgeAbstractObject, Entity
  
  int getOrder();
 
+ ModuleKey getModuleKey();
  DataModule getDataModule();
 
 }

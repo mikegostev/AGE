@@ -5,6 +5,7 @@ import java.util.Collection;
 import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.ext.entity.EntityDomain;
 import uk.ac.ebi.age.model.ContextSemanticModel;
+import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
@@ -133,6 +134,18 @@ public class SwapDataModuleImpl implements DataModuleWritable, ProxyDataModule
  public SerializedSwapStorage getStorage()
  {
   return moduleRef.getStorage();
+ }
+
+ @Override
+ public ModuleKey getModuleKey()
+ {
+  return baseModule.getModuleKey();
+ }
+
+ @Override
+ public void setModuleKey(ModuleKey id)
+ {
+  baseModule.setModuleKey( id );
  }
 
 }

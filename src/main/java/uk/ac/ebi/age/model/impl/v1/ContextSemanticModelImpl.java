@@ -20,6 +20,7 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.RelationClassRef;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
@@ -202,16 +203,16 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 
  
  @Override
- public AgeExternalRelationWritable createExternalRelation(RelationClassRef clsRef, AgeObjectWritable sourceObj, String val, boolean glb )
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef clsRef, AgeObjectWritable sourceObj, String val, ResolveScope scope )
  {
-  return masterModel.getModelFactory().createExternalRelation(clsRef, sourceObj, val, glb);
+  return masterModel.getModelFactory().createExternalRelation(clsRef, sourceObj, val, scope);
  }
 
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String val, boolean glb  )
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String val, ResolveScope scope )
  {
-  return masterModel.getModelFactory().createExternalObjectAttribute(atCls, host, val, glb );
+  return masterModel.getModelFactory().createExternalObjectAttribute(atCls, host, val, scope );
  }
 
 // public AgeRelationClass createRelationClass(String name, AgeClass cls, AgeClass rangeCls)

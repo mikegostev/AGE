@@ -21,4 +21,15 @@ public class AgeTabValue extends AgeTabElement
  {
   return colHeader;
  }
+
+ public boolean matchPrefix( String pfx )
+ {
+  return value.startsWith(pfx);
+ }
+
+ public void trim()
+ {
+  value=value.trim();
+ }
+ 
 }

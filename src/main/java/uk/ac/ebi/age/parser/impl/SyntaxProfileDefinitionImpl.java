@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.parser.impl;
 
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.parser.AgeDefaultSyntaxProfileDefinition;
 import uk.ac.ebi.age.parser.SyntaxProfileDefinition;
 
@@ -22,8 +23,11 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
  private String  verticalBlockPrefix    = AgeDefaultSyntaxProfileDefinition.verticalBlockPrefix;
 
  private IdScope defaultIdScope           = AgeDefaultSyntaxProfileDefinition.defaultIdScope;
- private boolean horizontalBlockDefault = AgeDefaultSyntaxProfileDefinition.horizontalBlockDefault;
- private boolean resetPrototype         = AgeDefaultSyntaxProfileDefinition.resetPrototype;
+ private Boolean horizontalBlockDefault = AgeDefaultSyntaxProfileDefinition.horizontalBlockDefault;
+ private Boolean resetPrototype         = AgeDefaultSyntaxProfileDefinition.resetPrototype;
+ 
+ private ResolveScope defaultObjAttrReslvScope = AgeDefaultSyntaxProfileDefinition.defaultObjectAttributeResolveScope;
+ private ResolveScope defaultRelReslvScope     = AgeDefaultSyntaxProfileDefinition.defaultRelationResolveScope;
 
  public String getCustomTokenBrackets()
  {
@@ -155,7 +159,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.defaultIdScope = defaultScope;
  }
 
- public boolean isHorizontalBlockDefault()
+ public Boolean isHorizontalBlockDefault()
  {
   return horizontalBlockDefault;
  }
@@ -165,7 +169,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.horizontalBlockDefault = defaultHorizontal;
  }
 
- public boolean isResetPrototype()
+ public Boolean isResetPrototype()
  {
   return resetPrototype;
  }
@@ -173,6 +177,18 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
  public void setResetPrototype(boolean resetPrototype)
  {
   this.resetPrototype = resetPrototype;
+ }
+
+ @Override
+ public ResolveScope getDefaultObjectAttributeResolveScope()
+ {
+  return defaultObjAttrReslvScope;
+ }
+
+ @Override
+ public ResolveScope getDefaultRelationResolveScope()
+ {
+  return defaultRelReslvScope;
  }
 
 }

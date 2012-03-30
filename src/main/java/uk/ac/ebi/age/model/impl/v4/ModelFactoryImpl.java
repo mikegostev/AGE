@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v3;
+package uk.ac.ebi.age.model.impl.v4;
 
 import java.io.Serializable;
 
@@ -35,7 +35,7 @@ import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 
 public class ModelFactoryImpl extends ModelFactory implements Serializable
 {
- private static final long serialVersionUID = 3L;
+ private static final long serialVersionUID = 4L;
 
  private static ModelFactoryImpl instance;
 
@@ -60,7 +60,7 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AgeObjectWritable createAgeObject(ClassRef ageClassRef, String id )
  {
-  return new AgeObjectImpl(ageClassRef, id);
+  throw new UnsupportedOperationException();
  }
 
 
@@ -93,82 +93,46 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, AttributedWritable host)
  {
-  AgeAttributeWritable attr=null;
-  
-  switch( attrClassRef.getAttributeClass().getDataType() )
-  {
-   case INTEGER:
-    attr = new AgeIntegerAttributeImpl(attrClassRef, host);
-    break;
-   
-   case REAL:
-    attr = new AgeRealAttributeImpl(attrClassRef, host);
-    break;
-   
-   case BOOLEAN:
-    attr = new AgeBooleanAttributeImpl(attrClassRef, host);
-    break;
-   
-   case URI:
-   case TEXT: 
-   case STRING:
-   case GUESS:
-    attr = new AgeStringAttributeImpl(attrClassRef, host);
-    break;
-
-   case FILE:
-    attr = new AgeFileAttributeImpl(attrClassRef, host);
-    break;
-    
-   case OBJECT:
-    attr = new AgeObjectAttributeImpl(attrClassRef, host);
-  }
-  
-  
-  return attr;
-  
+  throw new UnsupportedOperationException();
  }
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, ResolveScope scope )
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, ResolveScope global )
  {
-  throw new UnsupportedOperationException();
+  return new AgeExternalRelationImpl(ref, sourceObj, id, global);
  }
  
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host , String id, ResolveScope scope )
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host , String id, ResolveScope global )
  {
-  throw new UnsupportedOperationException();
+  return new AgeExternalObjectAttributeImpl(atCls, id, host, global);
  }
 
  @Override
  public AgeRelationWritable createRelation(RelationClassRef rClsR, AgeObjectWritable targetObj)
  {
-  return new AgeRelationImpl(rClsR, targetObj);
+  throw new UnsupportedOperationException();
  }
 
 
  @Override
  public AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, ContextSemanticModel sm, AgeClass owner)
  {
-  if( type == DataType.OBJECT )
-   return new CustomObjectAgeAttributeClassImpl(name, sm, owner);
-  
-  return new CustomAgeAttributeClassImpl(name, type, sm, owner);
+  throw new UnsupportedOperationException();
  }
 
 
  @Override
  public AgeClassWritable createCustomAgeClass(String name, String pfx, ContextSemanticModel sm)
  {
-  return new CustomAgeClassImpl(name, pfx, sm);
+  throw new UnsupportedOperationException();
  }
 
  @Override
  public AgeRelationClassWritable createCustomAgeRelationClass(String name, ContextSemanticModel sm, AgeClass range, AgeClass owner)
  {
-  return new CustomAgeRelationClassImpl(name, sm, range, owner);
+  throw new UnsupportedOperationException();
  }
 
  @Override
@@ -222,19 +186,19 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  @Override
  public AttributeClassRef createAttributeClassRef(AgeAttributeClassPlug plug, int order, String heading)
  {
-  return new AttrClassRef(plug, order, heading);
+  throw new UnsupportedOperationException();
  }
 
  @Override
  public ClassRef createClassRef(AgeClassPlug plug, int order, String heading, boolean hrz, ContextSemanticModel modl )
  {
-  return new uk.ac.ebi.age.model.impl.v3.ClassRef(plug, order, heading, hrz, modl );
+  throw new UnsupportedOperationException();
  }
 
  @Override
  public RelationClassRef createRelationClassRef(AgeRelationClassPlug plug, int order, String heading)
  {
-  return new RelClassRef(plug, order, heading);
+  throw new UnsupportedOperationException();
  }
 
  @Override

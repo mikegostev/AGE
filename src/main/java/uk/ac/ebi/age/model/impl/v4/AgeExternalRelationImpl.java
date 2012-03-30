@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v3;
+package uk.ac.ebi.age.model.impl.v4;
 
 import java.io.Serializable;
 
@@ -7,13 +7,14 @@ import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.ResolveScope;
+import uk.ac.ebi.age.model.impl.v3.AttributedObject;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
 public class AgeExternalRelationImpl extends AttributedObject implements AgeExternalRelationWritable, Serializable
 {
- private static final long serialVersionUID = 3L;
+ private static final long serialVersionUID = 4L;
 
  private RelationClassRef relClassRef; 
  private String objId;
@@ -21,6 +22,7 @@ public class AgeExternalRelationImpl extends AttributedObject implements AgeExte
  private transient AgeExternalRelationWritable invRelation;
  private transient AgeObjectWritable target;
  private boolean infered;
+ private ResolveScope tgtScope;
 
  protected AgeExternalRelationImpl(RelationClassRef cRef, AgeObjectWritable srcOb, String id, ResolveScope scp)
  {
@@ -28,6 +30,7 @@ public class AgeExternalRelationImpl extends AttributedObject implements AgeExte
 
   objId=id;
   sourceObject=srcOb;
+  tgtScope=scp;
  }
 
  @Override
@@ -97,7 +100,7 @@ public class AgeExternalRelationImpl extends AttributedObject implements AgeExte
  @Override
  public AgeRelationWritable createClone( AgeObjectWritable src )
  {
-  AgeExternalRelationImpl clone = new AgeExternalRelationImpl(relClassRef, src, getTargetObjectId(), ResolveScope.CASCADE_MODULE);
+  AgeExternalRelationImpl clone = new AgeExternalRelationImpl(relClassRef, src, getTargetObjectId(), tgtScope);
   clone.infered = infered;
   
   cloneAttributes(clone);
@@ -135,18 +138,17 @@ public class AgeExternalRelationImpl extends AttributedObject implements AgeExte
   return sourceObject.getSemanticModel();
  }
 
-
  @Override
  public ResolveScope getTargetResolveScope()
  {
-  return ResolveScope.CASCADE_MODULE;
+  return tgtScope;
  }
 
 
  @Override
  public void setTargetResolveScope(ResolveScope scp)
  {
-  throw new UnsupportedOperationException();
+  tgtScope = scp;
  }
 }
 

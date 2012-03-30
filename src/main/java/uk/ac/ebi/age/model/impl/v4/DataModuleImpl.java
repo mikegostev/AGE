@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v3;
+package uk.ac.ebi.age.model.impl.v4;
 
 import java.io.Serializable;
 import java.util.AbstractCollection;
@@ -30,7 +30,7 @@ import com.pri.util.collection.Collections.Mapper;
 
 class DataModuleImpl  implements DataModuleWritable, Serializable
 {
- private static final long serialVersionUID = 3L;
+ private static final long serialVersionUID = 4L;
  
  private static Comparator<AgeObjectWritable> ageObjectComparator = new Comparator<AgeObjectWritable>() {
 
@@ -57,26 +57,14 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  private List<AgeExternalObjectAttributeWritable> extObjAttrs ;
  private List<AgeFileAttributeWritable> fileRefs ;
 
- private String id;
-// private String descr;
- 
- private String clusterId;
+ private ModuleKey modKey;
+
 
  public DataModuleImpl(ContextSemanticModel sm)
  {
   model = sm;
  }
 
-
-// public String getDescription()
-// {
-//  return descr;
-// }
-//
-// public void setDescription( String dsc )
-// {
-//  descr=dsc;
-// }
 
  public void addObject(AgeObjectWritable obj)
  {
@@ -102,17 +90,29 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   obj.setDataModule( this );
  }
 
+ @Override
+ public void setModuleKey(ModuleKey id)
+ {
+  modKey=id;
+ }
+
  
+ @Override
  public void setId(String id)
  {
-  this.id=id;
+  if( modKey == null )
+   modKey = new ModuleKey();
+  
+  modKey.setModuleId(id);
  }
 
+ @Override
  public String getId()
  {
-  return id;
+  return modKey.getModuleId();
  }
 
+ @Override
  public Collection<AgeObjectWritable> getObjects()
  {
   return objects;
@@ -218,28 +218,18 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
    resetAttributedObject(atw);
  }
 
-// @Override
-// public long getVersion()
-// {
-//  return version;
-// }
-//
-// @Override
-// public void setVersion(long version)
-// {
-//  this.version = version;
-// }
-
-
  public String getClusterId()
  {
-  return clusterId;
+  return modKey.getClusterId();
  }
 
 
  public void setClusterId(String clusterId)
  {
-  this.clusterId = clusterId;
+  if( modKey == null )
+   modKey = new ModuleKey();
+  
+  modKey.setClusterId(clusterId);
  }
  
  //Collection of all attributes (recursively!) in the module filtered by the selector
@@ -360,7 +350,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  @Override
  public Entity getParentEntity()
  {
-  return new ClusterEntity(clusterId);
+  return new ClusterEntity(modKey.getClusterId());
  }
 
 
@@ -396,14 +386,6 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  @Override
  public ModuleKey getModuleKey()
  {
-  return new ModuleKey(clusterId, id);
- }
-
-
- @Override
- public void setModuleKey(ModuleKey key)
- {
-  clusterId = key.getClusterId();
-  id = key.getModuleId();
+  return modKey;
  }
 }

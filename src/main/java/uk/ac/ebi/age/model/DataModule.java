@@ -13,14 +13,14 @@ public interface DataModule extends Entity
   boolean select( Attributed at );
  }
  
+ ModuleKey getModuleKey();
+ 
  String getId();
-// long getVersion();
  String getClusterId();
 
  AgeObject getObject( String id );
  Collection<? extends AgeObject> getObjects();
  
-// String getDescription();
  
  ContextSemanticModel getContextSemanticModel();
  

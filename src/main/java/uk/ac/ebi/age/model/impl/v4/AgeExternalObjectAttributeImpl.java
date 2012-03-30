@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.model.impl.v3;
+package uk.ac.ebi.age.model.impl.v4;
 
 import java.io.Serializable;
 
@@ -9,22 +9,25 @@ import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.FormatException;
 import uk.ac.ebi.age.model.ResolveScope;
+import uk.ac.ebi.age.model.impl.v3.AgeAttributeImpl;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 public class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements AgeExternalObjectAttributeWritable, Serializable
 {
- private static final long serialVersionUID = 3L;
+ private static final long serialVersionUID = 4L;
 
  private String objId;
  private transient AgeObject target;
+ private ResolveScope tgtScope;
 
  
- protected AgeExternalObjectAttributeImpl(AttributeClassRef relClass, String id,  AttributedWritable host, ResolveScope scp)
+ protected AgeExternalObjectAttributeImpl(AttributeClassRef relClass, String id,  AttributedWritable host, ResolveScope scp) 
  {
   super(relClass, host);
   
   objId=id;
+  tgtScope = scp;
  }
 
 
@@ -123,7 +126,7 @@ public class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements 
  @Override
  public AgeExternalObjectAttributeWritable createClone( AttributedWritable host )
  {
-  AgeExternalObjectAttributeImpl clone  = new AgeExternalObjectAttributeImpl(getClassRef(), objId, host, ResolveScope.CASCADE_MODULE);
+  AgeExternalObjectAttributeImpl clone  = new AgeExternalObjectAttributeImpl(getClassRef(), objId, host, tgtScope);
   clone.target=this.target;
   
   cloneAttributes( clone );
@@ -153,14 +156,16 @@ public class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements 
  @Override
  public ResolveScope getTargetResolveScope()
  {
-  return ResolveScope.CASCADE_MODULE;
+  return tgtScope;
  }
 
 
  @Override
  public void setTargetResolveScope(ResolveScope scp)
  {
-  throw new UnsupportedOperationException();
+  tgtScope = scp;
  }
+
+
 }
 

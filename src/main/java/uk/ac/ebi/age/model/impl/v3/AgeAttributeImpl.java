@@ -9,13 +9,16 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
-abstract class AgeAttributeImpl extends AttributedObject implements AgeAttributeWritable, Serializable
+abstract public class AgeAttributeImpl extends AttributedObject implements AgeAttributeWritable, Serializable
 {
  private static final long serialVersionUID = 3L;
 
  private AttributeClassRef classReference;
  private AttributedWritable hostObject;
 
+ 
+ protected AgeAttributeImpl()
+ {}
  
  @Override
  public AttributeClassRef getClassRef()

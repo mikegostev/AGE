@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.storage;
+package uk.ac.ebi.age.model;
 
 public class ModuleKey implements Comparable<ModuleKey>
 {
