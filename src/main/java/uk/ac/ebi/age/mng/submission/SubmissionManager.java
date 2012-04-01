@@ -171,69 +171,17 @@ public class SubmissionManager
  
   SubmissionMeta origSbm = null;
 
-  if(sMeta.getStatus() == Status.UPDATEORNEW)
-  {
-   if(sMeta.getId() == null || sMeta.getId().trim().length() == 0)
-   {
-    logRoot.log(Level.ERROR, "Submission ID must be specified for UPDATEORNEW operation");
-    return false;
-   }
-
-   sMeta.setId(sMeta.getId().trim());
-
-   try
-   {
-    if(submissionDB.hasSubmission(sMeta.getId()))
-     sMeta.setStatus(Status.UPDATE);
-    else
-     sMeta.setStatus(Status.NEW);
-   }
-   catch(SubmissionDBException e)
-   {
-    logRoot.log(Level.ERROR, "Method hasSubmission error: " + e.getMessage());
-
-    return false;
-   }
-  }
-
-  if( sMeta.getStatus() == Status.UPDATE )
-  {
-   if(  sMeta.getId() == null  )
-   {
-    logRoot.log(Level.ERROR, "Submission is marked for update but no ID is provided");
-    return false;
-   }
-
-   try
-   {
-    origSbm = submissionDB.getSubmission( sMeta.getId() );
-   }
-   catch(SubmissionDBException e)
-   {
-    logRoot.log(Level.ERROR, "Method getSubmition error: "+e.getMessage());
-    
-    return false;
-   }
-   
-   if( origSbm == null )
-   {
-    logRoot.log(Level.ERROR, "Submission with ID='"+sMeta.getId()+"' is not found to be updated");
-    return false;
-   }
-   
-   sMeta.setSubmitter(origSbm.getSubmitter());
-   sMeta.setSubmissionTime(origSbm.getSubmissionTime());
-   
-   if( sMeta.getDescription() == null )
-    sMeta.setDescription( origSbm.getDescription() );
-  }
-  else if( sMeta.getId() != null )
+  if( sMeta.getId() != null )
   {
    sMeta.setId(sMeta.getId().trim());
 
    if(sMeta.getId().length() == 0)
     sMeta.setId(null);
-   else
+  }
+  
+  if(sMeta.getId() != null)
+  {
+   if( sMeta.getStatus() == Status.NEW )
    {
     try
     {
@@ -250,23 +198,60 @@ public class SubmissionManager
      return false;
     }
    }
+   
+   try
+   {
+    origSbm = submissionDB.getSubmission(sMeta.getId());
+   }
+   catch(SubmissionDBException e)
+   {
+    logRoot.log(Level.ERROR, "Method getSubmition error: " + e.getMessage());
 
+    return false;
+   }
   }
+
+
+  if(sMeta.getStatus() == Status.UPDATEORNEW)
+  {
+   if(sMeta.getId() == null)
+    sMeta.setStatus(Status.NEW);
+   else
+   {
+    if(origSbm != null)
+     sMeta.setStatus(Status.UPDATE);
+    else
+     sMeta.setStatus(Status.NEW);
+   }
+  }  
+  
+  if( sMeta.getStatus() == Status.UPDATE )
+  {
+   if( sMeta.getId() == null )
+   {
+    logRoot.log(Level.ERROR, "Submission is marked for update but no ID is provided");
+    return false;
+   }
+   
+   if( origSbm == null )
+   {
+    logRoot.log(Level.ERROR, "Submission with ID='"+sMeta.getId()+"' is not found to be updated");
+    return false;
+   }
+   
+   sMeta.setSubmitter(origSbm.getSubmitter());
+   sMeta.setSubmissionTime(origSbm.getSubmissionTime());
+   
+   if( sMeta.getDescription() == null )
+    sMeta.setDescription( origSbm.getDescription() );
+  }
+
   
   ClustMeta cstMeta = new ClustMeta();
   cstMeta.id = sMeta.getId();
   
   List<FileAttachmentMeta> files = sMeta.getAttachments();
   
-//  String clusterId = sMeta.getClusterId();
-//  
-//  boolean update = true;
-//  
-//  if( clusterId == null )
-//  {
-//   update = false;
-//   clusterId=IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
-//  }
   
   
   boolean res = true;
@@ -276,20 +261,14 @@ public class SubmissionManager
   
   if( sMeta.getDataModules() != null )
   {
-   for(DataModuleMeta dm : sMeta.getDataModules() )
+   for(DataModuleMeta dm : sMeta.getDataModules() ) //Separating modules
    {
     
     n++;
     
     ModuleAux modAux = (ModuleAux)dm.getAux();
 
-//    ModMeta mm = new ModMeta();
-//    mm.meta = dm;
-//    mm.aux = 
-//
-//    cstMeta.incomeMods.add(mm);
-
-    DataModuleWritable exstMod = dm.getId() == null || sMeta.getId() == null ? null : ageStorage.getDataModule(sMeta.getId(), dm.getId());
+    DataModuleWritable exstMod = dm.getId() != null && sMeta.getStatus() == Status.UPDATE ?ageStorage.getDataModule(sMeta.getId(), dm.getId()) : null;
     
     if( modAux.getStatus() == Status.UPDATEORNEW )
     {
@@ -301,11 +280,17 @@ public class SubmissionManager
     
     if( modAux.getStatus() == Status.UPDATE || modAux.getStatus() == Status.DELETE )
     {
-     if(origSbm == null)
+     if(sMeta.getStatus() != Status.UPDATE)
      {
       logRoot.log(Level.ERROR, "Module " + modAux.getOrder() + " is marked for "+modAux.getStatus().name()+" but submission is not in UPDATE mode");
       res = false;
       continue;
+     }
+
+     if(exstMod == null)
+     {
+      logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='"+dm.getId() + "' (Cluster ID='"+sMeta.getId()+"') to be updated/deleted");
+      res = false;
      }
 
      if( dm.getId() == null  )
@@ -321,17 +306,7 @@ public class SubmissionManager
 
      mm.origModule = exstMod;
      
-     if(mm.origModule == null)
-     {
-      logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + mm.meta.getId() + "' to be updated/deleted");
-      res = false;
-     }
-     else if(!mm.origModule.getClusterId().equals(origSbm.getId()))
-     {
-      logRoot.log(Level.ERROR, "Module with ID='" + mm.meta.getId() + "' belongs to another submission (" + mm.origModule.getClusterId() + ")");
-      res = false;
-     }
-     else if( mm.aux.getStatus() == Status.DELETE )
+     if( mm.aux.getStatus() == Status.DELETE )
      {
       cstMeta.mod4Del.put(mm.meta.getId(),mm);
      }
@@ -343,13 +318,11 @@ public class SubmissionManager
      }
      else
      {
-      
-      
       cstMeta.mod4MetaUpd.put(mm.meta.getId(), mm);
       cstMeta.mod4Use.add(mm);
      }
     }
-    else if( modAux.getStatus() == Status.NEW )
+    else //modAux.getStatus() == Status.NEW
     {
      if(dm.getText() == null)
      {
@@ -382,12 +355,10 @@ public class SubmissionManager
 
      cstMeta.incomingMods.add(mm);
     }
-
-
    }
   }
   
-  if( origSbm != null && origSbm.getDataModules() != null )
+  if( origSbm != null && origSbm.getDataModules() != null ) // now we are sorting modules from the existing cluster (submission)
   {
    for( DataModuleMeta odm : origSbm.getDataModules() )
    {
@@ -400,11 +371,11 @@ public class SubmissionManager
     
     if( updMod != null )
     {
-     if( updMod.meta.getDescription() == null )
+     if( updMod.meta.getDescription() == null ) // if the new module has no description we keep the old one
       updMod.meta.setDescription(odm.getDescription());
 
      
-     updMod.meta.setSubmissionTime( odm.getSubmissionTime() );
+     updMod.meta.setSubmissionTime( odm.getSubmissionTime() ); //Preserving originsl submitter and submission time
      updMod.meta.setSubmitter( odm.getSubmitter() );
      
      if( updMod.meta.getText() != null )
@@ -413,7 +384,7 @@ public class SubmissionManager
       updMod.meta.setDocVersion( odm.getDocVersion() );
 
     }
-    else if( ! cstMeta.mod4Del.containsKey(modID) )
+    else if( ! cstMeta.mod4Del.containsKey(modID) ) //i.e. module that will be kept untouched
     {
      ModMeta mm = new ModMeta();
      mm.meta = odm;
@@ -439,7 +410,7 @@ public class SubmissionManager
   if( ! res )
    return false;
 
-  if( files != null && files.size() > 0 )
+  if( files != null && files.size() > 0 ) // Sorting incoming files
   {
    LogNode fileNode = logRoot.branch("Preparing attachments");
 
@@ -448,7 +419,7 @@ public class SubmissionManager
     FileAttachmentMeta fm = files.get(n);
     AttachmentAux atax = (AttachmentAux) fm.getAux();
 
-    String cAtId = atax.getNewId() != null ? atax.getNewId() : fm.getId();
+    String cAtId = atax.getNewId() != null ? atax.getNewId() : fm.getId(); // atax.getNewId() != null meant that we want to assign the new ID to some attachment
 
     if(cAtId == null)
     {

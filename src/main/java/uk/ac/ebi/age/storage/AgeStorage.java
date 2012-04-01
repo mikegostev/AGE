@@ -39,7 +39,6 @@ public interface AgeStorage
  void addDataChangeListener(DataChangeListener dataChangeListener);
  void addMaintenanceModeListener(MaintenanceModeListener mmListener);
  
- File getAttachment(String id, String clustId, boolean global);
  File getAttachmentBySysRef(String sysid);
  
  DataModule getDataModule(String clstId, String name);
@@ -52,5 +51,7 @@ public interface AgeStorage
  public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts,
    KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator) throws IndexIOException;
 
+ File getAttachment(String id);
+ File getAttachment(String id, String clustId);
 
 }

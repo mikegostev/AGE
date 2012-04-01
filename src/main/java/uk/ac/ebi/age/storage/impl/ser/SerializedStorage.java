@@ -1182,9 +1182,16 @@ public class SerializedStorage implements AgeStorageAdm
 // }
 
  @Override
- public File getAttachment(String id, String clusterId, boolean global)
+ public File getAttachment(String id)
  {
-  return getAttachmentBySysRef(global?makeFileSysRef(id):makeFileSysRef(id, clusterId));
+  return getAttachmentBySysRef(makeFileSysRef(id));
+ }
+
+ 
+ @Override
+ public File getAttachment(String id, String clusterId)
+ {
+  return getAttachmentBySysRef(makeFileSysRef(id, clusterId));
  }
  
  @Override
