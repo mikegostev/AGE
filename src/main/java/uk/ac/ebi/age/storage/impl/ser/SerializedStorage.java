@@ -1194,8 +1194,7 @@ public class SerializedStorage implements AgeStorageAdm
   return getAttachmentBySysRef(makeFileSysRef(id, clusterId));
  }
  
- @Override
- public File getAttachmentBySysRef(String ref)
+ private File getAttachmentBySysRef(String ref)
  {
   File f = fileDepot.getFilePath(ref);
   
@@ -1207,20 +1206,17 @@ public class SerializedStorage implements AgeStorageAdm
 
 
 
- @Override
- public String makeFileSysRef(String id)
+ private String makeFileSysRef(String id)
  {
   return "G"+M2codec.encode(id);
  }
 
- @Override
- public String makeFileSysRef(String id, String clustID)
+ private String makeFileSysRef(String id, String clustID)
  {
   return String.valueOf(id.length())+'_'+M2codec.encode(id+clustID);
  }
 
- @Override
- public boolean isFileIdGlobal(String fileID)
+ private boolean isFileRefGlobal(String fileID)
  {
   return fileID.charAt(0) == 'G';
  }
@@ -1229,7 +1225,10 @@ public class SerializedStorage implements AgeStorageAdm
  @Override
  public boolean deleteAttachment(String id, String clusterId, boolean global)
  {
-  File f = fileDepot.getFilePath(global?makeFileSysRef(id):makeFileSysRef(id, clusterId));
+  if( global )
+   fileDepot.getFilePath(makeFileSysRef(id)).delete();
+  
+  File f = fileDepot.getFilePath(makeFileSysRef(id, clusterId));
 
   return f.delete();
  }
@@ -1237,12 +1236,21 @@ public class SerializedStorage implements AgeStorageAdm
  @Override
  public File storeAttachment(String id, String clusterId, boolean global, File aux) throws AttachmentIOException
  {
-  File fDest = fileDepot.getFilePath(global?makeFileSysRef(id):makeFileSysRef(id, clusterId));
+  File fDest = fileDepot.getFilePath(makeFileSysRef(id, clusterId));
   fDest.delete();
   
   try
   {
    FileUtil.linkOrCopyFile(aux, fDest);
+   
+   if( global )
+   {
+    File glbfDest = fileDepot.getFilePath(makeFileSysRef(id));
+    glbfDest.delete();
+    
+    FileUtil.linkOrCopyFile(aux, glbfDest);
+
+   }
   }
   catch(IOException e)
   {
@@ -1255,12 +1263,22 @@ public class SerializedStorage implements AgeStorageAdm
 
  public void changeAttachmentScope( String id, String clusterId, boolean global ) throws AttachmentIOException
  {
-  File fSrc = fileDepot.getFilePath(global?makeFileSysRef(id, clusterId):makeFileSysRef(id));
-  File fDest = fileDepot.getFilePath(global?makeFileSysRef(id):makeFileSysRef(id, clusterId));
-  fDest.delete();
+  File globFile = fileDepot.getFilePath(makeFileSysRef(id));
   
-  if( ! fSrc.renameTo(fDest) )
-   throw new AttachmentIOException("Can't rename file '"+fSrc.getAbsolutePath()+"' to '"+fDest.getAbsolutePath()+"'");
+  try
+  {
+   if(global)
+   {
+    File fSrc = fileDepot.getFilePath(makeFileSysRef(id, clusterId));
+    FileUtil.linkOrCopyFile(fSrc, globFile);
+   }
+   else
+    globFile.delete();
+  }
+  catch(IOException e)
+  {
+   throw new AttachmentIOException("Can't link file: "+e.getMessage(), e);
+  }
  }
 
  @Override

@@ -19,4 +19,6 @@ public interface Attributed extends AgeContextSemanticElement
 
  Collection< ? extends AgeAttributeClass> getAttributeClasses();
 
+ Attributed getHostObject();
+ 
 }

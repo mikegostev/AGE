@@ -39,13 +39,13 @@ public interface AgeStorage
  void addDataChangeListener(DataChangeListener dataChangeListener);
  void addMaintenanceModeListener(MaintenanceModeListener mmListener);
  
- File getAttachmentBySysRef(String sysid);
+// File getAttachmentBySysRef(String sysid);
+// boolean isFileIdGlobal(String fileID);
  
  DataModule getDataModule(String clstId, String name);
 
  Collection<? extends DataModule> getDataModules();
 
- boolean isFileIdGlobal(String fileID);
 
  TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> cb ) throws IndexIOException;
  public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts,
