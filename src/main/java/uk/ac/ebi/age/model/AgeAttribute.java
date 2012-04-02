@@ -15,5 +15,6 @@ public interface AgeAttribute extends Attributed, AgeObjectProperty, Comparable<
  
  AttributeClassRef getClassRef();
  
- Attributed getHostObject();
+ Attributed getAttributedHost();
+ AgeObject  getMasterObject();
 }

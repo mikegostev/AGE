@@ -18,7 +18,4 @@ public interface Attributed extends AgeContextSemanticElement
 // Collection< ? extends AgeAttribute> getAttributesByClassId(String cid, boolean wSubCls);
 
  Collection< ? extends AgeAttributeClass> getAttributeClasses();
-
- Attributed getHostObject();
- 
 }

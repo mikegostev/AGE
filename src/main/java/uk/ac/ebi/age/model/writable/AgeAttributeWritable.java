@@ -15,8 +15,11 @@ public interface AgeAttributeWritable extends AgeAttribute, AttributedWritable, 
  void setIntValue(int intValue);
  void setDoubleValue(double doubleValue);
  
- void setHostObject( AttributedWritable host );
+ void setAttributedHost( AttributedWritable host );
 
+ AttributedWritable getAttributedHost();
+
+ 
  AgeAttributeWritable createClone(AttributedWritable hst);
 
 // void setHostObject( AttributedObject hst );

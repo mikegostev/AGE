@@ -7,6 +7,8 @@ import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
+import uk.ac.ebi.age.model.writable.AgeObjectWritable;
+import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 abstract public class AgeAttributeImpl extends AttributedObject implements AgeAttributeWritable, Serializable
@@ -38,7 +40,7 @@ abstract public class AgeAttributeImpl extends AttributedObject implements AgeAt
  }
  
  @Override
- public void setHostObject( AttributedWritable ho )
+ public void setAttributedHost( AttributedWritable ho )
  {
   hostObject=ho;
  }
@@ -69,8 +71,30 @@ abstract public class AgeAttributeImpl extends AttributedObject implements AgeAt
  }
  
  @Override
- public AttributedWritable getHostObject()
+ public AttributedWritable getAttributedHost()
  {
   return hostObject;
+ }
+ 
+ @Override
+ public AgeObjectWritable getMasterObject()
+ {
+  AttributedWritable host = getAttributedHost();
+  
+  while( host != null )
+  {
+   if( host instanceof AgeObjectWritable )
+    return (AgeObjectWritable)host;
+   
+   if( host instanceof AgeRelationWritable )
+    return ((AgeRelationWritable)host).getSourceObject();
+   
+   if( host instanceof AgeAttributeWritable )
+    host = ((AgeAttributeWritable)host).getAttributedHost();
+
+   return null;
+  }
+  
+  return null;
  }
 }

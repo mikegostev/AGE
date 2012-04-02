@@ -20,12 +20,12 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
  }
 
  @Override
- public AgeObjectProxy getHostObject()
+ public AgeObjectProxy getAttributedHost()
  {
-  AttributedWritable host = super.getHostObject();
+  AttributedWritable host = super.getAttributedHost();
   
   if( host instanceof AgeObjectProxy)
-   return (AgeObjectProxy)super.getHostObject();
+   return (AgeObjectProxy)super.getAttributedHost();
   
   AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   
@@ -43,14 +43,14 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
   if( val != null )
    return val;
   
-  SerializedSwapStorage stor = getHostObject().getStorage();
+  SerializedSwapStorage stor = getAttributedHost().getStorage();
   
   AgeObjectWritable tgt = null;
   
   if( isTargetGlobal() )
    tgt = stor.getGlobalObject( getTargetObjectId() );
   else
-   tgt = stor.getClusterObject(getHostObject().getModuleKey().getClusterId(), getTargetObjectId());
+   tgt = stor.getClusterObject(getAttributedHost().getModuleKey().getClusterId(), getTargetObjectId());
   
   setTargetObject(tgt);
 

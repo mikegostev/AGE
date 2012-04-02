@@ -33,9 +33,9 @@ public class SwapObjectAttribute extends AgeObjectAttributeImpl
  }
  
  @Override
- public AttributedWritable getHostObject()
+ public AttributedWritable getAttributedHost()
  {
-  AttributedWritable host = super.getHostObject();
+  AttributedWritable host = super.getAttributedHost();
   
   if( host instanceof AgeObjectProxy)
    return host;

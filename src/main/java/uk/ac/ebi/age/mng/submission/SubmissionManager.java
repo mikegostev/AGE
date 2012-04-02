@@ -2463,13 +2463,9 @@ public class SubmissionManager
      {
       ModMeta errMod = null;
       
-      Attributed ch = extObjAttr.getHostObject();
+      Attributed ch = extObjAttr.getMasterObject();
       
-      while(  ch != null && ! (ch instanceof AgeObject) )
-       ch=ch.getHostObject();
-
       String hostId = ch!=null?ch.getId():"???";
-      
       
       if( (errMod = cstMeta.mod4Del.get(refModId)) != null )
        logRecon.log(Level.ERROR, "Module " + errMod.aux.getOrder() + " (ID='" + errMod.meta.getId() + "') is marked for deletion but object (ID='" + extObjAttr.getValue().getId()
@@ -2489,10 +2485,7 @@ public class SubmissionManager
      {
       if( ! replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass()) )
       {
-       Attributed ch = extObjAttr.getHostObject();
-       
-       while(  ch != null && ! (ch instanceof AgeObject) )
-        ch=ch.getHostObject();
+       Attributed ch = extObjAttr.getMasterObject();
 
        String hostId = ch!=null?ch.getId():"???";
 

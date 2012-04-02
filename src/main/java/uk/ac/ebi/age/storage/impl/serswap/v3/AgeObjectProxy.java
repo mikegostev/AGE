@@ -15,6 +15,7 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.model.RelationClassRef;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -169,9 +170,9 @@ public class AgeObjectProxy implements AgeObjectWritable
  }
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val, boolean glb )
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val, ResolveScope scp )
  {
-  return getObject().createExternalObjectAttribute(attrClass,val, glb);
+  return getObject().createExternalObjectAttribute(attrClass,val, scp);
  }
 
  @Override
@@ -229,9 +230,9 @@ public class AgeObjectProxy implements AgeObjectWritable
  }
 
  @Override
- public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, String val, boolean glb )
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, String val, ResolveScope scp )
  {
-  return getObject().createExternalRelation(ref, val, glb);
+  return getObject().createExternalRelation(ref, val, scp);
  }
 
  @Override

@@ -17,12 +17,12 @@ public class SwapStringAttribute extends AgeStringAttributeImpl
  }
  
  @Override
- public AttributedWritable getHostObject()
+ public AttributedWritable getAttributedHost()
  {
-  AttributedWritable host = super.getHostObject();
+  AttributedWritable host = super.getAttributedHost();
   
   if( host instanceof AgeObjectProxy)
-   return super.getHostObject();
+   return super.getAttributedHost();
   
   AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   
