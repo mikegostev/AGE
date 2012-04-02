@@ -83,11 +83,191 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return valid;
  }
 
- public boolean validateRelations(AgeObject obj, Set<? extends AgeRelation> auxRels, Set<? extends AgeRelation> remRels, LogNode log)
+ public boolean validateRelationsOld(AgeObject obj, Set<? extends AgeRelation> auxRels, Set<? extends AgeRelation> remRels, LogNode log)
  {
   return validateRelations(obj, auxRels, remRels, Resolver.getIntsance(), log);
  }
  
+ @Override
+ public boolean validateRelations(AgeClass objClass, Collection<? extends AgeRelation> rels, LogNode log)
+ {
+  return validateRelations(objClass, rels, Resolver.getIntsance(), log);
+ }
+
+ 
+ private boolean validateRelations(AgeClass objClass, Collection<? extends AgeRelation> rels, Resolver mod, LogNode log)
+ {
+  AgeClass cls = mod.getAgeClass(objClass);
+  
+  if(cls == null)
+  {
+   log.log(Level.ERROR, "Class '" + objClass + "' doesn't exist in the new model");
+   return false;
+  }
+
+  
+  Collection<RelationRule> rlRules = cls.getAllRelationRules();
+
+  if( rlRules == null )
+   rlRules = Collections.<RelationRule> emptyList();
+  
+//  Collection< ? extends AgeRelationClass> rlClasses = obj.getRelationClasses();
+
+  boolean hasQualifiers = false;
+  
+  Set<AgeRelationClass> rlClasses = new HashSet<AgeRelationClass>();
+  
+  boolean objectOk = true;
+
+  boolean res = true;
+  
+  LogNode ln = log.branch("Validating relations range/domain");
+
+  for( AgeRelation r : rels )
+  {
+   rlClasses.add(r.getAgeElClass());
+  
+   if( r.getAttributes() != null && r.getAttributes().size() > 0 )
+    hasQualifiers = true;
+ 
+   
+   res = validateRangeDomain( r, mod, ln );
+  }
+
+  if( res )
+   ln.success();
+  else
+   ln.log(Level.ERROR, "Range/domain validation failed");
+
+  objectOk = res && objectOk; 
+
+  
+  Collection<AgeRelation> byClassRels = new ArrayList<AgeRelation>(10);
+
+  for(AgeRelationClass rlCls : rlClasses)
+  {
+   if(rlCls.isCustom() || rlCls.isImplicit() )
+    continue;
+
+   AgeRelationClass resolvedRlCls = mod.getAgeRelationClass( rlCls );
+   
+   if( resolvedRlCls == null )
+   {
+    log.log(Level.ERROR, "Relation class '"+rlCls+"' doesn't exist in the new model");
+    objectOk = false;
+    
+    continue;
+   }
+   
+   byClassRels.clear();
+   
+   for( AgeRelation r : rels )
+   {
+    if( r.getAgeElClass().isClassOrSubclass(rlCls) )
+     byClassRels.add(r);
+   }
+   
+   
+   ln = log.branch("Validating relations of class '"+rlCls+"' Relations number: "+byClassRels.size());
+
+   
+   res = checkTargetsUnique( byClassRels, log ); 
+
+   if( ! res )
+    ln.log(Level.ERROR, "Relation targets are not unique");
+   
+   objectOk = res && objectOk; 
+   
+   res = isRelationAllowed(resolvedRlCls, byClassRels, rlRules, mod, ln);
+   
+   if( res )
+    ln.success();
+   else
+    ln.log(Level.ERROR, "There is no rule that allows this relation");
+   
+   objectOk = res && objectOk; 
+  }
+
+  if(cls.getRelationRules() != null && cls.getRelationRules().size() > 0 )
+  {
+   ln = log.branch("Validating relation rules");
+
+   boolean rrulOk = true;
+   for(RelationRule rlRl : cls.getRelationRules())
+   {
+    LogNode rlln = ln.branch("Validating rule: "+rlRl.getRuleId()+" of class: '"+cls.getName()
+      +"' Relation class: '"+rlRl.getRelationClass().getName()+"' Target class: '"+rlRl.getTargetClass().getName()+"'");
+
+    res = isRelationRuleSatisfied2(rlRl, rels, mod, rlln);
+    
+    if( res )
+     rlln.success();
+    
+    rrulOk = res && rrulOk;
+   }
+   
+   if( rrulOk )
+    ln.success();
+   
+   objectOk = objectOk && rrulOk;
+  }
+
+  
+  if(hasQualifiers)
+  {
+   ln = log.branch("Validating relation qualifiers");
+   boolean qres = true;
+
+   for(AgeRelation rl : rels )
+   {
+    if( rl.isInferred() || rl.getAttributes() == null || rl.getAttributes().size() == 0 )
+     continue;
+    
+    LogNode atln = ln.branch("Validating relation's qualifiers. Relation class: '" + rl.getAgeElClass()
+      + "' Target object: " + rl.getTargetObject().getId() + " Order: " + rl.getOrder());
+
+    res = validateAttributed(rl, 1, mod, atln);
+
+    if(res)
+     atln.success();
+
+    qres = res && qres;
+   }
+
+   if( qres )
+    ln.success();
+
+   objectOk = objectOk && qres;
+  }
+  
+
+  
+  return objectOk;
+ }
+ 
+ private boolean validateRangeDomain(AgeRelation r, Resolver mod, LogNode log)
+ {
+  AgeClass srcClass = mod.getAgeClass( r.getSourceObject().getAgeElClass() );
+  AgeClass tgtClass = mod.getAgeClass( r.getTargetObject().getAgeElClass() );
+  AgeRelationClass rlClass = mod.getAgeRelationClass( r.getAgeElClass() );
+  
+  boolean res = true;
+  
+  if( ! rlClass.isWithinRange(srcClass) )
+  {
+   log.log(Level.ERROR, "Object's class ('"+srcClass.getName()+"') is not within relation's range. Relation class: '"+rlClass.getName()+"'");
+   res = false;
+  }
+  
+  if( ! rlClass.isWithinDomain(tgtClass) )
+  {
+   log.log(Level.ERROR, "Target object's class ('"+tgtClass.getName()+"') is not within relation's domain. Relation class: '"+rlClass.getName()+"'");
+   res = false;
+  }   
+  
+  return res;
+ }
+
  private boolean validateRelations(AgeObject obj, Set<? extends AgeRelation> auxRels, Set<? extends AgeRelation> remRels, Resolver mod, LogNode log)
  {
   AgeClass cls = mod.getAgeClass(obj.getAgeElClass());
@@ -142,7 +322,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    
    Collection< ? extends AgeRelation> rels = obj.getRelationsByClass(rlCls, true);
 
-   if( auxRels != null )
+   if( auxRels != null || remRels != null )
    {
     byClassRels.clear();
     
@@ -605,6 +785,72 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
   return true;
  }
 
+ private boolean isRelationRuleSatisfied2(RelationRule rlRl, Collection< ? extends AgeRelation> rels, Resolver rslv, LogNode log)
+ {
+  if( rlRl.getType() == RestrictionType.MAY )
+  {
+   log.log(Level.DEBUG, "MAY rule. Skiping.");
+   return true;
+  }
+
+  AgeRelationClass origRelCls = rslv.getAgeRelationClassOriginal(rlRl.getRelationClass()); //If the rule came from the new model we have to get correspondent class of the older model
+  
+  if( origRelCls == null )
+  {
+   log.log(rlRl.getType() == RestrictionType.MUSTNOT?Level.INFO:Level.ERROR,"Class '"+rlRl.getRelationClass()+"' doen't exist in the current model");
+   
+   return rlRl.getType() == RestrictionType.MUSTNOT;
+  }
+  
+  List< AgeRelation > clsRels = new ArrayList<AgeRelation>();
+  
+  for( AgeRelation r : rels )
+  {
+   if( r.getAgeElClass().isClassOrSubclass(origRelCls) )
+    clsRels.add(r);
+  }
+  
+  if( clsRels.size() == 0 )
+  {
+   log.log(Level.DEBUG, "No relations of rule's class ("+origRelCls.getName()+")");
+
+   if( rlRl.getType() == RestrictionType.MUSTNOT )
+    return true;
+  }
+  
+   
+  LogNode ln = log.branch("Validating cardinality");
+  if( ! matchCardinality( rlRl, rels.size() ) )
+  {
+   ln.log(Level.ERROR,"Rule "+rlRl.getRuleId()+" cardinality requirement failed. Cardinality: "+rlRl.getCardinalityType().name()+":"+rlRl.getCardinality()
+     +" Relations: "+rels.size());
+
+   return rlRl.getType() == RestrictionType.MUSTNOT;
+  }
+  else
+   ln.success();
+  
+//  if( ! checkTargetsUnique(rels) )
+//   return rlRl.getType() == RestrictionType.MUSTNOT;
+   
+  
+  if( rlRl.getQualifiers() != null )
+  {
+   ln = log.branch("Matching qualifiers");
+   if( ! matchQualifiers(rlRl.getQualifiers(), rels, rslv, ln) )
+   {
+    ln.log(Level.ERROR, "Qualifiers match failed");
+    
+    return rlRl.getType() == RestrictionType.MUSTNOT;
+   }
+   else
+    ln.success();
+  }
+  
+  
+  return true;
+ }
+ 
  private boolean isRelationRuleSatisfied(RelationRule rlRl, AgeObject obj, Set< ? extends AgeRelation> auxRels, Set< ? extends AgeRelation> remRels, Resolver rslv, LogNode log)
  {
   if( rlRl.getType() == RestrictionType.MAY )
