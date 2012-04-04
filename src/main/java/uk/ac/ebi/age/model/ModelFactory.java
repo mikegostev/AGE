@@ -33,8 +33,15 @@ public abstract class ModelFactory
  public abstract AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, ResolveScope scope );
  public abstract AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, ResolveScope scope);
 
- public abstract AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host);
+// public abstract AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host);
 
+ public abstract AgeAttributeWritable createAgeStringAttribute(AttributeClassRef attrClass, AttributedWritable host);
+ public abstract AgeAttributeWritable createAgeIntegerAttribute(AttributeClassRef attrClass, AttributedWritable host);
+ public abstract AgeAttributeWritable createAgeRealAttribute(AttributeClassRef attrClass, AttributedWritable host);
+ public abstract AgeAttributeWritable createAgeBooleanAttribute(AttributeClassRef attrClass, AttributedWritable host);
+ public abstract AgeAttributeWritable createAgeFileAttribute(AttributeClassRef attrClass, AttributedWritable host, ResolveScope scope );
+ public abstract AgeAttributeWritable createAgeObjectAttribute(AttributeClassRef attrClass, AttributedWritable host);
+ 
  public abstract AgeRelationWritable createRelation( RelationClassRef relClassRef, AgeObjectWritable targetObj);
 
  

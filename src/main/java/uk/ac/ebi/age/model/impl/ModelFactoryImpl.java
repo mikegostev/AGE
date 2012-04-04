@@ -101,13 +101,6 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
 
  @Override
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host)
- {
-  return v3factory.createAgeAttribute(attrClass, host);
- }
-
-
- @Override
  public AgeExternalRelationWritable createExternalRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, String id, ResolveScope glb )
  {
   return v4factory.createExternalRelation(rClsR, sourceObj, id, glb);
@@ -215,6 +208,42 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  public ContextSemanticModel createContextSemanticModel(SemanticModel mm)
  {
   return v1factory.createContextSemanticModel(mm);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeStringAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  return v3factory.createAgeStringAttribute(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeIntegerAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  return v3factory.createAgeIntegerAttribute(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeRealAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  return v3factory.createAgeRealAttribute(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeBooleanAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  return v3factory.createAgeBooleanAttribute(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeFileAttribute(AttributeClassRef attrClass, AttributedWritable host, ResolveScope scope)
+ {
+  return v4factory.createAgeFileAttribute(attrClass, host, scope);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeObjectAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  return v3factory.createAgeObjectAttribute(attrClass, host);
  }
 
 }

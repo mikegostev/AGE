@@ -89,46 +89,6 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
   throw new UnsupportedOperationException();
  }
 
-
- @Override
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, AttributedWritable host)
- {
-  AgeAttributeWritable attr=null;
-  
-  switch( attrClassRef.getAttributeClass().getDataType() )
-  {
-   case INTEGER:
-    attr = new AgeIntegerAttributeImpl(attrClassRef, host);
-    break;
-   
-   case REAL:
-    attr = new AgeRealAttributeImpl(attrClassRef, host);
-    break;
-   
-   case BOOLEAN:
-    attr = new AgeBooleanAttributeImpl(attrClassRef, host);
-    break;
-   
-   case URI:
-   case TEXT: 
-   case STRING:
-   case GUESS:
-    attr = new AgeStringAttributeImpl(attrClassRef, host);
-    break;
-
-   case FILE:
-    attr = new AgeFileAttributeImpl(attrClassRef, host);
-    break;
-    
-   case OBJECT:
-    attr = new AgeObjectAttributeImpl(attrClassRef, host);
-  }
-  
-  
-  return attr;
-  
- }
-
  @Override
  public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, ResolveScope scope )
  {
@@ -247,6 +207,42 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  public SemanticModel createModelInstance()
  {
   throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeStringAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  return new AgeStringAttributeImpl(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeIntegerAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  return new AgeIntegerAttributeImpl(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeRealAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  return new AgeRealAttributeImpl(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeBooleanAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  return new AgeBooleanAttributeImpl(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeFileAttribute(AttributeClassRef attrClass, AttributedWritable host, ResolveScope scope)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeObjectAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  return new AgeObjectAttributeImpl(attrClass, host);
  }
 
 

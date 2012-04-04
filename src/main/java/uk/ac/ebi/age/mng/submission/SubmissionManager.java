@@ -2001,32 +2001,9 @@ public class SubmissionManager
     
     
     
-    AgeObjectWritable tgObj = null;
+    AgeObjectWritable tgObj = resolveTarget(exr, cstMeta);
     
-    if( exr.getTargetResolveScope() == ResolveScope.GLOBAL  )
-    {
-     tgObj = cstMeta.newGlobalIdMap.get(ref);
-     
-     if( tgObj == null )
-      tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
-     
-     if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
-      tgObj = null;
-    }
-    else
-    {
-     tgObj = cstMeta.clusterIdMap.get(ref);
-     
-     if( tgObj == null && exr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
-     {
-      tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
-
-      if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
-       tgObj = null;
-     }
-    }
-
-    
+   
     // if there is no target object within the cluster let's try to find global object but we have to keep in mind inverse relation!
     if( tgObj == null )
     {
@@ -2458,7 +2435,7 @@ public class SubmissionManager
   {
    tgObj = cstMeta.clusterIdMap.get(ref);
    
-   if( tgObj == null && exr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
+   if( tgObj == null && rslv.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
    {
     tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
 
@@ -2466,6 +2443,8 @@ public class SubmissionManager
      tgObj = null;
    }
   }
+  
+  return tgObj;
  }
  
  private String objId2Str( AgeObject obj )
@@ -2535,10 +2514,20 @@ public class SubmissionManager
      {
       replObj = cstMeta.clusterIdMap.get(extObjAttr.getTargetObjectId());
       
-      if(   replObj != null && extObjAttr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER 
-         && ! replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass())
-        )
-         replObj = cstMeta.newGlobalIdMap.get(extObjAttr.getTargetObjectId());
+//      if(   replObj != null && extObjAttr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER 
+//         && ! replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass())
+//        )
+//         replObj = cstMeta.newGlobalIdMap.get(extObjAttr.getTargetObjectId());
+
+      if( replObj != null && ! replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass()) )
+      {
+       res = false;
+       
+       logRecon.log(Level.ERROR,"Object attribute (Class: '"+extObjAttr.getClass()+"') of object "+objId2Str(extObjAttr.getMasterObject())
+       +" should be reconnected to object "+objId2Str(replObj)+" that doesn't match target class");
+      }
+
+     
      }
    
      if( replObj == null )
@@ -2712,7 +2701,7 @@ public class SubmissionManager
 
      FileAttachmentMeta meta = cMeta.att4Del.get(fileAttr.getFileId());
 
-     if(meta != null && meta.isGlobal() )
+     if( meta != null && meta.isGlobal() )
      {
       FileAttachmentMeta fm = cMeta.att4Ins.get(fileAttr.getFileId());
       
@@ -2858,42 +2847,8 @@ public class SubmissionManager
     
     String ref = extAttr.getTargetObjectId();
 
-    AgeObject tgObj = null;
+    AgeObject tgObj = resolveTarget(extAttr, cstMeta);
     
-    if( extAttr.getTargetResolveScope() == ResolveScope.GLOBAL  )
-    {
-     tgObj = cstMeta.newGlobalIdMap.get(ref);
-     
-     if( tgObj == null )
-      tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
-     
-     if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
-      tgObj = null;
-    }
-    else
-    {
-     tgObj = cstMeta.clusterIdMap.get(ref);
-     
-     if( tgObj == null && exr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
-     {
-      tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
-
-      if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
-       tgObj = null;
-     }
-    }
-    
-    
-    AgeObject tgObj = cstMeta.clusterIdMap.get( ref );
-
-    if( tgObj == null )
-    {
-     tgObj = stor.getGlobalObject( ref );
-    
-     if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) ) //We don't want to get dead objects 
-      tgObj = null;
-    }
-   
     if( tgObj == null )
     {
      AgeObject obj  = (AgeObject)atStk.get(0);
