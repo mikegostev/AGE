@@ -40,6 +40,7 @@ import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.model.RelationClassRef;
+import uk.ac.ebi.age.model.Resolvable;
 import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
@@ -351,7 +352,7 @@ public class SubmissionManager
      }
      else
      {
-      tmpId[1]=(char)n;
+      tmpId[1]=(char)modAux.getOrder();
       dm.setId( new String(tmpId) );
      }
 
@@ -1983,6 +1984,23 @@ public class SubmissionManager
     
     String ref = exr.getTargetObjectId();
 
+//    if( !exr.getAgeElClass().getInverseRelationClass().isImplicit() && exr.getSourceObject().getIdScope() == IdScope.MODULE )
+//    {
+//     extModRelRes = false;
+//     extRelModLog.log(Level.ERROR, "Object "+objId2Str(exr.getSourceObject())+" has external relation (Class: '"+exr+"') with explicit inverse relation class"
+//       " but object ID scope is MODULE"
+//       "Invalid external relation: '" + ref 
+//       + "'. Target object is not found within the cluster and the source object has not global identifier " +
+//               "but relation class has explicit inverse class so inverse relation is impossible. Module: " + mm.aux.getOrder() + " Source object: '"
+//       + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: " + exr.getSourceObject().getOrder()
+//       + "). Relation class: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
+//     
+//     continue;
+//    } 
+
+    
+    
+    
     AgeObjectWritable tgObj = null;
     
     if( exr.getTargetResolveScope() == ResolveScope.GLOBAL  )
@@ -1991,41 +2009,38 @@ public class SubmissionManager
      
      if( tgObj == null )
       tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
+     
+     if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
+      tgObj = null;
     }
     else
     {
      tgObj = cstMeta.clusterIdMap.get(ref);
      
      if( tgObj == null && exr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
+     {
       tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
+
+      if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
+       tgObj = null;
+     }
     }
 
-    if( !exr.getAgeElClass().getInverseRelationClass().isImplicit() && exr.getSourceObject().getIdScope() == IdScope.MODULE )
-    {
-     extModRelRes = false;
-     extRelModLog.log(Level.ERROR, "Invalid external relation: '" + ref 
-       + "'. Target object is not found within the cluster and the source object has not global identifier " +
-               "but relation class has explicit inverse class so inverse relation is impossible. Module: " + mm.aux.getOrder() + " Source object: '"
-       + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: " + exr.getSourceObject().getOrder()
-       + "). Relation class: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
-     
-     continue;
-    } 
     
     // if there is no target object within the cluster let's try to find global object but we have to keep in mind inverse relation!
     if( tgObj == null )
     {
-     if( !exr.getAgeElClass().getInverseRelationClass().isImplicit() && exr.getSourceObject().getIdScope() != IdScope.GLOBAL )
-     {
-      extModRelRes = false;
-      extRelModLog.log(Level.ERROR, "Invalid external relation: '" + ref 
-        + "'. Target object found is not found within the cluster and the source object has not global identifier " +
-        		"but relation class has explicit inverse class so inverse relation is impossible. Module: " + mm.aux.getOrder() + " Source object: '"
-        + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: " + exr.getSourceObject().getOrder()
-        + "). Relation class: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
-      
-      continue;
-     }
+//     if( !exr.getAgeElClass().getInverseRelationClass().isImplicit() && exr.getSourceObject().getIdScope() != IdScope.GLOBAL )
+//     {
+//      extModRelRes = false;
+//      extRelModLog.log(Level.ERROR, "Invalid external relation: '" + ref 
+//        + "'. Target object found is not found within the cluster and the source object has not global identifier " +
+//        		"but relation class has explicit inverse class so inverse relation is impossible. Module: " + mm.aux.getOrder() + " Source object: '"
+//        + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: " + exr.getSourceObject().getOrder()
+//        + "). Relation class: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
+//      
+//      continue;
+//     }
 
      tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
 
@@ -2037,94 +2052,60 @@ public class SubmissionManager
     if(tgObj == null)
     {
      extModRelRes = false;
-     extRelModLog.log(Level.ERROR, "Invalid external relation: '" + ref + "'. Target object not found." + " Module: " + mm.aux.getOrder() + " Source object: '"
-       + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: " + exr.getSourceObject().getOrder()
-       + "). Relation: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
+     extRelModLog.log(Level.ERROR, "Object "+objId2Str(exr.getSourceObject())
+       +" has external relation (Class: '"+exr.getAgeElClass()+"' Position: "+exr.getOrder()+" ) that can't be resolved");
+     
+     continue;
     }
-    else
+
+    AgeExternalRelationWritable invRel = null;
+    
+    invRel = findInverseRelation(exr, tgObj);
+    
+    if( invRel == null )
     {
-     if(!exr.getAgeElClass().isWithinRange(tgObj.getAgeElClass()))
+     AgeRelationClass invRCls = exr.getAgeElClass().getInverseRelationClass();
+
+     RelationClassRef invCRef = cstMeta.relRefMap.get(invRCls);
+
+     if(invCRef == null)
      {
-      extModRelRes = false;
-      extRelModLog.log(Level.ERROR,
-        "External relation target object's class is not within range. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass() + "'). Module: " + mm.aux.getOrder()
-          + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
-          + exr.getSourceObject().getOrder() + "). Relation: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
+      invCRef = tgObj.getDataModule().getContextSemanticModel().getModelFactory()
+        .createRelationClassRef(tgObj.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(invRCls), 0, invRCls.getId());
+
+      cstMeta.relRefMap.put(invRCls, invCRef);
      }
-     else
+
+     invRel = tgObj.getDataModule().getContextSemanticModel()
+       .createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId(), ResolveScope.CASCADE_CLUSTER);
+     invRel.setInferred(true);
+
+     invRel.setTargetObject(exr.getSourceObject());
+     invRel.setInverseRelation(exr);
+    
+     Set<AgeRelationWritable> rels = invRelMap.get(tgObj);
+
+     if(rels == null)
      {
-      AgeRelationClass invRCls = exr.getAgeElClass().getInverseRelationClass();
-
-      boolean invClassOk = false;
-      if(invRCls != null)
-      {
-       if(invRCls.isCustom())
-       {
-        extModRelRes = false;
-        extRelModLog.log(Level.ERROR, "Class of external inverse relation can't be custom. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass()
-          + "'). Module: " + mm.aux.getOrder() + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
-          + exr.getSourceObject().getOrder() + "). Relation: '" + exr.getAgeElClass() + "' Order: " + exr.getOrder() + ". Inverse relation: " + invRCls);
-       }
-       else if(!invRCls.isWithinDomain(tgObj.getAgeElClass()))
-       {
-        extModRelRes = false;
-        extRelModLog.log(Level.ERROR,
-          "Target object's class is not within domain of inverse relation. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass() + "'). Module: "
-            + mm.aux.getOrder() + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
-            + exr.getSourceObject().getOrder() + "). Relation: '" + exr.getAgeElClass() + "' Order: " + exr.getOrder() + ". Inverse relation: " + invRCls);
-       }
-       else if(!invRCls.isWithinRange(exr.getSourceObject().getAgeElClass()))
-       {
-        extModRelRes = false;
-        extRelModLog.log(Level.ERROR,
-          "Source object's class is not within range of inverse relation. Target object: '" + ref + "' (Class: " + tgObj.getAgeElClass() + "'). Module: "
-            + mm.aux.getOrder() + " Source object: '" + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: "
-            + exr.getSourceObject().getOrder() + "). Relation: '" + exr.getAgeElClass() + "' Order: " + exr.getOrder() + ". Inverse relation: " + invRCls);
-       }
-       else
-        invClassOk = true;
-      }
-
-      if(invClassOk)
-      {
-       RelationClassRef invCRef = cstMeta.relRefMap.get(invRCls);
-       
-       if( invCRef == null )
-       {
-        invCRef =tgObj.getDataModule().getContextSemanticModel().getModelFactory().createRelationClassRef(
-          tgObj.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(invRCls), 0, invRCls.getId());
-        
-        cstMeta.relRefMap.put(invRCls, invCRef);
-       }
-       
-       
-       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId(), true);
-       invRel.setTargetObject(exr.getSourceObject());
-       invRel.setInferred(true);
-
-       Set<AgeRelationWritable> rels = invRelMap.get(tgObj);
-
-       if(rels == null)
-       {
-        rels = new HashSet<AgeRelationWritable>();
-        invRelMap.put(tgObj, rels);
-       }
-
-       rels.add(invRel);
-       
-       exr.setInverseRelation(invRel);
-       invRel.setInverseRelation(exr);
-      }
-
-      exr.setTargetObject(tgObj);
+      rels = new HashSet<AgeRelationWritable>();
+      invRelMap.put(tgObj, rels);
      }
+
+     rels.add(invRel);
     }
+
+    invRel.setTargetObject(exr.getSourceObject()); // Only unconnected objects (new) can have free explicit external relations
+    invRel.setInverseRelation(exr);
+
+
+    exr.setInverseRelation(invRel);
+
+    exr.setTargetObject(tgObj);
    }
 
    if(extModRelRes)
     extRelModLog.success();
 
-   
    extRelRes = extRelRes && extModRelRes;
 
   }
@@ -2345,7 +2326,8 @@ public class SubmissionManager
    
   }
 
-  
+  //As new ID could appear within cluster scope we need to reconnect CASCADE_CLUSTER relations
+  //that point to the GLOBAL scope but can be resolved on the CLUSTER scope now 
   for( ModMeta mm : new CollectionsUnion<ModMeta>(cstMeta.mod4Hld.values(),cstMeta.mod4MetaUpd.values()) )
   {
    Collection<? extends AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
@@ -2356,19 +2338,42 @@ public class SubmissionManager
    for(AgeExternalRelationWritable extRel : origExtRels)
    {
     AgeExternalRelationWritable invrsRel = extRel.getInverseRelation();
-    AgeObjectWritable target = extRel.getTargetObject(); //external object
+    AgeObjectWritable oldTarget = extRel.getTargetObject(); //external object
+    AgeObjectWritable relSource = extRel.getSourceObject();
     
     if(   extRel.isInferred() 
        || extRel.getTargetResolveScope() != ResolveScope.CASCADE_CLUSTER 
-       || target.getModuleKey().getClusterId().equals(cstMeta.id) 
+       || oldTarget.getModuleKey().getClusterId().equals(cstMeta.id) 
       )
      continue; 
      
-    AgeObjectWritable newTg = cstMeta.clusterIdMap.get(extRel.getTargetObjectId());
+    AgeObjectWritable newTarget = cstMeta.clusterIdMap.get(extRel.getTargetObjectId()); // newTarget can only be one of the new objects
     
-    if( newTg != null )
+    if( newTarget != null )
     {
-     AgeRelationWritable newInvRel = findInverseRelation(extRel, newTg);
+     if( invrsRel.isInferred() )
+     {
+      Set<AgeRelationWritable> detSet = detachedRelMap.get(oldTarget);
+
+      if( detSet == null )
+       detachedRelMap.put(oldTarget, detSet = new HashSet<AgeRelationWritable>());
+
+      detSet.add(invrsRel);
+     }
+     else
+     {
+      res = false;
+      
+      logRecon.log(Level.ERROR, "Object "+objId2Str(relSource)
+        +" has relation (Class: '"+extRel.getAgeElClass()+"') with "+ResolveScope.CASCADE_CLUSTER.name()
+        + " resolution scope pointing to object "+objId2Str(oldTarget)+" in global scope and this relation can be reconnected to object "+objId2Str(newTarget)
+        +" but current relation has explicit inverse relation that can't be reconnected");
+      
+      continue;
+     }
+     
+     
+     AgeExternalRelationWritable newInvRel = findInverseRelation(extRel, newTarget);
      
      if( newInvRel == null )
      {
@@ -2376,29 +2381,28 @@ public class SubmissionManager
 
       if( invCRef == null )
       {
-       invCRef =newTg.getDataModule().getContextSemanticModel().getModelFactory().createRelationClassRef(
-         newTg.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(extRel.getAgeElClass()), 0,
+       invCRef =newTarget.getDataModule().getContextSemanticModel().getModelFactory().createRelationClassRef(
+         newTarget.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(extRel.getAgeElClass()), 0,
          extRel.getTargetObjectId());
 
        cstMeta.relRefMap.put(extRel.getAgeElClass(), invCRef);
       }
 
-      newInvRel = newTg.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, newTg, target.getId(), ResolveScope.CASCADE_CLUSTER);
+      newInvRel = newTarget.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, newTarget, relSource.getId(), ResolveScope.CASCADE_CLUSTER);
 
       newInvRel.setInferred(true);
+      newInvRel.setTargetObject(relSource);
 
-      newTg.addRelation(newInvRel);
+      newTarget.addRelation(newInvRel);
      }
      
-     Set<AgeRelationWritable> detSet = detachedRelMap.get(target);
+     relConn.add( new Pair<AgeExternalRelationWritable, AgeObjectWritable>(extRel, newTarget) );
+
+     newInvRel.setInverseRelation(extRel);
      
-     if( detSet == null )
-      detachedRelMap.put(target, detSet = new HashSet<AgeRelationWritable>());
-     
-     detSet.add(invrsRel);
-    
-     extRel.setTargetObject(newTg);
-    
+     if( ! detachedRelMap.containsKey(relSource) ) //This is to enforce semantic check on the changed object
+      detachedRelMap.put(relSource, null);
+
     }
    }
   }
@@ -2434,9 +2438,46 @@ public class SubmissionManager
  }
  
  
+ private AgeObjectWritable resolveTarget( Resolvable rslv, ClustMeta cstMeta)
+ {
+  String ref = rslv.getTargetObjectId();
+  
+  AgeObjectWritable tgObj = null;
+  
+  if( rslv.getTargetResolveScope() == ResolveScope.GLOBAL  )
+  {
+   tgObj = cstMeta.newGlobalIdMap.get(ref);
+   
+   if( tgObj == null )
+    tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
+   
+   if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
+    tgObj = null;
+  }
+  else
+  {
+   tgObj = cstMeta.clusterIdMap.get(ref);
+   
+   if( tgObj == null && exr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
+   {
+    tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
+
+    if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
+     tgObj = null;
+   }
+  }
+ }
+ 
  private String objId2Str( AgeObject obj )
  {
-  return "CID: '"+obj.getModuleKey().getClusterId()+"' MID: '"+obj.getModuleKey().getModuleId()+"' OID: '"+obj.getId()+"'";
+  String modId=null;
+  
+  if( obj.getModuleKey().getModuleId().charAt(0) == '\0' )
+   modId = "Module order: "+(int)obj.getModuleKey().getModuleId().charAt(1);
+  else
+   modId ="MID: '"+obj.getModuleKey().getModuleId()+'\'';
+   
+  return "CID: '"+obj.getModuleKey().getClusterId()+"' "+modId+" OID: '"+obj.getId()+"' Pos: "+obj.getOrder();
  }
  
  private boolean reconnectExternalObjectAttributes( ClustMeta  cstMeta, Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> attrConn, LogNode logRoot)
@@ -2790,21 +2831,11 @@ public class SubmissionManager
    
    if( mdres )
     extAttrModLog.success();
-   
-//   if( mdres )
-//    extAttrModLog.log(Level.SUCCESS, "Success");
-//   else
-//    extAttrModLog.log(Level.ERROR, "Failed");
+
   }
   
- if( extAttrRes )
-  extAttrLog.success();
-
-//  if( extAttrRes )
-//   extAttrLog.log(Level.SUCCESS, "Success");
-//  else
-//   extAttrLog.log(Level.ERROR, "Failed");
-
+  if( extAttrRes )
+   extAttrLog.success();
 
   return extAttrRes;
  }
@@ -2827,6 +2858,32 @@ public class SubmissionManager
     
     String ref = extAttr.getTargetObjectId();
 
+    AgeObject tgObj = null;
+    
+    if( extAttr.getTargetResolveScope() == ResolveScope.GLOBAL  )
+    {
+     tgObj = cstMeta.newGlobalIdMap.get(ref);
+     
+     if( tgObj == null )
+      tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
+     
+     if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
+      tgObj = null;
+    }
+    else
+    {
+     tgObj = cstMeta.clusterIdMap.get(ref);
+     
+     if( tgObj == null && exr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
+     {
+      tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
+
+      if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
+       tgObj = null;
+     }
+    }
+    
+    
     AgeObject tgObj = cstMeta.clusterIdMap.get( ref );
 
     if( tgObj == null )
