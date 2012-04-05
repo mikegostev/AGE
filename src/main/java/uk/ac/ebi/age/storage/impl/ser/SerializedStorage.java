@@ -1194,7 +1194,7 @@ public class SerializedStorage implements AgeStorageAdm
   return getAttachmentBySysRef(makeFileSysRef(id, clusterId));
  }
  
- private File getAttachmentBySysRef(String ref)
+ public File getAttachmentBySysRef(String ref)
  {
   File f = fileDepot.getFilePath(ref);
   
@@ -1206,17 +1206,17 @@ public class SerializedStorage implements AgeStorageAdm
 
 
 
- private String makeFileSysRef(String id)
+ public String makeFileSysRef(String id)
  {
   return "G"+M2codec.encode(id);
  }
 
- private String makeFileSysRef(String id, String clustID)
+ public String makeFileSysRef(String id, String clustID)
  {
   return String.valueOf(id.length())+'_'+M2codec.encode(id+clustID);
  }
 
- private boolean isFileRefGlobal(String fileID)
+ public boolean isFileSysRefGlobal(String fileID)
  {
   return fileID.charAt(0) == 'G';
  }

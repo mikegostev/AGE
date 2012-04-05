@@ -91,12 +91,6 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
 
  @Override
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, AttributedWritable host)
- {
-  throw new UnsupportedOperationException();
- }
-
- @Override
  public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, ResolveScope global )
  {
   return new AgeExternalRelationImpl(ref, sourceObj, id, global);
@@ -209,6 +203,43 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
 
  @Override
  public SemanticModel createModelInstance()
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeStringAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeIntegerAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeRealAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeBooleanAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeFileAttribute(AttributeClassRef attrClass, AttributedWritable host,
+   ResolveScope scope)
+ {
+  return new AgeFileAttributeImpl(attrClass, host, scope);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeObjectAttribute(AttributeClassRef attrClass, AttributedWritable host)
  {
   throw new UnsupportedOperationException();
  }

@@ -26,7 +26,7 @@ public class SwapRealAttribute extends AgeRealAttributeImpl
   
   AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   
-  setHostObject(pxo);
+  setAttributedHost(pxo);
   
   return pxo;
  }

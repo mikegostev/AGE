@@ -2,6 +2,7 @@ package uk.ac.ebi.age.storage.impl.serswap.v3;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AttributeClassRef;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.impl.v3.AgeExternalObjectAttributeImpl;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -14,9 +15,9 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
  private static final long serialVersionUID = 3L;
 
 
- public SwapExternalObjectAttribute(AttributeClassRef atCls, String id, AttributedWritable host, boolean glb)
+ public SwapExternalObjectAttribute(AttributeClassRef atCls, String id, AttributedWritable host, ResolveScope scp)
  {
-  super(atCls, id, host, glb);
+  super(atCls, id, host, scp);
  }
 
  @Override
@@ -29,7 +30,7 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
   
   AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   
-  setHostObject(pxo);
+  setAttributedHost(pxo);
   
   return pxo;
  }
@@ -47,7 +48,7 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
   
   AgeObjectWritable tgt = null;
   
-  if( isTargetGlobal() )
+  if( getTargetResolveScope() == ResolveScope.GLOBAL )
    tgt = stor.getGlobalObject( getTargetObjectId() );
   else
    tgt = stor.getClusterObject(getAttributedHost().getModuleKey().getClusterId(), getTargetObjectId());
@@ -61,7 +62,7 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
  @Override
  public AgeExternalObjectAttributeWritable createClone( AttributedWritable host )
  {
-  AgeExternalObjectAttributeImpl clone  = new SwapExternalObjectAttribute(getClassRef(), getTargetObjectId(), host, isTargetGlobal());
+  AgeExternalObjectAttributeImpl clone  = new SwapExternalObjectAttribute(getClassRef(), getTargetObjectId(), host, getTargetResolveScope());
   
   
   cloneAttributes( clone );

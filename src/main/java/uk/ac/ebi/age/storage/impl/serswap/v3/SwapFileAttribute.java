@@ -2,7 +2,8 @@ package uk.ac.ebi.age.storage.impl.serswap.v3;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AttributeClassRef;
-import uk.ac.ebi.age.model.impl.v3.AgeFileAttributeImpl;
+import uk.ac.ebi.age.model.ResolveScope;
+import uk.ac.ebi.age.model.impl.v4.AgeFileAttributeImpl;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
@@ -10,9 +11,9 @@ public class SwapFileAttribute extends AgeFileAttributeImpl
 {
  private static final long serialVersionUID = 3L;
 
- public SwapFileAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ public SwapFileAttribute(AttributeClassRef attrClass, AttributedWritable host, ResolveScope scope)
  {
-  super(attrClass, host);
+  super(attrClass, host, scope);
  }
 
  @Override
@@ -25,7 +26,7 @@ public class SwapFileAttribute extends AgeFileAttributeImpl
   
   AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   
-  setHostObject(pxo);
+  setAttributedHost(pxo);
   
   return pxo;
  }
@@ -33,7 +34,7 @@ public class SwapFileAttribute extends AgeFileAttributeImpl
  @Override
  public AgeAttributeWritable createClone( AttributedWritable host )
  {
-  SwapFileAttribute clone  = new SwapFileAttribute(getClassRef(), host);
+  SwapFileAttribute clone  = new SwapFileAttribute(getClassRef(), host, getTargetResolveScope());
   
   clone.setFileId( getFileId() );
   clone.setFileSysRef( getFileSysRef() );

@@ -33,6 +33,7 @@ import uk.ac.ebi.age.ext.submission.SubmissionDBException;
 import uk.ac.ebi.age.ext.submission.SubmissionMeta;
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
+import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.Attributed;
@@ -836,12 +837,35 @@ public class SubmissionManager
     boolean invRelRes = true;
     LogNode invRelLog = logRoot.branch("Validating externaly related object semantic");
     
+    Set<AgeRelation> relSet = new HashSet<AgeRelation>();
+    
     for( AgeObject obj :  affObjSet )
     {
      LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
      
-     if( validator.validateRelations(obj, invRelMap!=null?invRelMap.get(obj):null,
-       relationDetachMap!=null?relationDetachMap.get(obj):null, objLogNode) )
+     Collection<? extends AgeRelation> relColl = null;
+     
+     Collection<AgeRelationWritable> inv = invRelMap!=null?invRelMap.get(obj):null;
+     Collection<AgeRelationWritable> det = relationDetachMap!=null?relationDetachMap.get(obj):null;
+     
+     if( inv == null && det == null )
+      relColl = obj.getRelations();
+     else
+     {
+      relSet.clear();
+      
+      relSet.addAll(obj.getRelations());
+      
+      if( inv != null )
+       relSet.addAll(inv);
+      
+      if( det != null )
+       relSet.removeAll(det);
+      
+      relColl = relSet;
+     }
+     
+     if( validator.validateRelations(obj.getAgeElClass(), relColl, objLogNode) )
       objLogNode.success();
      else
       invRelRes = false;
@@ -1424,10 +1448,12 @@ public class SubmissionManager
    {
    }
    
+   AgeTabModule atMod = null;
+   
    LogNode atLog = modNode.branch("Parsing AgeTab");
    try
    {
-    mm.atMod = ageTabParser.parse(mm.meta.getText());
+    atMod = ageTabParser.parse(mm.meta.getText());
     atLog.success();
    }
    catch(ParserException e)
@@ -1438,7 +1464,7 @@ public class SubmissionManager
    }
    
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.newModule = converter.convert(mm.atMod, ageStorage.getSemanticModel().createContextSemanticModel(), convLog );
+   mm.newModule = converter.convert(atMod, ageStorage.getSemanticModel().createContextSemanticModel(), convLog );
    
    if( mm.newModule != null )
     convLog.success();
@@ -1467,7 +1493,7 @@ public class SubmissionManager
    
    // XXX connection to main graph
    
-   if( ! checkUniqObjects(cstMeta, ageStorage, logRoot) )
+   if( ! checkUniqObjects(cstMeta, logRoot) )
    {
     res = false;
     return false;
@@ -1482,7 +1508,7 @@ public class SubmissionManager
    Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
    // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
    
-   if( !connectNewExternalRelations(cstMeta, ageStorage, invRelMap, logRoot) )
+   if( !connectNewExternalRelations(cstMeta, invRelMap, logRoot) )
    {
     res = false;
     return false;
@@ -1534,11 +1560,30 @@ public class SubmissionManager
     boolean invRelRes = true;
     LogNode invRelLog = logRoot.branch("Validating externaly related object semantic");
     
+    Set<AgeRelation> relSet = new HashSet<AgeRelation>();
+    
     for( AgeObject obj :  invRelMap.keySet() )
     {
      LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
      
-     if( validator.validateRelations(obj, invRelMap.get(obj), null, objLogNode) )
+     Collection<? extends AgeRelation> relColl = null;
+     
+     Collection<AgeRelationWritable> inv = invRelMap!=null?invRelMap.get(obj):null;
+     
+     if( inv == null )
+      relColl = obj.getRelations();
+     else
+     {
+      relSet.clear();
+      
+      relSet.addAll(obj.getRelations());
+      
+      relSet.addAll(inv);
+      
+      relColl = relSet;
+     }
+     
+     if( validator.validateRelations(obj.getAgeElClass(), relColl, objLogNode) )
       objLogNode.success();
      else
       invRelRes = false;
@@ -1790,12 +1835,12 @@ public class SubmissionManager
     relConnections = new ArrayList<Pair<AgeExternalRelationWritable, AgeObjectWritable>>();
     relationDetachMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
 
-    if(!reconnectExternalObjectAttributes(cstMeta, extAttrConnector, ageStorage, logRoot))
+    if(!reconnectExternalObjectAttributes(cstMeta, extAttrConnector, logRoot))
     {
      return false;
     }
 
-    if(!reconnectExternalRelations(cstMeta, relConnections, relationDetachMap, ageStorage, logRoot))
+    if(!reconnectExternalRelations(cstMeta, relConnections, relationDetachMap, logRoot))
     {
      return false;
     }
@@ -1814,11 +1859,30 @@ public class SubmissionManager
     boolean invRelRes = true;
     LogNode invRelLog = logRoot.branch("Validating externaly related object semantic");
 
+    Set<AgeRelation> relSet = new HashSet<AgeRelation>();
+    
     for(AgeObject obj : relationDetachMap.keySet())
     {
      LogNode objLogNode = invRelLog.branch("Validating object Id: " + obj.getId() + " Class: " + obj.getAgeElClass());
+ 
+     Collection<? extends AgeRelation> relColl = null;
+     
+     Collection<AgeRelationWritable> det = relationDetachMap!=null?relationDetachMap.get(obj):null;
+     
+     if( det == null )
+      relColl = obj.getRelations();
+     else
+     {
+      relSet.clear();
+      
+      relSet.addAll(obj.getRelations());
+      
+      relSet.removeAll(det);
+      
+      relColl = relSet;
+     }
 
-     if(validator.validateRelations(obj, null, relationDetachMap.get(obj), objLogNode))
+     if(validator.validateRelations(obj.getAgeElClass(), relColl, objLogNode))
       objLogNode.success();
      else
       invRelRes = false;
@@ -2696,7 +2760,7 @@ public class SubmissionManager
   
    for( AgeFileAttributeWritable fileAttr : extDM.getFileAttributes() )
    {
-    if( stor.isFileIdGlobal(fileAttr.getFileSysRef()) )
+    if( stor.isFileSysRefGlobal(fileAttr.getFileSysRef()) )
     {
 
      FileAttachmentMeta meta = cMeta.att4Del.get(fileAttr.getFileId());
@@ -2739,7 +2803,7 @@ public class SubmissionManager
  {
   boolean res = true;
   
-  for( ModMeta mm : cMeta.mod4Hld.values() )
+  for( ModMeta mm : new CollectionsUnion<ModMeta>( cMeta.mod4Hld.values(), cMeta.mod4MetaUpd.values()) )
   {
    for( AgeFileAttributeWritable fattr : mm.origModule.getFileAttributes() )
    {
@@ -2749,7 +2813,7 @@ public class SubmissionManager
     {
      String sysref = stor.makeFileSysRef(fattr.getFileId());
      
-     if( stor.getAttachmentBySysRef(sysref) != null )
+     if( stor.getAttachment(fam.getId(), cMeta.id) != null )
       fileConn.add(new Pair<AgeFileAttributeWritable, String>(fattr,sysref));
      else
      {

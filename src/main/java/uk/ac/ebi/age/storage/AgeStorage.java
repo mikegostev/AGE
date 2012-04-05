@@ -19,9 +19,7 @@ public interface AgeStorage
 {
  Collection<AgeObject> executeQuery( AgeQuery qury );
  
-// List<AgeObject> queryTextIndex(IndexID idx, String query);
-// int queryTextIndexCount(IndexID idx, String query);
- 
+
  SemanticModel getSemanticModel();
  
  void shutdown();
@@ -30,8 +28,6 @@ public interface AgeStorage
  public AgeObject getGlobalObject(String objID);
  public AgeObject getClusterObject(String clustId, String objID);
 
-// AgeObject getObjectById(String grpID);
-
 // boolean hasObject(String id);
  boolean hasDataModule(String clstId, String id);
  boolean hasDataModule(ModuleKey mk);
@@ -39,9 +35,7 @@ public interface AgeStorage
  void addDataChangeListener(DataChangeListener dataChangeListener);
  void addMaintenanceModeListener(MaintenanceModeListener mmListener);
  
-// File getAttachmentBySysRef(String sysid);
-// boolean isFileIdGlobal(String fileID);
- 
+
  DataModule getDataModule(String clstId, String name);
 
  Collection<? extends DataModule> getDataModules();
@@ -53,5 +47,9 @@ public interface AgeStorage
 
  File getAttachment(String id);
  File getAttachment(String id, String clustId);
+
+ 
+ boolean isFileSysRefGlobal(String fileSysRef);
+ File getAttachmentBySysRef(String sysid);
 
 }

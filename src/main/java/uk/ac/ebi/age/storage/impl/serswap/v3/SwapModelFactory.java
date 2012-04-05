@@ -14,6 +14,7 @@ import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.ModelFactory;
 import uk.ac.ebi.age.model.RelationClassRef;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.RestrictionType;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.writable.AgeAnnotationClassWritable;
@@ -84,55 +85,6 @@ public class SwapModelFactory extends ModelFactory
  public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, boolean glb )
  {
   return new SwapExternalRelation(ref, sourceObj, id, glb);
- }
-
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, boolean glb )
- {
-  return new SwapExternalObjectAttribute(atCls, id, host, glb);
- }
-
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClassRef, AttributedWritable host)
- {
-  if( attrClassRef.getAttributeClass().getDataType() == DataType.OBJECT )
-   return new SwapObjectAttribute(attrClassRef, host);
-  
-  if( ! ( host instanceof AgeObject ) )
-    return baseFactory.createAgeAttribute(attrClassRef, host);
-  
-  AgeAttributeWritable attr=null;
-  
-  switch( attrClassRef.getAttributeClass().getDataType() )
-  {
-   case INTEGER:
-    attr = new SwapIntegerAttribute(attrClassRef, host);
-    break;
-   
-   case REAL:
-    attr = new SwapRealAttribute(attrClassRef, host);
-    break;
-   
-   case BOOLEAN:
-    attr = new SwapBooleanAttribute(attrClassRef, host);
-    break;
-   
-   case URI:
-   case TEXT: 
-   case STRING:
-   case GUESS:
-    attr = new SwapStringAttribute(attrClassRef, host);
-    break;
-
-   case FILE:
-    attr = new SwapFileAttribute(attrClassRef, host);
-    break;
-    
-   case OBJECT: //See above
-  }
-  
-  
-  return attr;
-  
-
  }
 
  public AgeRelationWritable createRelation(RelationClassRef relClassRef, AgeObjectWritable targetObj)
@@ -214,5 +166,72 @@ public class SwapModelFactory extends ModelFactory
   mod.setModelFactory( this );
   
   return mod;
+ }
+
+ @Override
+ public AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj,
+   String id, ResolveScope scope)
+ {
+  // TODO Auto-generated method stub
+  return null;
+ }
+
+ @Override
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id,
+   ResolveScope scope)
+ {
+  return new SwapExternalObjectAttribute(atCls, id, host, scope);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeStringAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  if( host instanceof AgeObject )
+   return new SwapStringAttribute(attrClass, host);
+   
+  return baseFactory.createAgeStringAttribute(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeIntegerAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  if( host instanceof AgeObject )
+   return new SwapIntegerAttribute(attrClass, host);
+   
+  return baseFactory.createAgeIntegerAttribute(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeRealAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  if( host instanceof AgeObject )
+   return new SwapRealAttribute(attrClass, host);
+   
+  return baseFactory.createAgeRealAttribute(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeBooleanAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  if( host instanceof AgeObject )
+   return new SwapBooleanAttribute(attrClass, host);
+   
+  return baseFactory.createAgeBooleanAttribute(attrClass, host);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeFileAttribute(AttributeClassRef attrClass, AttributedWritable host,
+   ResolveScope scope)
+ {
+  if( host instanceof AgeObject )
+   return new SwapFileAttribute(attrClass, host, scope);
+   
+  return baseFactory.createAgeFileAttribute(attrClass, host, scope);
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeObjectAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ {
+  return new SwapObjectAttribute(attrClass, host);
  }
 }

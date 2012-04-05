@@ -9,7 +9,7 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
 {
  private static final long serialVersionUID = 3L;
 
-// private transient String fileSysRef;
+ private transient String fileSysRef;
 
  public AgeFileAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
  {
@@ -35,16 +35,16 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
   return ResolveScope.CASCADE_CLUSTER;
  }
 
-// @Override
-// public String getFileSysRef()
-// {
-//  return fileSysRef;
-// }
-//
-// @Override
-// public void setFileSysRef(String fId)
-// {
-//  fileSysRef = fId;
-// }
+ @Override
+ public String getFileSysRef()
+ {
+  return fileSysRef;
+ }
+
+ @Override
+ public void setFileSysRef(String fId)
+ {
+  fileSysRef = fId;
+ }
 
 }

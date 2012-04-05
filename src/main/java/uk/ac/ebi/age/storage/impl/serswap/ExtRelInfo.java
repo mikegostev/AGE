@@ -2,20 +2,21 @@ package uk.ac.ebi.age.storage.impl.serswap;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.IdScope;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 
 class ExtRelInfo
 {
  private IdScope sourceObjectScope;
  private String targetId;
- private boolean targetGlobal;
+ private ResolveScope scope;
  private AgeRelationClass relationClass;
  private String customClassName; 
 
  public ExtRelInfo(AgeExternalRelationWritable rel)
  {
   targetId = rel.getTargetObjectId();
-  targetGlobal = rel.isTargetGlobal();
+  scope = rel.getTargetResolveScope();
   
   if( ! rel.getAgeElClass().isCustom() )
    relationClass = rel.getAgeElClass();
@@ -35,14 +36,14 @@ class ExtRelInfo
   this.targetId = targetId;
  }
 
- public boolean isTargetGlobal()
+ public ResolveScope getTargetResolveScope()
  {
-  return targetGlobal;
+  return scope;
  }
 
- public void setTargetGlobal(boolean targetGlobal)
+ public void setTargetResolveScope(ResolveScope sc)
  {
-  this.targetGlobal = targetGlobal;
+  this.scope = sc;
  }
 
  public AgeRelationClass getRelationClass()

@@ -358,9 +358,40 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 // }
  
  @Override
- public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host)
+ public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host )
  {
-  return masterModel.getModelFactory().createAgeAttribute(attrClass, host);
+  switch(attrClass.getAttributeClass().getDataType())
+  {
+   case BOOLEAN:
+    return masterModel.getModelFactory().createAgeBooleanAttribute(attrClass, host);
+
+   case INTEGER:
+    return masterModel.getModelFactory().createAgeIntegerAttribute(attrClass, host);
+
+   case REAL:
+    return masterModel.getModelFactory().createAgeRealAttribute(attrClass, host);
+
+   case STRING:
+   case TEXT:
+   case URI:
+    return masterModel.getModelFactory().createAgeStringAttribute(attrClass, host);
+
+   case FILE:
+    return masterModel.getModelFactory().createAgeFileAttribute(attrClass, host, ResolveScope.CASCADE_CLUSTER);
+    
+   case OBJECT:
+    return masterModel.getModelFactory().createAgeObjectAttribute(attrClass, host);
+    
+   default:
+  }
+  
+  return null;
+ }
+
+ @Override
+ public AgeAttributeWritable createAgeFileAttribute(AttributeClassRef attrClass, AttributedWritable host, ResolveScope scope )
+ {
+  return masterModel.getModelFactory().createAgeFileAttribute(attrClass, host, scope);
  }
 
  

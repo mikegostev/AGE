@@ -5,5 +5,6 @@ import uk.ac.ebi.age.model.AgeFileAttribute;
 public interface AgeFileAttributeWritable extends AgeAttributeWritable, AgeFileAttribute
 {
  void setFileId( String fRef );
-// void setFileSysRef( String fId );
+
+ void setFileSysRef(String fId);
 }

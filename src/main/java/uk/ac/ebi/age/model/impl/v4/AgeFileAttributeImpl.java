@@ -8,9 +8,9 @@ import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeFileAttributeWritable
 {
- private static final long serialVersionUID = 3L;
+ private static final long serialVersionUID = 4L;
 
-// private transient String fileSysRef;
+ private transient String fileSysRef;
  private ResolveScope scope;
 
  public AgeFileAttributeImpl(AttributeClassRef attrClass, AttributedWritable host, ResolveScope scope)
@@ -31,17 +31,17 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
   super.setValue(fRef);
  }
 
-// @Override
-// public String getFileSysRef()
-// {
-//  return fileSysRef;
-// }
-//
-// @Override
-// public void setFileSysRef(String fId)
-// {
-//  fileSysRef = fId;
-// }
+ @Override
+ public String getFileSysRef()
+ {
+  return fileSysRef;
+ }
+
+ @Override
+ public void setFileSysRef(String fId)
+ {
+  fileSysRef = fId;
+ }
 
  @Override
  public ResolveScope getTargetResolveScope()
