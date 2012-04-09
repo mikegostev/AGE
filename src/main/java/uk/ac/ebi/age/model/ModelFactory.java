@@ -15,55 +15,74 @@ import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 
-public abstract class ModelFactory
+public interface ModelFactory
 {
- public abstract DataModuleWritable createDataModule( ContextSemanticModel sm );
 
- public abstract AgeClassWritable createAgeClass(String name, String id, String pfx, SemanticModel sm);
- public abstract AgeClassWritable createCustomAgeClass(String name, String pfx, ContextSemanticModel sm);
+ DataModuleWritable createDataModule(ContextSemanticModel sm);
 
- public abstract AgeObjectWritable createAgeObject(ClassRef ageClassRef, String id);
+ AgeClassWritable createAgeClass(String name, String id, String pfx, SemanticModel sm);
 
- public abstract AgeRelationClassWritable  createAgeRelationClass(String name, String id, SemanticModel sm);
- public abstract AgeRelationClassWritable createCustomAgeRelationClass(String name, ContextSemanticModel sm, AgeClass range, AgeClass owner);
+ AgeClassWritable createCustomAgeClass(String name, String pfx, ContextSemanticModel sm);
 
- public abstract AgeAttributeClassWritable  createAgeAttributeClass( String name, String id, DataType type, SemanticModel sm );
- public abstract AgeAttributeClassWritable createCustomAgeAttributeClass( String name, DataType type, ContextSemanticModel sm, AgeClass owner );
+ AgeObjectWritable createAgeObject(ClassRef ageClassRef, String id);
 
- public abstract AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id, ResolveScope scope );
- public abstract AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id, ResolveScope scope);
+ AgeRelationClassWritable createAgeRelationClass(String name, String id, SemanticModel sm);
 
-// public abstract AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host);
+ AgeRelationClassWritable createCustomAgeRelationClass(String name, ContextSemanticModel sm, AgeClass range,
+   AgeClass owner);
 
- public abstract AgeAttributeWritable createAgeStringAttribute(AttributeClassRef attrClass, AttributedWritable host);
- public abstract AgeAttributeWritable createAgeIntegerAttribute(AttributeClassRef attrClass, AttributedWritable host);
- public abstract AgeAttributeWritable createAgeRealAttribute(AttributeClassRef attrClass, AttributedWritable host);
- public abstract AgeAttributeWritable createAgeBooleanAttribute(AttributeClassRef attrClass, AttributedWritable host);
- public abstract AgeAttributeWritable createAgeFileAttribute(AttributeClassRef attrClass, AttributedWritable host, ResolveScope scope );
- public abstract AgeAttributeWritable createAgeObjectAttribute(AttributeClassRef attrClass, AttributedWritable host);
- 
- public abstract AgeRelationWritable createRelation( RelationClassRef relClassRef, AgeObjectWritable targetObj);
+ AgeAttributeClassWritable createAgeAttributeClass(String name, String id, DataType type, SemanticModel sm);
 
- 
- public abstract AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, ContextSemanticModel sm);
+ AgeAttributeClassWritable createCustomAgeAttributeClass(String name, DataType type, ContextSemanticModel sm,
+   AgeClass owner);
 
- public abstract AgeClassPlug createAgeClassPlug(AgeClass attrClass, ContextSemanticModel sm);
- 
- public abstract AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass attrClass, ContextSemanticModel sm);
- public abstract AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass cls, ContextSemanticModel sm);
+ AgeExternalRelationWritable createExternalRelation(RelationClassRef ref, AgeObjectWritable sourceObj, String id,
+   ResolveScope scope);
 
- public abstract AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id, SemanticModel semanticModelImpl);
- public abstract AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls, SemanticModel semanticModelImpl);
+ AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef atCls, AttributedWritable host, String id,
+   ResolveScope scope);
 
- public abstract AttributeAttachmentRuleWritable createAgeAttributeAttachmentRule(RestrictionType type, SemanticModel sm);
- public abstract RelationRuleWritable createAgeRelationRule(RestrictionType type, SemanticModel sm);
- public abstract QualifierRuleWritable createAgeQualifierRule( SemanticModel sm);
+ AgeAttributeWritable createAgeStringAttribute(AttributeClassRef attrClass, AttributedWritable host);
 
- public abstract ClassRef createClassRef( AgeClassPlug plug, int order, String heading, boolean hrz, ContextSemanticModel modl );
- public abstract AttributeClassRef createAttributeClassRef( AgeAttributeClassPlug plug, int order, String heading);
- public abstract RelationClassRef createRelationClassRef( AgeRelationClassPlug plug, int order, String heading);
+ AgeAttributeWritable createAgeIntegerAttribute(AttributeClassRef attrClass, AttributedWritable host);
 
- public abstract ContextSemanticModel createContextSemanticModel( SemanticModel mm );
+ AgeAttributeWritable createAgeRealAttribute(AttributeClassRef attrClass, AttributedWritable host);
 
- public abstract SemanticModel createModelInstance();
+ AgeAttributeWritable createAgeBooleanAttribute(AttributeClassRef attrClass, AttributedWritable host);
+
+ AgeAttributeWritable createAgeFileAttribute(AttributeClassRef attrClass, AttributedWritable host, ResolveScope scope);
+
+ AgeAttributeWritable createAgeObjectAttribute(AttributeClassRef attrClass, AttributedWritable host);
+
+ AgeRelationWritable createRelation(RelationClassRef relClassRef, AgeObjectWritable targetObj);
+ AgeRelationWritable createInferredInverseRelation(AgeRelationWritable dirRel);
+
+ AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, ContextSemanticModel sm);
+
+ AgeClassPlug createAgeClassPlug(AgeClass attrClass, ContextSemanticModel sm);
+
+ AgeRelationClassPlug createAgeRelationClassPlug(AgeRelationClass attrClass, ContextSemanticModel sm);
+
+ AgeRelationClassPlug createAgeRelationInverseClassPlug(AgeRelationClass cls, ContextSemanticModel sm);
+
+ AgeAnnotationClassWritable createAgeAnnotationClass(String name, String id, SemanticModel semanticModelImpl);
+
+ AgeAnnotationWritable createAgeAnnotation(AgeAnnotationClass cls, SemanticModel semanticModelImpl);
+
+ AttributeAttachmentRuleWritable createAgeAttributeAttachmentRule(RestrictionType type, SemanticModel sm);
+
+ RelationRuleWritable createAgeRelationRule(RestrictionType type, SemanticModel sm);
+
+ QualifierRuleWritable createAgeQualifierRule(SemanticModel sm);
+
+ ClassRef createClassRef(AgeClassPlug plug, int order, String heading, boolean hrz, ContextSemanticModel modl);
+
+ AttributeClassRef createAttributeClassRef(AgeAttributeClassPlug plug, int order, String heading);
+
+ RelationClassRef createRelationClassRef(AgeRelationClassPlug plug, int order, String heading);
+
+ ContextSemanticModel createContextSemanticModel(SemanticModel mm);
+
+ SemanticModel createModelInstance();
+
 }

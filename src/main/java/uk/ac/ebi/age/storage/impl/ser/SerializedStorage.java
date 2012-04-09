@@ -698,75 +698,66 @@ public class SerializedStorage implements AgeStorageAdm
       if( exr.getTargetObject() != null )
        continue;
       
+      String ref = exr.getTargetObjectId();
+      
       AgeObjectWritable tgObj = null;
       
-      if( clustMap != null )
-       tgObj = clustMap.get(exr.getTargetObjectId());
-      
-      if( tgObj == null )
+      if( exr.getTargetResolveScope() == ResolveScope.GLOBAL  )
        tgObj = globalIndexMap.get(exr.getTargetObjectId());
-      
+      else
+      {
+       if( clustMap != null )
+        tgObj = clustMap.get(exr.getTargetObjectId());
+       
+       if( tgObj == null && exr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
+        tgObj = globalIndexMap.get(exr.getTargetObjectId());
+        
+      }
+
       if( tgObj == null )
-       log.warn("Can't resolve external relation. "+exr.getTargetObjectId());
+      {
+       log.warn("Can't resolve external relation. "+exr.getTargetObjectId()+" Module: "+mod.getModuleKey()+" Object: "+exr.getSourceObject().getId());
+       continue;
+      }
       
       exr.setTargetObject(tgObj);
       
-      AgeRelationClass invRCls = exr.getAgeElClass().getInverseRelationClass();
       
-      if( invRCls == null ) //it should not be as implicit class must be generated if there is no explicit one
-       continue;
-      
+      AgeRelationClass invClass = exr.getAgeElClass().getInverseRelationClass();
+
       boolean hasInv = false;
       
-      for( AgeRelationWritable rl : tgObj.getRelations() )
+      if( tgObj.getDataModule().getExternalRelations() != null )
       {
-       if( ! rl.getAgeElClass().equals(invRCls) )
-        continue;
-       
-       if( rl.getTargetObject() == exr.getSourceObject() )
+       for( AgeExternalRelationWritable cndtRel : tgObj.getDataModule().getExternalRelations() ) //Looking for suitable explicit relation
        {
-        exr.setInverseRelation(rl);
-        rl.setInverseRelation(exr);
-        
-        hasInv=true;
-        break;
-       }
-       else if( rl instanceof AgeExternalRelationWritable)
-       {
-        AgeExternalRelationWritable invExR = (AgeExternalRelationWritable) rl;
-        
-        if( invExR.getTargetObjectId().equals(exr.getSourceObject().getId()) )
+        if(   cndtRel.getSourceObject() == tgObj
+           && exr.getTargetObjectId().equals(tgObj.getId())
+           && cndtRel.getAgeElClass().equals(invClass)
+           && cndtRel.getTargetObjectId().equals(exr.getSourceObject().getId()) 
+           && ( exr.getSourceObject().getIdScope() == IdScope.GLOBAL || exr.getSourceObject().getModuleKey().getClusterId().equals(tgObj.getModuleKey().getClusterId()) )
+           && ( cndtRel.getTargetResolveScope() != ResolveScope.CLUSTER || exr.getSourceObject().getModuleKey().getClusterId().equals(tgObj.getModuleKey().getClusterId()) )
+          )
         {
-         exr.setInverseRelation(rl);
-         rl.setInverseRelation(exr);
+         hasInv = true;
+         
+         exr.setInverseRelation(cndtRel);
+         cndtRel.setInverseRelation(exr);
 
-         invExR.setTargetObject(exr.getSourceObject());
-         hasInv=true;
+         cndtRel.setTargetObject(exr.getSourceObject());
+
+         
          break;
         }
        }
       }
+
       
       if( ! hasInv )
       {
-//       AgeRelationWritable iRel = tgObj.getAgeElClass().getSemanticModel().createAgeRelation(tgObj, invRCls);
-       RelationClassRef invCRef = relRefMap.get(invRCls);
        
-       if( invCRef == null )
-       {
-        invCRef =tgObj.getDataModule().getContextSemanticModel().getModelFactory().createRelationClassRef(
-          tgObj.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(invRCls), 0, invRCls.getId());
-        
-        relRefMap.put(invRCls, invCRef);
-       }
-       
-       
-       AgeExternalRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel()
-         .createExternalRelation(invCRef, tgObj, exr.getSourceObject().getId(), ResolveScope.CASCADE_CLUSTER );
+       AgeRelationWritable invRel = tgObj.getDataModule().getContextSemanticModel().createInferredInverseRelation(exr);
 
-       invRel.setTargetObject(exr.getSourceObject());
-       invRel.setInverseRelation(exr);
-       invRel.setInferred(true);
        exr.setInverseRelation(invRel);
        
        tgObj.addRelation(invRel);

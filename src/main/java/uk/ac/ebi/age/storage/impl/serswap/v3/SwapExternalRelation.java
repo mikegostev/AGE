@@ -3,6 +3,7 @@ package uk.ac.ebi.age.storage.impl.serswap.v3;
 import java.lang.ref.SoftReference;
 
 import uk.ac.ebi.age.model.RelationClassRef;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.impl.v3.AgeExternalRelationImpl;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -15,9 +16,9 @@ public class SwapExternalRelation extends AgeExternalRelationImpl
 
  private SoftReference<AgeExternalRelationWritable> softInvRel;
  
- protected SwapExternalRelation(RelationClassRef cRef, AgeObjectWritable srcOb, String id, boolean glb )
+ protected SwapExternalRelation(RelationClassRef cRef, AgeObjectWritable srcOb, String id, ResolveScope scp )
  {
-  super(cRef, srcOb, id, glb);
+  super(cRef, srcOb, id, scp);
  }
 
  public AgeObjectProxy getSourceObject()
@@ -42,16 +43,23 @@ public class SwapExternalRelation extends AgeExternalRelationImpl
   
   SerializedSwapStorage stor = getSourceObject().getStorage();
   
-  AgeObjectWritable tgt = null;
+ 
+  AgeObjectWritable tgObj = null;
   
-  if( isTargetGlobal() )
-   tgt = stor.getGlobalObject( getTargetObjectId() );
+  if( getTargetResolveScope() == ResolveScope.GLOBAL  )
+   tgObj = stor.getGlobalObject( getTargetObjectId() );
   else
-   tgt = stor.getClusterObject(getSourceObject().getModuleKey().getClusterId(), getTargetObjectId());
+  {
+   tgObj = stor.getClusterObject(getSourceObject().getModuleKey().getClusterId(), getTargetObjectId());
+   
+   if( tgObj == null && getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
+    tgObj = stor.getGlobalObject( getTargetObjectId() );
+    
+  }
   
-  setTargetObject(tgt);
+  setTargetObject(tgObj);
 
-  return tgt;
+  return tgObj;
  }
  
  public AgeExternalRelationWritable getInverseRelation()

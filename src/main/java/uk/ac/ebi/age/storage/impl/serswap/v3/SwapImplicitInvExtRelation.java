@@ -9,6 +9,7 @@ import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -35,11 +36,6 @@ abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
   return targetObject.getId();
  }
 
- @Override
- public boolean isTargetGlobal()
- {
-  throw new UnsupportedOperationException();
- }
 
  @Override
  public AgeObjectWritable getSourceObject()
@@ -136,7 +132,7 @@ abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
  }
 
  @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val, boolean glb )
+ public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val, ResolveScope scp )
  {
   throw new UnsupportedOperationException();
  }
@@ -200,15 +196,23 @@ abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
  }
 
  @Override
- public void setInverseRelation(AgeExternalRelationWritable inrv)
+ public ResolveScope getTargetResolveScope()
  {
   throw new UnsupportedOperationException();
  }
 
  @Override
- public void setTargetGlobal(boolean glb)
+ public void setTargetResolveScope(ResolveScope scp)
  {
   throw new UnsupportedOperationException();
  }
+
+ @Override
+ public void setInverseRelation(AgeExternalRelationWritable inrv)
+ {
+  invRelRef = new SoftReference<AgeExternalRelationWritable>(inrv);
+  
+ }
+
 
 }

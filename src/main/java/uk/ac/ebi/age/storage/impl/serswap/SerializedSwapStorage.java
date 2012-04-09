@@ -28,6 +28,7 @@ import uk.ac.ebi.age.log.TooManyErrorsException;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.ModuleKey;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
 import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
@@ -54,9 +55,8 @@ import uk.ac.ebi.age.storage.impl.ser.SerializedStorageConfiguration;
 import uk.ac.ebi.age.storage.impl.ser.Stats;
 import uk.ac.ebi.age.storage.impl.serswap.v3.AgeObjectMergedLinkProxy;
 import uk.ac.ebi.age.storage.impl.serswap.v3.AgeObjectProxy;
-import uk.ac.ebi.age.storage.impl.serswap.v3.SwapCustomImplicitInvExtRelation;
-import uk.ac.ebi.age.storage.impl.serswap.v3.SwapDefinedImplicitInvExtRelation;
 import uk.ac.ebi.age.storage.impl.serswap.v3.SwapModelFactory;
+import uk.ac.ebi.age.storage.impl.serswap.v3.SwapModelFactoryImpl;
 import uk.ac.ebi.age.storage.index.AgeIndexWritable;
 import uk.ac.ebi.age.storage.index.IndexFactory;
 import uk.ac.ebi.age.storage.index.KeyExtractor;
@@ -183,7 +183,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
   if(modelFile.canRead())
    loadModel();
   else
-   model = new SemanticModelImpl(new SwapModelFactory(ModelFactoryImpl.getInstance()));
+   model = new SemanticModelImpl(new SwapModelFactoryImpl(ModelFactoryImpl.getInstance()));
 
   loadData();
 
@@ -877,26 +877,32 @@ public class SerializedSwapStorage implements AgeStorageAdm
       {
        AgeObjectProxy tgObj = null;
 
-       if(relInfo.isTargetGlobal())
+       
+       if( relInfo.getTargetResolveScope() == ResolveScope.GLOBAL  )
         tgObj = globalIndexMap.get(relInfo.getTargetId());
        else
        {
-        if(clustMap != null)
+        if( clustMap != null )
          tgObj = clustMap.get(relInfo.getTargetId());
+        
+        if( tgObj == null && relInfo.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
+         tgObj = globalIndexMap.get(relInfo.getTargetId());
+         
        }
+
 
        if(tgObj == null)
        {
         log.warn("Can't resolve external relation. Source: " + modref.getModuleKey().getClusterId() + ":" + modref.getModuleKey().getModuleId() + ":"
-          + pxo.getId() + " Target: " + relInfo.getTargetId() + " Scope: " + (relInfo.isTargetGlobal() ? "global" : "cluster"));
+          + pxo.getId() + " Target: " + relInfo.getTargetId() + " Scope: " + relInfo.getTargetResolveScope().name());
 
         continue;
        }
 
        AgeRelationWritable invRel = null;
 
-       if(relInfo.getCustomClassName() != null || relInfo.getSourceObjectScope() == IdScope.MODULE)
-        invRel = new SwapCustomImplicitInvExtRelation(tgObj, pxo, relInfo.getCustomClassName());
+       if(relInfo.getCustomClassName() != null || relInfo.getSourceObjectScope() == IdScope.MODULE )
+        invRel = ((SwapModelFactory)model.getModelFactory()).createCustomInferredExternalInverseRelation(tgObj, pxo, relInfo.getCustomClassName());
        else
        {
         ModuleKey tgModKey = tgObj.getModuleKey();
@@ -904,35 +910,26 @@ public class SerializedSwapStorage implements AgeStorageAdm
         List<ExtRelInfo> tgtExtLinks = extRelMap.get(tgModKey.getClusterId().length() + tgModKey.getClusterId() + tgModKey.getModuleId().length()
           + tgModKey.getModuleId() + tgObj.getId());
 
-        if(tgtExtLinks == null)
-         invRel = new SwapDefinedImplicitInvExtRelation(tgObj, pxo, relInfo.getRelationClass());
-        else
+        boolean found = false;
+        if( tgtExtLinks != null )
         {
-         boolean found = false;
-
          for(ExtRelInfo tgRel : tgtExtLinks)
          {
-          if(tgRel.getRelationClass() != relInfo.getRelationClass().getInverseRelationClass())
-           continue;
-
-          if(tgRel.isTargetGlobal())
-          {
-           if(relInfo.getSourceObjectScope() == IdScope.GLOBAL && tgRel.getTargetId().equals(pxo.getId()))
-           {
-            found = true;
-            break;
-           }
-          }
-          else if(tgRel.getTargetId().equals(pxo.getId()) && tgModKey.getClusterId().equals(cid))
+          if(  tgRel.getRelationClass().equals(relInfo.getRelationClass().getInverseRelationClass() )
+            && tgRel.getTargetId().equals(pxo.getId())
+            && ( relInfo.getSourceObjectScope() == IdScope.GLOBAL || pxo.getModuleKey().getClusterId().equals(tgObj.getModuleKey().getClusterId()) )
+            && ( tgRel.getTargetResolveScope() != ResolveScope.CLUSTER || pxo.getModuleKey().getClusterId().equals(tgObj.getModuleKey().getClusterId()) )
+           )
           {
            found = true;
            break;
           }
          }
-
-         if(!found)
-          invRel = new SwapDefinedImplicitInvExtRelation(tgObj, pxo, relInfo.getRelationClass());
         }
+        
+ 
+        if(!found)
+         invRel = ((SwapModelFactory)model.getModelFactory()).createDefinedInferredExternalInverseRelation(tgObj, pxo, relInfo.getRelationClass());
        }
 
        if(invRel != null)
@@ -1017,7 +1014,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
    // SemanticManager.getInstance().setMasterModel( model );
    // model.setModelFactory(SemanticManager.getModelFactory());
-   model.setModelFactory(new SwapModelFactory(ModelFactoryImpl.getInstance()));
+   model.setModelFactory(new SwapModelFactoryImpl(ModelFactoryImpl.getInstance()));
   }
   catch(Exception e)
   {
@@ -1301,10 +1298,17 @@ public class SerializedSwapStorage implements AgeStorageAdm
  // }
 
  @Override
- public File getAttachment(String id, String clusterId, boolean global)
+ public File getAttachment(String id)
  {
-  return getAttachmentBySysRef(global ? makeFileSysRef(id) : makeFileSysRef(id, clusterId));
+  return getAttachmentBySysRef(makeFileSysRef(id));
  }
+
+ @Override
+ public File getAttachment(String id, String clusterId)
+ {
+  return getAttachmentBySysRef( makeFileSysRef(id, clusterId));
+ }
+
 
  @Override
  public File getAttachmentBySysRef(String ref)
@@ -1330,7 +1334,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
  }
 
  @Override
- public boolean isFileIdGlobal(String fileID)
+ public boolean isFileSysRefGlobal(String fileID)
  {
   return fileID.charAt(0) == 'G';
  }

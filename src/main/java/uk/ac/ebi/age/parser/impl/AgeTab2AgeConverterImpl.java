@@ -634,21 +634,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     if( ! found )
     {
-     RelationClassRef invCRef = relRefMap.get(invClass);
+     AgeRelationWritable invRel = data.getContextSemanticModel().createInferredInverseRelation(rl);
+     rl.getTargetObject().addRelation( invRel );
      
-     if( invCRef == null )
-     {
-      invCRef =data.getContextSemanticModel().getModelFactory().createRelationClassRef(
-        data.getContextSemanticModel().getAgeRelationClassPlug(invClass), 0, invClass.getId());
-      
-      relRefMap.put(invClass, invCRef);
-     }
-     
-     
-     AgeRelationWritable invRel = rl.getTargetObject().createRelation(invCRef, obj );
-
-     invRel.setInverseRelation(rl);
-     invRel.setInferred(true);
      rl.setInverseRelation(invRel);
     }
    }

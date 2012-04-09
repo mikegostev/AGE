@@ -3,9 +3,7 @@ package uk.ac.ebi.age.storage.impl.serswap.v3;
 import java.lang.ref.SoftReference;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
-import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.ResolveScope;
-import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 
 public class SwapCustomImplicitInvExtRelation extends SwapImplicitInvExtRelation
 {
@@ -57,12 +55,7 @@ public class SwapCustomImplicitInvExtRelation extends SwapImplicitInvExtRelation
   return ResolveScope.CASCADE_CLUSTER;
  }
 
- @Override
- public AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val, ResolveScope scope)
- {
-  // TODO Auto-generated method stub
-  throw new dev.NotImplementedYetException();
-  //return null;
- }
+
+
 
 }

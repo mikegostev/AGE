@@ -401,6 +401,11 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.getModelFactory().createRelation(rClsR, targetObj);
  }
 
+ @Override
+ public AgeRelationWritable createInferredInverseRelation(AgeRelationWritable rl)
+ {
+  return masterModel.getModelFactory().createInferredInverseRelation(rl);
+ }
 
  @Override
  public AgeAttributeClass getDefinedAgeAttributeClass(String attrClass)
@@ -650,6 +655,8 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  {
   return masterModel.createContextSemanticModel();
  }
+
+
 
 // @Override
 // public void setRootAgeClass(AgeClass cls)

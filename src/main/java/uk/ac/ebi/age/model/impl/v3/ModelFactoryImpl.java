@@ -33,7 +33,7 @@ import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.model.writable.QualifierRuleWritable;
 import uk.ac.ebi.age.model.writable.RelationRuleWritable;
 
-public class ModelFactoryImpl extends ModelFactory implements Serializable
+public class ModelFactoryImpl implements ModelFactory, Serializable
 {
  private static final long serialVersionUID = 3L;
 
@@ -243,6 +243,12 @@ public class ModelFactoryImpl extends ModelFactory implements Serializable
  public AgeAttributeWritable createAgeObjectAttribute(AttributeClassRef attrClass, AttributedWritable host)
  {
   return new AgeObjectAttributeImpl(attrClass, host);
+ }
+
+ @Override
+ public AgeRelationWritable createInferredInverseRelation(AgeRelationWritable dirRel)
+ {
+  return new InferredInverseRelation(dirRel);
  }
 
 
