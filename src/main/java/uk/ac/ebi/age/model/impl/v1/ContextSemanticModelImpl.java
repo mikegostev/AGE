@@ -374,6 +374,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
    case STRING:
    case TEXT:
    case URI:
+   case GUESS:
     return masterModel.getModelFactory().createAgeStringAttribute(attrClass, host);
 
    case FILE:
@@ -381,8 +382,6 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
     
    case OBJECT:
     return masterModel.getModelFactory().createAgeObjectAttribute(attrClass, host);
-    
-   default:
   }
   
   return null;
@@ -396,9 +395,9 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 
  
  @Override
- public AgeRelationWritable createAgeRelation(RelationClassRef rClsR, AgeObjectWritable targetObj)
+ public AgeRelationWritable createAgeRelation(RelationClassRef rClsR, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
  {
-  return masterModel.getModelFactory().createRelation(rClsR, targetObj);
+  return masterModel.getModelFactory().createRelation(rClsR, sourceObj, targetObj);
  }
 
  @Override

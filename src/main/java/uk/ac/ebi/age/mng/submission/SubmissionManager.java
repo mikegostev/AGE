@@ -711,15 +711,18 @@ public class SubmissionManager
    mm.newModule = converter.convert(atMod, ageStorage.getSemanticModel().createContextSemanticModel(), convLog );
    
    if( mm.newModule != null )
+   {
+    ModuleKey modk = new ModuleKey( clusterMeta.id, mm.meta.getId() );
+    mm.newModule.setModuleKey(modk);
+
     convLog.success();
+   }
    else
    {
     convLog.log(Level.ERROR, "Conversion failed");
     modRes = false;
    }
    
-   ModuleKey modk = new ModuleKey( clusterMeta.id, mm.meta.getId() );
-   mm.newModule.setModuleKey(modk);
    
    if( modRes )
     modNode.success();
@@ -2254,8 +2257,7 @@ public class SubmissionManager
 
 
       logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the global scope. The first object: "
-        +( (mm.aux!=null?mm.aux.getOrder()+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
-        +". The second object: cluster ID='"+clashObj.getModuleKey().getClusterId()+"' module ID='"+clashObj.getModuleKey().getModuleId()+"' Row: " + clashObj.getOrder()
+        + objId2Str(obj)+". The second object: "+objId2Str(clashObj)
       );
 
       continue;

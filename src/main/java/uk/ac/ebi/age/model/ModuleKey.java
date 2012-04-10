@@ -1,7 +1,11 @@
 package uk.ac.ebi.age.model;
 
-public class ModuleKey implements Comparable<ModuleKey>
+import java.io.Serializable;
+
+public class ModuleKey implements Comparable<ModuleKey>, Serializable
 {
+ private static final long serialVersionUID = 1L;
+
  private String clusterId;
  private String moduleId;
  
@@ -53,5 +57,10 @@ public class ModuleKey implements Comparable<ModuleKey>
    return dif;
   
   return moduleId.compareTo(o.moduleId);
+ }
+ 
+ public String toString()
+ {
+  return "CID: "+clusterId+" MID: "+moduleId;
  }
 }

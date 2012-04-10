@@ -54,7 +54,7 @@ public interface ModelFactory
 
  AgeAttributeWritable createAgeObjectAttribute(AttributeClassRef attrClass, AttributedWritable host);
 
- AgeRelationWritable createRelation(RelationClassRef relClassRef, AgeObjectWritable targetObj);
+ AgeRelationWritable createRelation(RelationClassRef relClassRef, AgeObjectWritable sourceObj, AgeObjectWritable targetObj);
  AgeRelationWritable createInferredInverseRelation(AgeRelationWritable dirRel);
 
  AgeAttributeClassPlug createAgeAttributeClassPlug(AgeAttributeClass attrClass, ContextSemanticModel sm);

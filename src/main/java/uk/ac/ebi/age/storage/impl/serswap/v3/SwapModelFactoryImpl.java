@@ -88,7 +88,7 @@ public class SwapModelFactoryImpl implements SwapModelFactory
   return new SwapExternalRelation(ref, sourceObj, id, scp);
  }
 
- public AgeRelationWritable createRelation(RelationClassRef relClassRef, AgeObjectWritable targetObj)
+ public AgeRelationWritable createRelation(RelationClassRef relClassRef, AgeObjectWritable sourceObj, AgeObjectWritable targetObj)
  {
   return new SwapRelation(relClassRef, targetObj);
   //baseFactory.createRelation(relClassRef, targetObj);
