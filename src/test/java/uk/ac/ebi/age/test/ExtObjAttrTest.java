@@ -7,13 +7,15 @@ import uk.ac.ebi.age.authz.PermissionManager;
 import uk.ac.ebi.age.ext.authz.SystemAction;
 import uk.ac.ebi.age.ext.authz.TagRef;
 import uk.ac.ebi.age.ext.entity.Entity;
-import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.SemanticModel;
+import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
+import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeClassWritable;
@@ -26,11 +28,9 @@ public class ExtObjAttrTest
 {
  public static void main( String[] argv )
  {
-  SemanticModel mod = SemanticManager.createModelInstance();
+  SemanticModel mod = new SemanticModelImpl( ModelFactoryImpl.getInstance() );
   
-  SemanticManager.getInstance().setMasterModel(mod);
-  
-  ContextSemanticModel cMod = SemanticManager.getInstance().getContextModel();
+  ContextSemanticModel cMod = mod.createContextSemanticModel();
   
   DataModuleWritable dm = mod.getModelFactory().createDataModule(cMod);
   
@@ -57,28 +57,28 @@ public class ExtObjAttrTest
    
    if( i == 1 )
    {
-    obj.createExternalObjectAttribute( classRefO, "ObjRef"+i );
+    obj.createExternalObjectAttribute( classRefO, "ObjRef"+i, ResolveScope.CASCADE_CLUSTER );
    }
    else if( i == 2 )
    {
-    obj.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+1L1");
+    obj.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+1L1", ResolveScope.CASCADE_CLUSTER );
     obj.createAgeAttribute(classRefS).setValue("Val2");
-    AttributedWritable attr = obj.createExternalObjectAttribute(classRefO ,"ObjRef"+i+"+2L1");
+    AttributedWritable attr = obj.createExternalObjectAttribute(classRefO ,"ObjRef"+i+"+2L1", ResolveScope.CASCADE_CLUSTER );
     obj.createAgeAttribute(classRefS).setValue("Val3");
-    obj.createExternalObjectAttribute(classRefO , "ObjRef"+i+"+3L1");
+    obj.createExternalObjectAttribute(classRefO , "ObjRef"+i+"+3L1", ResolveScope.CASCADE_CLUSTER );
 
     attr.createAgeAttribute(classRefS).setValue("Val2+");
-    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+1L2");
-    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+2L2");
+    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+1L2", ResolveScope.CASCADE_CLUSTER );
+    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+2L2", ResolveScope.CASCADE_CLUSTER );
     
     AgeAttributeWritable sat = attr.createAgeAttribute(classRefS);
     sat.setValue("Val3+");
     attr=sat;
     
     attr.createAgeAttribute(classRefS).setValue("Val2++");
-    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+1L3");
+    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+1L3", ResolveScope.CASCADE_CLUSTER );
     attr.createAgeAttribute(classRefS).setValue("Val3++");
-    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+2L3");
+    attr.createExternalObjectAttribute(classRefO, "ObjRef"+i+"+2L3", ResolveScope.CASCADE_CLUSTER );
    }
    
    dm.addObject(obj);

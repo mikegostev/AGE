@@ -14,7 +14,6 @@ import uk.ac.ebi.age.ext.authz.SystemAction;
 import uk.ac.ebi.age.ext.authz.TagRef;
 import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.log.BufferLogger;
-import uk.ac.ebi.age.mng.SemanticManager;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.ParserException;
@@ -42,7 +41,6 @@ public class Test
  {
   try
   {
-   SemanticManager smngr = SemanticManager.getInstance();
    
 //   smngr.initModel(ontologyFile);
    
@@ -59,13 +57,6 @@ public class Test
    
    BufferLogger logBuf = new BufferLogger( 30 );
   
-   DataModuleWritable dblock = new AgeTab2AgeConverterImpl( new DefPM() ).convert(sbm, smngr.getContextModel(), synProf, logBuf.getRootNode() );
-   
-   if( dblock == null )
-   {
-    System.out.println("Convertion failed");
-    return;
-   }
    
    SerializedStorageConfiguration cfg = new SerializedStorageConfiguration();
    
@@ -73,6 +64,16 @@ public class Test
    cfg.setMaintenanceModeTimeout(30000);
    
    SerializedStorage str = new SerializedStorage( cfg );
+
+   DataModuleWritable dblock = new AgeTab2AgeConverterImpl( new DefPM(), synProf )
+   .convert(sbm, str.getSemanticModel().createContextSemanticModel(), logBuf.getRootNode() );
+   
+   if( dblock == null )
+   {
+    System.out.println("Convertion failed");
+    return;
+   }
+
    
    str.update(Collections.singletonList(dblock), null);
    
