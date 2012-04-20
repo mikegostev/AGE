@@ -70,120 +70,173 @@ import com.pri.util.stream.StreamPump;
 
 public class SubmissionManager
 {
-// private static SubmissionManager instance = new SubmissionManager();
- 
- 
+ // private static SubmissionManager instance = new SubmissionManager();
+
  private static class ModMeta
  {
-  DataModuleWritable origModule;
-  DataModuleWritable newModule;
-  DataModuleMeta meta;
-  ModuleAux aux;
-  
+  DataModuleWritable             origModule;
+  DataModuleWritable             newModule;
+  DataModuleMeta                 meta;
+  ModuleAux                      aux;
+
   Map<String, AgeObjectWritable> idMap = new HashMap<String, AgeObjectWritable>();
  }
- 
- private static Extractor<ModMeta, DataModuleWritable> modExtractor = new Extractor<ModMeta, DataModuleWritable>()
- {
-  @Override
-  public DataModuleWritable extract(ModMeta obj)
-  {
-   return obj.newModule;
-  }
- };
- 
- private static Extractor<ModMeta, ModuleKey> modkeyExtractor = new Extractor<ModMeta, ModuleKey>()
- {
-  @Override
-  public ModuleKey extract(ModMeta obj)
-  {
-   return new ModuleKey( obj.origModule.getClusterId(), obj.origModule.getId() );
-  }
- };
 
- 
+ private static Extractor<ModMeta, DataModuleWritable> modExtractor    = new Extractor<ModMeta, DataModuleWritable>()
+                                                                       {
+                                                                        @Override
+                                                                        public DataModuleWritable extract(ModMeta obj)
+                                                                        {
+                                                                         return obj.newModule;
+                                                                        }
+                                                                       };
+
+ private static Extractor<ModMeta, ModuleKey>          modkeyExtractor = new Extractor<ModMeta, ModuleKey>()
+                                                                       {
+                                                                        @Override
+                                                                        public ModuleKey extract(ModMeta obj)
+                                                                        {
+                                                                         return new ModuleKey(obj.origModule.getClusterId(), obj.origModule.getId());
+                                                                        }
+                                                                       };
+
  private static class FileMeta
  {
   FileAttachmentMeta origFile;
   FileAttachmentMeta newFile;
-  AttachmentAux aux;
+  AttachmentAux      aux;
  }
- 
+
  private static class ClustMeta
  {
-  List<ModMeta> incomingMods = new ArrayList<SubmissionManager.ModMeta>();  //New modules and modules with data update (Ins+Upd) but in original order
- 
-  List<ModMeta> mod4Use = new ArrayList<SubmissionManager.ModMeta>(); //Ins+Upd+Hld+MetaUpd convenience map
- 
-  List<ModMeta> mod4Ins = new ArrayList<SubmissionManager.ModMeta>();
-  
-  Map<String,ModMeta> mod4MetaUpd = new HashMap<String, SubmissionManager.ModMeta>(); //Modules with meta (description) update only
-  Map<String,ModMeta> mod4DataUpd = new HashMap<String, SubmissionManager.ModMeta>(); //Modules with data update
-  Map<String,ModMeta> mod4Del = new HashMap<String, SubmissionManager.ModMeta>();     //Modules to be deleted
-  Map<String,ModMeta> mod4Hld = new HashMap<String, SubmissionManager.ModMeta>();     //Modules to be retained (fully untouched, even meta)
+  List<ModMeta>                           incomingMods   = new ArrayList<SubmissionManager.ModMeta>();       // New
+                                                                                                              // modules
+                                                                                                              // and
+                                                                                                              // modules
+                                                                                                              // with
+                                                                                                              // data
+                                                                                                              // update
+                                                                                                              // (Ins+Upd)
+                                                                                                              // but
+                                                                                                              // in
+                                                                                                              // original
+                                                                                                              // order
 
-  Map<String,FileAttachmentMeta> att4Ins = new HashMap<String, FileAttachmentMeta>(); //New files
-  Map<String,FileMeta> att4Upd = new HashMap<String, FileMeta>();                     //Files with content update   
-  Map<String,FileMeta> att4MetaUpd = new HashMap<String, FileMeta>();                 //Files with meta update only  
-  Map<String,FileAttachmentMeta> att4Del = new HashMap<String, FileAttachmentMeta>();
-  Map<String,FileMeta> att4G2L = new HashMap<String, FileMeta>();                     //Files that reduce visibility
-  Map<String,FileMeta> att4L2G = new HashMap<String, FileMeta>();                     //Files that increase visibility
-  Map<String,FileAttachmentMeta> att4Hld = new HashMap<String, FileAttachmentMeta>(); //Files that keep both content and visibility untouched
-  Map<String,FileAttachmentMeta> att4Use = new HashMap<String, FileAttachmentMeta>(); //New full file set
+  List<ModMeta>                           mod4Use        = new ArrayList<SubmissionManager.ModMeta>();       // Ins+Upd+Hld+MetaUpd
+                                                                                                              // convenience
+                                                                                                              // map
 
-  public String id;
-  
-  Map<String, AgeObjectWritable> clusterIdMap = new HashMap<String, AgeObjectWritable>();
-  Map<String, AgeObjectWritable> newGlobalIdMap = new HashMap<String, AgeObjectWritable>();
- 
-  Map<AgeRelationClass, RelationClassRef> relRefMap = new HashMap<AgeRelationClass, RelationClassRef>();
+  List<ModMeta>                           mod4Ins        = new ArrayList<SubmissionManager.ModMeta>();
+
+  Map<String, ModMeta>                    mod4MetaUpd    = new HashMap<String, SubmissionManager.ModMeta>(); // Modules
+                                                                                                              // with
+                                                                                                              // meta
+                                                                                                              // (description)
+                                                                                                              // update
+                                                                                                              // only
+  Map<String, ModMeta>                    mod4DataUpd    = new HashMap<String, SubmissionManager.ModMeta>(); // Modules
+                                                                                                              // with
+                                                                                                              // data
+                                                                                                              // update
+  Map<String, ModMeta>                    mod4Del        = new HashMap<String, SubmissionManager.ModMeta>(); // Modules
+                                                                                                              // to
+                                                                                                              // be
+                                                                                                              // deleted
+  Map<String, ModMeta>                    mod4Hld        = new HashMap<String, SubmissionManager.ModMeta>(); // Modules
+                                                                                                              // to
+                                                                                                              // be
+                                                                                                              // retained
+                                                                                                              // (fully
+                                                                                                              // untouched,
+                                                                                                              // even
+                                                                                                              // meta)
+
+  Map<String, FileAttachmentMeta>         att4Ins        = new HashMap<String, FileAttachmentMeta>();        // New
+                                                                                                              // files
+  Map<String, FileMeta>                   att4Upd        = new HashMap<String, FileMeta>();                  // Files
+                                                                                                              // with
+                                                                                                              // content
+                                                                                                              // update
+  Map<String, FileMeta>                   att4MetaUpd    = new HashMap<String, FileMeta>();                  // Files
+                                                                                                              // with
+                                                                                                              // meta
+                                                                                                              // update
+                                                                                                              // only
+  Map<String, FileAttachmentMeta>         att4Del        = new HashMap<String, FileAttachmentMeta>();
+  Map<String, FileMeta>                   att4G2L        = new HashMap<String, FileMeta>();                  // Files
+                                                                                                              // that
+                                                                                                              // reduce
+                                                                                                              // visibility
+  Map<String, FileMeta>                   att4L2G        = new HashMap<String, FileMeta>();                  // Files
+                                                                                                              // that
+                                                                                                              // increase
+                                                                                                              // visibility
+  Map<String, FileAttachmentMeta>         att4Hld        = new HashMap<String, FileAttachmentMeta>();        // Files
+                                                                                                              // that
+                                                                                                              // keep
+                                                                                                              // both
+                                                                                                              // content
+                                                                                                              // and
+                                                                                                              // visibility
+                                                                                                              // untouched
+  Map<String, FileAttachmentMeta>         att4Use        = new HashMap<String, FileAttachmentMeta>();        // New
+                                                                                                              // full
+                                                                                                              // file
+                                                                                                              // set
+
+  public String                           id;
+
+  Map<String, AgeObjectWritable>          clusterIdMap   = new HashMap<String, AgeObjectWritable>();
+  Map<String, AgeObjectWritable>          newGlobalIdMap = new HashMap<String, AgeObjectWritable>();
+
+  Map<AgeRelationClass, RelationClassRef> relRefMap      = new HashMap<AgeRelationClass, RelationClassRef>();
  }
- 
-// public static SubmissionManager getInstance()
-// {
-//  return instance;
-// }
- 
- private AgeTabSyntaxParser ageTabParser;
- private AgeTab2AgeConverter converter = null;
+
+ // public static SubmissionManager getInstance()
+ // {
+ // return instance;
+ // }
+
+ private AgeTabSyntaxParser   ageTabParser;
+ private AgeTab2AgeConverter  converter = null;
  private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
- private AnnotationManager annotationManager;
- 
- private SubmissionDB submissionDB;
- private AgeStorageAdm ageStorage;
- 
- public SubmissionManager( AgeStorageAdm ageS, SubmissionDB sDB, AgeTabSyntaxParser prs, AgeTab2AgeConverter conv, AnnotationManager aMngr  )
+ private AnnotationManager    annotationManager;
+
+ private SubmissionDB         submissionDB;
+ private AgeStorageAdm        ageStorage;
+
+ public SubmissionManager(AgeStorageAdm ageS, SubmissionDB sDB, AgeTabSyntaxParser prs, AgeTab2AgeConverter conv, AnnotationManager aMngr)
  {
   ageStorage = ageS;
   submissionDB = sDB;
-  ageTabParser=prs;
+  ageTabParser = prs;
   converter = conv;
-  
-  annotationManager = aMngr;   
+
+  annotationManager = aMngr;
  }
 
- public boolean storeSubmission( SubmissionMeta sMeta,  String updateDescr, LogNode logRoot )
+ public boolean storeSubmission(SubmissionMeta sMeta, String updateDescr, LogNode logRoot)
  {
-  return storeSubmission( sMeta,  updateDescr, logRoot, false );
+  return storeSubmission(sMeta, updateDescr, logRoot, false);
  }
 
  @SuppressWarnings("unchecked")
- public boolean storeSubmission( SubmissionMeta sMeta,  String updateDescr, LogNode logRoot, boolean verifyOnly )
+ public boolean storeSubmission(SubmissionMeta sMeta, String updateDescr, LogNode logRoot, boolean verifyOnly)
  {
- 
+
   SubmissionMeta origSbm = null;
 
-  if( sMeta.getId() != null )
+  if(sMeta.getId() != null)
   {
    sMeta.setId(sMeta.getId().trim());
 
    if(sMeta.getId().length() == 0)
     sMeta.setId(null);
   }
-  
+
   if(sMeta.getId() != null)
   {
-   if( sMeta.getStatus() == Status.NEW )
+   if(sMeta.getStatus() == Status.NEW)
    {
     try
     {
@@ -200,7 +253,7 @@ public class SubmissionManager
      return false;
     }
    }
-   
+
    try
    {
     origSbm = submissionDB.getSubmission(sMeta.getId());
@@ -213,7 +266,6 @@ public class SubmissionManager
    }
   }
 
-
   if(sMeta.getStatus() == Status.UPDATEORNEW)
   {
    if(sMeta.getId() == null)
@@ -225,85 +277,82 @@ public class SubmissionManager
     else
      sMeta.setStatus(Status.NEW);
    }
-  }  
-  
-  if( sMeta.getStatus() == Status.UPDATE )
+  }
+
+  if(sMeta.getStatus() == Status.UPDATE)
   {
-   if( sMeta.getId() == null )
+   if(sMeta.getId() == null)
    {
     logRoot.log(Level.ERROR, "Submission is marked for update but no ID is provided");
     return false;
    }
-   
-   if( origSbm == null )
+
+   if(origSbm == null)
    {
-    logRoot.log(Level.ERROR, "Submission with ID='"+sMeta.getId()+"' is not found to be updated");
+    logRoot.log(Level.ERROR, "Submission with ID='" + sMeta.getId() + "' is not found to be updated");
     return false;
    }
-   
+
    sMeta.setSubmitter(origSbm.getSubmitter());
    sMeta.setSubmissionTime(origSbm.getSubmissionTime());
-   
-   if( sMeta.getDescription() == null )
-    sMeta.setDescription( origSbm.getDescription() );
+
+   if(sMeta.getDescription() == null)
+    sMeta.setDescription(origSbm.getDescription());
   }
 
-  char[] tmpId = new char[] {'\0', '\0'};
-  
-  
+  char[] tmpId = new char[] { '\0', '\0' };
+
   ClustMeta clusterMeta = new ClustMeta();
 
-  if( sMeta.getId() == null )
+  if(sMeta.getId() == null)
    clusterMeta.id = new String(tmpId);
   else
    clusterMeta.id = sMeta.getId();
-  
+
   List<FileAttachmentMeta> files = sMeta.getAttachments();
-  
-  
-  
+
   boolean res = true;
-  
 
-  int n=0;
-  
-  if( sMeta.getDataModules() != null )
+  int n = 0;
+
+  if(sMeta.getDataModules() != null)
   {
-   for(DataModuleMeta dm : sMeta.getDataModules() ) //Separating modules
+   for(DataModuleMeta dm : sMeta.getDataModules()) // Separating modules
    {
-    
-    n++;
-    
-    ModuleAux modAux = (ModuleAux)dm.getAux();
 
-    DataModuleWritable exstMod = dm.getId() != null && sMeta.getStatus() == Status.UPDATE ?ageStorage.getDataModule(sMeta.getId(), dm.getId()) : null;
-    
-    if( modAux.getStatus() == Status.UPDATEORNEW )
+    n++;
+
+    ModuleAux modAux = (ModuleAux) dm.getAux();
+
+    DataModuleWritable exstMod = dm.getId() != null && sMeta.getStatus() == Status.UPDATE ? ageStorage.getDataModule(sMeta.getId(), dm.getId()) : null;
+
+    if(modAux.getStatus() == Status.UPDATEORNEW)
     {
-     if( exstMod == null )
-      modAux.setStatus( Status.NEW );
+     if(exstMod == null)
+      modAux.setStatus(Status.NEW);
      else
-      modAux.setStatus( Status.UPDATE );
+      modAux.setStatus(Status.UPDATE);
     }
-    
-    if( modAux.getStatus() == Status.UPDATE || modAux.getStatus() == Status.DELETE )
+
+    if(modAux.getStatus() == Status.UPDATE || modAux.getStatus() == Status.DELETE)
     {
      if(sMeta.getStatus() != Status.UPDATE)
      {
-      logRoot.log(Level.ERROR, "Module " + modAux.getOrder() + " is marked for "+modAux.getStatus().name()+" but submission is not in UPDATE mode");
+      logRoot.log(Level.ERROR, "Module " + modAux.getOrder() + " is marked for " + modAux.getStatus().name() + " but submission is not in UPDATE mode");
       res = false;
       continue;
      }
 
      if(exstMod == null)
      {
-      logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='"+dm.getId() + "' (Cluster ID='"+sMeta.getId()+"') to be updated/deleted");
+      logRoot.log(Level.ERROR, "The storage doesn't contain data module with ID='" + dm.getId() + "' (Cluster ID='" + sMeta.getId()
+        + "') to be updated/deleted");
       res = false;
      }
 
-     if( dm.getId() == null  )
+     if(dm.getId() == null)
      {
-      logRoot.log(Level.ERROR, "Module " + modAux.getOrder() + " is marked for "+modAux.getStatus().name()+" but no ID is provided");
+      logRoot.log(Level.ERROR, "Module " + modAux.getOrder() + " is marked for " + modAux.getStatus().name() + " but no ID is provided");
       res = false;
       continue;
      }
@@ -313,12 +362,12 @@ public class SubmissionManager
      mm.aux = modAux;
 
      mm.origModule = exstMod;
-     
-     if( mm.aux.getStatus() == Status.DELETE )
+
+     if(mm.aux.getStatus() == Status.DELETE)
      {
-      clusterMeta.mod4Del.put(mm.meta.getId(),mm);
+      clusterMeta.mod4Del.put(mm.meta.getId(), mm);
      }
-     else if( dm.getText() != null )
+     else if(dm.getText() != null)
      {
       clusterMeta.mod4DataUpd.put(mm.meta.getId(), mm);
       clusterMeta.mod4Use.add(mm);
@@ -330,7 +379,8 @@ public class SubmissionManager
       clusterMeta.mod4Use.add(mm);
      }
     }
-    else //modAux.getStatus() == Status.NEW
+    else
+    // modAux.getStatus() == Status.NEW
     {
      if(dm.getText() == null)
      {
@@ -344,24 +394,23 @@ public class SubmissionManager
 
       if(exstMod != null)
       {
-       logRoot.log(Level.ERROR,
-         "Module " + modAux.getOrder() + " is marked for insertion and has it's own ID (" + dm.getId()
-           + ") but this ID it already taken by module of cluster '" + exstMod.getClusterId() + "'");
+       logRoot.log(Level.ERROR, "Module " + modAux.getOrder() + " is marked for insertion and has it's own ID (" + dm.getId()
+         + ") but this ID it already taken by module of cluster '" + exstMod.getClusterId() + "'");
        res = false;
        continue;
       }
      }
      else
      {
-      tmpId[1]=(char)modAux.getOrder();
-      dm.setId( new String(tmpId) );
+      tmpId[1] = (char) modAux.getOrder();
+      dm.setId(new String(tmpId));
      }
 
      ModMeta mm = new ModMeta();
      mm.meta = dm;
      mm.aux = modAux;
 
-     mm.meta.setDocVersion( mm.meta.getModificationTime() );
+     mm.meta.setDocVersion(mm.meta.getModificationTime());
 
      clusterMeta.mod4Ins.add(mm);
      clusterMeta.mod4Use.add(mm);
@@ -370,62 +419,69 @@ public class SubmissionManager
     }
    }
   }
-  
-  if( origSbm != null && origSbm.getDataModules() != null ) // now we are sorting modules from the existing cluster (submission)
+
+  if(origSbm != null && origSbm.getDataModules() != null) // now we are sorting
+                                                          // modules from the
+                                                          // existing cluster
+                                                          // (submission)
   {
-   for( DataModuleMeta odm : origSbm.getDataModules() )
+   for(DataModuleMeta odm : origSbm.getDataModules())
    {
     String modID = odm.getId();
 
     ModMeta updMod = clusterMeta.mod4DataUpd.get(modID);
-    
-    if( updMod == null )
+
+    if(updMod == null)
      updMod = clusterMeta.mod4MetaUpd.get(modID);
-    
-    if( updMod != null )
+
+    if(updMod != null)
     {
-     if( updMod.meta.getDescription() == null ) // if the new module has no description we keep the old one
+     if(updMod.meta.getDescription() == null) // if the new module has no
+                                              // description we keep the old one
       updMod.meta.setDescription(odm.getDescription());
 
-     
-     updMod.meta.setSubmissionTime( odm.getSubmissionTime() ); //Preserving originsl submitter and submission time
-     updMod.meta.setSubmitter( odm.getSubmitter() );
-     
-     if( updMod.meta.getText() != null )
-      updMod.meta.setDocVersion( updMod.meta.getModificationTime() );
+     updMod.meta.setSubmissionTime(odm.getSubmissionTime()); // Preserving
+                                                             // originsl
+                                                             // submitter and
+                                                             // submission time
+     updMod.meta.setSubmitter(odm.getSubmitter());
+
+     if(updMod.meta.getText() != null)
+      updMod.meta.setDocVersion(updMod.meta.getModificationTime());
      else
-      updMod.meta.setDocVersion( odm.getDocVersion() );
+      updMod.meta.setDocVersion(odm.getDocVersion());
 
     }
-    else if( ! clusterMeta.mod4Del.containsKey(modID) ) //i.e. module that will be kept untouched
+    else if(!clusterMeta.mod4Del.containsKey(modID)) // i.e. module that will be
+                                                     // kept untouched
     {
      ModMeta mm = new ModMeta();
      mm.meta = odm;
      mm.origModule = ageStorage.getDataModule(clusterMeta.id, modID);
-     
-     if( mm.origModule == null )
+
+     if(mm.origModule == null)
      {
-      logRoot.log(Level.ERROR,
-        "Module '" + modID + "' is in the submission db but not in the graph. It means data inconsistency. Please contact system administrator");
-      
+      logRoot.log(Level.ERROR, "Module '" + modID
+        + "' is in the submission db but not in the graph. It means data inconsistency. Please contact system administrator");
+
       res = false;
       continue;
      }
-     
+
      clusterMeta.mod4Use.add(mm);
      clusterMeta.mod4Hld.put(modID, mm);
     }
-    
+
    }
   }
-  
-  
-  if( ! res )
+
+  if(!res)
    return false;
 
-  Map<String,Integer> globalFileConflicts=null; //= new HashMap<String, Integer>();
-  
-  if( files != null && files.size() > 0 ) // Sorting incoming files
+  Map<String, Integer> globalFileConflicts = null; // = new HashMap<String,
+                                                   // Integer>();
+
+  if(files != null && files.size() > 0) // Sorting incoming files
   {
    LogNode fileNode = logRoot.branch("Preparing attachments");
 
@@ -434,7 +490,21 @@ public class SubmissionManager
     FileAttachmentMeta newFileMeta = files.get(n);
     AttachmentAux newAuxInfo = (AttachmentAux) newFileMeta.getAux();
 
-    String cAtId = newAuxInfo.getNewId() != null ? newAuxInfo.getNewId() : newFileMeta.getId(); // atax.getNewId() != null meant that we want to assign the new ID to some attachment
+    String cAtId = newAuxInfo.getNewId() != null ? newAuxInfo.getNewId() : newFileMeta.getId(); // atax.getNewId()
+                                                                                                // !=
+                                                                                                // null
+                                                                                                // meant
+                                                                                                // that
+                                                                                                // we
+                                                                                                // want
+                                                                                                // to
+                                                                                                // assign
+                                                                                                // the
+                                                                                                // new
+                                                                                                // ID
+                                                                                                // to
+                                                                                                // some
+                                                                                                // attachment
 
     if(cAtId == null)
     {
@@ -443,10 +513,10 @@ public class SubmissionManager
      continue;
     }
 
-
     if(newAuxInfo.getStatus() != Status.DELETE)
     {
-     for(int k = n + 1; k < files.size(); k++) // All IDs must be unique within the submission
+     for(int k = n + 1; k < files.size(); k++) // All IDs must be unique within
+                                               // the submission
      {
       FileAttachmentMeta ofa = files.get(k);
 
@@ -465,11 +535,10 @@ public class SubmissionManager
       }
      }
     }
-    
-    
+
     FileAttachmentMeta origFileMeta = null;
 
-    if( origSbm != null && origSbm.getAttachments() != null )
+    if(origSbm != null && origSbm.getAttachments() != null)
     {
      for(FileAttachmentMeta ofa : origSbm.getAttachments())
      {
@@ -480,13 +549,14 @@ public class SubmissionManager
       }
      }
     }
-    
-    if( newAuxInfo.getStatus() == Status.UPDATEORNEW )
+
+    if(newAuxInfo.getStatus() == Status.UPDATEORNEW)
     {
-     if( origFileMeta != null ) // OR ageStorage.getAttachment(fm.getId(), cstMeta.id) != null
-      newAuxInfo.setStatus( Status.UPDATE );
+     if(origFileMeta != null) // OR ageStorage.getAttachment(fm.getId(),
+                              // cstMeta.id) != null
+      newAuxInfo.setStatus(Status.UPDATE);
      else
-      newAuxInfo.setStatus( Status.NEW );
+      newAuxInfo.setStatus(Status.NEW);
     }
 
     if(newAuxInfo.getStatus() == Status.DELETE || newAuxInfo.getStatus() == Status.UPDATE)
@@ -504,53 +574,69 @@ public class SubmissionManager
       res = false;
       continue;
      }
-     
-//     fm.setSystemId(origFm.getSystemId());
-     
-     if( newFileMeta.getDescription() == null )
+
+     // fm.setSystemId(origFm.getSystemId());
+
+     if(newFileMeta.getDescription() == null)
       newFileMeta.setDescription(origFileMeta.getDescription());
 
-     newFileMeta.setSubmitter( origFileMeta.getSubmitter() );
-     newFileMeta.setSubmissionTime( origFileMeta.getSubmissionTime() );
-     
+     newFileMeta.setSubmitter(origFileMeta.getSubmitter());
+     newFileMeta.setSubmissionTime(origFileMeta.getSubmissionTime());
+
      if(newAuxInfo.getStatus() == Status.DELETE)
      {
-      if( origFileMeta.isGlobal() )
+      if(origFileMeta.isGlobal())
       {
-       if( globalFileConflicts == null)
+       if(globalFileConflicts == null)
         globalFileConflicts = new HashMap<String, Integer>();
-       
+
        globalFileConflicts.put(newFileMeta.getId(), -1);
       }
-      
+
       newFileMeta.setGlobal(origFileMeta.isGlobal());
       clusterMeta.att4Del.put(newFileMeta.getId(), newFileMeta);
      }
-     else // UPDATE
+     else
+     // UPDATE
      {
-      if(newAuxInfo.getNewId() != null && !newAuxInfo.getNewId().equals(newFileMeta.getId())) //Submitter wants to rename this attachment
+      if(newAuxInfo.getNewId() != null && !newAuxInfo.getNewId().equals(newFileMeta.getId())) // Submitter
+                                                                                              // wants
+                                                                                              // to
+                                                                                              // rename
+                                                                                              // this
+                                                                                              // attachment
       {
-       
-       // We have checked that all IDs are unique within this submission let's check conflicts with the global IDs
-       
-       if( newFileMeta.isGlobal() )
+
+       // We have checked that all IDs are unique within this submission let's
+       // check conflicts with the global IDs
+
+       if(newFileMeta.isGlobal())
        {
-        if( ageStorage.getAttachment(newAuxInfo.getNewId()) != null ) // ok, it could be a problem if it not some attachment that we a going to delete
+        if(ageStorage.getAttachment(newAuxInfo.getNewId()) != null) // ok, it
+                                                                    // could be
+                                                                    // a problem
+                                                                    // if it not
+                                                                    // some
+                                                                    // attachment
+                                                                    // that we a
+                                                                    // going to
+                                                                    // delete
         {
-         if( globalFileConflicts == null)
+         if(globalFileConflicts == null)
           globalFileConflicts = new HashMap<String, Integer>();
 
-         if( ! globalFileConflicts.containsKey(newAuxInfo.getNewId()) )
+         if(!globalFileConflicts.containsKey(newAuxInfo.getNewId()))
           globalFileConflicts.put(newAuxInfo.getNewId(), newAuxInfo.getOrder());
-         
-//         fileNode.log(Level.ERROR, "File " + newAuxInfo.getNewId() + " has global ID but this ID is already taken");
-//         res = false;
-//         continue;
+
+         // fileNode.log(Level.ERROR, "File " + newAuxInfo.getNewId() +
+         // " has global ID but this ID is already taken");
+         // res = false;
+         // continue;
         }
        }
-       
-       //To do renaming we will simulate insertion/deletion
-       
+
+       // To do renaming we will simulate insertion/deletion
+
        FileAttachmentMeta nfm = Factory.createFileAttachmentMeta();
        AttachmentAux nax = new AttachmentAux();
 
@@ -558,7 +644,8 @@ public class SubmissionManager
        nax.setStatus(Status.NEW);
        nfm.setId(newAuxInfo.getNewId());
        nax.setOrder(newAuxInfo.getOrder());
-       nax.setFile(newAuxInfo.getFile() != null ? newAuxInfo.getFile() : submissionDB.getAttachment(origSbm.getId(), origFileMeta.getId(), origFileMeta.getModificationTime()));
+       nax.setFile(newAuxInfo.getFile() != null ? newAuxInfo.getFile() : submissionDB.getAttachment(origSbm.getId(), origFileMeta.getId(),
+         origFileMeta.getModificationTime()));
 
        nfm.setSubmitter(origFileMeta.getSubmitter());
        nfm.setModifier(newFileMeta.getModifier());
@@ -577,22 +664,24 @@ public class SubmissionManager
 
        clusterMeta.att4Del.put(newFileMeta.getId(), newFileMeta);
       }
-      else // UPDATE not renaming
+      else
+      // UPDATE not renaming
       {
-       FileMeta fmeta = new FileMeta(); // Our local structure to keep attachment info together
+       FileMeta fmeta = new FileMeta(); // Our local structure to keep
+                                        // attachment info together
 
        fmeta.newFile = newFileMeta;
        fmeta.origFile = origFileMeta;
        fmeta.aux = newAuxInfo;
 
-       if( newAuxInfo.getFile() != null )
+       if(newAuxInfo.getFile() != null)
         clusterMeta.att4Upd.put(newFileMeta.getId(), fmeta);
        else
        {
         clusterMeta.att4MetaUpd.put(newFileMeta.getId(), fmeta);
         newFileMeta.setFileVersion(origFileMeta.getFileVersion());
        }
-       
+
        clusterMeta.att4Use.put(newFileMeta.getId(), newFileMeta);
 
        if(newFileMeta.isGlobal() != origFileMeta.isGlobal())
@@ -609,91 +698,94 @@ public class SubmissionManager
     }
     else if(newAuxInfo.getStatus() == Status.NEW)
     {
-     if( newAuxInfo.getFile() == null )
+     if(newAuxInfo.getFile() == null)
      {
       fileNode.log(Level.ERROR, "File " + newAuxInfo.getOrder() + " is marked as NEW but contains no data");
       res = false;
       continue;
      }
-     
-     if( origFileMeta != null )
+
+     if(origFileMeta != null)
      {
       fileNode.log(Level.ERROR, "File " + newAuxInfo.getOrder() + " is marked as NEW but file with the same ID already exists");
       res = false;
       continue;
      }
 
-     if(newFileMeta.isGlobal()) // this is a new file with a new global ID. We have to check its uniqueness
+     if(newFileMeta.isGlobal()) // this is a new file with a new global ID. We
+                                // have to check its uniqueness
      {
 
-      if( ageStorage.getAttachment(newFileMeta.getId()) != null ) // ok, it could be a problem if it not some attachment that we a going to delete
+      if(ageStorage.getAttachment(newFileMeta.getId()) != null) // ok, it could
+                                                                // be a problem
+                                                                // if it not
+                                                                // some
+                                                                // attachment
+                                                                // that we a
+                                                                // going to
+                                                                // delete
       {
-       if( globalFileConflicts == null)
+       if(globalFileConflicts == null)
         globalFileConflicts = new HashMap<String, Integer>();
 
-       if( ! globalFileConflicts.containsKey(newFileMeta.getId()) )
+       if(!globalFileConflicts.containsKey(newFileMeta.getId()))
         globalFileConflicts.put(newFileMeta.getId(), newAuxInfo.getOrder());
       }
 
-//      fm.setSystemId(gid);
+      // fm.setSystemId(gid);
      }
 
-     
      clusterMeta.att4Ins.put(newFileMeta.getId(), newFileMeta);
      clusterMeta.att4Use.put(newFileMeta.getId(), newFileMeta);
 
     }
-   
+
    }
-  
-   if( globalFileConflicts != null )
+
+   if(globalFileConflicts != null)
    {
-    for( Map.Entry<String, Integer> me : globalFileConflicts.entrySet() )
+    for(Map.Entry<String, Integer> me : globalFileConflicts.entrySet())
     {
-     if( me.getValue() != -1 )
+     if(me.getValue() != -1)
      {
-      fileNode.log(Level.ERROR, "File " + me.getValue() + " has global ID='"+me.getKey()+"' but this ID is already taken");
+      fileNode.log(Level.ERROR, "File " + me.getValue() + " has global ID='" + me.getKey() + "' but this ID is already taken");
       res = false;
      }
     }
-   
+
     globalFileConflicts = null;
    }
 
-   if( res )
+   if(res)
     fileNode.success();
-  
+
   }
-  
-  
-  
-  if( origSbm != null && origSbm.getAttachments() != null )
+
+  if(origSbm != null && origSbm.getAttachments() != null)
   {
-   for( FileAttachmentMeta fm : origSbm.getAttachments() )
+   for(FileAttachmentMeta fm : origSbm.getAttachments())
    {
-    if(    ! clusterMeta.att4Del.containsKey(fm.getId())
-        && ! clusterMeta.att4Upd.containsKey(fm.getId()) 
-        && ! clusterMeta.att4MetaUpd.containsKey(fm.getId()) )
+    if(!clusterMeta.att4Del.containsKey(fm.getId()) && !clusterMeta.att4Upd.containsKey(fm.getId()) && !clusterMeta.att4MetaUpd.containsKey(fm.getId()))
     {
      clusterMeta.att4Hld.put(fm.getDescription(), fm);
      clusterMeta.att4Use.put(fm.getId(), fm);
     }
    }
   }
-  
-  for( n=0; n < clusterMeta.incomingMods.size(); n++)
+
+  for(n = 0; n < clusterMeta.incomingMods.size(); n++)
   {
    ModMeta mm = clusterMeta.incomingMods.get(n);
-   
+
    boolean modRes = true;
-   LogNode modNode = logRoot.branch("Processing module: " + mm.aux.getOrder() );
-   
-   if( mm.meta.getText() == null ) //Modules to be deleted or meta update
+   LogNode modNode = logRoot.branch("Processing module: " + mm.aux.getOrder());
+
+   if(mm.meta.getText() == null) // Modules to be deleted or meta update
     continue;
-   
+
    LogNode atLog = modNode.branch("Parsing AgeTab");
-   
-   AgeTabModule atMod =null;
+
+   AgeTabModule atMod = null;
    try
    {
     atMod = ageTabParser.parse(mm.meta.getText());
@@ -706,13 +798,13 @@ public class SubmissionManager
     modRes = false;
     continue;
    }
-   
+
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.newModule = converter.convert(atMod, ageStorage.getSemanticModel().createContextSemanticModel(), convLog );
-   
-   if( mm.newModule != null )
+   mm.newModule = converter.convert(atMod, ageStorage.getSemanticModel().createContextSemanticModel(), convLog);
+
+   if(mm.newModule != null)
    {
-    ModuleKey modk = new ModuleKey( clusterMeta.id, mm.meta.getId() );
+    ModuleKey modk = new ModuleKey(clusterMeta.id, mm.meta.getId());
     mm.newModule.setModuleKey(modk);
 
     convLog.success();
@@ -722,211 +814,201 @@ public class SubmissionManager
     convLog.log(Level.ERROR, "Conversion failed");
     modRes = false;
    }
-   
-   
-   if( modRes )
+
+   if(modRes)
     modNode.success();
    else
     mm.newModule = null;
-   
+
    res = res && modRes;
   }
-  
-  
-  if( ! res )  
+
+  if(!res)
    return false;
 
-  
   try
   {
    ageStorage.lockWrite();
    // XXX storeSubmission: connection to the main graph
-   
-   if( ! checkUniqObjects(clusterMeta, logRoot) )
+
+   if(!checkUniqObjects(clusterMeta, logRoot))
    {
     res = false;
     return false;
    }
 
-   
-   Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject> > extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable,AgeObject>>();
-   Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable> > relConnections = null;
-   Map<AgeObjectWritable,Set<AgeRelationWritable> > relationDetachMap = null;
-   
-   if( clusterMeta.mod4DataUpd.size() != 0 || clusterMeta.mod4Ins.size() !=0 || clusterMeta.mod4Del.size() != 0 )
+   Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable, AgeObject>>();
+   Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable>> relConnections = null;
+   Map<AgeObjectWritable, Set<AgeRelationWritable>> relationDetachMap = null;
+
+   if(clusterMeta.mod4DataUpd.size() != 0 || clusterMeta.mod4Ins.size() != 0 || clusterMeta.mod4Del.size() != 0)
    {
-    relConnections = new ArrayList<Pair<AgeExternalRelationWritable,AgeObjectWritable>>();
+    relConnections = new ArrayList<Pair<AgeExternalRelationWritable, AgeObjectWritable>>();
     relationDetachMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
-    
-    if( ! reconnectExternalObjectAttributes(clusterMeta, extAttrConnector, logRoot))
-    {
-     res = false;
-     return false;
-    }
-    
-    
-    if( ! reconnectExternalRelations(clusterMeta, relConnections, relationDetachMap, logRoot) )
-    {
-     res = false;
-     return false;
-    }
-   }
-   
-   Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
-   // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
-   
-   if( !connectNewExternalRelations(clusterMeta, invRelMap, logRoot) )
-   {
-    res = false;
-    return false;
-   }
-   
-   if( !connectNewObjectAttributes(clusterMeta, ageStorage, logRoot) )
-   {
-    res = false;
-    return false;
-   }
 
-   
-   if( clusterMeta.att4Del.size() != 0 ||  clusterMeta.att4G2L.size() != 0 )
-   {
-    if( ! checkRemovedDataFiles(clusterMeta, ageStorage, logRoot) )
+    if(!reconnectExternalObjectAttributes(clusterMeta, extAttrConnector, logRoot))
+    {
+     res = false;
+     return false;
+    }
+
+    if(!reconnectExternalRelations(clusterMeta, relConnections, relationDetachMap, logRoot))
     {
      res = false;
      return false;
     }
    }
 
-  
-   
+   Map<AgeObjectWritable, Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
+   // invRelMap contains a map of external objects to sets of prepared inverse
+   // relations for new external relations
+
+   if(!connectNewExternalRelations(clusterMeta, invRelMap, logRoot))
+   {
+    res = false;
+    return false;
+   }
+
+   if(!connectNewObjectAttributes(clusterMeta, ageStorage, logRoot))
+   {
+    res = false;
+    return false;
+   }
+
+   if(clusterMeta.att4Del.size() != 0 || clusterMeta.att4G2L.size() != 0)
+   {
+    if(!checkRemovedDataFiles(clusterMeta, ageStorage, logRoot))
+    {
+     res = false;
+     return false;
+    }
+   }
+
    LogNode semLog = logRoot.branch("Validating semantic");
 
    boolean vldRes = true;
-   n=0;
-   for( ModMeta mm : clusterMeta.incomingMods )
+   n = 0;
+   for(ModMeta mm : clusterMeta.incomingMods)
    {
     n++;
-    
-    if( mm.newModule == null )
+
+    if(mm.newModule == null)
      continue;
-    
-    LogNode vldLog = semLog.branch("Processing module: "+n);
-    
+
+    LogNode vldLog = semLog.branch("Processing module: " + n);
+
     boolean modRes = validator.validate(mm.newModule, vldLog);
-    
+
     if(modRes)
      vldLog.success();
 
     vldRes = vldRes && modRes;
    }
-   
-   if( vldRes )
+
+   if(vldRes)
     semLog.success();
 
    res = res && vldRes;
-   
-   
 
    Set<AgeObject> affObjSet = new HashSet<AgeObject>();
-   
-   if( invRelMap != null )
-    affObjSet.addAll( invRelMap.keySet() );
-   
-   if( relationDetachMap != null )
-    affObjSet.addAll( relationDetachMap.keySet() );
-   
-   if( affObjSet.size() > 0 )
+
+   if(invRelMap != null)
+    affObjSet.addAll(invRelMap.keySet());
+
+   if(relationDetachMap != null)
+    affObjSet.addAll(relationDetachMap.keySet());
+
+   if(affObjSet.size() > 0)
    {
     boolean invRelRes = true;
     LogNode invRelLog = logRoot.branch("Validating externaly related object semantic");
-    
+
     Set<AgeRelation> relSet = new HashSet<AgeRelation>();
-    
-    for( AgeObject obj :  affObjSet )
+
+    for(AgeObject obj : affObjSet)
     {
-     LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
-     
-     Collection<? extends AgeRelation> relColl = null;
-     
-     Collection<AgeRelationWritable> inv = invRelMap!=null?invRelMap.get(obj):null;
-     Collection<AgeRelationWritable> det = relationDetachMap!=null?relationDetachMap.get(obj):null;
-     
-     if( inv == null && det == null )
+     LogNode objLogNode = invRelLog.branch("Validating object Id: " + obj.getId() + " Class: " + obj.getAgeElClass());
+
+     Collection< ? extends AgeRelation> relColl = null;
+
+     Collection<AgeRelationWritable> inv = invRelMap != null ? invRelMap.get(obj) : null;
+     Collection<AgeRelationWritable> det = relationDetachMap != null ? relationDetachMap.get(obj) : null;
+
+     if(inv == null && det == null)
       relColl = obj.getRelations();
      else
      {
       relSet.clear();
-      
+
       relSet.addAll(obj.getRelations());
-      
-      if( inv != null )
+
+      if(inv != null)
        relSet.addAll(inv);
-      
-      if( det != null )
+
+      if(det != null)
        relSet.removeAll(det);
-      
+
       relColl = relSet;
      }
-     
-     if( validator.validateRelations(obj.getAgeElClass(), relColl, objLogNode) )
+
+     if(validator.validateRelations(obj.getAgeElClass(), relColl, objLogNode))
       objLogNode.success();
      else
       invRelRes = false;
     }
-    
+
     if(invRelRes)
      invRelLog.success();
     else
-     invRelRes =false;
+     invRelRes = false;
 
     res = res && invRelRes;
    }
-   
-   if( ! res )
+
+   if(!res)
     return false;
-   
-   if( verifyOnly )
+
+   if(verifyOnly)
    {
     return checkLocalModulesToFilesConnections(clusterMeta, ageStorage, logRoot);
    }
-   
-   if( clusterMeta.id.charAt(0) == '\0' )
+
+   if(clusterMeta.id.charAt(0) == '\0')
    {
     String id = null;
-    
+
     try
     {
      do
      {
-      id = Constants.submissionIDPrefix+IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
-     }
-     while( submissionDB.hasSubmission(id) );
+      id = Constants.submissionIDPrefix + IdGenerator.getInstance().getStringId(Constants.clusterIDDomain);
+     } while(submissionDB.hasSubmission(id));
     }
     catch(SubmissionDBException e)
     {
-     logRoot.log(Level.ERROR, "Method hasSubmission error: "+e.getMessage());
+     logRoot.log(Level.ERROR, "Method hasSubmission error: " + e.getMessage());
 
      res = false;
-     
+
      return false;
     }
-   
+
     clusterMeta.id = id;
     sMeta.setId(id);
    }
-   
-   for( ModMeta mm : clusterMeta.incomingMods )
+
+   for(ModMeta mm : clusterMeta.incomingMods)
    {
     ModuleKey mk = new ModuleKey();
-    
+
     mk.setClusterId(clusterMeta.id);
-    
+
     mm.newModule.setModuleKey(mk);
 
-    if( mm.origModule != null )
-     mk.setModuleId( mm.origModule.getId() );
-    else if( mm.meta.getId() != null && mm.meta.getId().charAt(0) != '\0' )
-     mk.setModuleId( mm.meta.getId() );
+    if(mm.origModule != null)
+     mk.setModuleId(mm.origModule.getId());
+    else if(mm.meta.getId() != null && mm.meta.getId().charAt(0) != '\0')
+     mk.setModuleId(mm.meta.getId());
     else
     {
      String id = null;
@@ -935,8 +1017,7 @@ public class SubmissionManager
      {
       id = Constants.dataModuleIDPrefix + IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
       mk.setModuleId(id);
-     } 
-     while(ageStorage.hasDataModule(mk));
+     } while(ageStorage.hasDataModule(mk));
 
      mm.meta.setId(id);
 
@@ -950,8 +1031,8 @@ public class SubmissionManager
 
       do
       {
-       id = Constants.localObjectIDPrefix + obj.getAgeElClass().getIdPrefix()
-         + IdGenerator.getInstance().getStringId(Constants.objectIDDomain) + "@" + mm.newModule.getId();
+       id = Constants.localObjectIDPrefix + obj.getAgeElClass().getIdPrefix() + IdGenerator.getInstance().getStringId(Constants.objectIDDomain) + "@"
+         + mm.newModule.getId();
       } while(mm.idMap.containsKey(id));
 
       obj.setId(id);
@@ -959,28 +1040,26 @@ public class SubmissionManager
      }
     }
    }
-   
-   
+
    connectIncomingModulesToFiles(clusterMeta, ageStorage, logRoot);
-   
-   Collection< Pair<AgeFileAttributeWritable,String> > fileConn = new ArrayList< Pair<AgeFileAttributeWritable,String> >();
+
+   Collection<Pair<AgeFileAttributeWritable, String>> fileConn = new ArrayList<Pair<AgeFileAttributeWritable, String>>();
    reconnectLocalModulesToFiles(clusterMeta, fileConn, ageStorage, logRoot);
-   
-   
-   if( clusterMeta.att4Ins.size() > 0 )
+
+   if(clusterMeta.att4Ins.size() > 0)
    {
     LogNode finsLog = logRoot.branch("Storing files");
-    
-    for( FileAttachmentMeta fam : clusterMeta.att4Ins.values() )
+
+    for(FileAttachmentMeta fam : clusterMeta.att4Ins.values())
     {
-     finsLog.log(Level.INFO, "Storing file: '"+fam.getId()+"' (scope "+(fam.isGlobal()?"global":"cluster")+")");
-     
+     finsLog.log(Level.INFO, "Storing file: '" + fam.getId() + "' (scope " + (fam.isGlobal() ? "global" : "cluster") + ")");
+
      try
      {
       fam.setFileVersion(fam.getModificationTime());
-      
-      File tagt = ageStorage.storeAttachment(fam.getId(), clusterMeta.id, fam.isGlobal(), ((AttachmentAux)fam.getAux()).getFile());
-      
+
+      File tagt = ageStorage.storeAttachment(fam.getId(), clusterMeta.id, fam.isGlobal(), ((AttachmentAux) fam.getAux()).getFile());
+
       submissionDB.storeAttachment(clusterMeta.id, fam.getId(), fam.getFileVersion(), tagt);
      }
      catch(Exception e)
@@ -991,47 +1070,47 @@ public class SubmissionManager
       return false;
      }
 
-     
      finsLog.success();
     }
    }
-   
-   if( clusterMeta.att4Del.size() > 0 )
+
+   if(clusterMeta.att4Del.size() > 0)
    {
     LogNode fdelLog = logRoot.branch("Deleting files");
-    
+
     boolean delRes = true;
-    
-    for( FileAttachmentMeta fam : clusterMeta.att4Del.values() )
+
+    for(FileAttachmentMeta fam : clusterMeta.att4Del.values())
     {
-     fdelLog.log(Level.INFO, "Deleting file: '"+fam.getId()+"' (scope "+(fam.isGlobal()?"global":"cluster")+")");
-     
-     if( ! ageStorage.deleteAttachment(fam.getId(), clusterMeta.id, fam.isGlobal()) )
+     fdelLog.log(Level.INFO, "Deleting file: '" + fam.getId() + "' (scope " + (fam.isGlobal() ? "global" : "cluster") + ")");
+
+     if(!ageStorage.deleteAttachment(fam.getId(), clusterMeta.id, fam.isGlobal()))
      {
-      fdelLog.log(Level.WARN, "File wasn't deleted or doesn't exist" );
+      fdelLog.log(Level.WARN, "File wasn't deleted or doesn't exist");
       delRes = false;
      }
-     
+
     }
-    
-    if( delRes )
+
+    if(delRes)
      fdelLog.success();
-     
+
    }
-   
-   if( clusterMeta.att4Upd.size() > 0 )
+
+   if(clusterMeta.att4Upd.size() > 0)
    {
     LogNode fupdLog = logRoot.branch("Updating files");
-    
-    for( FileMeta fam : clusterMeta.att4Upd.values() )
+
+    for(FileMeta fam : clusterMeta.att4Upd.values())
     {
-     fupdLog.log(Level.INFO, "Updating file: '"+fam.origFile.getId()+"' (scope "+(fam.newFile.isGlobal()?"global":"cluster")+")");
-     
+     fupdLog.log(Level.INFO, "Updating file: '" + fam.origFile.getId() + "' (scope " + (fam.newFile.isGlobal() ? "global" : "cluster") + ")");
+
      try
      {
       fam.newFile.setFileVersion(fam.newFile.getModificationTime());
 
-      File tagt = ageStorage.storeAttachment(fam.origFile.getId(), clusterMeta.id, fam.origFile.isGlobal(), ((AttachmentAux)fam.newFile.getAux()).getFile());
+      File tagt = ageStorage.storeAttachment(fam.origFile.getId(), clusterMeta.id, fam.origFile.isGlobal(),
+        ((AttachmentAux) fam.newFile.getAux()).getFile());
 
       submissionDB.storeAttachment(clusterMeta.id, fam.newFile.getId(), fam.newFile.getFileVersion(), tagt);
      }
@@ -1042,19 +1121,19 @@ public class SubmissionManager
       res = false;
       return false;
      }
-     
+
      fupdLog.success();
     }
    }
 
-   if( clusterMeta.att4G2L.size() > 0 )
+   if(clusterMeta.att4G2L.size() > 0)
    {
     LogNode fupdLog = logRoot.branch("Changing file visibility scope (global to local)");
-    
-    for( FileMeta fam : clusterMeta.att4G2L.values() )
+
+    for(FileMeta fam : clusterMeta.att4G2L.values())
     {
-     fupdLog.log(Level.INFO, "Processing file '"+fam.origFile.getId()+"'");
-     
+     fupdLog.log(Level.INFO, "Processing file '" + fam.origFile.getId() + "'");
+
      try
      {
       ageStorage.changeAttachmentScope(fam.origFile.getId(), clusterMeta.id, fam.newFile.isGlobal());
@@ -1066,19 +1145,19 @@ public class SubmissionManager
       res = false;
       return false;
      }
-     
+
      fupdLog.success();
     }
    }
 
-   if( clusterMeta.att4L2G.size() > 0 )
+   if(clusterMeta.att4L2G.size() > 0)
    {
     LogNode fupdLog = logRoot.branch("Changing file visibility scope (local to global)");
-    
-    for( FileMeta fam : clusterMeta.att4L2G.values() )
+
+    for(FileMeta fam : clusterMeta.att4L2G.values())
     {
-     fupdLog.log(Level.INFO, "Processing file '"+fam.origFile.getId()+"'");
-     
+     fupdLog.log(Level.INFO, "Processing file '" + fam.origFile.getId() + "'");
+
      try
      {
       ageStorage.changeAttachmentScope(fam.origFile.getId(), clusterMeta.id, fam.newFile.isGlobal());
@@ -1090,41 +1169,35 @@ public class SubmissionManager
       res = false;
       return false;
      }
-     
+
      fupdLog.success();
     }
    }
- 
-   
 
-   if( clusterMeta.mod4DataUpd.size() > 0 || clusterMeta.mod4Del.size() > 0 || clusterMeta.mod4Ins.size() > 0 )
+   if(clusterMeta.mod4DataUpd.size() > 0 || clusterMeta.mod4Del.size() > 0 || clusterMeta.mod4Ins.size() > 0)
    {
     LogNode updtLog = logRoot.branch("Updating storage");
 
     try
     {
-     
-     Collection<DataModuleWritable> chgMods =        new CollectionsUnion<DataModuleWritable>(
-       new ExtractorCollection<ModMeta, DataModuleWritable>(clusterMeta.mod4DataUpd.values(), modExtractor),
-       new ExtractorCollection<ModMeta, DataModuleWritable>(clusterMeta.mod4Ins, modExtractor));
 
+     Collection<DataModuleWritable> chgMods = new CollectionsUnion<DataModuleWritable>(new ExtractorCollection<ModMeta, DataModuleWritable>(
+       clusterMeta.mod4DataUpd.values(), modExtractor), new ExtractorCollection<ModMeta, DataModuleWritable>(clusterMeta.mod4Ins, modExtractor));
 
-     for( DataModuleWritable mod :  chgMods)
+     for(DataModuleWritable mod : chgMods)
       mod.pack();
-     
-     ageStorage.update( 
-       chgMods,
 
-      new CollectionsUnion<ModuleKey>(
-        new ExtractorCollection<ModMeta, ModuleKey>(clusterMeta.mod4DataUpd.values(), modkeyExtractor),
-        new ExtractorCollection<ModMeta, ModuleKey>(clusterMeta.mod4Del.values(), modkeyExtractor)));
+     ageStorage.update(chgMods,
+
+     new CollectionsUnion<ModuleKey>(new ExtractorCollection<ModMeta, ModuleKey>(clusterMeta.mod4DataUpd.values(), modkeyExtractor),
+       new ExtractorCollection<ModMeta, ModuleKey>(clusterMeta.mod4Del.values(), modkeyExtractor)));
 
      updtLog.success();
     }
     catch(Exception e)
     {
      e.printStackTrace();
-     updtLog.log(Level.ERROR, e.getMessage()!=null?e.getMessage():"Exception: "+e.getClass().getName());
+     updtLog.log(Level.ERROR, e.getMessage() != null ? e.getMessage() : "Exception: " + e.getClass().getName());
 
      res = false;
 
@@ -1132,9 +1205,8 @@ public class SubmissionManager
     }
    }
 
-   
    SubmissionMeta newSMeta = Factory.createSubmissionMeta();
-   
+
    newSMeta.setId(sMeta.getId());
    newSMeta.setDescription(sMeta.getDescription());
    newSMeta.setRemoved(false);
@@ -1142,66 +1214,62 @@ public class SubmissionManager
    newSMeta.setModifier(sMeta.getModifier());
    newSMeta.setSubmissionTime(sMeta.getSubmissionTime());
    newSMeta.setModificationTime(sMeta.getModificationTime());
-   
-   for( ModMeta dmm : clusterMeta.mod4Use )
+
+   for(ModMeta dmm : clusterMeta.mod4Use)
     newSMeta.addDataModule(dmm.meta);
-  
-   for( FileAttachmentMeta fam : clusterMeta.att4Use.values() )
+
+   for(FileAttachmentMeta fam : clusterMeta.att4Use.values())
     newSMeta.addAttachment(fam);
 
-  
    try
    {
     submissionDB.storeSubmission(newSMeta, origSbm, updateDescr);
    }
    catch(SubmissionDBException e)
    {
-    logRoot.log(Level.ERROR, "Method storeSubmission error: "+e.getMessage());
+    logRoot.log(Level.ERROR, "Method storeSubmission error: " + e.getMessage());
 
     res = false;
-    
+
     return false;
    }
-   
-   
-   
-   
-   if( extAttrConnector != null )
+
+   if(extAttrConnector != null)
    {
-    for( Pair<AgeExternalObjectAttributeWritable, AgeObject> cn : extAttrConnector )
-     cn.getFirst().setTargetObject( cn.getSecond() );
-   }
-   
-   if( relConnections != null )
-   {
-    for( Pair<AgeExternalRelationWritable, AgeObjectWritable> cn : relConnections )
+    for(Pair<AgeExternalObjectAttributeWritable, AgeObject> cn : extAttrConnector)
      cn.getFirst().setTargetObject(cn.getSecond());
    }
-   
-   for( Pair<AgeFileAttributeWritable, String> fc :  fileConn ) 
-    fc.getFirst().setFileSysRef( fc.getSecond() );
-   
-   if( relationDetachMap != null )
+
+   if(relConnections != null)
+   {
+    for(Pair<AgeExternalRelationWritable, AgeObjectWritable> cn : relConnections)
+     cn.getFirst().setTargetObject(cn.getSecond());
+   }
+
+   for(Pair<AgeFileAttributeWritable, String> fc : fileConn)
+    fc.getFirst().setFileSysRef(fc.getSecond());
+
+   if(relationDetachMap != null)
    {
     for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : relationDetachMap.entrySet())
      for(AgeRelationWritable rel : me.getValue())
       me.getKey().removeRelation(rel);
    }
-    //    stor.removeRelations(me.getKey().getId(),me.getValue());
+   // stor.removeRelations(me.getKey().getId(),me.getValue());
 
-   for( Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
-    for( AgeRelationWritable rel : me.getValue() )
+   for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : invRelMap.entrySet())
+    for(AgeRelationWritable rel : me.getValue())
      me.getKey().addRelation(rel);
-    
-   for( ModMeta dm : clusterMeta.incomingMods )
+
+   for(ModMeta dm : clusterMeta.incomingMods)
    {
-    if( dm.newModule != null && dm.newModule.getExternalRelations() != null  )
+    if(dm.newModule != null && dm.newModule.getExternalRelations() != null)
     {
-     for( AgeExternalRelationWritable rel : dm.newModule.getExternalRelations() )
+     for(AgeExternalRelationWritable rel : dm.newModule.getExternalRelations())
       rel.getInverseRelation().setInverseRelation(rel);
     }
    }
-    //    stor.addRelations(me.getKey().getId(),me.getValue());
+   // stor.addRelations(me.getKey().getId(),me.getValue());
 
   }
   finally
@@ -1209,10 +1277,10 @@ public class SubmissionManager
    ageStorage.unlockWrite();
   }
 
-  if( ! verifyOnly  )
+  if(!verifyOnly)
   {
    Transaction trn = annotationManager.startTransaction();
- 
+
    ClusterEntity cEnt = new ClusterEntity(sMeta.getId());
 
    try
@@ -1247,65 +1315,65 @@ public class SubmissionManager
      }
 
     }
-    
-    if( sMeta.getTags() != null )
+
+    if(sMeta.getTags() != null)
     {
      List<TagRef> tgs = sMeta.getTags();
-     
-     if( ! ( tgs instanceof ArrayList ) )
+
+     if(!(tgs instanceof ArrayList))
      {
-      tgs = new ArrayList<TagRef>( tgs.size() );
+      tgs = new ArrayList<TagRef>(tgs.size());
       tgs.addAll(sMeta.getTags());
      }
-     
+
      Collections.sort(tgs);
-     
-     annotationManager.addAnnotation(trn, Topic.TAG, cEnt, (Serializable)tgs);
+
+     annotationManager.addAnnotation(trn, Topic.TAG, cEnt, (Serializable) tgs);
     }
-    
-    for( ModMeta mm : clusterMeta.incomingMods )
+
+    for(ModMeta mm : clusterMeta.incomingMods)
     {
-     if( mm.meta.getTags() != null )
+     if(mm.meta.getTags() != null)
      {
       List<TagRef> tgs = mm.meta.getTags();
-      
-      if( ! ( tgs instanceof ArrayList ) )
+
+      if(!(tgs instanceof ArrayList))
       {
-       tgs = new ArrayList<TagRef>( tgs.size() );
+       tgs = new ArrayList<TagRef>(tgs.size());
        tgs.addAll(mm.meta.getTags());
       }
-      
+
       Collections.sort(tgs);
-      
-      annotationManager.addAnnotation(trn, Topic.TAG, mm.newModule, (Serializable)tgs);
+
+      annotationManager.addAnnotation(trn, Topic.TAG, mm.newModule, (Serializable) tgs);
      }
     }
-    
-    if( sMeta.getAttachments() != null )
+
+    if(sMeta.getAttachments() != null)
     {
      AttachmentEntity ate = new AttachmentEntity(cEnt, null);
 
-     for( FileAttachmentMeta att : sMeta.getAttachments() )
+     for(FileAttachmentMeta att : sMeta.getAttachments())
      {
       List<TagRef> tgs = att.getTags();
 
-      if( tgs != null )
+      if(tgs != null)
       {
-       if( ! ( tgs instanceof ArrayList ) )
+       if(!(tgs instanceof ArrayList))
        {
-        tgs = new ArrayList<TagRef>( tgs.size() );
+        tgs = new ArrayList<TagRef>(tgs.size());
         tgs.addAll(att.getTags());
        }
-       
+
        Collections.sort(tgs);
-       
+
        ate.setEntityId(att.getId());
-       
-       annotationManager.addAnnotation(trn, Topic.TAG, ate, (Serializable)tgs);      }
+
+       annotationManager.addAnnotation(trn, Topic.TAG, ate, (Serializable) tgs);
+      }
      }
     }
 
-    
    }
    catch(AnnotationDBException e)
    {
@@ -1317,12 +1385,12 @@ public class SubmissionManager
     {
      e1.printStackTrace();
     }
-    
-    trn=null;
+
+    trn = null;
    }
    finally
    {
-    if( trn != null )
+    if(trn != null)
     {
      try
      {
@@ -1337,88 +1405,84 @@ public class SubmissionManager
 
   }
 
-  
-  //Impute reverse relation and revalidate.
+  // Impute reverse relation and revalidate.
 
   return res;
  }
 
- 
- public boolean restoreSubmission( String sbmID, LogNode logRoot )
+ public boolean restoreSubmission(String sbmID, LogNode logRoot)
  {
-  
+
   SubmissionMeta sMeta = null;
-  
+
   try
   {
-   sMeta = submissionDB.getSubmission( sbmID );
+   sMeta = submissionDB.getSubmission(sbmID);
   }
   catch(SubmissionDBException e)
   {
-   logRoot.log(Level.ERROR, "Method restoreSubmission error: "+e.getMessage());
-   
+   logRoot.log(Level.ERROR, "Method restoreSubmission error: " + e.getMessage());
+
    return false;
   }
-  
-  if( sMeta == null )
+
+  if(sMeta == null)
   {
-   logRoot.log(Level.ERROR, "Submission with ID='"+sbmID+"' is not found to be restored");
+   logRoot.log(Level.ERROR, "Submission with ID='" + sbmID + "' is not found to be restored");
    return false;
   }
-  
+
   ClustMeta cstMeta = new ClustMeta();
   cstMeta.id = sbmID;
 
-  int n=0;
-  if( sMeta.getDataModules() != null )
+  int n = 0;
+  if(sMeta.getDataModules() != null)
   {
-   for( DataModuleMeta dmm : sMeta.getDataModules() )
+   for(DataModuleMeta dmm : sMeta.getDataModules())
    {
     n++;
-    
+
     ModMeta mm = new ModMeta();
     ModuleAux maux = new ModuleAux();
     maux.setOrder(n);
-    
+
     mm.meta = dmm;
-    mm.aux=maux;
+    mm.aux = maux;
     dmm.setAux(maux);
-    
+
     cstMeta.mod4Ins.add(mm);
     cstMeta.mod4Use.add(mm);
 
     cstMeta.incomingMods.add(mm);
    }
   }
-  
-  if( sMeta.getAttachments() != null )
+
+  if(sMeta.getAttachments() != null)
   {
-   for(FileAttachmentMeta fatt : sMeta.getAttachments() )
+   for(FileAttachmentMeta fatt : sMeta.getAttachments())
    {
     cstMeta.att4Ins.put(fatt.getId(), fatt);
     cstMeta.att4Use.put(fatt.getId(), fatt);
    }
   }
 
-  
   boolean res = true;
-  
 
-  for( n=0; n < cstMeta.incomingMods.size(); n++)
+  for(n = 0; n < cstMeta.incomingMods.size(); n++)
   {
    ModMeta mm = cstMeta.incomingMods.get(n);
-   
+
    boolean modRes = true;
-   LogNode modNode = logRoot.branch("Processing module: " + mm.meta.getId() );
-   
+   LogNode modNode = logRoot.branch("Processing module: " + mm.meta.getId());
+
    File modFile = submissionDB.getDocument(cstMeta.id, mm.meta.getId(), mm.meta.getDocVersion());
-   
-   if( modFile == null )
+
+   if(modFile == null)
    {
-    modNode.log(Level.ERROR,"File for module "+mm.meta.getId()+" is not found");
+    modNode.log(Level.ERROR, "File for module " + mm.meta.getId() + " is not found");
     modRes = false;
    }
-   
+
    ByteArrayOutputStream bais = new ByteArrayOutputStream();
 
    try
@@ -1426,16 +1490,15 @@ public class SubmissionManager
     FileInputStream fis = new FileInputStream(modFile);
     StreamPump.doPump(fis, bais, false);
     fis.close();
-    
+
     bais.close();
-    
+
    }
    catch(IOException e)
    {
-    modNode.log(Level.ERROR, "File read error. "+e.getMessage());
+    modNode.log(Level.ERROR, "File read error. " + e.getMessage());
     res = false;
    }
-   
 
    byte[] barr = bais.toByteArray();
    String enc = "UTF-8";
@@ -1450,9 +1513,9 @@ public class SubmissionManager
    catch(UnsupportedEncodingException e1)
    {
    }
-   
+
    AgeTabModule atMod = null;
-   
+
    LogNode atLog = modNode.branch("Parsing AgeTab");
    try
    {
@@ -1465,178 +1528,166 @@ public class SubmissionManager
     res = false;
     continue;
    }
-   
+
    LogNode convLog = modNode.branch("Converting AgeTab to Age data module");
-   mm.newModule = converter.convert(atMod, ageStorage.getSemanticModel().createContextSemanticModel(), convLog );
-   
-   if( mm.newModule != null )
+   mm.newModule = converter.convert(atMod, ageStorage.getSemanticModel().createContextSemanticModel(), convLog);
+
+   if(mm.newModule != null)
     convLog.success();
    else
     modRes = false;
-   
-   
-   
-   if( modRes )
+
+   if(modRes)
     modNode.success();
    else
     mm.newModule = null;
-   
+
    res = res && modRes;
   }
-  
-  
-  if( ! res )  
+
+  if(!res)
    return false;
 
-  
   try
   {
    ageStorage.lockWrite();
 
-   
    // XXX connection to main graph
-   
-   if( ! checkUniqObjects(cstMeta, logRoot) )
+
+   if(!checkUniqObjects(cstMeta, logRoot))
    {
     res = false;
     return false;
    }
 
+   Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable, AgeObject>>();
 
- 
-   
-   Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject> > extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable,AgeObject>>();
+   Map<AgeObjectWritable, Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
+   // invRelMap contains a map of external objects to sets of prepared inverse
+   // relations for new external relations
 
-   
-   Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
-   // invRelMap contains a map of external objects to sets of prepared inverse relations for new external relations
-   
-   if( !connectNewExternalRelations(cstMeta, invRelMap, logRoot) )
+   if(!connectNewExternalRelations(cstMeta, invRelMap, logRoot))
    {
     res = false;
     return false;
    }
-   
-   if( !connectNewObjectAttributes(cstMeta, ageStorage, logRoot) )
+
+   if(!connectNewObjectAttributes(cstMeta, ageStorage, logRoot))
    {
     res = false;
     return false;
    }
- 
-   
+
    LogNode semLog = logRoot.branch("Validating semantic");
 
    boolean vldRes = true;
-   n=0;
-   for( ModMeta mm : cstMeta.incomingMods )
+   n = 0;
+   for(ModMeta mm : cstMeta.incomingMods)
    {
     n++;
-    
-    if( mm.newModule == null )
+
+    if(mm.newModule == null)
      continue;
-    
-    LogNode vldLog = semLog.branch("Processing module: "+mm.meta.getId());
-    
+
+    LogNode vldLog = semLog.branch("Processing module: " + mm.meta.getId());
+
     boolean modRes = validator.validate(mm.newModule, vldLog);
-    
+
     if(modRes)
      vldLog.success();
 
     vldRes = vldRes && modRes;
    }
-   
-   if( vldRes )
+
+   if(vldRes)
     semLog.success();
 
    res = res && vldRes;
-   
-   
 
-//   Set<AgeObject> affObjSet = new HashSet<AgeObject>();
-//   
-//   if( invRelMap != null )
-//    affObjSet.addAll( invRelMap.keySet() );
-   
-   
-   if( invRelMap.size() > 0 )
+   // Set<AgeObject> affObjSet = new HashSet<AgeObject>();
+   //
+   // if( invRelMap != null )
+   // affObjSet.addAll( invRelMap.keySet() );
+
+   if(invRelMap.size() > 0)
    {
     boolean invRelRes = true;
     LogNode invRelLog = logRoot.branch("Validating externaly related object semantic");
-    
+
     Set<AgeRelation> relSet = new HashSet<AgeRelation>();
-    
-    for( AgeObject obj :  invRelMap.keySet() )
+
+    for(AgeObject obj : invRelMap.keySet())
     {
-     LogNode objLogNode = invRelLog.branch("Validating object Id: "+obj.getId()+" Class: "+obj.getAgeElClass());
-     
-     Collection<? extends AgeRelation> relColl = null;
-     
-     Collection<AgeRelationWritable> inv = invRelMap!=null?invRelMap.get(obj):null;
-     
-     if( inv == null )
+     LogNode objLogNode = invRelLog.branch("Validating object Id: " + obj.getId() + " Class: " + obj.getAgeElClass());
+
+     Collection< ? extends AgeRelation> relColl = null;
+
+     Collection<AgeRelationWritable> inv = invRelMap != null ? invRelMap.get(obj) : null;
+
+     if(inv == null)
       relColl = obj.getRelations();
      else
      {
       relSet.clear();
-      
+
       relSet.addAll(obj.getRelations());
-      
+
       relSet.addAll(inv);
-      
+
       relColl = relSet;
      }
-     
-     if( validator.validateRelations(obj.getAgeElClass(), relColl, objLogNode) )
+
+     if(validator.validateRelations(obj.getAgeElClass(), relColl, objLogNode))
       objLogNode.success();
      else
       invRelRes = false;
     }
-    
+
     if(invRelRes)
      invRelLog.success();
     else
-     invRelRes =false;
+     invRelRes = false;
 
     res = res && invRelRes;
    }
-   
-   if( ! res )
+
+   if(!res)
     return false;
-   
+
    boolean needReload = false;
-  
-   for( ModMeta mm : cstMeta.incomingMods )
+
+   for(ModMeta mm : cstMeta.incomingMods)
    {
     String modId = mm.meta.getId();
-    
+
     mm.newModule.setClusterId(cstMeta.id);
 
-    
-//    while(ageStorage.hasDataModule(modId))
-//    {
-//     modId = Constants.dataModuleIDPrefix + IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
-//    }
-    
-    
-//    if( ! modId.equals(mm.meta.getId()) )
-//    {
-//     logRoot.log(Level.WARN, "Module ID '"+mm.meta.getId()+"' is already taken by some another module. New ID="+modId+" is assigned");
-//     needReload = true;
-//    }
-    
+    // while(ageStorage.hasDataModule(modId))
+    // {
+    // modId = Constants.dataModuleIDPrefix +
+    // IdGenerator.getInstance().getStringId(Constants.dataModuleIDDomain);
+    // }
+
+    // if( ! modId.equals(mm.meta.getId()) )
+    // {
+    // logRoot.log(Level.WARN,
+    // "Module ID '"+mm.meta.getId()+"' is already taken by some another module. New ID="+modId+" is assigned");
+    // needReload = true;
+    // }
+
     mm.newModule.setId(modId);
     mm.meta.setId(modId);
 
     for(AgeObjectWritable obj : mm.newModule.getObjects())
     {
-     if( obj.getId() == null)
+     if(obj.getId() == null)
      {
       String id = null;
 
       do
       {
-       id = Constants.localObjectIDPrefix + obj.getAgeElClass().getIdPrefix()
-         + IdGenerator.getInstance().getStringId(Constants.objectIDDomain) + "@" + mm.newModule.getId();
+       id = Constants.localObjectIDPrefix + obj.getAgeElClass().getIdPrefix() + IdGenerator.getInstance().getStringId(Constants.objectIDDomain) + "@"
+         + mm.newModule.getId();
       } while(mm.idMap.containsKey(id));
 
       obj.setId(id);
@@ -1644,59 +1695,52 @@ public class SubmissionManager
      }
     }
    }
-   
-   
+
    connectIncomingModulesToFiles(cstMeta, ageStorage, logRoot);
-   
-   Collection< Pair<AgeFileAttributeWritable,String> > fileConn = new ArrayList< Pair<AgeFileAttributeWritable,String> >();
+
+   Collection<Pair<AgeFileAttributeWritable, String>> fileConn = new ArrayList<Pair<AgeFileAttributeWritable, String>>();
    reconnectLocalModulesToFiles(cstMeta, fileConn, ageStorage, logRoot);
-   
- 
-   
+
    LogNode updtLog = logRoot.branch("Updating storage");
 
    try
    {
-    if( cstMeta.mod4DataUpd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0 )
+    if(cstMeta.mod4DataUpd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0)
     {
-     
-     ageStorage.update( 
-        new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Ins, modExtractor),
-        null  
-     );
-     
+
+     ageStorage.update(new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Ins, modExtractor), null);
+
      updtLog.success();
     }
    }
-   catch (Exception e)
+   catch(Exception e)
    {
     updtLog.log(Level.ERROR, e.getMessage());
-    
+
     res = false;
- 
+
     return false;
    }
-   
-   
-   if( ! needReload )
+
+   if(!needReload)
    {
     try
     {
      submissionDB.restoreSubmission(sbmID);
     }
-    catch (Exception e)
+    catch(Exception e)
     {
-     logRoot.log(Level.ERROR, "Method restoreSubmission error: "+e.getMessage());
+     logRoot.log(Level.ERROR, "Method restoreSubmission error: " + e.getMessage());
 
      res = false;
-     
+
      return false;
     }
    }
    else
    {
     SubmissionMeta newSMeta = Factory.createSubmissionMeta();
-    
+
     newSMeta.setId(sMeta.getId());
     newSMeta.setDescription(sMeta.getDescription());
     newSMeta.setRemoved(false);
@@ -1704,56 +1748,50 @@ public class SubmissionManager
     newSMeta.setModifier(sMeta.getModifier());
     newSMeta.setSubmissionTime(sMeta.getSubmissionTime());
     newSMeta.setModificationTime(sMeta.getModificationTime());
-    
-    for( ModMeta dmm : cstMeta.mod4Use )
+
+    for(ModMeta dmm : cstMeta.mod4Use)
      newSMeta.addDataModule(dmm.meta);
-    
-    for( FileAttachmentMeta fam : cstMeta.att4Use.values() )
+
+    for(FileAttachmentMeta fam : cstMeta.att4Use.values())
      newSMeta.addAttachment(fam);
-    
-    
+
     try
     {
      submissionDB.storeSubmission(newSMeta, sMeta, "Restoring submission with changed modules' IDs");
     }
     catch(SubmissionDBException e)
     {
-     logRoot.log(Level.ERROR, "Method storeSubmission error: "+e.getMessage());
-     
+     logRoot.log(Level.ERROR, "Method storeSubmission error: " + e.getMessage());
+
      res = false;
-     
+
      return false;
     }
-    
-    
-   }
-   
-   
-   
-   if( extAttrConnector != null )
-   {
-    for( Pair<AgeExternalObjectAttributeWritable, AgeObject> cn : extAttrConnector )
-     cn.getFirst().setTargetObject( cn.getSecond() );
-   }
-   
-  
-   for( Pair<AgeFileAttributeWritable, String> fc :  fileConn ) 
-    fc.getFirst().setFileSysRef( fc.getSecond() );
-   
 
-   for( Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me :  invRelMap.entrySet() )
-    for( AgeRelationWritable rel : me.getValue() )
-     me.getKey().addRelation(rel);
-    
-   for( ModMeta dm : cstMeta.incomingMods )
+   }
+
+   if(extAttrConnector != null)
    {
-    if( dm.newModule != null && dm.newModule.getExternalRelations() != null  )
+    for(Pair<AgeExternalObjectAttributeWritable, AgeObject> cn : extAttrConnector)
+     cn.getFirst().setTargetObject(cn.getSecond());
+   }
+
+   for(Pair<AgeFileAttributeWritable, String> fc : fileConn)
+    fc.getFirst().setFileSysRef(fc.getSecond());
+
+   for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : invRelMap.entrySet())
+    for(AgeRelationWritable rel : me.getValue())
+     me.getKey().addRelation(rel);
+
+   for(ModMeta dm : cstMeta.incomingMods)
+   {
+    if(dm.newModule != null && dm.newModule.getExternalRelations() != null)
     {
-     for( AgeExternalRelationWritable rel : dm.newModule.getExternalRelations() )
+     for(AgeExternalRelationWritable rel : dm.newModule.getExternalRelations())
       rel.getInverseRelation().setInverseRelation(rel);
     }
    }
-    //    stor.addRelations(me.getKey().getId(),me.getValue());
+   // stor.addRelations(me.getKey().getId(),me.getValue());
 
   }
   finally
@@ -1761,23 +1799,22 @@ public class SubmissionManager
    ageStorage.unlockWrite();
   }
 
-  //Impute reverse relation and revalidate.
+  // Impute reverse relation and revalidate.
 
   return res;
  }
- 
- public boolean removeSubmission( String sbmID, LogNode logRoot )
+
+ public boolean removeSubmission(String sbmID, LogNode logRoot)
  {
   return removeSubmission(sbmID, false, logRoot);
  }
- 
- 
+
  public boolean tranklucateSubmission(String sbmID, LogNode logRoot)
  {
   return removeSubmission(sbmID, true, logRoot);
  }
- 
- private boolean removeSubmission( String sbmID, boolean wipeOut, LogNode logRoot )
+
+ private boolean removeSubmission(String sbmID, boolean wipeOut, LogNode logRoot)
  {
   SubmissionMeta sMeta = null;
 
@@ -1863,25 +1900,25 @@ public class SubmissionManager
     LogNode invRelLog = logRoot.branch("Validating externaly related object semantic");
 
     Set<AgeRelation> relSet = new HashSet<AgeRelation>();
-    
+
     for(AgeObject obj : relationDetachMap.keySet())
     {
      LogNode objLogNode = invRelLog.branch("Validating object Id: " + obj.getId() + " Class: " + obj.getAgeElClass());
- 
-     Collection<? extends AgeRelation> relColl = null;
-     
-     Collection<AgeRelationWritable> det = relationDetachMap!=null?relationDetachMap.get(obj):null;
-     
-     if( det == null )
+
+     Collection< ? extends AgeRelation> relColl = null;
+
+     Collection<AgeRelationWritable> det = relationDetachMap != null ? relationDetachMap.get(obj) : null;
+
+     if(det == null)
       relColl = obj.getRelations();
      else
      {
       relSet.clear();
-      
+
       relSet.addAll(obj.getRelations());
-      
+
       relSet.removeAll(det);
-      
+
       relColl = relSet;
      }
 
@@ -2026,10 +2063,7 @@ public class SubmissionManager
   return res;
  }
 
-
- 
- 
- private boolean connectNewExternalRelations( ClustMeta cstMeta, Map<AgeObjectWritable,Set<AgeRelationWritable>> invRelMap, LogNode rootNode )
+ private boolean connectNewExternalRelations(ClustMeta cstMeta, Map<AgeObjectWritable, Set<AgeRelationWritable>> invRelMap, LogNode rootNode)
  {
 
   LogNode extRelLog = rootNode.branch("Connecting external object relations");
@@ -2037,76 +2071,88 @@ public class SubmissionManager
 
   for(ModMeta mm : cstMeta.incomingMods)
   {
-   if(mm.newModule == null || mm.newModule.getExternalRelations() == null )
+   if(mm.newModule == null || mm.newModule.getExternalRelations() == null)
     continue;
 
-   LogNode extRelModLog = extRelLog.branch("Processing module: " + mm.aux.getOrder()+(mm.meta.getId()!=null?" ID='"+mm.meta.getId()+"'":""));
+   LogNode extRelModLog = extRelLog.branch("Processing module: " + mm.aux.getOrder() + (mm.meta.getId() != null ? " ID='" + mm.meta.getId() + "'" : ""));
 
    boolean extModRelRes = true;
 
    for(AgeExternalRelationWritable exr : mm.newModule.getExternalRelations())
    {
-    if( exr.getTargetObject() != null ) //It can happen when we connected inverse relation
+    if(exr.getTargetObject() != null) // It can happen when we connected inverse
+                                      // relation
      continue;
-    
+
     String ref = exr.getTargetObjectId();
 
-//    if( !exr.getAgeElClass().getInverseRelationClass().isImplicit() && exr.getSourceObject().getIdScope() == IdScope.MODULE )
-//    {
-//     extModRelRes = false;
-//     extRelModLog.log(Level.ERROR, "Object "+objId2Str(exr.getSourceObject())+" has external relation (Class: '"+exr+"') with explicit inverse relation class"
-//       " but object ID scope is MODULE"
-//       "Invalid external relation: '" + ref 
-//       + "'. Target object is not found within the cluster and the source object has not global identifier " +
-//               "but relation class has explicit inverse class so inverse relation is impossible. Module: " + mm.aux.getOrder() + " Source object: '"
-//       + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: " + exr.getSourceObject().getOrder()
-//       + "). Relation class: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
-//     
-//     continue;
-//    } 
+    // if( !exr.getAgeElClass().getInverseRelationClass().isImplicit() &&
+    // exr.getSourceObject().getIdScope() == IdScope.MODULE )
+    // {
+    // extModRelRes = false;
+    // extRelModLog.log(Level.ERROR,
+    // "Object "+objId2Str(exr.getSourceObject())+" has external relation (Class: '"+exr+"') with explicit inverse relation class"
+    // " but object ID scope is MODULE"
+    // "Invalid external relation: '" + ref
+    // +
+    // "'. Target object is not found within the cluster and the source object has not global identifier "
+    // +
+    // "but relation class has explicit inverse class so inverse relation is impossible. Module: "
+    // + mm.aux.getOrder() + " Source object: '"
+    // + exr.getSourceObject().getId() + "' (Class: " +
+    // exr.getSourceObject().getAgeElClass() + ", Order: " +
+    // exr.getSourceObject().getOrder()
+    // + "). Relation class: " + exr.getAgeElClass() + " Order: " +
+    // exr.getOrder());
+    //
+    // continue;
+    // }
 
-    
-    
-    
     AgeObjectWritable tgObj = resolveTarget(exr, cstMeta);
-    
-   
-    // if there is no target object within the cluster let's try to find global object but we have to keep in mind inverse relation!
-    if( tgObj == null )
+
+    // if there is no target object within the cluster let's try to find global
+    // object but we have to keep in mind inverse relation!
+    if(tgObj == null)
     {
-//     if( !exr.getAgeElClass().getInverseRelationClass().isImplicit() && exr.getSourceObject().getIdScope() != IdScope.GLOBAL )
-//     {
-//      extModRelRes = false;
-//      extRelModLog.log(Level.ERROR, "Invalid external relation: '" + ref 
-//        + "'. Target object found is not found within the cluster and the source object has not global identifier " +
-//        		"but relation class has explicit inverse class so inverse relation is impossible. Module: " + mm.aux.getOrder() + " Source object: '"
-//        + exr.getSourceObject().getId() + "' (Class: " + exr.getSourceObject().getAgeElClass() + ", Order: " + exr.getSourceObject().getOrder()
-//        + "). Relation class: " + exr.getAgeElClass() + " Order: " + exr.getOrder());
-//      
-//      continue;
-//     }
+     // if( !exr.getAgeElClass().getInverseRelationClass().isImplicit() &&
+     // exr.getSourceObject().getIdScope() != IdScope.GLOBAL )
+     // {
+     // extModRelRes = false;
+     // extRelModLog.log(Level.ERROR, "Invalid external relation: '" + ref
+     // +
+     // "'. Target object found is not found within the cluster and the source object has not global identifier "
+     // +
+     // "but relation class has explicit inverse class so inverse relation is impossible. Module: "
+     // + mm.aux.getOrder() + " Source object: '"
+     // + exr.getSourceObject().getId() + "' (Class: " +
+     // exr.getSourceObject().getAgeElClass() + ", Order: " +
+     // exr.getSourceObject().getOrder()
+     // + "). Relation class: " + exr.getAgeElClass() + " Order: " +
+     // exr.getOrder());
+     //
+     // continue;
+     // }
 
      tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
 
      if(tgObj == null || cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()))
       tgObj = null;
     }
-    
 
     if(tgObj == null)
     {
      extModRelRes = false;
-     extRelModLog.log(Level.ERROR, "Object "+objId2Str(exr.getSourceObject())
-       +" has external relation (Class: '"+exr.getAgeElClass()+"' Position: "+exr.getOrder()+" ) that can't be resolved");
-     
+     extRelModLog.log(Level.ERROR, "Object " + objId2Str(exr.getSourceObject()) + " has external relation (Class: '" + exr.getAgeElClass()
+       + "' Position: " + exr.getOrder() + " ) that can't be resolved");
+
      continue;
     }
 
     AgeExternalRelationWritable invRel = null;
-    
+
     invRel = findInverseRelation(exr, tgObj);
-    
-    if( invRel == null )
+
+    if(invRel == null)
     {
      AgeRelationClass invRCls = exr.getAgeElClass().getInverseRelationClass();
 
@@ -2126,7 +2172,7 @@ public class SubmissionManager
 
      invRel.setTargetObject(exr.getSourceObject());
      invRel.setInverseRelation(exr);
-    
+
      Set<AgeRelationWritable> rels = invRelMap.get(tgObj);
 
      if(rels == null)
@@ -2138,9 +2184,11 @@ public class SubmissionManager
      rels.add(invRel);
     }
 
-    invRel.setTargetObject(exr.getSourceObject()); // Only unconnected objects (new) can have free explicit external relations
+    invRel.setTargetObject(exr.getSourceObject()); // Only unconnected objects
+                                                   // (new) can have free
+                                                   // explicit external
+                                                   // relations
     invRel.setInverseRelation(exr);
-
 
     exr.setInverseRelation(invRel);
 
@@ -2160,148 +2208,159 @@ public class SubmissionManager
   return extRelRes;
  }
 
-
- private boolean checkUniqObjects( ClustMeta  clusterMeta, LogNode logRoot )
+ private boolean checkUniqObjects(ClustMeta clusterMeta, LogNode logRoot)
  {
   boolean res = true;
-  
+
   LogNode logUniq = logRoot.branch("Checking object identifiers uniquness");
-  
-  Map<DataModule,ModMeta> modMap = new HashMap<DataModule, SubmissionManager.ModMeta>();
-  
-  for( ModMeta mm : clusterMeta.mod4Use )
+
+  Map<DataModule, ModMeta> modMap = new HashMap<DataModule, SubmissionManager.ModMeta>();
+
+  for(ModMeta mm : clusterMeta.mod4Use)
   {
    modMap.put(mm.newModule, mm);
 
-   if( mm.newModule == null ) // Hld+MetaUpd
+   if(mm.newModule == null) // Hld+MetaUpd
    {
-    for( AgeObjectWritable obj : mm.origModule.getObjects() )
+    for(AgeObjectWritable obj : mm.origModule.getObjects())
     {
-     if( obj.getIdScope() == IdScope.CLUSTER || obj.getIdScope() == IdScope.GLOBAL )
+     if(obj.getIdScope() == IdScope.CLUSTER || obj.getIdScope() == IdScope.GLOBAL)
      {
       AgeObject clashObj = clusterMeta.clusterIdMap.get(obj.getId());
 
-      if( clashObj != null ) // It meant that some new object pretends to this ID
+      if(clashObj != null) // It meant that some new object pretends to this ID
       {
        res = false;
-       
+
        ModMeta clashMM = modMap.get(clashObj.getDataModule());
-       
-       logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the cluster. The first object: module "
-         +( (mm.aux!=null?mm.aux.getOrder()+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
-         +". The second object: module "
-         +( (clashMM.aux!=null?clashMM.aux.getOrder()+" ":"(existing) ") + (clashMM.meta.getId()!=null?("ID='"+clashMM.meta.getId()+"' "):"") + "Row: " + clashObj.getOrder()  )
-       );
-       
+
+       logUniq
+         .log(
+           Level.ERROR,
+           "Object identifiers clash (ID='"
+             + obj.getId()
+             + "') whithin the cluster. The first object: module "
+             + ((mm.aux != null ? mm.aux.getOrder() + " " : "(existing) ") + (mm.meta.getId() != null ? ("ID='" + mm.meta.getId() + "' ") : "") + "Row: " + obj
+               .getOrder())
+             + ". The second object: module "
+             + ((clashMM.aux != null ? clashMM.aux.getOrder() + " " : "(existing) ")
+               + (clashMM.meta.getId() != null ? ("ID='" + clashMM.meta.getId() + "' ") : "") + "Row: " + clashObj.getOrder()));
+
       }
-      
-      clusterMeta.clusterIdMap.put(obj.getId(),obj);
+
+      clusterMeta.clusterIdMap.put(obj.getId(), obj);
      }
     }
 
     continue;
    }
-   
-   
-   for( AgeObjectWritable obj : mm.newModule.getObjects() )
+
+   for(AgeObjectWritable obj : mm.newModule.getObjects())
    {
-    if( obj.getId() == null ) // new object with anonymous ID
+    if(obj.getId() == null) // new object with anonymous ID
      continue;
 
     AgeObject clashObj = mm.idMap.get(obj.getId());
 
-    if( clashObj != null )
+    if(clashObj != null)
     {
      res = false;
-     
-     logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the same module: "
-       +( (mm.aux!=null?mm.aux.getOrder()+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
-       +" and Row: " + clashObj.getOrder() 
-     );
-     
+
+     logUniq
+       .log(
+         Level.ERROR,
+         "Object identifiers clash (ID='"
+           + obj.getId()
+           + "') whithin the same module: "
+           + ((mm.aux != null ? mm.aux.getOrder() + " " : "(existing) ") + (mm.meta.getId() != null ? ("ID='" + mm.meta.getId() + "' ") : "") + "Row: " + obj
+             .getOrder()) + " and Row: " + clashObj.getOrder());
+
      continue;
     }
-    
+
     mm.idMap.put(obj.getId(), obj);
-    
-    if( obj.getIdScope() == IdScope.CLUSTER || obj.getIdScope() == IdScope.GLOBAL )
+
+    if(obj.getIdScope() == IdScope.CLUSTER || obj.getIdScope() == IdScope.GLOBAL)
     {
      clashObj = clusterMeta.clusterIdMap.get(obj.getId());
-     
-     if( clashObj != null )
+
+     if(clashObj != null)
      {
       res = false;
-      
+
       ModMeta clashMM = modMap.get(clashObj.getDataModule());
-      
-      logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the cluster. The first object: module "
-        +( (mm.aux!=null?mm.aux.getOrder()+" ":"(existing) ") + (mm.meta.getId()!=null?("ID='"+mm.meta.getId()+"' "):"") + "Row: " + obj.getOrder()  )
-        +". The second object: module "
-        +( (clashMM.aux!=null?clashMM.aux.getOrder()+" ":"(existing) ") + (clashMM.meta.getId()!=null?("ID='"+clashMM.meta.getId()+"' "):"") + "Row: " + clashObj.getOrder()  )
-      );
-      
+
+      logUniq
+        .log(
+          Level.ERROR,
+          "Object identifiers clash (ID='"
+            + obj.getId()
+            + "') whithin the cluster. The first object: module "
+            + ((mm.aux != null ? mm.aux.getOrder() + " " : "(existing) ") + (mm.meta.getId() != null ? ("ID='" + mm.meta.getId() + "' ") : "") + "Row: " + obj
+              .getOrder())
+            + ". The second object: module "
+            + ((clashMM.aux != null ? clashMM.aux.getOrder() + " " : "(existing) ")
+              + (clashMM.meta.getId() != null ? ("ID='" + clashMM.meta.getId() + "' ") : "") + "Row: " + clashObj.getOrder()));
+
       continue;
      }
-     
+
      clusterMeta.clusterIdMap.put(obj.getId(), obj);
     }
-    
-    if( obj.getIdScope() == IdScope.GLOBAL )
+
+    if(obj.getIdScope() == IdScope.GLOBAL)
     {
      clashObj = ageStorage.getGlobalObject(obj.getId());
-     
-     // We try to find clashing object outside of our cluster as all clashes within the cluster we detected earlier 
-     if( clashObj != null && ! clashObj.getModuleKey().getClusterId().equals(clusterMeta.id) )
+
+     // We try to find clashing object outside of our cluster as all clashes
+     // within the cluster we detected earlier
+     if(clashObj != null && !clashObj.getModuleKey().getClusterId().equals(clusterMeta.id))
      {
       res = false;
 
-
-      logUniq.log(Level.ERROR, "Object identifiers clash (ID='"+obj.getId()+"') whithin the global scope. The first object: "
-        + objId2Str(obj)+". The second object: "+objId2Str(clashObj)
-      );
+      logUniq.log(Level.ERROR, "Object identifiers clash (ID='" + obj.getId() + "') whithin the global scope. The first object: " + objId2Str(obj)
+        + ". The second object: " + objId2Str(clashObj));
 
       continue;
      }
 
-     
      clusterMeta.newGlobalIdMap.put(obj.getId(), obj);
     }
    }
   }
-  
-  
-  if( res )
+
+  if(res)
    logUniq.success();
 
   return res;
  }
- 
- 
 
  @SuppressWarnings("unchecked")
- private boolean reconnectExternalRelations( ClustMeta  cstMeta, Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable>> relConn, 
-   Map<AgeObjectWritable,Set<AgeRelationWritable>> detachedRelMap, LogNode logRoot)
+ private boolean reconnectExternalRelations(ClustMeta cstMeta, Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable>> relConn,
+   Map<AgeObjectWritable, Set<AgeRelationWritable>> detachedRelMap, LogNode logRoot)
  {
   LogNode logRecon = logRoot.branch("Reconnecting external relations");
-  
-  boolean res = true; 
-  
-  for( ModMeta mm : new CollectionsUnion<ModMeta>(cstMeta.mod4Del.values(),cstMeta.mod4DataUpd.values()) )
+
+  boolean res = true;
+
+  for(ModMeta mm : new CollectionsUnion<ModMeta>(cstMeta.mod4Del.values(), cstMeta.mod4DataUpd.values()))
   {
-   if( mm.origModule == null ) //Skipping new modules, processing only update/delete modules (where original data are going away)
+   if(mm.origModule == null) // Skipping new modules, processing only
+                             // update/delete modules (where original data are
+                             // going away)
     continue;
-   
-   Collection<? extends AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
+
+   Collection< ? extends AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
 
    if(origExtRels == null)
     continue;
-   
+
    for(AgeExternalRelationWritable extRel : origExtRels)
    {
     AgeExternalRelationWritable invrsRel = extRel.getInverseRelation();
-    AgeObjectWritable target = extRel.getTargetObject(); //external object
+    AgeObjectWritable target = extRel.getTargetObject(); // external object
 
-    if( invrsRel.isInferred() )
+    if(invrsRel.isInferred())
     {
      Set<AgeRelationWritable> objectsRels = detachedRelMap.get(target);
 
@@ -2315,34 +2374,36 @@ public class SubmissionManager
      AgeObjectWritable replObj = null;
      String replObjId = invrsRel.getTargetObjectId();
 
-     if( invrsRel.getTargetResolveScope() == ResolveScope.GLOBAL || ! target.getModuleKey().getClusterId().equals(cstMeta.id) )
+     if(invrsRel.getTargetResolveScope() == ResolveScope.GLOBAL || !target.getModuleKey().getClusterId().equals(cstMeta.id))
       replObj = cstMeta.newGlobalIdMap.get(replObjId);
      else
       replObj = cstMeta.clusterIdMap.get(replObjId);
 
-     if( replObj == null )
+     if(replObj == null)
      {
       logRecon.log(Level.ERROR, "Module " + mm.aux.getOrder() + " (ID='" + mm.meta.getId() + "') is marked for "
-        +(mm.newModule == null?"deletion":"update")+" but some object (ID='" + extRel.getTargetObjectId()
-        + "' Module ID: '"+extRel.getTargetObject().getDataModule().getId()+"' Cluster ID: '"
-        +extRel.getTargetObject().getDataModule().getClusterId()+"') holds the relation of class  '" + invrsRel.getAgeElClass() 
-        + "' with object '"  +invrsRel.getTargetObjectId() + "'");
+        + (mm.newModule == null ? "deletion" : "update") + " but some object (ID='" + extRel.getTargetObjectId() + "' Module ID: '"
+        + extRel.getTargetObject().getDataModule().getId() + "' Cluster ID: '" + extRel.getTargetObject().getDataModule().getClusterId()
+        + "') holds the relation of class  '" + invrsRel.getAgeElClass() + "' with object '" + invrsRel.getTargetObjectId() + "'");
       res = false;
      }
      else
      {
       AgeExternalRelationWritable dirRel = findInverseRelation(invrsRel, replObj);
 
-      if( dirRel == null )
+      if(dirRel == null)
       {
 
        RelationClassRef invCRef = cstMeta.relRefMap.get(extRel.getAgeElClass());
 
-       if( invCRef == null )
+       if(invCRef == null)
        {
-        invCRef =replObj.getDataModule().getContextSemanticModel().getModelFactory().createRelationClassRef(
-          replObj.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(extRel.getAgeElClass()), 0,
-          extRel.getTargetObjectId());
+        invCRef = replObj
+          .getDataModule()
+          .getContextSemanticModel()
+          .getModelFactory()
+          .createRelationClassRef(replObj.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(extRel.getAgeElClass()), 0,
+            extRel.getTargetObjectId());
 
         cstMeta.relRefMap.put(extRel.getAgeElClass(), invCRef);
        }
@@ -2357,48 +2418,54 @@ public class SubmissionManager
       dirRel.setInverseRelation(invrsRel);
       dirRel.setTargetObject(target);
 
+      relConn.add(new Pair<AgeExternalRelationWritable, AgeObjectWritable>(invrsRel, replObj));
 
-      relConn.add( new Pair<AgeExternalRelationWritable, AgeObjectWritable>(invrsRel, replObj) );
-
-      if( ! detachedRelMap.containsKey(target) ) //This is to enforce semantic check on the target object
+      if(!detachedRelMap.containsKey(target)) // This is to enforce semantic
+                                              // check on the target object
        detachedRelMap.put(target, null);
      }
     }
 
    }
-   
+
   }
 
-  //As new ID could appear within cluster scope we need to reconnect CASCADE_CLUSTER relations
-  //that point to the GLOBAL scope but can be resolved on the CLUSTER scope now 
-  for( ModMeta mm : new CollectionsUnion<ModMeta>(cstMeta.mod4Hld.values(),cstMeta.mod4MetaUpd.values()) )
+  // As new ID could appear within cluster scope we need to reconnect
+  // CASCADE_CLUSTER relations
+  // that point to the GLOBAL scope but can be resolved on the CLUSTER scope now
+  for(ModMeta mm : new CollectionsUnion<ModMeta>(cstMeta.mod4Hld.values(), cstMeta.mod4MetaUpd.values()))
   {
-   Collection<? extends AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
+   Collection< ? extends AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
 
    if(origExtRels == null)
     continue;
-   
+
    for(AgeExternalRelationWritable extRel : origExtRels)
    {
     AgeExternalRelationWritable invrsRel = extRel.getInverseRelation();
-    AgeObjectWritable oldTarget = extRel.getTargetObject(); //external object
+    AgeObjectWritable oldTarget = extRel.getTargetObject(); // external object
     AgeObjectWritable relSource = extRel.getSourceObject();
-    
-    if(   extRel.isInferred() 
-       || extRel.getTargetResolveScope() != ResolveScope.CASCADE_CLUSTER 
-       || oldTarget.getModuleKey().getClusterId().equals(cstMeta.id) 
-      )
-     continue; 
-     
-    AgeObjectWritable newTarget = cstMeta.clusterIdMap.get(extRel.getTargetObjectId()); // newTarget can only be one of the new objects
-    
-    if( newTarget != null )
+
+    if(extRel.isInferred() || extRel.getTargetResolveScope() != ResolveScope.CASCADE_CLUSTER || oldTarget.getModuleKey().getClusterId().equals(cstMeta.id))
+     continue;
+
+    AgeObjectWritable newTarget = cstMeta.clusterIdMap.get(extRel.getTargetObjectId()); // newTarget
+                                                                                        // can
+                                                                                        // only
+                                                                                        // be
+                                                                                        // one
+                                                                                        // of
+                                                                                        // the
+                                                                                        // new
+                                                                                        // objects
+
+    if(newTarget != null)
     {
-     if( invrsRel.isInferred() )
+     if(invrsRel.isInferred())
      {
       Set<AgeRelationWritable> detSet = detachedRelMap.get(oldTarget);
 
-      if( detSet == null )
+      if(detSet == null)
        detachedRelMap.put(oldTarget, detSet = new HashSet<AgeRelationWritable>());
 
       detSet.add(invrsRel);
@@ -2406,135 +2473,143 @@ public class SubmissionManager
      else
      {
       res = false;
-      
-      logRecon.log(Level.ERROR, "Object "+objId2Str(relSource)
-        +" has relation (Class: '"+extRel.getAgeElClass()+"') with "+ResolveScope.CASCADE_CLUSTER.name()
-        + " resolution scope pointing to object "+objId2Str(oldTarget)+" in global scope and this relation can be reconnected to object "+objId2Str(newTarget)
-        +" but current relation has explicit inverse relation that can't be reconnected");
-      
+
+      logRecon.log(Level.ERROR, "Object " + objId2Str(relSource) + " has relation (Class: '" + extRel.getAgeElClass() + "') with "
+        + ResolveScope.CASCADE_CLUSTER.name() + " resolution scope pointing to object " + objId2Str(oldTarget)
+        + " in global scope and this relation can be reconnected to object " + objId2Str(newTarget)
+        + " but current relation has explicit inverse relation that can't be reconnected");
+
       continue;
      }
-     
-     
+
      AgeExternalRelationWritable newInvRel = findInverseRelation(extRel, newTarget);
-     
-     if( newInvRel == null )
+
+     if(newInvRel == null)
      {
       RelationClassRef invCRef = cstMeta.relRefMap.get(extRel.getAgeElClass());
 
-      if( invCRef == null )
+      if(invCRef == null)
       {
-       invCRef =newTarget.getDataModule().getContextSemanticModel().getModelFactory().createRelationClassRef(
-         newTarget.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(extRel.getAgeElClass()), 0,
-         extRel.getTargetObjectId());
+       invCRef = newTarget
+         .getDataModule()
+         .getContextSemanticModel()
+         .getModelFactory()
+         .createRelationClassRef(newTarget.getDataModule().getContextSemanticModel().getAgeRelationClassPlug(extRel.getAgeElClass()), 0,
+           extRel.getTargetObjectId());
 
        cstMeta.relRefMap.put(extRel.getAgeElClass(), invCRef);
       }
 
-      newInvRel = newTarget.getDataModule().getContextSemanticModel().createExternalRelation(invCRef, newTarget, relSource.getId(), ResolveScope.CASCADE_CLUSTER);
+      newInvRel = newTarget.getDataModule().getContextSemanticModel()
+        .createExternalRelation(invCRef, newTarget, relSource.getId(), ResolveScope.CASCADE_CLUSTER);
 
       newInvRel.setInferred(true);
       newInvRel.setTargetObject(relSource);
 
       newTarget.addRelation(newInvRel);
      }
-     
-     relConn.add( new Pair<AgeExternalRelationWritable, AgeObjectWritable>(extRel, newTarget) );
+
+     relConn.add(new Pair<AgeExternalRelationWritable, AgeObjectWritable>(extRel, newTarget));
 
      newInvRel.setInverseRelation(extRel);
-     
-     if( ! detachedRelMap.containsKey(relSource) ) //This is to enforce semantic check on the changed object
+
+     if(!detachedRelMap.containsKey(relSource)) // This is to enforce semantic
+                                                // check on the changed object
       detachedRelMap.put(relSource, null);
 
     }
    }
   }
-  
-  if( res )
+
+  if(res)
    logRecon.success();
-  
+
   return res;
 
  }
- 
- 
- private AgeExternalRelationWritable findInverseRelation( AgeExternalRelationWritable extRel, AgeObjectWritable replObj )
+
+ private AgeExternalRelationWritable findInverseRelation(AgeExternalRelationWritable extRel, AgeObjectWritable replObj)
  {
   AgeRelationClass invClass = extRel.getAgeElClass().getInverseRelationClass();
 
-  if( replObj.getDataModule().getExternalRelations() != null )
+  if(replObj.getDataModule().getExternalRelations() != null)
   {
-   for( AgeExternalRelationWritable cndtRel : replObj.getDataModule().getExternalRelations() ) //Looking for suitable explicit relation
+   for(AgeExternalRelationWritable cndtRel : replObj.getDataModule().getExternalRelations()) // Looking
+                                                                                             // for
+                                                                                             // suitable
+                                                                                             // explicit
+                                                                                             // relation
    {
-    if(   cndtRel.getSourceObject() == replObj
-       && extRel.getTargetObjectId().equals(replObj.getId())
-       && cndtRel.getAgeElClass().equals(invClass)
-       && cndtRel.getTargetObjectId().equals(extRel.getSourceObject().getId()) 
-       && ( extRel.getSourceObject().getIdScope() == IdScope.GLOBAL || extRel.getSourceObject().getModuleKey().getClusterId().equals(replObj.getModuleKey().getClusterId()) )
-       && ( cndtRel.getTargetResolveScope() != ResolveScope.CLUSTER || extRel.getSourceObject().getModuleKey().getClusterId().equals(replObj.getModuleKey().getClusterId()) )
-      )
+    if(cndtRel.getSourceObject() == replObj
+      && extRel.getTargetObjectId().equals(replObj.getId())
+      && cndtRel.getAgeElClass().equals(invClass)
+      && cndtRel.getTargetObjectId().equals(extRel.getSourceObject().getId())
+      && (extRel.getSourceObject().getIdScope() == IdScope.GLOBAL || extRel.getSourceObject().getModuleKey().getClusterId()
+        .equals(replObj.getModuleKey().getClusterId()))
+      && (cndtRel.getTargetResolveScope() != ResolveScope.CLUSTER || extRel.getSourceObject().getModuleKey().getClusterId()
+        .equals(replObj.getModuleKey().getClusterId())))
      return cndtRel;
    }
   }
-  
+
   return null;
  }
- 
- 
- private AgeObjectWritable resolveTarget( Resolvable rslv, ClustMeta cstMeta)
+
+ private AgeObjectWritable resolveTarget(Resolvable rslv, ClustMeta cstMeta)
  {
   String ref = rslv.getTargetObjectId();
-  
+
   AgeObjectWritable tgObj = null;
-  
-  if( rslv.getTargetResolveScope() == ResolveScope.GLOBAL  )
+
+  if(rslv.getTargetResolveScope() == ResolveScope.GLOBAL)
   {
    tgObj = cstMeta.newGlobalIdMap.get(ref);
-   
-   if( tgObj == null )
+
+   if(tgObj == null)
     tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
-   
-   if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
+
+   if(tgObj != null && (cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId())))
     tgObj = null;
   }
   else
   {
    tgObj = cstMeta.clusterIdMap.get(ref);
-   
-   if( tgObj == null && rslv.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
+
+   if(tgObj == null && rslv.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER)
    {
     tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
 
-    if( tgObj != null && ( cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()) ) )
+    if(tgObj != null && (cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId())))
      tgObj = null;
    }
   }
-  
+
   return tgObj;
  }
- 
- private String objId2Str( AgeObject obj )
+
+ private String objId2Str(AgeObject obj)
  {
-  String modId=null;
-  
-  if( obj.getModuleKey().getModuleId().charAt(0) == '\0' )
-   modId = "Module order: "+(int)obj.getModuleKey().getModuleId().charAt(1);
+  String modId = null;
+
+  if(obj.getModuleKey().getModuleId().charAt(0) == '\0')
+   modId = "Module order: " + (int) obj.getModuleKey().getModuleId().charAt(1);
   else
-   modId ="MID: '"+obj.getModuleKey().getModuleId()+'\'';
-   
-  return "CID: '"+obj.getModuleKey().getClusterId()+"' "+modId+" OID: '"+obj.getId()+"' Pos: "+obj.getOrder();
+   modId = "MID: '" + obj.getModuleKey().getModuleId() + '\'';
+
+  return "CID: '" + obj.getModuleKey().getClusterId() + "' " + modId + " OID: '" + obj.getId() + "' Pos: " + obj.getOrder();
  }
- 
- private boolean reconnectExternalObjectAttributes( ClustMeta  cstMeta, Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> attrConn, LogNode logRoot)
+
+ private boolean reconnectExternalObjectAttributes(ClustMeta cstMeta, Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> attrConn,
+   LogNode logRoot)
  {
-  
+
   LogNode logRecon = logRoot.branch("Reconnecting external object attributes");
-  
-  boolean res = true; 
-  
-  for( DataModule extDM : ageStorage.getDataModules() )
+
+  boolean res = true;
+
+  for(DataModule extDM : ageStorage.getDataModules())
   {
-   if( extDM.getClusterId().equals(cstMeta.id) )
+   if(extDM.getClusterId().equals(cstMeta.id))
    {
     if(cstMeta.mod4Del.containsKey(extDM.getId()) || cstMeta.mod4DataUpd.containsKey(extDM.getId()))
      continue;
@@ -2547,14 +2622,14 @@ public class SubmissionManager
      {
       AgeObject replObj = cstMeta.clusterIdMap.get(extObjAttr.getTargetObjectId());
 
-      if(replObj != null )
+      if(replObj != null)
       {
-       if( ! replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass()) )
+       if(!replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass()))
        {
         res = false;
-        
-        logRecon.log(Level.ERROR,"Object attribute (Class: '"+extObjAttr.getClass()+"') of object "+objId2Str(extObjAttr.getMasterObject())
-        +" should be reconnected to object "+objId2Str(replObj)+" that doesn't match target class");
+
+        logRecon.log(Level.ERROR, "Object attribute (Class: '" + extObjAttr.getClass() + "') of object " + objId2Str(extObjAttr.getMasterObject())
+          + " should be reconnected to object " + objId2Str(replObj) + " that doesn't match target class");
        }
        else
         attrConn.add(new Pair<AgeExternalObjectAttributeWritable, AgeObject>(extObjAttr, replObj));
@@ -2562,95 +2637,97 @@ public class SubmissionManager
      }
     }
    }
-   
-   
-   for( Attributed atb : extDM.getExternalObjectAttributes() )
+
+   for(Attributed atb : extDM.getExternalObjectAttributes())
    {
     AgeExternalObjectAttributeWritable extObjAttr = (AgeExternalObjectAttributeWritable) atb;
     ModuleKey refModId = extObjAttr.getValue().getModuleKey();
 
-  
-    if(refModId.getClusterId().equals(cstMeta.id) && ( cstMeta.mod4Del.containsKey(refModId) || cstMeta.mod4DataUpd.containsKey(refModId) ) )
+    if(refModId.getClusterId().equals(cstMeta.id) && (cstMeta.mod4Del.containsKey(refModId) || cstMeta.mod4DataUpd.containsKey(refModId)))
     {
      AgeObject replObj = null;
-     
-     if( extObjAttr.getTargetResolveScope() == ResolveScope.GLOBAL || ! extDM.getClusterId().equals(cstMeta.id) )
+
+     if(extObjAttr.getTargetResolveScope() == ResolveScope.GLOBAL || !extDM.getClusterId().equals(cstMeta.id))
       replObj = cstMeta.newGlobalIdMap.get(extObjAttr.getTargetObjectId());
      else
      {
       replObj = cstMeta.clusterIdMap.get(extObjAttr.getTargetObjectId());
-      
-//      if(   replObj != null && extObjAttr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER 
-//         && ! replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass())
-//        )
-//         replObj = cstMeta.newGlobalIdMap.get(extObjAttr.getTargetObjectId());
 
-      if( replObj != null && ! replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass()) )
+      // if( replObj != null && extObjAttr.getTargetResolveScope() ==
+      // ResolveScope.CASCADE_CLUSTER
+      // && !
+      // replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass())
+      // )
+      // replObj = cstMeta.newGlobalIdMap.get(extObjAttr.getTargetObjectId());
+
+      if(replObj != null && !replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass()))
       {
        res = false;
-       
-       logRecon.log(Level.ERROR,"Object attribute (Class: '"+extObjAttr.getClass()+"') of object "+objId2Str(extObjAttr.getMasterObject())
-       +" should be reconnected to object "+objId2Str(replObj)+" that doesn't match target class");
+
+       logRecon.log(Level.ERROR, "Object attribute (Class: '" + extObjAttr.getClass() + "') of object " + objId2Str(extObjAttr.getMasterObject())
+         + " should be reconnected to object " + objId2Str(replObj) + " that doesn't match target class");
       }
 
-     
      }
-   
-     if( replObj == null )
+
+     if(replObj == null)
      {
       ModMeta errMod = null;
-      
-      if( (errMod = cstMeta.mod4Del.get(refModId)) != null )
-       logRecon.log(Level.ERROR, "Module " + errMod.aux.getOrder() + " (ID='" + errMod.meta.getId() + "') is marked for deletion but object (ID='" + extObjAttr.getValue().getId()
-         + "') is referred by object attribute (Class='"+extObjAttr.getAgeElClass().getName()
-         +"') of object "+objId2Str(extObjAttr.getMasterObject()));
+
+      if((errMod = cstMeta.mod4Del.get(refModId)) != null)
+       logRecon.log(Level.ERROR, "Module " + errMod.aux.getOrder() + " (ID='" + errMod.meta.getId() + "') is marked for deletion but object (ID='"
+         + extObjAttr.getValue().getId() + "') is referred by object attribute (Class='" + extObjAttr.getAgeElClass().getName() + "') of object "
+         + objId2Str(extObjAttr.getMasterObject()));
       else
       {
        errMod = cstMeta.mod4DataUpd.get(refModId);
-       logRecon.log(Level.ERROR, "Module " + errMod.aux.getOrder() + " (ID='" + errMod.meta.getId() + "') is marked for update but object (ID='" + extObjAttr.getValue().getId()
-         + "') is referred by object attribute (Class='"+extObjAttr.getAgeElClass().getName()
-         +"') of object "+objId2Str(extObjAttr.getMasterObject()) + " and reference can't be resolved anymore");
+       logRecon.log(Level.ERROR, "Module " + errMod.aux.getOrder() + " (ID='" + errMod.meta.getId() + "') is marked for update but object (ID='"
+         + extObjAttr.getValue().getId() + "') is referred by object attribute (Class='" + extObjAttr.getAgeElClass().getName() + "') of object "
+         + objId2Str(extObjAttr.getMasterObject()) + " and reference can't be resolved anymore");
       }
-      
+
       res = false;
      }
      else
      {
-      if( ! replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass()) )
+      if(!replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass()))
       {
        Attributed ch = extObjAttr.getMasterObject();
 
-       String hostId = ch!=null?ch.getId():"???";
+       String hostId = ch != null ? ch.getId() : "???";
 
-       logRecon.log(Level.ERROR, "Object attribute (Class='"+extObjAttr.getAgeElClass().getName()
-       		+"') of object (ID='" + hostId+ "') from module '" + extDM.getId() + "' of cluster '" + extDM.getClusterId() + "' can be connected but target object has wrong class ");
+       logRecon.log(Level.ERROR, "Object attribute (Class='" + extObjAttr.getAgeElClass().getName() + "') of object (ID='" + hostId + "') from module '"
+         + extDM.getId() + "' of cluster '" + extDM.getClusterId() + "' can be connected but target object has wrong class ");
 
        res = false;
       }
       else
-       attrConn.add( new Pair<AgeExternalObjectAttributeWritable, AgeObject>(extObjAttr, replObj) );
+       attrConn.add(new Pair<AgeExternalObjectAttributeWritable, AgeObject>(extObjAttr, replObj));
      }
     }
    }
   }
-   
-  if( res )
+
+  if(res)
    logRecon.success();
-  
+
   return res;
  }
- 
- 
 
  @SuppressWarnings("unchecked")
- private boolean connectIncomingModulesToFiles(ClustMeta cMeta, AgeStorageAdm stor, LogNode logRoot ) //Identifiers must be generated by this moment
+ private boolean connectIncomingModulesToFiles(ClustMeta cMeta, AgeStorageAdm stor, LogNode logRoot) // Identifiers
+                                                                                                     // must
+                                                                                                     // be
+                                                                                                     // generated
+                                                                                                     // by
+                                                                                                     // this
+                                                                                                     // moment
  {
   boolean res = true;
 
   LogNode logCon = logRoot.branch("Connecting file attributes to files");
 
-  
-  for(ModMeta mm : new CollectionsUnion<ModMeta>( cMeta.mod4Ins, cMeta.mod4DataUpd.values() ))
+  for(ModMeta mm : new CollectionsUnion<ModMeta>(cMeta.mod4Ins, cMeta.mod4DataUpd.values()))
   {
    for(AgeFileAttributeWritable fattr : mm.newModule.getFileAttributes())
    {
@@ -2658,7 +2735,7 @@ public class SubmissionManager
 
     if(fmt != null)
     {
-     fattr.setFileSysRef(fmt.isGlobal()?stor.makeFileSysRef(fattr.getFileId()):stor.makeFileSysRef(fattr.getFileId(), cMeta.id));
+     fattr.setFileSysRef(fmt.isGlobal() ? stor.makeFileSysRef(fattr.getFileId()) : stor.makeFileSysRef(fattr.getFileId(), cMeta.id));
     }
     else
     {
@@ -2679,285 +2756,303 @@ public class SubmissionManager
    }
   }
 
-  if( res )
+  if(res)
    logCon.success();
-  
+
   return res;
  }
- 
- 
+
  @SuppressWarnings("unchecked")
- private boolean checkLocalModulesToFilesConnections(ClustMeta cMeta, AgeStorageAdm stor, LogNode logRoot )
+ private boolean checkLocalModulesToFilesConnections(ClustMeta cMeta, AgeStorageAdm stor, LogNode logRoot)
  {
   boolean res = true;
 
   LogNode logCon = logRoot.branch("Checking file attributes to files connections");
 
-  
-  for(ModMeta mm : new CollectionsUnion<ModMeta>( cMeta.mod4Ins, cMeta.mod4DataUpd.values() ))
+  for(ModMeta mm : new CollectionsUnion<ModMeta>(cMeta.mod4Ins, cMeta.mod4DataUpd.values()))
   {
    for(AgeFileAttributeWritable fattr : mm.newModule.getFileAttributes())
    {
-    FileAttachmentMeta fmt = cMeta.att4Use.get(fattr.getFileId());
-
-    if(fmt == null)
+    if(fattr.getTargetResolveScope() == ResolveScope.GLOBAL)
     {
-     String sysRef = stor.makeFileSysRef(fattr.getFileId());
-
-     if(stor.getAttachmentBySysRef(sysRef) == null)
+     if(stor.getAttachment(fattr.getFileId()) == null)
      {
       AttributeClassRef clRef = fattr.getClassRef();
 
-      logCon.log(Level.ERROR, "Reference to file can't be resolved. Module: " + mm.aux.getOrder()
+      logCon.log(Level.ERROR, "Reference to file can't be resolved (in global scope). Module: " + mm.aux.getOrder()
         + (mm.meta.getId() != null ? (" (ID='" + mm.meta.getId() + "')") : "") + " Attribute: row: " + fattr.getOrder() + " col: " + clRef.getOrder());
 
       res = false;
      }
+     else
+      fattr.setResolvedScope(ResolveScope.GLOBAL);
     }
+    else
+    {
+     FileAttachmentMeta fmt = cMeta.att4Use.get(fattr.getFileId());
+
+     if( fmt != null )
+      fattr.setResolvedScope(ResolveScope.CLUSTER);
+     else if( fattr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
+     {
+      if(stor.getAttachment(fattr.getFileId()) == null)
+      {
+       AttributeClassRef clRef = fattr.getClassRef();
+
+       logCon.log(Level.ERROR, "Reference to file can't be resolved (in global scope). Module: " + mm.aux.getOrder()
+         + (mm.meta.getId() != null ? (" (ID='" + mm.meta.getId() + "')") : "") + " Attribute: row: " + fattr.getOrder() + " col: " + clRef.getOrder());
+
+       res = false;
+      }
+      else
+       fattr.setResolvedScope(ResolveScope.GLOBAL);
+     }
+
+    }
+
+    FileAttachmentMeta fmt = cMeta.att4Use.get(fattr.getFileId());
+
    }
   }
 
-  
-  for( ModMeta mm : cMeta.mod4Hld.values() )
+  for(ModMeta mm : cMeta.mod4Hld.values())
   {
-   for( AgeFileAttributeWritable fattr : mm.origModule.getFileAttributes() )
+   for(AgeFileAttributeWritable fattr : mm.origModule.getFileAttributes())
    {
     FileAttachmentMeta fam = cMeta.att4Use.get(fattr.getFileId());
-    
-    if( fam == null )
+
+    if(fam == null)
     {
      String sysref = stor.makeFileSysRef(fattr.getFileId());
-     
-     if( stor.getAttachmentBySysRef(sysref) == null )
+
+     if(stor.getAttachmentBySysRef(sysref) == null)
      {
-      logCon.log(Level.ERROR, "Can't connect file attribute: '"+fattr.getFileId()+"'. Module: ID='"+mm.meta.getId()
-        +"' Row: "+fattr.getOrder()+" Col: "+fattr.getClassRef().getOrder());
+      logCon.log(Level.ERROR, "Can't connect file attribute: '" + fattr.getFileId() + "'. Module: ID='" + mm.meta.getId() + "' Row: " + fattr.getOrder()
+        + " Col: " + fattr.getClassRef().getOrder());
       res = false;
      }
-      
+
     }
    }
   }
 
-  
-  if( res )
+  if(res)
    logCon.success();
-  
+
   return res;
  }
 
- 
- private boolean checkRemovedDataFiles( ClustMeta cMeta, AgeStorageAdm stor, LogNode logRoot)
+ private boolean checkRemovedDataFiles(ClustMeta cMeta, AgeStorageAdm stor, LogNode logRoot)
  {
-  
+
   LogNode logRecon = logRoot.branch("Reconnecting file attributes");
-  
-  boolean res = true; 
-  
-  for( DataModule extDM : stor.getDataModules() )
+
+  boolean res = true;
+
+  for(DataModule extDM : stor.getDataModules())
   {
-   if( extDM.getClusterId().equals(cMeta.id) )
+   if(extDM.getClusterId().equals(cMeta.id))
     continue;
-   
-  
-   for( AgeFileAttributeWritable fileAttr : extDM.getFileAttributes() )
+
+   for(AgeFileAttributeWritable fileAttr : extDM.getFileAttributes())
    {
-    if( stor.isFileSysRefGlobal(fileAttr.getFileSysRef()) )
+    if(stor.isFileSysRefGlobal(fileAttr.getFileSysRef()))
     {
 
      FileAttachmentMeta meta = cMeta.att4Del.get(fileAttr.getFileId());
 
-     if( meta != null && meta.isGlobal() )
+     if(meta != null && meta.isGlobal())
      {
       FileAttachmentMeta fm = cMeta.att4Ins.get(fileAttr.getFileId());
-      
-      
-      if( fm == null || !fm.isGlobal() )
+
+      if(fm == null || !fm.isGlobal())
       {
        res = false;
-       logRecon.log(Level.ERROR, "File with ID '" + fileAttr.getFileId() + "' is referred by the module '"
-         + extDM.getId() + "' cluster '" + extDM.getClusterId() + "' and can't be deleted");
+       logRecon.log(Level.ERROR,
+         "File with ID '" + fileAttr.getFileId() + "' is referred by the module '" + extDM.getId() + "' cluster '" + extDM.getClusterId()
+           + "' and can't be deleted");
        continue;
       }
      }
 
      FileMeta fm = cMeta.att4G2L.get(fileAttr.getFileId());
 
-     if( fm != null )
+     if(fm != null)
      {
       res = false;
-      logRecon.log(Level.ERROR, "File with ID '" + fileAttr.getFileId() + "' is referred by the module '"
-        + extDM.getId() + "' cluster '" + extDM.getClusterId() + "' and can't limit visibility");
+      logRecon.log(Level.ERROR,
+        "File with ID '" + fileAttr.getFileId() + "' is referred by the module '" + extDM.getId() + "' cluster '" + extDM.getClusterId()
+          + "' and can't limit visibility");
       continue;
      }
     }
-    
+
    }
   }
-   
-  if( res )
+
+  if(res)
    logRecon.success();
-  
+
   return res;
  }
 
- private boolean reconnectLocalModulesToFiles( ClustMeta cMeta, Collection<Pair<AgeFileAttributeWritable,String>> fileConn, AgeStorageAdm stor, LogNode reconnLog )
+ private boolean reconnectLocalModulesToFiles(ClustMeta cMeta, Collection<Pair<AgeFileAttributeWritable, String>> fileConn, AgeStorageAdm stor,
+   LogNode reconnLog)
  {
   boolean res = true;
-  
-  for( ModMeta mm : new CollectionsUnion<ModMeta>( cMeta.mod4Hld.values(), cMeta.mod4MetaUpd.values()) )
+
+  for(ModMeta mm : new CollectionsUnion<ModMeta>(cMeta.mod4Hld.values(), cMeta.mod4MetaUpd.values()))
   {
-   for( AgeFileAttributeWritable fattr : mm.origModule.getFileAttributes() )
+   for(AgeFileAttributeWritable fattr : mm.origModule.getFileAttributes())
    {
     FileAttachmentMeta fam = cMeta.att4Use.get(fattr.getFileId());
-    
-    if( fam == null )
+
+    if(fam == null)
     {
      String sysref = stor.makeFileSysRef(fattr.getFileId());
-     
-     if( stor.getAttachment(fam.getId(), cMeta.id) != null )
-      fileConn.add(new Pair<AgeFileAttributeWritable, String>(fattr,sysref));
+
+     if(stor.getAttachment(fam.getId(), cMeta.id) != null)
+      fileConn.add(new Pair<AgeFileAttributeWritable, String>(fattr, sysref));
      else
      {
-      reconnLog.log(Level.ERROR, "Can't connect file attribute: '"+fattr.getFileId()+"'. Module: ID='"+mm.meta.getId()
-        +"' Row: "+fattr.getOrder()+" Col: "+fattr.getClassRef().getOrder());
+      reconnLog.log(Level.ERROR,
+        "Can't connect file attribute: '" + fattr.getFileId() + "'. Module: ID='" + mm.meta.getId() + "' Row: " + fattr.getOrder() + " Col: "
+          + fattr.getClassRef().getOrder());
       res = false;
      }
-      
+
     }
     else
     {
-     String newSysRef = fam.isGlobal()?stor.makeFileSysRef(fam.getId()):stor.makeFileSysRef(fam.getId(), cMeta.id);
-    
-     if( ! newSysRef.equals(fattr.getFileSysRef()) )
-      fileConn.add(new Pair<AgeFileAttributeWritable, String>(fattr,newSysRef));
+     String newSysRef = fam.isGlobal() ? stor.makeFileSysRef(fam.getId()) : stor.makeFileSysRef(fam.getId(), cMeta.id);
+
+     if(!newSysRef.equals(fattr.getFileSysRef()))
+      fileConn.add(new Pair<AgeFileAttributeWritable, String>(fattr, newSysRef));
 
     }
    }
   }
-  
+
   return res;
  }
- 
+
  private boolean connectNewObjectAttributes(ClustMeta cstMeta, AgeStorageAdm stor, LogNode logRoot)
  {
-  
-  LogNode connLog = logRoot.branch("Connecting data module"+(cstMeta.incomingMods.size()>1?"s":"")+" to the main graph");
+
+  LogNode connLog = logRoot.branch("Connecting data module" + (cstMeta.incomingMods.size() > 1 ? "s" : "") + " to the main graph");
 
   LogNode extAttrLog = connLog.branch("Connecting external object attributes");
   boolean extAttrRes = true;
 
-  
   Stack<Attributed> attrStk = new Stack<Attributed>();
-  
-  int n=0;
-  for( ModMeta mm : cstMeta.incomingMods )
+
+  int n = 0;
+  for(ModMeta mm : cstMeta.incomingMods)
   {
    n++;
-   
-   if( mm.newModule == null )
+
+   if(mm.newModule == null)
     continue;
-   
+
    boolean mdres = true;
-   
-   LogNode extAttrModLog = extAttrLog.branch("Processing module: "+mm.aux.getOrder());
-   
-   for( AgeObjectWritable obj : mm.newModule.getObjects() )
+
+   LogNode extAttrModLog = extAttrLog.branch("Processing module: " + mm.aux.getOrder());
+
+   for(AgeObjectWritable obj : mm.newModule.getObjects())
    {
     attrStk.clear();
     attrStk.push(obj);
-    
-    mdres = connectExternalAttrs( attrStk, stor, cstMeta, mm, extAttrModLog  );
-    
-    if( obj.getRelations() != null )
+
+    mdres = connectExternalAttrs(attrStk, stor, cstMeta, mm, extAttrModLog);
+
+    if(obj.getRelations() != null)
     {
-     for( AgeRelationWritable rl : obj.getRelations() )
+     for(AgeRelationWritable rl : obj.getRelations())
      {
       attrStk.clear();
       attrStk.push(rl);
-      
-      mdres = mdres && connectExternalAttrs( attrStk, stor, cstMeta, mm, extAttrModLog  );
+
+      mdres = mdres && connectExternalAttrs(attrStk, stor, cstMeta, mm, extAttrModLog);
      }
     }
-    
 
     extAttrRes = extAttrRes && mdres;
    }
-   
-   if( mdres )
+
+   if(mdres)
     extAttrModLog.success();
 
   }
-  
-  if( extAttrRes )
+
+  if(extAttrRes)
    extAttrLog.success();
 
   return extAttrRes;
  }
 
- 
- private boolean connectExternalAttrs( Stack<Attributed> atStk, AgeStorageAdm stor, ClustMeta cstMeta , ModMeta cmod, LogNode log )
+ private boolean connectExternalAttrs(Stack<Attributed> atStk, AgeStorageAdm stor, ClustMeta cstMeta, ModMeta cmod, LogNode log)
  {
   boolean res = true;
-  
+
   Attributed atInst = atStk.peek();
-  
-  if( atInst.getAttributes().isEmpty() )
+
+  if(atInst.getAttributes().isEmpty())
    return true;
-  
-  for( AgeAttribute attr : atInst.getAttributes() )
+
+  for(AgeAttribute attr : atInst.getAttributes())
   {
-   if( attr instanceof AgeExternalObjectAttributeWritable )
+   if(attr instanceof AgeExternalObjectAttributeWritable)
    {
-    AgeExternalObjectAttributeWritable extAttr = (AgeExternalObjectAttributeWritable)attr;
-    
+    AgeExternalObjectAttributeWritable extAttr = (AgeExternalObjectAttributeWritable) attr;
+
     String ref = extAttr.getTargetObjectId();
 
     AgeObject tgObj = resolveTarget(extAttr, cstMeta);
-    
-    if( tgObj == null )
+
+    if(tgObj == null)
     {
-     AgeObject obj  = (AgeObject)atStk.get(0);
-     
+     AgeObject obj = (AgeObject) atStk.get(0);
+
      String attrName = attr.getAgeElClass().getName();
-     
-     if( atStk.size() > 1 )
+
+     if(atStk.size() > 1)
      {
       StringBuilder sb = new StringBuilder(200);
-      
+
       sb.append(atStk.get(1).getAttributedClass().getName());
-      
-      for( int i = 2; i < atStk.size(); i++ )
+
+      for(int i = 2; i < atStk.size(); i++)
        sb.append("[").append(atStk.get(i).getAttributedClass().getName()).append("]");
-      
+
       sb.append("[").append(attr.getAgeElClass().getName()).append("]");
-      
+
       attrName = sb.toString();
      }
-     
-     log.log(Level.ERROR,"Invalid external reference: '"+ref+"'. Target object not found. Source object: '"+obj.getId()+"' (Class: "+obj.getAgeElClass()
-       +", Order: "+obj.getOrder()+"). Attribute: "+attrName+" Order: "+attr.getOrder());
+
+     log.log(Level.ERROR,
+       "Invalid external reference: '" + ref + "'. Target object not found. Source object: '" + obj.getId() + "' (Class: " + obj.getAgeElClass()
+         + ", Order: " + obj.getOrder() + "). Attribute: " + attrName + " Order: " + attr.getOrder());
      res = false;
     }
     else
     {
-     if( ! tgObj.getAgeElClass().isClassOrSubclass(extAttr.getAgeElClass().getTargetClass()) )
+     if(!tgObj.getAgeElClass().isClassOrSubclass(extAttr.getAgeElClass().getTargetClass()))
      {
-      AgeObject obj  = (AgeObject)atStk.get(0);
+      AgeObject obj = (AgeObject) atStk.get(0);
 
       String attrName = attr.getAgeElClass().getName();
-      if( atStk.size() > 1 )
+      if(atStk.size() > 1)
       {
        attrName = atStk.get(1).getAttributedClass().getName();
-       for( int i = 2; i < atStk.size(); i++ )
-        attrName += "["+atStk.get(i).getAttributedClass().getName()+"]";
-       
-       attrName+= "["+attr.getAgeElClass().getName()+"]";
+       for(int i = 2; i < atStk.size(); i++)
+        attrName += "[" + atStk.get(i).getAttributedClass().getName() + "]";
+
+       attrName += "[" + attr.getAgeElClass().getName() + "]";
       }
 
-      log.log(Level.ERROR,"Inappropriate target object's (Id: '"+ref+"') class: "+tgObj.getAgeElClass()
-        +". Expected class: "+extAttr.getAgeElClass().getTargetClass()+" Source object: '"+obj.getId()+"' (Class: "+obj.getAgeElClass()
-        +", Order: "+obj.getOrder()+"). Attribute: "+attrName+" Order: "+attr.getOrder());
+      log.log(Level.ERROR, "Inappropriate target object's (Id: '" + ref + "') class: " + tgObj.getAgeElClass() + ". Expected class: "
+        + extAttr.getAgeElClass().getTargetClass() + " Source object: '" + obj.getId() + "' (Class: " + obj.getAgeElClass() + ", Order: " + obj.getOrder()
+        + "). Attribute: " + attrName + " Order: " + attr.getOrder());
       res = false;
      }
      else
@@ -2965,12 +3060,12 @@ public class SubmissionManager
     }
 
    }
-   
+
    atStk.push(attr);
-   res = res && connectExternalAttrs(atStk,stor, cstMeta, cmod, log);
+   res = res && connectExternalAttrs(atStk, stor, cstMeta, cmod, log);
    atStk.pop();
   }
- 
+
   return res;
  }
 
@@ -2993,6 +3088,5 @@ public class SubmissionManager
  {
   return submissionDB;
  }
-
 
 }

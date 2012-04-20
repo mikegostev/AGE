@@ -1,17 +1,22 @@
 package uk.ac.ebi.age.model.impl.v4;
 
+import java.io.File;
+
 import uk.ac.ebi.age.model.AttributeClassRef;
+import uk.ac.ebi.age.model.DataModule;
 import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.impl.v3.AgeStringAttributeImpl;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
+import uk.ac.ebi.age.storage.AgeStorage;
 
 public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeFileAttributeWritable
 {
  private static final long serialVersionUID = 4L;
 
- private transient String fileSysRef;
+// private transient String fileSysRef;
  private ResolveScope scope;
+ private ResolveScope resolvedScope;
 
  public AgeFileAttributeImpl(AttributeClassRef attrClass, AttributedWritable host, ResolveScope scope)
  {
@@ -31,22 +36,36 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
   super.setValue(fRef);
  }
 
- @Override
- public String getFileSysRef()
- {
-  return fileSysRef;
- }
-
- @Override
- public void setFileSysRef(String fId)
- {
-  fileSysRef = fId;
- }
 
  @Override
  public ResolveScope getTargetResolveScope()
  {
   return scope;
+ }
+
+ @Override
+ public ResolveScope getResolvedScope()
+ {
+  return resolvedScope;
+ }
+
+ @Override
+ public void setResolvedScope(ResolveScope resolvedScope)
+ {
+  this.resolvedScope = resolvedScope;
+ }
+
+ @Override
+ public File getFile()
+ {
+  DataModule dm = getMasterObject().getDataModule();
+  
+  AgeStorage stor = dm.getStorage();
+  
+  if( getResolvedScope() == ResolveScope.GLOBAL )
+   return stor.getAttachment( (String)getValue() );
+
+  return stor.getAttachment((String)getValue(), dm.getClusterId() );
  }
 
 }

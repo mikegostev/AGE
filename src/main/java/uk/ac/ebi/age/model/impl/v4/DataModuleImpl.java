@@ -24,6 +24,7 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
+import uk.ac.ebi.age.storage.AgeStorage;
 
 import com.pri.util.collection.Collections;
 import com.pri.util.collection.Collections.Mapper;
@@ -48,6 +49,8 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
    return key.getId();
   }
  };
+
+ private transient AgeStorage ageStorage;
  
 // private long version;
  private List<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
@@ -387,5 +390,17 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  public ModuleKey getModuleKey()
  {
   return modKey;
+ }
+
+ @Override
+ public AgeStorage getStorage()
+ {
+  return ageStorage;
+ }
+
+ @Override
+ public void setStorage(AgeStorage ageStorage)
+ {
+  this.ageStorage = ageStorage;
  }
 }

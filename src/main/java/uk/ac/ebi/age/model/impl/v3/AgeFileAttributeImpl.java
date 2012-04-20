@@ -47,4 +47,10 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
   fileSysRef = fId;
  }
 
+ @Override
+ public ResolveScope getResolvedScope()
+ {
+  throw new UnsupportedOperationException();
+ }
+
 }

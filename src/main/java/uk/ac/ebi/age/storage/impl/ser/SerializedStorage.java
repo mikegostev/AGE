@@ -37,7 +37,6 @@ import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
 import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
-import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
@@ -416,6 +415,8 @@ public class SerializedStorage implements AgeStorageAdm
       if( obj.getIdScope() == IdScope.GLOBAL )
        globalIndexMap.put(obj.getId(), obj);
      }
+    
+     dm.setStorage(this);
     }
     
    }
@@ -688,6 +689,8 @@ public class SerializedStorage implements AgeStorageAdm
 
    for( DataModuleWritable mod : moduleMap.values() )
    {
+    mod.setStorage(this);
+    
     Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(mod.getClusterId());
 
     
@@ -765,7 +768,8 @@ public class SerializedStorage implements AgeStorageAdm
       
      }
     }
-   
+
+/*    
     if( mod.getFileAttributes() != null )
     {
      for(AgeFileAttributeWritable fattr : mod.getFileAttributes())
@@ -786,6 +790,8 @@ public class SerializedStorage implements AgeStorageAdm
       }
      }
     }
+ */
+    
    }
    
    String cClustID = null;
@@ -931,7 +937,7 @@ public class SerializedStorage implements AgeStorageAdm
 
  private void saveDataModule(DataModuleWritable sm) throws ModuleStoreException
  {
-  File modFile = dataDepot.getFilePath( M2codec.encode( sm.getId() ) );
+  File modFile = dataDepot.getFilePath( sm.getClusterId().length()+sm.getClusterId()+sm.getId() );
   
   try
   {
@@ -957,7 +963,7 @@ public class SerializedStorage implements AgeStorageAdm
   if( dm == null )
    return false;
   
-  File modFile = dataDepot.getFilePath( dm.getId() );
+  File modFile = dataDepot.getFilePath( mk.getClusterId().length()+mk.getClusterId()+mk.getModuleId() );
   
   if( ! modFile.delete() )
    throw new ModuleStoreException("Can't delete module file: "+modFile.getAbsolutePath());
@@ -965,7 +971,8 @@ public class SerializedStorage implements AgeStorageAdm
   if( dm.getExternalRelations() != null )
   {
    for( AgeExternalRelationWritable rel : dm.getExternalRelations() )
-    rel.getTargetObject().removeRelation(rel.getInverseRelation());
+    if( rel.getInverseRelation().isInferred() )
+     rel.getTargetObject().removeRelation(rel.getInverseRelation());
   }
   
   Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
@@ -983,7 +990,8 @@ public class SerializedStorage implements AgeStorageAdm
   
   moduleMap.remove(mk);
  
-  updateIndices(null, true);
+  if( ! maintenanceMode )
+   updateIndices(null, true);
   
   return true;
  }

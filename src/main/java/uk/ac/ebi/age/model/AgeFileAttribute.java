@@ -1,9 +1,15 @@
 package uk.ac.ebi.age.model;
 
+import java.io.File;
+
 public interface AgeFileAttribute extends AgeAttribute
 {
  String getFileId();
  ResolveScope getTargetResolveScope();
+ 
+ ResolveScope getResolvedScope();
 
- String getFileSysRef();
+ File getFile();
+ 
+// String getFileSysRef();
 }
