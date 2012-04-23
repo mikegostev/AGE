@@ -4,18 +4,18 @@ import java.util.Collection;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
+import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 
 import com.pri.util.Pair;
-import com.pri.util.collection.CollectionMapCollection;
 
 public class ConnectionInfo
 {
  private Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> objectAttributesReconnection;
  private Collection<Pair<AgeFileAttributeWritable, Boolean>>             fileAttributesResolution;
  private Collection<AgeRelationWritable>                                 relationsRemoval;
- private Collection<AgeRelationWritable>                                 relationsReconnection;
+ private Collection<AgeExternalRelationWritable>                                 relationsReconnection;
  private Collection<AgeRelationWritable>                                 relationsAttachment;
 
  public Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> getObjectAttributesReconnection()
@@ -48,19 +48,14 @@ public class ConnectionInfo
   this.relationsRemoval = relationsRemoval;
  }
 
- public Collection<AgeRelationWritable> getRelationsReconnection()
+ public Collection<AgeExternalRelationWritable> getRelationsReconnection()
  {
   return relationsReconnection;
  }
 
- public void setRelationsReconnection(Collection<AgeRelationWritable> relationsReconnection)
+ public void setRelationsReconnection(Collection<AgeExternalRelationWritable> relationsReconnection)
  {
   this.relationsReconnection = relationsReconnection;
- }
-
- public void setRelationsAttachment(CollectionMapCollection<AgeRelationWritable> relAtt )
- {
-  relationsAttachment = relAtt;
  }
 
  public Collection<AgeRelationWritable> getRelationsAttachment()

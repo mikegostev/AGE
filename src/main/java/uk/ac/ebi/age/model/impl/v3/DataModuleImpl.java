@@ -24,6 +24,7 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
+import uk.ac.ebi.age.storage.AgeStorage;
 
 import com.pri.util.collection.Collections;
 import com.pri.util.collection.Collections.Mapper;
@@ -61,6 +62,8 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
 // private String descr;
  
  private String clusterId;
+ 
+ private transient AgeStorage storage;
 
  public DataModuleImpl(ContextSemanticModel sm)
  {
@@ -405,5 +408,17 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  {
   clusterId = key.getClusterId();
   id = key.getModuleId();
+ }
+
+
+ public AgeStorage getStorage()
+ {
+  return storage;
+ }
+
+
+ public void setStorage(AgeStorage storage)
+ {
+  this.storage = storage;
  }
 }

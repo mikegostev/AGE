@@ -17,6 +17,7 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
+import uk.ac.ebi.age.storage.AgeStorage;
 
 class DataModuleImpl  implements DataModuleWritable, Serializable
 {
@@ -30,17 +31,12 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  private Collection<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
  private ContextSemanticModel model;
  private Collection<AgeExternalRelationWritable> extRels ;
-// private Collection<AgeExternalObjectAttributeWritable> extAttrs ;
-
-// private Map<AgeRelationClass, Collection<AgeRelationWritable>> rels ;
-// private Collection<AgeRelationWritable> relLst;
  
-// private Collection<SubmissionBlock> blocks = new ArrayList<SubmissionBlock>(10);
-// private Collection<SubmissionBlock> blocks = new ArrayList<SubmissionBlock>(10);
-
  private String id;
  private String descr;
 
+ private transient AgeStorage ageStorage;
+ 
  public DataModuleImpl(ContextSemanticModel sm)
  {
   model = sm;
@@ -270,5 +266,17 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  public void setModuleKey(ModuleKey key)
  {
   throw new UnsupportedOperationException();
+ }
+
+
+ public AgeStorage getStorage()
+ {
+  return ageStorage;
+ }
+
+
+ public void setStorage(AgeStorage ageStorage)
+ {
+  this.ageStorage = ageStorage;
  }
 }

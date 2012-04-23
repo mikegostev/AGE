@@ -13,7 +13,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -431,35 +430,33 @@ public class SerializedStorage implements AgeStorageAdm
      cn.getFirst().setTargetObject(cn.getSecond());
    }
    
-   if( connectionInfo != null)
+   if( connectionInfo.getRelationsReconnection() != null)
    {
-    for(Pair<AgeExternalRelationWritable, AgeObjectWritable> cn : relConnections)
-     cn.getFirst().setTargetObject(cn.getSecond());
-   }
-
-   for(Pair<AgeFileAttributeWritable, String> fc : fileConn)
-    fc.getFirst().setFileSysRef(fc.getSecond());
-
-   if(relationDetachMap != null)
-   {
-    for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : relationDetachMap.entrySet())
-     for(AgeRelationWritable rel : me.getValue())
-      me.getKey().removeRelation(rel);
-   }
-   // stor.removeRelations(me.getKey().getId(),me.getValue());
-
-   for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : invRelMap.entrySet())
-    for(AgeRelationWritable rel : me.getValue())
-     me.getKey().addRelation(rel);
-
-   for(ModMeta dm : clusterMeta.incomingMods)
-   {
-    if(dm.newModule != null && dm.newModule.getExternalRelations() != null)
+    for(AgeExternalRelationWritable rel : connectionInfo.getRelationsReconnection())
     {
-     for(AgeExternalRelationWritable rel : dm.newModule.getExternalRelations())
-      rel.getInverseRelation().setInverseRelation(rel);
+     rel.getInverseRelation().setTargetObject( rel.getSourceObject() );
+     rel.getInverseRelation().setInverseRelation(rel);
     }
    }
+
+   if( connectionInfo.getFileAttributesResolution() != null)
+   {
+    for(Pair<AgeFileAttributeWritable, Boolean> fc : connectionInfo.getFileAttributesResolution())
+     fc.getFirst().setResolvedScope(fc.getSecond()?ResolveScope.GLOBAL:ResolveScope.CLUSTER);
+   }
+
+   if( connectionInfo.getRelationsRemoval() != null )
+   {
+    for( AgeRelationWritable rel : connectionInfo.getRelationsRemoval() )
+     rel.getSourceObject().removeRelation(rel);
+   }
+   
+   if( connectionInfo.getRelationsAttachment() != null )
+   {
+    for( AgeRelationWritable rel : connectionInfo.getRelationsRemoval() )
+     rel.getSourceObject().addRelation(rel);
+   }
+
    
    if( ! maintenanceMode )
     updateIndices(mods2Ins, changed);

@@ -1,5 +1,7 @@
 package uk.ac.ebi.age.model.impl.v3;
 
+import java.io.File;
+
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
@@ -8,8 +10,6 @@ import uk.ac.ebi.age.model.writable.AttributedWritable;
 public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeFileAttributeWritable
 {
  private static final long serialVersionUID = 3L;
-
- private transient String fileSysRef;
 
  public AgeFileAttributeImpl(AttributeClassRef attrClass, AttributedWritable host)
  {
@@ -35,20 +35,21 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
   return ResolveScope.CASCADE_CLUSTER;
  }
 
- @Override
- public String getFileSysRef()
- {
-  return fileSysRef;
- }
-
- @Override
- public void setFileSysRef(String fId)
- {
-  fileSysRef = fId;
- }
 
  @Override
  public ResolveScope getResolvedScope()
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public File getFile()
+ {
+  throw new UnsupportedOperationException();
+ }
+
+ @Override
+ public void setResolvedScope(ResolveScope resolvedScope)
  {
   throw new UnsupportedOperationException();
  }

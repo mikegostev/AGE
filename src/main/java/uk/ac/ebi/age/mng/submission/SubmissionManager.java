@@ -65,6 +65,7 @@ import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
 
 import com.pri.util.Extractor;
 import com.pri.util.Pair;
+import com.pri.util.collection.CollectionMapCollection;
 import com.pri.util.collection.CollectionsUnion;
 import com.pri.util.collection.ExtractorCollection;
 import com.pri.util.stream.StreamPump;
@@ -787,14 +788,14 @@ public class SubmissionManager
    
    
    Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable, AgeObject>>();
-   Collection< AgeRelationWritable > relConnections = null;
+   Collection< AgeExternalRelationWritable > relConnections = null;
    Map<AgeObjectWritable, Set<AgeRelationWritable>> relationDetachMap = null;
 
    connectionInfo.setObjectAttributesReconnection(extAttrConnector);
 
    if(clusterMeta.mod4DataUpd.size() != 0 || clusterMeta.mod4Ins.size() != 0 || clusterMeta.mod4Del.size() != 0)
    {
-    relConnections = new ArrayList< AgeRelationWritable >();
+    relConnections = new ArrayList< AgeExternalRelationWritable >();
     relationDetachMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
 
     connectionInfo.setRelationsRemoval( new com.pri.util.collection.CollectionMapCollection<AgeRelationWritable>(relationDetachMap) );
@@ -1521,7 +1522,6 @@ public class SubmissionManager
     return false;
    }
 
-   Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable, AgeObject>>();
 
    Map<AgeObjectWritable, Set<AgeRelationWritable>> invRelMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
    // invRelMap contains a map of external objects to sets of prepared inverse
@@ -1666,12 +1666,16 @@ public class SubmissionManager
 
    LogNode updtLog = logRoot.branch("Updating storage");
 
+   ConnectionInfo connInfo = new ConnectionInfo();
+   
+   connInfo.setRelationsAttachment( new CollectionMapCollection<AgeRelationWritable>(invRelMap) );
+   
    try
    {
     if(cstMeta.mod4DataUpd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0)
     {
 
-     ageStorage.update(new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Ins, modExtractor), null);
+     ageStorage.update(new ExtractorCollection<ModMeta, DataModuleWritable>(cstMeta.mod4Ins, modExtractor), null, connInfo);
 
      updtLog.success();
     }
@@ -1732,27 +1736,6 @@ public class SubmissionManager
     }
 
    }
-
-   if(extAttrConnector != null)
-   {
-    for(Pair<AgeExternalObjectAttributeWritable, AgeObject> cn : extAttrConnector)
-     cn.getFirst().setTargetObject(cn.getSecond());
-   }
-
-
-   for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : invRelMap.entrySet())
-    for(AgeRelationWritable rel : me.getValue())
-     me.getKey().addRelation(rel);
-
-   for(ModMeta dm : cstMeta.incomingMods)
-   {
-    if(dm.newModule != null && dm.newModule.getExternalRelations() != null)
-    {
-     for(AgeExternalRelationWritable rel : dm.newModule.getExternalRelations())
-      rel.getInverseRelation().setInverseRelation(rel);
-    }
-   }
-   // stor.addRelations(me.getKey().getId(),me.getValue());
 
   }
   finally
@@ -1828,12 +1811,12 @@ public class SubmissionManager
    // XXX connection to main graph
 
    Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable, AgeObject>>();
-   Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable>> relConnections = null;
+   Collection< AgeExternalRelationWritable >  relConnections = null;
    Map<AgeObjectWritable, Set<AgeRelationWritable>> relationDetachMap = null;
 
    if(cstMeta.mod4Del.size() != 0)
    {
-    relConnections = new ArrayList<Pair<AgeExternalRelationWritable, AgeObjectWritable>>();
+    relConnections = new ArrayList<AgeExternalRelationWritable>();
     relationDetachMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
 
     if(!reconnectExternalObjectAttributes(cstMeta, extAttrConnector, logRoot))
@@ -1921,13 +1904,19 @@ public class SubmissionManager
      fdelLog.success();
    }
 
+   ConnectionInfo connInfo = new ConnectionInfo();
+   
+   connInfo.setObjectAttributesReconnection( extAttrConnector );
+   connInfo.setRelationsReconnection( relConnections );
+   connInfo.setRelationsRemoval( new CollectionMapCollection<AgeRelationWritable>(relationDetachMap) );
+   
    if(cstMeta.mod4DataUpd.size() > 0 || cstMeta.mod4Del.size() > 0 || cstMeta.mod4Ins.size() > 0)
    {
     LogNode updtLog = logRoot.branch("Updating storage");
 
     try
     {
-     ageStorage.update(null, new ExtractorCollection<ModMeta, ModuleKey>(cstMeta.mod4Del.values(), modkeyExtractor));
+     ageStorage.update(null, new ExtractorCollection<ModMeta, ModuleKey>(cstMeta.mod4Del.values(), modkeyExtractor),connInfo);
 
      updtLog.success();
     }
@@ -1963,18 +1952,6 @@ public class SubmissionManager
     return false;
    }
 
-   if(relConnections != null)
-   {
-    for(Pair<AgeExternalRelationWritable, AgeObjectWritable> cn : relConnections)
-     cn.getFirst().setTargetObject(cn.getSecond());
-   }
-
-   if(relationDetachMap != null)
-   {
-    for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : relationDetachMap.entrySet())
-     for(AgeRelationWritable rel : me.getValue())
-      me.getKey().removeRelation(rel);
-   }
 
   }
   finally
@@ -2297,7 +2274,7 @@ public class SubmissionManager
  }
 
  @SuppressWarnings("unchecked")
- private boolean reconnectExternalRelations(ClustMeta cstMeta, Collection<AgeRelationWritable> relConn,
+ private boolean reconnectExternalRelations(ClustMeta cstMeta, Collection<AgeExternalRelationWritable> relConn,
    Map<AgeObjectWritable, Set<AgeRelationWritable>> detachedRelMap, LogNode logRoot)
  {
   LogNode logRecon = logRoot.branch("Reconnecting external relations");
