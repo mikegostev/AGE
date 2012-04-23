@@ -19,7 +19,7 @@ public interface AgeStorageAdm extends AgeStorage
 
  
 // void storeDataModule(DataModuleWritable sbm) throws RelationResolveException, ModuleStoreException;
- void update(Collection<DataModuleWritable> modListToIns, Collection<ModuleKey> modListToDel) throws RelationResolveException, ModuleStoreException;
+ void update(Collection<DataModuleWritable> modListToIns, Collection<ModuleKey> modListToDel, ConnectionInfo conninf) throws RelationResolveException, ModuleStoreException;
 // void removeDataModule(Collection<String> ids);
 
  boolean updateSemanticModel( SemanticModel sm, LogNode log ); // throws ModelStoreException;

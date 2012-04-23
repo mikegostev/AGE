@@ -39,10 +39,6 @@ public interface FileAttachmentMeta
 
  void setModifier(String modifier);
 
-// void setSystemId(String gid);
-//
-// String getSystemId();
-
  long getFileVersion();
 
  void setFileVersion(long fileVersion);

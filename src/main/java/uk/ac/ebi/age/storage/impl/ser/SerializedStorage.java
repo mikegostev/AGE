@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -37,11 +38,13 @@ import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
 import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
 import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
+import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
+import uk.ac.ebi.age.storage.ConnectionInfo;
 import uk.ac.ebi.age.storage.DataChangeListener;
 import uk.ac.ebi.age.storage.DataModuleReaderWriter;
 import uk.ac.ebi.age.storage.MaintenanceModeListener;
@@ -70,6 +73,7 @@ import uk.ac.ebi.mg.time.UniqTime;
 
 import com.pri.util.Extractor;
 import com.pri.util.M2codec;
+import com.pri.util.Pair;
 import com.pri.util.StringUtils;
 import com.pri.util.collection.CollectionsUnion;
 import com.pri.util.collection.ExtractorCollection;
@@ -369,7 +373,7 @@ public class SerializedStorage implements AgeStorageAdm
 // }
 
  @Override
- public void update( Collection<DataModuleWritable> mods2Ins, Collection<ModuleKey> mods2Del ) throws RelationResolveException, ModuleStoreException
+ public void update( Collection<DataModuleWritable> mods2Ins, Collection<ModuleKey> mods2Del, ConnectionInfo connectionInfo ) throws RelationResolveException, ModuleStoreException
  {
   if( ! master )
    throw new ModuleStoreException("Only the master instance can store data");
@@ -419,6 +423,42 @@ public class SerializedStorage implements AgeStorageAdm
      dm.setStorage(this);
     }
     
+   }
+   
+   if( connectionInfo.getObjectAttributesReconnection() != null )
+   {
+    for(Pair<AgeExternalObjectAttributeWritable, AgeObject> cn : connectionInfo.getObjectAttributesReconnection())
+     cn.getFirst().setTargetObject(cn.getSecond());
+   }
+   
+   if( connectionInfo != null)
+   {
+    for(Pair<AgeExternalRelationWritable, AgeObjectWritable> cn : relConnections)
+     cn.getFirst().setTargetObject(cn.getSecond());
+   }
+
+   for(Pair<AgeFileAttributeWritable, String> fc : fileConn)
+    fc.getFirst().setFileSysRef(fc.getSecond());
+
+   if(relationDetachMap != null)
+   {
+    for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : relationDetachMap.entrySet())
+     for(AgeRelationWritable rel : me.getValue())
+      me.getKey().removeRelation(rel);
+   }
+   // stor.removeRelations(me.getKey().getId(),me.getValue());
+
+   for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : invRelMap.entrySet())
+    for(AgeRelationWritable rel : me.getValue())
+     me.getKey().addRelation(rel);
+
+   for(ModMeta dm : clusterMeta.incomingMods)
+   {
+    if(dm.newModule != null && dm.newModule.getExternalRelations() != null)
+    {
+     for(AgeExternalRelationWritable rel : dm.newModule.getExternalRelations())
+      rel.getInverseRelation().setInverseRelation(rel);
+    }
    }
    
    if( ! maintenanceMode )

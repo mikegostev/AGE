@@ -56,6 +56,7 @@ import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.service.id.IdGenerator;
 import uk.ac.ebi.age.service.submission.SubmissionDB;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
+import uk.ac.ebi.age.storage.ConnectionInfo;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
 import uk.ac.ebi.age.transaction.Transaction;
 import uk.ac.ebi.age.transaction.TransactionException;
@@ -109,80 +110,25 @@ public class SubmissionManager
 
  private static class ClustMeta
  {
-  List<ModMeta>                           incomingMods   = new ArrayList<SubmissionManager.ModMeta>();       // New
-                                                                                                              // modules
-                                                                                                              // and
-                                                                                                              // modules
-                                                                                                              // with
-                                                                                                              // data
-                                                                                                              // update
-                                                                                                              // (Ins+Upd)
-                                                                                                              // but
-                                                                                                              // in
-                                                                                                              // original
-                                                                                                              // order
+  List<ModMeta> incomingMods = new ArrayList<SubmissionManager.ModMeta>(); //New modules and modules with data update (Ins+Upd) but in original order
+  
+  List<ModMeta> mod4Use = new ArrayList<SubmissionManager.ModMeta>(); //Ins+Upd+Hld+MetaUpd convenience map
+ 
+  List<ModMeta> mod4Ins = new ArrayList<SubmissionManager.ModMeta>();
+  
+  Map<String,ModMeta> mod4MetaUpd = new HashMap<String, SubmissionManager.ModMeta>(); //Modules with meta (description) update only
+  Map<String,ModMeta> mod4DataUpd = new HashMap<String, SubmissionManager.ModMeta>(); //Modules with data update
+  Map<String,ModMeta> mod4Del = new HashMap<String, SubmissionManager.ModMeta>(); //Modules to be deleted
+  Map<String,ModMeta> mod4Hld = new HashMap<String, SubmissionManager.ModMeta>(); //Modules to be retained (fully untouched, even meta)
 
-  List<ModMeta>                           mod4Use        = new ArrayList<SubmissionManager.ModMeta>();       // Ins+Upd+Hld+MetaUpd
-                                                                                                              // convenience
-                                                                                                              // map
-
-  List<ModMeta>                           mod4Ins        = new ArrayList<SubmissionManager.ModMeta>();
-
-  Map<String, ModMeta>                    mod4MetaUpd    = new HashMap<String, SubmissionManager.ModMeta>(); // Modules
-                                                                                                              // with
-                                                                                                              // meta
-                                                                                                              // (description)
-                                                                                                              // update
-                                                                                                              // only
-  Map<String, ModMeta>                    mod4DataUpd    = new HashMap<String, SubmissionManager.ModMeta>(); // Modules
-                                                                                                              // with
-                                                                                                              // data
-                                                                                                              // update
-  Map<String, ModMeta>                    mod4Del        = new HashMap<String, SubmissionManager.ModMeta>(); // Modules
-                                                                                                              // to
-                                                                                                              // be
-                                                                                                              // deleted
-  Map<String, ModMeta>                    mod4Hld        = new HashMap<String, SubmissionManager.ModMeta>(); // Modules
-                                                                                                              // to
-                                                                                                              // be
-                                                                                                              // retained
-                                                                                                              // (fully
-                                                                                                              // untouched,
-                                                                                                              // even
-                                                                                                              // meta)
-
-  Map<String, FileAttachmentMeta>         att4Ins        = new HashMap<String, FileAttachmentMeta>();        // New
-                                                                                                              // files
-  Map<String, FileMeta>                   att4Upd        = new HashMap<String, FileMeta>();                  // Files
-                                                                                                              // with
-                                                                                                              // content
-                                                                                                              // update
-  Map<String, FileMeta>                   att4MetaUpd    = new HashMap<String, FileMeta>();                  // Files
-                                                                                                              // with
-                                                                                                              // meta
-                                                                                                              // update
-                                                                                                              // only
-  Map<String, FileAttachmentMeta>         att4Del        = new HashMap<String, FileAttachmentMeta>();
-  Map<String, FileMeta>                   att4G2L        = new HashMap<String, FileMeta>();                  // Files
-                                                                                                              // that
-                                                                                                              // reduce
-                                                                                                              // visibility
-  Map<String, FileMeta>                   att4L2G        = new HashMap<String, FileMeta>();                  // Files
-                                                                                                              // that
-                                                                                                              // increase
-                                                                                                              // visibility
-  Map<String, FileAttachmentMeta>         att4Hld        = new HashMap<String, FileAttachmentMeta>();        // Files
-                                                                                                              // that
-                                                                                                              // keep
-                                                                                                              // both
-                                                                                                              // content
-                                                                                                              // and
-                                                                                                              // visibility
-                                                                                                              // untouched
-  Map<String, FileAttachmentMeta>         att4Use        = new HashMap<String, FileAttachmentMeta>();        // New
-                                                                                                              // full
-                                                                                                              // file
-                                                                                                              // set
+  Map<String,FileAttachmentMeta> att4Ins = new HashMap<String, FileAttachmentMeta>(); //New files
+  Map<String,FileMeta> att4Upd = new HashMap<String, FileMeta>(); //Files with content update
+  Map<String,FileMeta> att4MetaUpd = new HashMap<String, FileMeta>(); //Files with meta update only
+  Map<String,FileAttachmentMeta> att4Del = new HashMap<String, FileAttachmentMeta>();
+  Map<String,FileMeta> att4G2L = new HashMap<String, FileMeta>(); //Files that reduce visibility
+  Map<String,FileMeta> att4L2G = new HashMap<String, FileMeta>(); //Files that increase visibility
+  Map<String,FileAttachmentMeta> att4Hld = new HashMap<String, FileAttachmentMeta>(); //Files that keep both content and visibility untouched
+  Map<String,FileAttachmentMeta> att4Use = new HashMap<String, FileAttachmentMeta>(); //New full file set
 
   public String                           id;
 
@@ -837,15 +783,23 @@ public class SubmissionManager
     return false;
    }
 
+   ConnectionInfo connectionInfo = new ConnectionInfo();
+   
+   
    Collection<Pair<AgeExternalObjectAttributeWritable, AgeObject>> extAttrConnector = new ArrayList<Pair<AgeExternalObjectAttributeWritable, AgeObject>>();
-   Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable>> relConnections = null;
+   Collection< AgeRelationWritable > relConnections = null;
    Map<AgeObjectWritable, Set<AgeRelationWritable>> relationDetachMap = null;
+
+   connectionInfo.setObjectAttributesReconnection(extAttrConnector);
 
    if(clusterMeta.mod4DataUpd.size() != 0 || clusterMeta.mod4Ins.size() != 0 || clusterMeta.mod4Del.size() != 0)
    {
-    relConnections = new ArrayList<Pair<AgeExternalRelationWritable, AgeObjectWritable>>();
+    relConnections = new ArrayList< AgeRelationWritable >();
     relationDetachMap = new HashMap<AgeObjectWritable, Set<AgeRelationWritable>>();
 
+    connectionInfo.setRelationsRemoval( new com.pri.util.collection.CollectionMapCollection<AgeRelationWritable>(relationDetachMap) );
+    connectionInfo.setRelationsReconnection( relConnections );
+    
     if(!reconnectExternalObjectAttributes(clusterMeta, extAttrConnector, logRoot))
     {
      res = false;
@@ -863,26 +817,40 @@ public class SubmissionManager
    // invRelMap contains a map of external objects to sets of prepared inverse
    // relations for new external relations
 
+   connectionInfo.setRelationsAttachment( new com.pri.util.collection.CollectionMapCollection<AgeRelationWritable>(invRelMap) );
+   
    if(!connectNewExternalRelations(clusterMeta, invRelMap, logRoot))
    {
     res = false;
     return false;
    }
 
-   if(!connectNewObjectAttributes(clusterMeta, ageStorage, logRoot))
+   if(!connectNewObjectAttributes(clusterMeta, logRoot))
    {
     res = false;
     return false;
    }
 
+   if( !resolveIncomingFileAttributes(clusterMeta, logRoot) )
+   {
+    res = false;
+    return false;
+   }
+
+   
+   Collection<Pair<AgeFileAttributeWritable, Boolean>> fileConn = new ArrayList<Pair<AgeFileAttributeWritable, Boolean>>();
+
+   
    if(clusterMeta.att4Del.size() != 0 || clusterMeta.att4G2L.size() != 0)
    {
-    if(!checkRemovedDataFiles(clusterMeta, ageStorage, logRoot))
+    if(!checkExternalFileConnections(clusterMeta, logRoot) || ! reconnectLocalModulesToFiles(clusterMeta, fileConn, logRoot) )
     {
      res = false;
      return false;
     }
+
    }
+
 
    LogNode semLog = logRoot.branch("Validating semantic");
 
@@ -968,10 +936,6 @@ public class SubmissionManager
    if(!res)
     return false;
 
-   if(verifyOnly)
-   {
-    return resolveIncomingFileAttributes(clusterMeta, ageStorage, logRoot);
-   }
 
    if(clusterMeta.id.charAt(0) == '\0')
    {
@@ -1040,11 +1004,6 @@ public class SubmissionManager
      }
     }
    }
-
-   connectIncomingModulesToFiles(clusterMeta, ageStorage, logRoot);
-
-   Collection<Pair<AgeFileAttributeWritable, String>> fileConn = new ArrayList<Pair<AgeFileAttributeWritable, String>>();
-   reconnectLocalModulesToFiles(clusterMeta, fileConn, ageStorage, logRoot);
 
    if(clusterMeta.att4Ins.size() > 0)
    {
@@ -1188,9 +1147,9 @@ public class SubmissionManager
       mod.pack();
 
      ageStorage.update(chgMods,
-
      new CollectionsUnion<ModuleKey>(new ExtractorCollection<ModMeta, ModuleKey>(clusterMeta.mod4DataUpd.values(), modkeyExtractor),
-       new ExtractorCollection<ModMeta, ModuleKey>(clusterMeta.mod4Del.values(), modkeyExtractor)));
+       new ExtractorCollection<ModMeta, ModuleKey>(clusterMeta.mod4Del.values(), modkeyExtractor)),
+     connectionInfo);
 
      updtLog.success();
     }
@@ -1234,6 +1193,7 @@ public class SubmissionManager
     return false;
    }
 
+ /*
    if(extAttrConnector != null)
    {
     for(Pair<AgeExternalObjectAttributeWritable, AgeObject> cn : extAttrConnector)
@@ -1270,6 +1230,7 @@ public class SubmissionManager
     }
    }
    // stor.addRelations(me.getKey().getId(),me.getValue());
+ */
 
   }
   finally
@@ -1572,12 +1533,19 @@ public class SubmissionManager
     return false;
    }
 
-   if(!connectNewObjectAttributes(cstMeta, ageStorage, logRoot))
+   if(!connectNewObjectAttributes(cstMeta, logRoot))
    {
     res = false;
     return false;
    }
 
+   if( !resolveIncomingFileAttributes(cstMeta, logRoot) )
+   {
+    res = false;
+    return false;
+   }
+
+   
    LogNode semLog = logRoot.branch("Validating semantic");
 
    boolean vldRes = true;
@@ -1696,11 +1664,6 @@ public class SubmissionManager
     }
    }
 
-   connectIncomingModulesToFiles(cstMeta, ageStorage, logRoot);
-
-   Collection<Pair<AgeFileAttributeWritable, String>> fileConn = new ArrayList<Pair<AgeFileAttributeWritable, String>>();
-   reconnectLocalModulesToFiles(cstMeta, fileConn, ageStorage, logRoot);
-
    LogNode updtLog = logRoot.branch("Updating storage");
 
    try
@@ -1776,8 +1739,6 @@ public class SubmissionManager
      cn.getFirst().setTargetObject(cn.getSecond());
    }
 
-   for(Pair<AgeFileAttributeWritable, String> fc : fileConn)
-    fc.getFirst().setFileSysRef(fc.getSecond());
 
    for(Map.Entry<AgeObjectWritable, Set<AgeRelationWritable>> me : invRelMap.entrySet())
     for(AgeRelationWritable rel : me.getValue())
@@ -1888,7 +1849,7 @@ public class SubmissionManager
 
    if(cstMeta.att4Del.size() != 0)
    {
-    if(!checkRemovedDataFiles(cstMeta, ageStorage, logRoot))
+    if(!checkExternalFileConnections(cstMeta, logRoot))
     {
      return false;
     }
@@ -2336,7 +2297,7 @@ public class SubmissionManager
  }
 
  @SuppressWarnings("unchecked")
- private boolean reconnectExternalRelations(ClustMeta cstMeta, Collection<Pair<AgeExternalRelationWritable, AgeObjectWritable>> relConn,
+ private boolean reconnectExternalRelations(ClustMeta cstMeta, Collection<AgeRelationWritable> relConn,
    Map<AgeObjectWritable, Set<AgeRelationWritable>> detachedRelMap, LogNode logRoot)
  {
   LogNode logRecon = logRoot.branch("Reconnecting external relations");
@@ -2346,9 +2307,9 @@ public class SubmissionManager
   for(ModMeta mm : new CollectionsUnion<ModMeta>(cstMeta.mod4Del.values(), cstMeta.mod4DataUpd.values()))
   {
    if(mm.origModule == null) // Skipping new modules, processing only
-                             // update/delete modules (where original data are
-                             // going away)
-    continue;
+    continue;                // update/delete modules (where original data are going away)
+ 
+   
 
    Collection< ? extends AgeExternalRelationWritable> origExtRels = mm.origModule.getExternalRelations();
 
@@ -2418,10 +2379,9 @@ public class SubmissionManager
       dirRel.setInverseRelation(invrsRel);
       dirRel.setTargetObject(target);
 
-      relConn.add(new Pair<AgeExternalRelationWritable, AgeObjectWritable>(invrsRel, replObj));
+      relConn.add(dirRel);
 
-      if(!detachedRelMap.containsKey(target)) // This is to enforce semantic
-                                              // check on the target object
+      if(!detachedRelMap.containsKey(target)) // This is to enforce semantic check on the target object
        detachedRelMap.put(target, null);
      }
     }
@@ -2430,7 +2390,7 @@ public class SubmissionManager
 
   }
 
-  // As new ID could appear within cluster scope we need to reconnect
+  // As new IDs could appear within cluster scope we need to reconnect
   // CASCADE_CLUSTER relations
   // that point to the GLOBAL scope but can be resolved on the CLUSTER scope now
   for(ModMeta mm : new CollectionsUnion<ModMeta>(cstMeta.mod4Hld.values(), cstMeta.mod4MetaUpd.values()))
@@ -2449,15 +2409,7 @@ public class SubmissionManager
     if(extRel.isInferred() || extRel.getTargetResolveScope() != ResolveScope.CASCADE_CLUSTER || oldTarget.getModuleKey().getClusterId().equals(cstMeta.id))
      continue;
 
-    AgeObjectWritable newTarget = cstMeta.clusterIdMap.get(extRel.getTargetObjectId()); // newTarget
-                                                                                        // can
-                                                                                        // only
-                                                                                        // be
-                                                                                        // one
-                                                                                        // of
-                                                                                        // the
-                                                                                        // new
-                                                                                        // objects
+    AgeObjectWritable newTarget = cstMeta.clusterIdMap.get(extRel.getTargetObjectId()); // newTarget can only be of the new objects
 
     if(newTarget != null)
     {
@@ -2509,13 +2461,13 @@ public class SubmissionManager
       newTarget.addRelation(newInvRel);
      }
 
-     relConn.add(new Pair<AgeExternalRelationWritable, AgeObjectWritable>(extRel, newTarget));
+     relConn.add(newInvRel);
 
      newInvRel.setInverseRelation(extRel);
 
      if(!detachedRelMap.containsKey(relSource)) // This is to enforce semantic
-                                                // check on the changed object
-      detachedRelMap.put(relSource, null);
+      detachedRelMap.put(relSource, null);      // check on the changed object
+     
 
     }
    }
@@ -2534,11 +2486,7 @@ public class SubmissionManager
 
   if(replObj.getDataModule().getExternalRelations() != null)
   {
-   for(AgeExternalRelationWritable cndtRel : replObj.getDataModule().getExternalRelations()) // Looking
-                                                                                             // for
-                                                                                             // suitable
-                                                                                             // explicit
-                                                                                             // relation
+   for(AgeExternalRelationWritable cndtRel : replObj.getDataModule().getExternalRelations()) // Looking for suitable explicit relation
    {
     if(cndtRel.getSourceObject() == replObj
       && extRel.getTargetObjectId().equals(replObj.getId())
@@ -2716,7 +2664,7 @@ public class SubmissionManager
 
 
  @SuppressWarnings("unchecked")
- private boolean resolveIncomingFileAttributes(ClustMeta cMeta, AgeStorageAdm stor, LogNode logRoot)
+ private boolean resolveIncomingFileAttributes(ClustMeta cMeta, LogNode logRoot)
  {
   boolean res = true;
 
@@ -2728,7 +2676,7 @@ public class SubmissionManager
    {
     if(fattr.getTargetResolveScope() == ResolveScope.GLOBAL)
     {
-     if(stor.getAttachment(fattr.getFileId()) == null)
+     if(ageStorage.getAttachment(fattr.getFileId()) == null)
      {
       AttributeClassRef clRef = fattr.getClassRef();
 
@@ -2748,7 +2696,7 @@ public class SubmissionManager
       fattr.setResolvedScope(ResolveScope.CLUSTER);
      else if( fattr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
      {
-      if(stor.getAttachment(fattr.getFileId()) == null)
+      if(ageStorage.getAttachment(fattr.getFileId()) == null)
       {
        AttributeClassRef clRef = fattr.getClassRef();
 
@@ -2772,14 +2720,14 @@ public class SubmissionManager
   return res;
  }
 
- private boolean checkRemovedDataFiles(ClustMeta cMeta, AgeStorageAdm stor, LogNode logRoot)
+ private boolean checkExternalFileConnections(ClustMeta cMeta, LogNode logRoot)
  {
 
   LogNode logRecon = logRoot.branch("Reconnecting file attributes");
 
   boolean res = true;
 
-  for(DataModule extDM : stor.getDataModules())
+  for(DataModule extDM : ageStorage.getDataModules())
   {
    if(extDM.getClusterId().equals(cMeta.id))
     continue;
@@ -2837,47 +2785,47 @@ public class SubmissionManager
  }
 
  @SuppressWarnings("unchecked")
- private boolean reconnectLocalModulesToFiles(ClustMeta cMeta, Collection<Pair<AgeFileAttributeWritable, String>> fileConn, AgeStorageAdm stor,
-   LogNode reconnLog)
+ private boolean reconnectLocalModulesToFiles(ClustMeta cMeta, Collection<Pair<AgeFileAttributeWritable, Boolean>> fileConn, LogNode reconnLog)
  {
   boolean res = true;
 
+  
   for(ModMeta mm : new CollectionsUnion<ModMeta>(cMeta.mod4Hld.values(), cMeta.mod4MetaUpd.values()))
   {
    for(AgeFileAttributeWritable fattr : mm.origModule.getFileAttributes())
    {
-    FileAttachmentMeta fam = cMeta.att4Use.get(fattr.getFileId());
-
-    if(fam == null)
+    if( fattr.getTargetResolveScope() == ResolveScope.GLOBAL && cMeta.att4G2L.containsKey(fattr.getFileId()) )
     {
-     String sysref = stor.makeFileSysRef(fattr.getFileId());
+     reconnLog.log(Level.ERROR,
+       "Can't connect file attribute: '" + fattr.getFileId() + "'. Module: ID='" + mm.meta.getId() + "' Row: " + fattr.getOrder() + " Col: "
+         + fattr.getClassRef().getOrder());
+     res = false;
 
-     if(stor.getAttachment(fam.getId(), cMeta.id) != null)
-      fileConn.add(new Pair<AgeFileAttributeWritable, String>(fattr, sysref));
-     else
+     continue;
+    }
+    
+
+    if( cMeta.att4Del.containsKey(fattr.getFileId() ) )
+    {
+     if( fattr.getTargetResolveScope() != ResolveScope.CASCADE_CLUSTER )
      {
       reconnLog.log(Level.ERROR,
         "Can't connect file attribute: '" + fattr.getFileId() + "'. Module: ID='" + mm.meta.getId() + "' Row: " + fattr.getOrder() + " Col: "
           + fattr.getClassRef().getOrder());
       res = false;
      }
-
+     else if( ageStorage.getAttachment(fattr.getFileId()) != null )
+      fileConn.add( new Pair<AgeFileAttributeWritable, Boolean>(fattr, true ) );
     }
-    else
-    {
-     String newSysRef = fam.isGlobal() ? stor.makeFileSysRef(fam.getId()) : stor.makeFileSysRef(fam.getId(), cMeta.id);
-
-     if(!newSysRef.equals(fattr.getFileSysRef()))
-      fileConn.add(new Pair<AgeFileAttributeWritable, String>(fattr, newSysRef));
-
-    }
+    
    }
   }
+
 
   return res;
  }
 
- private boolean connectNewObjectAttributes(ClustMeta cstMeta, AgeStorageAdm stor, LogNode logRoot)
+ private boolean connectNewObjectAttributes(ClustMeta cstMeta, LogNode logRoot)
  {
 
   LogNode connLog = logRoot.branch("Connecting data module" + (cstMeta.incomingMods.size() > 1 ? "s" : "") + " to the main graph");
@@ -2904,7 +2852,7 @@ public class SubmissionManager
     attrStk.clear();
     attrStk.push(obj);
 
-    mdres = connectExternalAttrs(attrStk, stor, cstMeta, mm, extAttrModLog);
+    mdres = connectExternalAttrs(attrStk, ageStorage, cstMeta, mm, extAttrModLog);
 
     if(obj.getRelations() != null)
     {
@@ -2913,7 +2861,7 @@ public class SubmissionManager
       attrStk.clear();
       attrStk.push(rl);
 
-      mdres = mdres && connectExternalAttrs(attrStk, stor, cstMeta, mm, extAttrModLog);
+      mdres = mdres && connectExternalAttrs(attrStk, ageStorage, cstMeta, mm, extAttrModLog);
      }
     }
 
