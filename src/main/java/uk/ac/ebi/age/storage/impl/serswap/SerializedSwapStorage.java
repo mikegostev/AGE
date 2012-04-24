@@ -33,12 +33,12 @@ import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
 import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
-import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
 import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.storage.AgeStorageAdm;
+import uk.ac.ebi.age.storage.ConnectionInfo;
 import uk.ac.ebi.age.storage.DataChangeListener;
 import uk.ac.ebi.age.storage.DataModuleReaderWriter;
 import uk.ac.ebi.age.storage.MaintenanceModeListener;
@@ -349,7 +349,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
  }
 
  @Override
- public void update(Collection<DataModuleWritable> mods2Ins, Collection<ModuleKey> mods2Del) throws RelationResolveException, ModuleStoreException
+ public void update(Collection<DataModuleWritable> mods2Ins, Collection<ModuleKey> mods2Del, ConnectionInfo connInfo) throws RelationResolveException, ModuleStoreException
  {
   if(!master)
    throw new ModuleStoreException("Only the master instance can store data");
@@ -701,29 +701,6 @@ public class SerializedSwapStorage implements AgeStorageAdm
      }
 
      modRef.addObject(obj.getId(), pxObj);
-    }
-
-    if(dm.getFileAttributes() != null)
-    {
-     for(AgeFileAttributeWritable fattr : dm.getFileAttributes())
-     {
-      String fid = makeFileSysRef(fattr.getFileId(), dm.getClusterId());
-
-      if(fileDepot.getFilePath(fid).exists())
-       fattr.setFileSysRef(fid);
-      else
-      {
-       fid = makeFileSysRef(fattr.getFileId());
-
-       if(fileDepot.getFilePath(fid).exists())
-        fattr.setFileSysRef(fid);
-       else
-        synchronized(log)
-        {
-         log.error("Can't resolve file attribute: '" + fattr.getFileId() + "'. Cluster: " + dm.getClusterId() + " Module: " + dm.getId());
-        }
-      }
-     }
     }
    }
   }
@@ -1278,24 +1255,6 @@ public class SerializedSwapStorage implements AgeStorageAdm
   dbLock.writeLock().unlock();
  }
 
- // @Override
- // public void addRelations(String key, Collection<AgeRelationWritable> rels)
- // {
- // AgeObjectWritable obj = mainIndexMap.get(key);
- //
- // for( AgeRelationWritable r : rels )
- // obj.addRelation(r);
- // }
- //
- // @Override
- // public void removeRelations(String key, Collection<AgeRelationWritable>
- // rels)
- // {
- // AgeObjectWritable obj = mainIndexMap.get(key);
- //
- // for( AgeRelationWritable r : rels )
- // obj.removeRelation(r);
- // }
 
  @Override
  public File getAttachment(String id)
@@ -1303,46 +1262,48 @@ public class SerializedSwapStorage implements AgeStorageAdm
   return getAttachmentBySysRef(makeFileSysRef(id));
  }
 
+ 
  @Override
  public File getAttachment(String id, String clusterId)
  {
-  return getAttachmentBySysRef( makeFileSysRef(id, clusterId));
+  return getAttachmentBySysRef(makeFileSysRef(id, clusterId));
  }
-
-
- @Override
- public File getAttachmentBySysRef(String ref)
+ 
+ private File getAttachmentBySysRef(String ref)
  {
   File f = fileDepot.getFilePath(ref);
-
-  if(!f.exists())
+  
+  if( ! f.exists() )
    return null;
-
+  
   return f;
  }
 
- @Override
- public String makeFileSysRef(String id)
+
+
+ private String makeFileSysRef(String id)
  {
-  return "G" + M2codec.encode(id);
+  return "G"+M2codec.encode(id);
  }
 
- @Override
- public String makeFileSysRef(String id, String clustID)
+ private String makeFileSysRef(String id, String clustID)
  {
-  return String.valueOf(id.length()) + '_' + M2codec.encode(id + clustID);
+  return String.valueOf(id.length())+'_'+M2codec.encode(id+clustID);
  }
 
- @Override
- public boolean isFileSysRefGlobal(String fileID)
+ private boolean isFileSysRefGlobal(String fileID)
  {
   return fileID.charAt(0) == 'G';
  }
 
+
  @Override
  public boolean deleteAttachment(String id, String clusterId, boolean global)
  {
-  File f = fileDepot.getFilePath(global ? makeFileSysRef(id) : makeFileSysRef(id, clusterId));
+  if( global )
+   fileDepot.getFilePath(makeFileSysRef(id)).delete();
+  
+  File f = fileDepot.getFilePath(makeFileSysRef(id, clusterId));
 
   return f.delete();
  }
@@ -1350,31 +1311,51 @@ public class SerializedSwapStorage implements AgeStorageAdm
  @Override
  public File storeAttachment(String id, String clusterId, boolean global, File aux) throws AttachmentIOException
  {
-  File fDest = fileDepot.getFilePath(global ? makeFileSysRef(id) : makeFileSysRef(id, clusterId));
+  File fDest = fileDepot.getFilePath(makeFileSysRef(id, clusterId));
   fDest.delete();
-
+  
   try
   {
    FileUtil.linkOrCopyFile(aux, fDest);
+   
+   if( global )
+   {
+    File glbfDest = fileDepot.getFilePath(makeFileSysRef(id));
+    glbfDest.delete();
+    
+    FileUtil.linkOrCopyFile(aux, glbfDest);
+
+   }
   }
   catch(IOException e)
   {
-   throw new AttachmentIOException("Store attachment error: " + e.getMessage(), e);
+   throw new AttachmentIOException("Store attachment error: "+e.getMessage(), e);
   }
-
+  
   return fDest;
  }
 
- public void changeAttachmentScope(String id, String clusterId, boolean global) throws AttachmentIOException
+
+ public void changeAttachmentScope( String id, String clusterId, boolean global ) throws AttachmentIOException
  {
-  File fSrc = fileDepot.getFilePath(global ? makeFileSysRef(id, clusterId) : makeFileSysRef(id));
-  File fDest = fileDepot.getFilePath(global ? makeFileSysRef(id) : makeFileSysRef(id, clusterId));
-  fDest.delete();
-
-  if(!fSrc.renameTo(fDest))
-   throw new AttachmentIOException("Can't rename file '" + fSrc.getAbsolutePath() + "' to '" + fDest.getAbsolutePath() + "'");
+  File globFile = fileDepot.getFilePath(makeFileSysRef(id));
+  
+  try
+  {
+   if(global)
+   {
+    File fSrc = fileDepot.getFilePath(makeFileSysRef(id, clusterId));
+    FileUtil.linkOrCopyFile(fSrc, globFile);
+   }
+   else
+    globFile.delete();
+  }
+  catch(IOException e)
+  {
+   throw new AttachmentIOException("Can't link file: "+e.getMessage(), e);
+  }
  }
-
+ 
  @Override
  public void rebuildIndices()
  {

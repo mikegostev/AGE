@@ -16,7 +16,7 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
 
 // private transient String fileSysRef;
  private ResolveScope scope;
- private ResolveScope resolvedScope;
+ private boolean resolvedScope;
 
  public AgeFileAttributeImpl(AttributeClassRef attrClass, AttributedWritable host, ResolveScope scope)
  {
@@ -44,13 +44,13 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
  }
 
  @Override
- public ResolveScope getResolvedScope()
+ public boolean isResolvedGlobal()
  {
   return resolvedScope;
  }
 
  @Override
- public void setResolvedScope(ResolveScope resolvedScope)
+ public void setResolvedGlobal(boolean resolvedScope)
  {
   this.resolvedScope = resolvedScope;
  }
@@ -62,7 +62,7 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
   
   AgeStorage stor = dm.getStorage();
   
-  if( getResolvedScope() == ResolveScope.GLOBAL )
+  if( isResolvedGlobal() )
    return stor.getAttachment( (String)getValue() );
 
   return stor.getAttachment((String)getValue(), dm.getClusterId() );

@@ -37,7 +37,7 @@ public class SwapFileAttribute extends AgeFileAttributeImpl
   SwapFileAttribute clone  = new SwapFileAttribute(getClassRef(), host, getTargetResolveScope());
   
   clone.setFileId( getFileId() );
-  clone.setFileSysRef( getFileSysRef() );
+  clone.setResolvedGlobal(isResolvedGlobal());
   
   cloneAttributes( clone );
 

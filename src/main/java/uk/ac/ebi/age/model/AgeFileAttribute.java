@@ -7,7 +7,7 @@ public interface AgeFileAttribute extends AgeAttribute
  String getFileId();
  ResolveScope getTargetResolveScope();
  
- ResolveScope getResolvedScope();
+ boolean isResolvedGlobal();
 
  File getFile();
  

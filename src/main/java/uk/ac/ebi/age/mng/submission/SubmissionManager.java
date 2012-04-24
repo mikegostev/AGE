@@ -2663,14 +2663,14 @@ public class SubmissionManager
       res = false;
      }
      else
-      fattr.setResolvedScope(ResolveScope.GLOBAL);
+      fattr.setResolvedGlobal(true);
     }
     else
     {
      FileAttachmentMeta fmt = cMeta.att4Use.get(fattr.getFileId());
 
      if( fmt != null )
-      fattr.setResolvedScope(ResolveScope.CLUSTER);
+      fattr.setResolvedGlobal(false);
      else if( fattr.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
      {
       if(ageStorage.getAttachment(fattr.getFileId()) == null)
@@ -2683,7 +2683,7 @@ public class SubmissionManager
        res = false;
       }
       else
-       fattr.setResolvedScope(ResolveScope.GLOBAL);
+       fattr.setResolvedGlobal(true);
      }
 
     }
@@ -2711,7 +2711,7 @@ public class SubmissionManager
 
    for(AgeFileAttributeWritable fileAttr : extDM.getFileAttributes())
    {
-    if(fileAttr.getResolvedScope() == ResolveScope.GLOBAL)
+    if( fileAttr.isResolvedGlobal() )
     {
 
      FileAttachmentMeta meta = cMeta.att4Del.get(fileAttr.getFileId());

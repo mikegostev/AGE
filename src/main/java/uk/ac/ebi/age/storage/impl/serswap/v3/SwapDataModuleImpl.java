@@ -13,6 +13,7 @@ import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
+import uk.ac.ebi.age.storage.AgeStorage;
 import uk.ac.ebi.age.storage.impl.serswap.ModuleRef;
 import uk.ac.ebi.age.storage.impl.serswap.ProxyDataModule;
 import uk.ac.ebi.age.storage.impl.serswap.SerializedSwapStorage;
@@ -146,6 +147,11 @@ public class SwapDataModuleImpl implements DataModuleWritable, ProxyDataModule
  public void setModuleKey(ModuleKey id)
  {
   baseModule.setModuleKey( id );
+ }
+
+ public void setStorage( AgeStorage storage)
+ {
+  moduleRef.setStorage( (SerializedSwapStorage)storage );
  }
 
 }

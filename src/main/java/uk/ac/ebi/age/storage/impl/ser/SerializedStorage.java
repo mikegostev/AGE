@@ -442,7 +442,7 @@ public class SerializedStorage implements AgeStorageAdm
    if( connectionInfo.getFileAttributesResolution() != null)
    {
     for(Pair<AgeFileAttributeWritable, Boolean> fc : connectionInfo.getFileAttributesResolution())
-     fc.getFirst().setResolvedScope(fc.getSecond()?ResolveScope.GLOBAL:ResolveScope.CLUSTER);
+     fc.getFirst().setResolvedGlobal(fc.getSecond());
    }
 
    if( connectionInfo.getRelationsRemoval() != null )
@@ -1230,7 +1230,7 @@ public class SerializedStorage implements AgeStorageAdm
   return getAttachmentBySysRef(makeFileSysRef(id, clusterId));
  }
  
- public File getAttachmentBySysRef(String ref)
+ private File getAttachmentBySysRef(String ref)
  {
   File f = fileDepot.getFilePath(ref);
   
@@ -1240,19 +1240,17 @@ public class SerializedStorage implements AgeStorageAdm
   return f;
  }
 
-
-
- public String makeFileSysRef(String id)
+ private String makeFileSysRef(String id)
  {
   return "G"+M2codec.encode(id);
  }
 
- public String makeFileSysRef(String id, String clustID)
+ private String makeFileSysRef(String id, String clustID)
  {
   return String.valueOf(id.length())+'_'+M2codec.encode(id+clustID);
  }
 
- public boolean isFileSysRefGlobal(String fileID)
+ private boolean isFileSysRefGlobal(String fileID)
  {
   return fileID.charAt(0) == 'G';
  }

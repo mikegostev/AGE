@@ -18,9 +18,7 @@ public interface AgeStorageAdm extends AgeStorage
  public Collection<? extends AgeObjectWritable> getAllObjects();
 
  
-// void storeDataModule(DataModuleWritable sbm) throws RelationResolveException, ModuleStoreException;
  void update(Collection<DataModuleWritable> modListToIns, Collection<ModuleKey> modListToDel, ConnectionInfo conninf) throws RelationResolveException, ModuleStoreException;
-// void removeDataModule(Collection<String> ids);
 
  boolean updateSemanticModel( SemanticModel sm, LogNode log ); // throws ModelStoreException;
 
@@ -30,28 +28,17 @@ public interface AgeStorageAdm extends AgeStorage
  void lockWrite();
  void unlockWrite();
 
-// void addRelations(String key, Collection<AgeRelationWritable> value);
-// void removeRelations(String id, Collection<AgeRelationWritable> value);
-
  DataModuleWritable getDataModule(String clstId, String name);
  Collection<? extends DataModuleWritable> getDataModules();
 
-// void setMaster(boolean master);
-
-// String makeGlobalFileID(String id);
-// String makeLocalFileID(String id, String clustID);
  
  boolean deleteAttachment(String id, String clusterId, boolean global);
  File storeAttachment(String id, String clusterId, boolean global, File aux) throws AttachmentIOException;
  void changeAttachmentScope(String id, String clusterId, boolean global) throws AttachmentIOException;
 
- String makeFileSysRef(String id);
- String makeFileSysRef(String id, String clustID);
-
  void rebuildIndices();
 
  boolean setMaintenanceMode( boolean mmode);
  
- //void renameAttachment(String id, String id2) throws AttachmentIOException;
 
 }

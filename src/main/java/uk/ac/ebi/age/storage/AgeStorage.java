@@ -48,8 +48,4 @@ public interface AgeStorage
  File getAttachment(String id);
  File getAttachment(String id, String clustId);
 
- 
- boolean isFileSysRefGlobal(String fileSysRef);
- File getAttachmentBySysRef(String sysid);
-
 }

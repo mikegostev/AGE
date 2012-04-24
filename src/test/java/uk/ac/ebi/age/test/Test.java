@@ -20,6 +20,7 @@ import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.SyntaxProfile;
 import uk.ac.ebi.age.parser.impl.AgeTab2AgeConverterImpl;
 import uk.ac.ebi.age.parser.impl.AgeTabSyntaxParserImpl;
+import uk.ac.ebi.age.storage.ConnectionInfo;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
@@ -74,8 +75,7 @@ public class Test
     return;
    }
 
-   
-   str.update(Collections.singletonList(dblock), null);
+   str.update(Collections.singletonList(dblock), null, new ConnectionInfo());
    
    System.out.println("Done");
    

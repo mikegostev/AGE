@@ -37,7 +37,7 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
 
 
  @Override
- public ResolveScope getResolvedScope()
+ public boolean isResolvedGlobal()
  {
   throw new UnsupportedOperationException();
  }
@@ -49,7 +49,7 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
  }
 
  @Override
- public void setResolvedScope(ResolveScope resolvedScope)
+ public void setResolvedGlobal(boolean glb)
  {
   throw new UnsupportedOperationException();
  }
