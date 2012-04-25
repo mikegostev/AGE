@@ -26,7 +26,7 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
   AttributedWritable host = super.getAttributedHost();
   
   if( host instanceof AgeObjectProxy)
-   return (AgeObjectProxy)super.getAttributedHost();
+   return (AgeObjectProxy)host;
   
   AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   
@@ -34,7 +34,21 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
   
   return pxo;
  }
-
+ 
+ @Override
+ public AgeObjectProxy getMasterObject()
+ {
+  AgeObjectWritable host = super.getMasterObject();
+  
+  if( host instanceof AgeObjectProxy)
+   return (AgeObjectProxy)host;
+  
+  AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
+  
+  setAttributedHost(pxo);
+  
+  return pxo;
+ }
  
  @Override
  public AgeObject getValue()

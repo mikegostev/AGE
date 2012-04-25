@@ -33,12 +33,27 @@ public class SwapObjectAttribute extends AgeObjectAttributeImpl
  }
  
  @Override
- public AttributedWritable getAttributedHost()
+ public AgeObjectProxy getAttributedHost()
  {
   AttributedWritable host = super.getAttributedHost();
   
   if( host instanceof AgeObjectProxy)
-   return host;
+   return (AgeObjectProxy)host;
+  
+  AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
+  
+  setAttributedHost(pxo);
+  
+  return pxo;
+ }
+ 
+ @Override
+ public AgeObjectProxy getMasterObject()
+ {
+  AgeObjectWritable host = super.getMasterObject();
+  
+  if( host instanceof AgeObjectProxy)
+   return (AgeObjectProxy)host;
   
   AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   

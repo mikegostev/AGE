@@ -17,6 +17,21 @@ public class SwapRelation extends AgeRelationImpl
 
 
  @Override
+ public AgeObjectWritable getSourceObject()
+ {
+  AgeObjectWritable target = super.getSourceObject();
+  
+  if( target instanceof AgeObjectProxy )
+   return target;
+  
+  AgeObjectProxy pxObj = ((SwapDataModuleImpl)target.getDataModule()).getModuleRef().getObjectProxy(target.getId());
+  
+  target = pxObj;
+  
+  return pxObj;
+ }
+ 
+ @Override
  public AgeObjectWritable getTargetObject()
  {
   AgeObjectWritable target = super.getTargetObject();

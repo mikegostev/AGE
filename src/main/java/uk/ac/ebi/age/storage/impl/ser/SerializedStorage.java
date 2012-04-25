@@ -400,8 +400,8 @@ public class SerializedStorage implements AgeStorageAdm
      changed = changed || removeDataModule(dm.getClusterId(), dm.getId());
      
      saveDataModule(dm);
-     
-     moduleMap.put(new ModuleKey(dm.getClusterId(), dm.getId()), dm);
+
+     moduleMap.put( dm.getModuleKey(), dm);
      
      Map<String, AgeObjectWritable> clustMap = clusterIndexMap.get(dm.getClusterId());
      
@@ -1027,8 +1027,8 @@ public class SerializedStorage implements AgeStorageAdm
   
   moduleMap.remove(mk);
  
-  if( ! maintenanceMode )
-   updateIndices(null, true);
+//  if( ! maintenanceMode )
+//   updateIndices(null, true);
   
   return true;
  }

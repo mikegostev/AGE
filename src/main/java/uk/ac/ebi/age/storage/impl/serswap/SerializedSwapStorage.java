@@ -32,7 +32,9 @@ import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
 import uk.ac.ebi.age.model.impl.v1.SemanticModelImpl;
+import uk.ac.ebi.age.model.writable.AgeExternalObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeExternalRelationWritable;
+import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
@@ -55,6 +57,7 @@ import uk.ac.ebi.age.storage.impl.ser.SerializedStorageConfiguration;
 import uk.ac.ebi.age.storage.impl.ser.Stats;
 import uk.ac.ebi.age.storage.impl.serswap.v3.AgeObjectMergedLinkProxy;
 import uk.ac.ebi.age.storage.impl.serswap.v3.AgeObjectProxy;
+import uk.ac.ebi.age.storage.impl.serswap.v3.SwapDataModuleImpl;
 import uk.ac.ebi.age.storage.impl.serswap.v3.SwapModelFactory;
 import uk.ac.ebi.age.storage.impl.serswap.v3.SwapModelFactoryImpl;
 import uk.ac.ebi.age.storage.index.AgeIndexWritable;
@@ -75,6 +78,7 @@ import uk.ac.ebi.mg.time.UniqTime;
 
 import com.pri.util.Extractor;
 import com.pri.util.M2codec;
+import com.pri.util.Pair;
 import com.pri.util.StringUtils;
 import com.pri.util.collection.CollectionsUnion;
 import com.pri.util.collection.ExtractorCollection;
@@ -98,13 +102,14 @@ public class SerializedSwapStorage implements AgeStorageAdm
   private static final String dmStoragePath = "data";
   private static final String fileStoragePath = "files";
   private static final String modelFileName = "model.ser";
+  private static final String indexCacheFileName = "indexCache.ser";
   
-  private File modelFile;
-  private File dataDir;
-  private File filesDir;
-  private File indexDir;
+  final private File modelFile;
+  final private File indexCacheFile;
+  final private File dataDir;
+  final private File filesDir;
+  final private File indexDir;
   
-  private StorageIndex unitedIndex = new StorageIndex();
   
   private Map<String, AgeObjectProxy> globalIndexMap = new HashMap<String, AgeObjectProxy>();
   private Map<String, Map<String,AgeObjectProxy>> clusterIndexMap = new HashMap<String, Map<String,AgeObjectProxy>>();
@@ -150,7 +155,8 @@ public class SerializedSwapStorage implements AgeStorageAdm
   dataDir = new File(baseDir, dmStoragePath);
   filesDir = new File(baseDir, fileStoragePath);
   indexDir = new File(baseDir, indexPath);
-
+  indexCacheFile = new File(filesDir,indexCacheFileName);
+  
   if(baseDir.isFile())
    throw new StorageInstantiationException("The initial path must be directory: " + baseDir.getAbsolutePath());
 
@@ -185,10 +191,80 @@ public class SerializedSwapStorage implements AgeStorageAdm
   else
    model = new SemanticModelImpl(new SwapModelFactoryImpl(ModelFactoryImpl.getInstance()));
 
-  loadData();
+  if( ! loadIndexCache ())
+   loadData();
 
  }
 
+ private boolean loadIndexCache()
+ {
+  if(!indexCacheFile.exists())
+   return false;
+
+  ObjectInputStream ois = null;
+
+  try
+  {
+   ois = new ObjectInputStream(new FileInputStream(indexCacheFile));
+
+   StorageIndex index = (StorageIndex) ois.readObject();
+   
+   globalIndexMap = index.getGlobalIndexMap();
+   clusterIndexMap = index.getClusterIndexMap();
+   moduleMap = index.getModuleMap();
+
+   ois.close();
+  }
+  catch(Exception e)
+  {
+   indexCacheFile.delete();
+
+   e.printStackTrace();
+
+   return false;
+  }
+  finally
+  {
+   if(ois != null)
+   {
+    try
+    {
+     ois.close();
+    }
+    catch(IOException e1)
+    {
+     e1.printStackTrace();
+    }
+   }
+  }
+
+  return true;
+ }
+
+ private void saveIndexCache()
+ {
+  try
+  {
+   ObjectOutputStream oos = new ObjectOutputStream( new FileOutputStream(indexCacheFile) );
+   
+   StorageIndex index = new StorageIndex();
+   
+   index.setGlobalIndexMap( globalIndexMap );
+   index.setClusterIndexMap( clusterIndexMap );
+   index.setModuleMap( moduleMap );
+   
+   oos.writeObject(index);
+   
+   oos.close();
+   
+  }
+  catch(IOException e)
+  {
+   log.error("Can't write index cache", e);
+   e.printStackTrace();
+  }
+ }
+ 
  public SemanticModel getSemanticModel()
  {
   return model;
@@ -349,7 +425,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
  }
 
  @Override
- public void update(Collection<DataModuleWritable> mods2Ins, Collection<ModuleKey> mods2Del, ConnectionInfo connInfo) throws RelationResolveException, ModuleStoreException
+ public void update(Collection<DataModuleWritable> mods2Ins, Collection<ModuleKey> mods2Del, ConnectionInfo connectionInfo) throws RelationResolveException, ModuleStoreException
  {
   if(!master)
    throw new ModuleStoreException("Only the master instance can store data");
@@ -406,6 +482,59 @@ public class SerializedSwapStorage implements AgeStorageAdm
      }
     }
 
+   }
+   
+   
+   if( connectionInfo.getObjectAttributesReconnection() != null )
+   {
+    for(Pair<AgeExternalObjectAttributeWritable, AgeObject> cn : connectionInfo.getObjectAttributesReconnection())
+    {
+     AgeObject tgObj = cn.getSecond();
+     AgeObjectProxy tgPx = null;
+     
+     if( tgObj instanceof AgeObjectProxy)
+      tgPx =  (AgeObjectProxy)tgObj;
+     else
+      tgPx = ((SwapDataModuleImpl)tgObj.getDataModule()).getModuleRef().getObjectProxy( tgObj.getId() );
+     
+     cn.getFirst().setTargetObject(tgPx);
+    }
+   }
+   
+   if( connectionInfo.getRelationsReconnection() != null)
+   {
+    for(AgeExternalRelationWritable rel : connectionInfo.getRelationsReconnection())
+    {
+     AgeObject tgObj = rel.getSourceObject();
+     AgeObjectProxy tgPx = null;
+     
+     if( tgObj instanceof AgeObjectProxy)
+      tgPx =  (AgeObjectProxy)tgObj;
+     else
+      tgPx = ((SwapDataModuleImpl)tgObj.getDataModule()).getModuleRef().getObjectProxy( tgObj.getId() );
+
+     
+     rel.getInverseRelation().setTargetObject( tgPx );
+     rel.getInverseRelation().setInverseRelation(rel);
+    }
+   }
+
+   if( connectionInfo.getFileAttributesResolution() != null)
+   {
+    for(Pair<AgeFileAttributeWritable, Boolean> fc : connectionInfo.getFileAttributesResolution())
+     fc.getFirst().setResolvedGlobal(fc.getSecond());
+   }
+
+   if( connectionInfo.getRelationsRemoval() != null )
+   {
+    for( AgeRelationWritable rel : connectionInfo.getRelationsRemoval() )
+     rel.getSourceObject().removeRelation(rel);
+   }
+   
+   if( connectionInfo.getRelationsAttachment() != null )
+   {
+    for( AgeRelationWritable rel : connectionInfo.getRelationsRemoval() )
+     rel.getSourceObject().addRelation(rel);
    }
 
    if(!maintenanceMode)
@@ -627,51 +756,6 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
      }
 
-     /*
-      * boolean extLink = obj.getIdScope() == IdScope.CLUSTER ||
-      * obj.getIdScope() == IdScope.GLOBAL;
-      * 
-      * if( extLink ) { for( AgeRelationWritable rel : obj.getRelations() ) {
-      * if( rel instanceof AgeExternalRelationWritable ) { if( extList == null )
-      * { extList = new ArrayList<ExtRelInfo>();
-      * 
-      * synchronized( extRelMap ) {
-      * extRelMap.put("C"+dm.getClusterId().length()+
-      * dm.getClusterId()+obj.getId(), extList);
-      * 
-      * if(obj.getIdScope() == IdScope.GLOBAL) extRelMap.put("G"+obj.getId(),
-      * extList);
-      * 
-      * } }
-      * 
-      * ExtRelInfo rlinf = new ExtRelInfo( (AgeExternalRelationWritable)rel );
-      * 
-      * extList.add(rlinf); }
-      * 
-      * } }
-      * 
-      * if( ! extLink && obj.getRelations() != null ) { for( AgeRelation rel :
-      * obj.getRelations() ) { if( rel instanceof AgeExternalRelation ) {
-      * extLink = true; break; } } }
-      * 
-      * AgeObjectProxy pxObj=null;
-      * 
-      * if( extLink ) { AgeObjectLinkedProxy lnPx = new
-      * AgeObjectLinkedProxy(obj, modKey, SerializedSwapStorage.this);
-      * 
-      * for( AgeRelationWritable rel : obj.getRelations() ) { if( rel instanceof
-      * AgeExternalRelationWritable ) {
-      * ((AgeExternalRelationWritable)rel).setSourceObject(lnPx);
-      * 
-      * if( ! ((AgeExternalRelationWritable)rel).isTargetGlobal() ) rel = new
-      * TempClusterRelation( (AgeExternalRelationWritable)rel, dm.getClusterId()
-      * ); }
-      * 
-      * lnPx.addRelation(rel); }
-      * 
-      * pxObj = lnPx; } else pxObj = new AgeObjectProxy(obj, modKey,
-      * SerializedSwapStorage.this);
-      */
 
      if(clustMap == null)
      {
@@ -964,6 +1048,8 @@ public class SerializedSwapStorage implements AgeStorageAdm
    assert log.info(String.format("Free mem: %,d Max mem: %,d Total mem: %,d Time: %dms", Runtime.getRuntime().freeMemory(), Runtime.getRuntime()
      .maxMemory(), Runtime.getRuntime().totalMemory(), System.currentTimeMillis() - stTime));
 
+   
+   saveIndexCache();
   }
   catch(Exception e)
   {
@@ -1067,7 +1153,12 @@ public class SerializedSwapStorage implements AgeStorageAdm
   if(mod.getExternalRelations() != null)
   {
    for(AgeExternalRelationWritable rel : mod.getExternalRelations())
-    rel.getTargetObject().removeRelation(rel.getInverseRelation());
+   {
+    AgeExternalRelationWritable invRel = rel.getInverseRelation();
+    
+    if( invRel.isInferred() )
+     rel.getTargetObject().removeRelation(invRel);
+   }
   }
 
   Map<String, AgeObjectProxy> clustMap = clusterIndexMap.get(dmr.getModuleKey().getClusterId());
@@ -1086,7 +1177,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
   moduleMap.remove(mk);
 
-  updateIndices(null, true);
+//  updateIndices(null, true);
 
   return true;
  }

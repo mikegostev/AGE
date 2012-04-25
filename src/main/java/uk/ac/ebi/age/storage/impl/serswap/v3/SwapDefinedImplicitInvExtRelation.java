@@ -11,7 +11,7 @@ public class SwapDefinedImplicitInvExtRelation extends SwapImplicitInvExtRelatio
  {
   super(src, tgt);
   
-  relClass = invClass .getInverseRelationClass();
+  relClass = invClass.getInverseRelationClass();
   className = invClass .getName();
  }
 

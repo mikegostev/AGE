@@ -179,8 +179,13 @@ abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
  @Override
  public AgeExternalRelationWritable getInverseRelation()
  {
-  if( invRelRef != null && invRelRef.get() != null )
-   return invRelRef.get();
+  if( invRelRef != null )
+  {
+   AgeExternalRelationWritable rel = invRelRef.get();
+   
+   if( rel != null )
+    return rel;
+  }
   
   for( AgeRelationWritable rel : getTargetObject().getRelations() )
   {

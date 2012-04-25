@@ -4,6 +4,7 @@ import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.impl.v3.AgeStringAttributeImpl;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
+import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 
 public class SwapStringAttribute extends AgeStringAttributeImpl
@@ -17,12 +18,27 @@ public class SwapStringAttribute extends AgeStringAttributeImpl
  }
  
  @Override
- public AttributedWritable getAttributedHost()
+ public AgeObjectProxy getAttributedHost()
  {
   AttributedWritable host = super.getAttributedHost();
   
   if( host instanceof AgeObjectProxy)
-   return super.getAttributedHost();
+   return (AgeObjectProxy)host;
+  
+  AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
+  
+  setAttributedHost(pxo);
+  
+  return pxo;
+ }
+ 
+ @Override
+ public AgeObjectProxy getMasterObject()
+ {
+  AgeObjectWritable host = super.getMasterObject();
+  
+  if( host instanceof AgeObjectProxy)
+   return (AgeObjectProxy)host;
   
   AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
   
