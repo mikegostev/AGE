@@ -434,6 +434,9 @@ public class SerializedSwapStorage implements AgeStorageAdm
   {
    dbLock.writeLock().lock();
 
+   if( ! dataDirty )
+    indexCacheFile.delete();
+   
    dataDirty = true;
    lastUpdate = System.currentTimeMillis();
 
@@ -538,8 +541,11 @@ public class SerializedSwapStorage implements AgeStorageAdm
    }
 
    if(!maintenanceMode)
+   {
     updateIndices(mods2Ins, changed);
-
+    saveIndexCache();
+   }
+   
   }
   finally
   {
@@ -1508,6 +1514,8 @@ public class SerializedSwapStorage implements AgeStorageAdm
    if(dataDirty)
    {
     updateIndices(null, true);
+    saveIndexCache();
+    
     dataModified = true;
 
     dataDirty = false;
