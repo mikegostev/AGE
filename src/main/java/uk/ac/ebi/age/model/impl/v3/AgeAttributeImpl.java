@@ -97,4 +97,9 @@ abstract public class AgeAttributeImpl extends AttributedObject implements AgeAt
   
   return null;
  }
+ 
+ public String toString()
+ {
+  return getAgeElClass().getName()+"="+getValue().toString();
+ }
 }
