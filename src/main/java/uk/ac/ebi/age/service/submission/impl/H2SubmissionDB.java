@@ -1084,7 +1084,11 @@ public class H2SubmissionDB extends SubmissionDB
    condExpr.append(" OFFSET ").append(q.getOffset());
    
    
-   rep.setSubmissions( extractSubmission(conn, condExpr.toString(), null) );
+   List<SubmissionMeta> slist = new ArrayList<SubmissionMeta>( q.getLimit() );
+   
+   extractSubmission(conn, condExpr.toString(), slist);
+   
+   rep.setSubmissions( slist );
    
    return rep;
   }
@@ -1144,14 +1148,12 @@ public class H2SubmissionDB extends SubmissionDB
   }
  }
 
- private List<SubmissionMeta> extractSubmission( Connection conn, String sql, SubmissionMeta sMeta ) throws SQLException
+ private SubmissionMeta extractSubmission( Connection conn, String sql, Collection<SubmissionMeta> sbmlist ) throws SQLException
  {
   Statement s = null;
   PreparedStatement mstmt = null;
   PreparedStatement fstmt = null;
-  List<SubmissionMeta> result = null;
 
-  
   ResultSet rstS = null;;
   try
   {
@@ -1161,12 +1163,9 @@ public class H2SubmissionDB extends SubmissionDB
 
    rstS = s.executeQuery(sql);
 
-   if(sMeta == null)
-    result = new ArrayList<SubmissionMeta>(30);
-
    while(rstS.next())
    {
-    SubmissionMeta simp = sMeta != null? sMeta : Factory.createSubmissionMeta();
+    SubmissionMeta simp = Factory.createSubmissionMeta();
 
     simp.setId(rstS.getString("id"));
     simp.setDescription(rstS.getString("desc") );
@@ -1229,10 +1228,10 @@ public class H2SubmissionDB extends SubmissionDB
     
     rstMF.close();
    
-    if( sMeta != null )
-     return null;
+    if( sbmlist == null )
+     return simp;
     
-    result.add(simp);
+    sbmlist.add(simp);
    }
 
   }
@@ -1248,7 +1247,7 @@ public class H2SubmissionDB extends SubmissionDB
     fstmt.close();
   }
   
-  return result;
+  return null;
  }
  
  @Override
@@ -1260,15 +1259,13 @@ public class H2SubmissionDB extends SubmissionDB
   StringUtils.appendEscaped(sb, id, '\'', '\'');
   sb.append('\'');
 
-  SubmissionMeta sm = Factory.createSubmissionMeta();
-  
   Connection conn = null;
   
   try
   {
    conn = createConnection();
    
-   extractSubmission(conn, sb.toString(), sm);
+   return extractSubmission(conn, sb.toString(), null);
   }
   catch(SQLException e)
   {
@@ -1289,7 +1286,6 @@ public class H2SubmissionDB extends SubmissionDB
     }
    }
   }
-  return sm;
  }
 
  @Override

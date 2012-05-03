@@ -80,7 +80,7 @@ public class AgeRelationImpl extends AttributedObject implements AgeRelationWrit
  @Override
  public AgeRelationWritable createClone( AgeObjectWritable src )
  {
-  AgeRelationImpl clone = new AgeRelationImpl(relClassRef, getSourceObject(), getTargetObject());
+  AgeRelationImpl clone = new AgeRelationImpl(relClassRef, src, getTargetObject());
   
   cloneAttributes(clone);
   clone.setInferred( isInferred() );

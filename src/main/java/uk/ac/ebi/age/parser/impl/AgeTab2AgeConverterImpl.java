@@ -1307,7 +1307,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    if(targetObj == null)
     rel = hostObject.createExternalRelation( rClsRef, val, scope );
    else
-    rel = hostObject.createRelation( rClsRef, targetObj);
+    rel = hostObject.createRelation( rClsRef, targetObj );
 
    setLastConvertedValue(rel);
 

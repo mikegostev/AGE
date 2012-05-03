@@ -95,6 +95,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
 
    ((AgeExternalRelationWritable)rl).setSourceObject( this );
   }
+  
  }
  
  @Override
