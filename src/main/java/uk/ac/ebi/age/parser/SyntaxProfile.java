@@ -230,4 +230,9 @@ public class SyntaxProfile
    
   return def;
  }
+
+ public String getEscapeSequence()
+ {
+  return commonSyntaxProfileDefinition.getEscapeSequence();
+ }
 }

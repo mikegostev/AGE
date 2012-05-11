@@ -38,4 +38,6 @@ public interface SyntaxProfileDefinition
  public ResolveScope getDefaultObjectAttributeResolveScope();
 
  public ResolveScope getDefaultRelationResolveScope();
+
+ public String getEscapeSequence();
 }

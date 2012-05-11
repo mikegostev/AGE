@@ -5,6 +5,8 @@ import uk.ac.ebi.age.model.ResolveScope;
 
 public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinition
 {
+ public static final String escapeSequence="\\";
+
  public static final String customTokenBrackets="{}";
  public static final String flagsTokenBrackets="<>";
  public static final String qualifierTokenBrackets="[]";
@@ -132,6 +134,12 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
  public ResolveScope getDefaultRelationResolveScope()
  {
   return defaultRelationResolveScope;
+ }
+
+ @Override
+ public String getEscapeSequence()
+ {
+  return escapeSequence;
  }
 
 }

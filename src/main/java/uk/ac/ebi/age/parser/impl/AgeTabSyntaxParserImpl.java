@@ -9,6 +9,7 @@ import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.AgeTabObject;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
 import uk.ac.ebi.age.parser.BlockHeader;
+import uk.ac.ebi.age.parser.CellValue;
 import uk.ac.ebi.age.parser.ClassReference;
 import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.SyntaxProfile;
@@ -31,10 +32,10 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 
   int getRecNum();
 
-  List<String> getRecord(List<String> parts);
+  List<CellValue> getRecord(List<CellValue> parts);
  }
  
- static class HorizontalBlockSupplier implements BlockSupplier
+ class HorizontalBlockSupplier implements BlockSupplier
  {
   private List<String> firstLine;
   private SpreadsheetReader reader;
@@ -45,7 +46,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    firstLine = new ArrayList<String>( fstLine.size() );
    
    for( String s : fstLine )
-    firstLine.add(s);
+    firstLine.add( s );
   }
   
 
@@ -64,42 +65,38 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 
 
   @Override
-  public List<String> getRecord(List<String> parts)
+  public List<CellValue> getRecord(List<CellValue> parts)
   {
-   if( firstLine != null )
+   List<String> line = null;
+   
+   if( firstLine.size() == 0 )
    {
+    line = reader.readRow(firstLine);
+   
+    if( line == null )
+     return null;
     
-    if( parts != null )
-    {
-     parts.clear();
-     
-     for( String s : firstLine )
-      parts.add(s);
-     
-     firstLine=null;
-     
-     return parts;
-    }
-    
-    List<String> fl = firstLine;
-    firstLine = null;
-    return fl;
+    if( isEmptyLine(line) )
+     return null;
    }
    
-   List<String> line = reader.readRow(parts);
-   
-   if( line == null )
-    return null;
-   
-   if( isEmptyLine(line) )
-    return null;
-   
-   return line;
+   if( parts == null )
+    parts = new ArrayList<CellValue>( firstLine.size() );
+   else
+    parts.clear();
+    
+     
+   for( String s : firstLine )
+    parts.add( new CellValue(s, getSyntaxProfile().getEscapeSequence() ) );
+     
+   firstLine.clear();
+     
+   return parts;
   }
   
  }
  
- static class VerticalBlockSupplier implements BlockSupplier
+ class VerticalBlockSupplier implements BlockSupplier
  {
 //  private List<List<String>> matrix = new ArrayList<List<String>>( 100 );
   
@@ -124,15 +121,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      maxDim = line.size();
    }
    
-//   for( int i=0; i < maxDim; i++ )
-//   {
-//    line = new ArrayList<String>( lines.size() );
-//    matrix.add(line);
-//    
-//    for( List<String> l : lines )
-//     line.add( i >= l.size()?"":l.get(i));
-//   }
-   
+  
   }
   
 
@@ -144,18 +133,18 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 
 
   @Override
-  public List<String> getRecord(List<String> line)
+  public List<CellValue> getRecord(List<CellValue> line)
   {
    if( ptr >= maxDim )
     return null;
    
    if( line == null )
-    line = new ArrayList<String>( lines.size() );
+    line = new ArrayList<CellValue>( lines.size() );
    else
     line.clear();
    
    for( List<String> l : lines )
-    line.add( ptr >= l.size()?"":l.get(ptr));
+    line.add(  new CellValue(ptr >= l.size()?"":l.get(ptr), getSyntaxProfile().getEscapeSequence() ) );
    
    ptr++;
    
