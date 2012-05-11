@@ -21,15 +21,16 @@ public class AgeTabObject
   row=rw;
  }
  
- public void addValue(int row, int col, String val, ClassReference prop)
+ public void addValue(AgeTabValue val)
  {
-  List<AgeTabValue> vl = values.get(prop);
+  List<AgeTabValue> vl = values.get(val.getColumnHeader());
   
   if( vl == null )
-   values.put(prop, vl=new LinkedList<AgeTabValue>() );
+   values.put(val.getColumnHeader(), vl=new LinkedList<AgeTabValue>() );
   
-  vl.add(new AgeTabValue(row, col, val, prop));
+  vl.add(val);
  }
+ 
 
  public void setId(String objId)
  {

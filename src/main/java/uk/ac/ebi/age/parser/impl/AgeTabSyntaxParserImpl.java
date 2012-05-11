@@ -29,9 +29,9 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
  {
 //  List<String> getHeaderLine();
 
-  int getLineNum();
+  int getRecNum();
 
-  List<String> getLine(List<String> parts);
+  List<String> getRecord(List<String> parts);
  }
  
  static class HorizontalBlockSupplier implements BlockSupplier
@@ -57,14 +57,14 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 
 
   @Override
-  public int getLineNum()
+  public int getRecNum()
   {
    return reader.getLineNumber();
   }
 
 
   @Override
-  public List<String> getLine(List<String> parts)
+  public List<String> getRecord(List<String> parts)
   {
    if( firstLine != null )
    {
@@ -137,14 +137,14 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   
 
   @Override
-  public int getLineNum()
+  public int getRecNum()
   {
    return ptr;
   }
 
 
   @Override
-  public List<String> getLine(List<String> line)
+  public List<String> getRecord(List<String> line)
   {
    if( ptr >= maxDim )
     return null;
@@ -213,7 +213,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     header.setHorizontal(false);
    }
    
-   analyzeHeader(header, block.getLine(parts), block.getLineNum() );
+   analyzeHeader(header, block.getRecord(parts), block.getRecNum() );
    data.addBlock(header);
    
    AgeTabObject cObj = null;
@@ -222,7 +222,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      profile.getCommonSyntaxProfile():profile.getClassSpecificSyntaxProfile(header.getClassColumnHeader().getName());
    
    parts.clear();
-   while( block.getLine(parts) != null )
+   while( block.getRecord(parts) != null )
    {
     Iterator<String> partIter = parts.iterator();
     
@@ -233,7 +233,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      if( part.equals( profileDef.getAnonymousObjectId() ) )
      { 
       String id = "??"+IdGenerator.getInstance().getStringId("tempObjectId");
-      cObj = data.createObject(id,header,block.getLineNum());
+      cObj = data.createObject(id,header,block.getRecNum());
       cObj.setIdDefined(false);
       cObj.setIdScope(IdScope.MODULE);
      }
@@ -274,7 +274,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
       
    
 
-      cObj = data.getOrCreateObject(id,header, block.getLineNum() );
+      cObj = data.getOrCreateObject(id,header, block.getRecNum() );
       
       cObj.setIdScope(scope);
       cObj.setIdDefined( defined );
@@ -282,7 +282,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      }
     }
     else if( cObj == null )
-     throw new ParserException(block.getLineNum(), 1, "Object identifier is expected"); // TODO provide correct coords here
+     throw new ParserException(block.getRecNum(), 1, "Object identifier is expected"); // TODO provide correct coords here
    
     int col=1; 
     for( ClassReference prop : header.getColumnHeaders() )
@@ -297,11 +297,11 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      if( prop != null )
      {
       if( val.length() > 0 )
-       cObj.addValue(block.getLineNum(),col,val,prop);
+       cObj.addValue(block.getRecNum(),col,val,prop);
      }
      else if( val.length() > 0 )
      {
-      throw new ParserException(block.getLineNum(),col,"Not empty value in the empty-headed column");
+      throw new ParserException(block.getRecNum(),col,"Not empty value in the empty-headed column");
      }
      
     }
