@@ -7,6 +7,8 @@ import uk.ac.ebi.age.parser.SyntaxProfileDefinition;
 
 public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
 {
+ private String escapeSequence = AgeDefaultSyntaxProfileDefinition.escapeSequence;
+ 
  private String  customTokenBrackets    = AgeDefaultSyntaxProfileDefinition.customTokenBrackets;
  private String  flagsTokenBrackets     = AgeDefaultSyntaxProfileDefinition.flagsTokenBrackets;
  private String  qualifierTokenBrackets = AgeDefaultSyntaxProfileDefinition.qualifierTokenBrackets;
@@ -189,6 +191,12 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
  public ResolveScope getDefaultRelationResolveScope()
  {
   return defaultRelReslvScope;
+ }
+
+ @Override
+ public String getEscapeSequence()
+ {
+  return escapeSequence;
  }
 
 }
