@@ -1,8 +1,7 @@
 package uk.ac.ebi.age.parser;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import uk.ac.ebi.age.util.StringUtil;
 
 public abstract class AgeTabSyntaxParser
 {
@@ -22,48 +21,106 @@ public abstract class AgeTabSyntaxParser
  private static interface StrProc
  {
   String getBrackets();
-  void process(ClassReference nm, String s) throws ParserException;
+  void process(ClassReference nm, CellValue s, int st, int end) throws ParserException;
  }
  
+ private static class IntPair
+ {
+  int begin;
+  int end;
 
+  public IntPair(int begin, int end)
+  {
+   super();
+   this.begin = begin;
+   this.end = end;
+  }
+ }
  
  private StrProc[] prc = new StrProc[]{
    new StrProc()
    {
     public String getBrackets(){ return syntaxProfileDef.getFlagsTokenBrackets(); }
-    public void process(ClassReference nm, String s) throws ParserException
+    
+    public void process(ClassReference nm, CellValue cell, int start, int end) throws ParserException
     {
-     List<String> flags = StringUtil.splitString(s, syntaxProfileDef.getFlagsSeparatorSign() );
+     String str = cell.getValue();
      
-     for( String flagstr : flags )
+     List<IntPair> flags = new ArrayList<IntPair>(10);
+     
+     String sep = syntaxProfileDef.getFlagsSeparatorSign();
+     
+     int fbeg = start;
+     int cpos = start;
+     int seplen = sep.length();
+     
+     while( fbeg < end-1 )
      {
-      int eqpos = flagstr.indexOf(syntaxProfileDef.getFlagsEqualSign());
+      int pos = str.indexOf(sep, cpos);
+      
+      if( pos == -1 )
+      {
+       flags.add(new IntPair(fbeg,end));
+       break;
+      }
+      
+      cpos = pos + seplen;
+
+      if( ! cell.hasRed(pos,pos+seplen) )
+      {
+       flags.add(new IntPair(fbeg,pos));
+       fbeg=cpos;
+      }
+
+     }
+     
+     
+     for( IntPair bnd : flags )
+     {
+      int eqpos = -1;
+      int ptr = bnd.begin;
+      
+      while( ptr < bnd.end )
+      {
+       int pos = str.indexOf(syntaxProfileDef.getFlagsEqualSign(),ptr);
+       
+       if( pos == -1 || pos >= bnd.end )
+        break;
+       
+       if( ! cell.isSymbolRed(pos) )
+       {
+        eqpos = pos;
+        break;
+       }
+       
+       ptr += syntaxProfileDef.getFlagsEqualSign().length();
+      }
       
       if( eqpos == -1 )
-       nm.addFlag(flagstr,null);
+       nm.addFlag(str.substring(bnd.begin, bnd.end),null);
       else
       {
-       String fname = flagstr.substring(0,eqpos);
-       String fval =  flagstr.substring(eqpos+1);
+       String fname = str.substring(bnd.begin,eqpos);
+       String fval =  str.substring(eqpos+syntaxProfileDef.getFlagsEqualSign().length(), bnd.end);
        
        nm.addFlag(fname,fval);
        
-       if( fname.equals( rangeFlag ) )
+       if( fname.equals( rangeFlag ) && ! cell.hasRed(bnd.begin,eqpos) )
        {
         try
         {
-         nm.setRangeClassRef( string2ClassReference(fval) );
+         nm.setRangeClassRef( string2ClassReference(cell,eqpos+syntaxProfileDef.getFlagsEqualSign().length(), bnd.end) );
         }
         catch (ParserException e)
         {
          throw new ParserException(0,0,"Invalid range class reference: "+e.getMessage());
         }
        }
-       else if( fname.equals( targetFlag ) )
+       else if( fname.equals( targetFlag ) && ! cell.hasRed(bnd.begin,eqpos)  )
        {
         try
         {
-         nm.setTargetClassRef( string2ClassReference(fval) );
+         nm.setTargetClassRef( string2ClassReference(cell,eqpos+syntaxProfileDef.getFlagsEqualSign().length(), bnd.end) );
         }
         catch (ParserException e)
         {
@@ -78,9 +135,9 @@ public abstract class AgeTabSyntaxParser
    new StrProc()
    {
     public String getBrackets(){ return syntaxProfileDef.getQualifierTokenBrackets(); }
-    public void process(ClassReference nm,String s) throws ParserException
+    public void process(ClassReference nm, CellValue cell, int start, int end) throws ParserException
     {
-     ClassReference cr = string2ClassReference(s);
+     ClassReference cr = string2ClassReference(cell, start, end);
      
      nm.insertQualifier(cr);
     }
@@ -106,38 +163,45 @@ public abstract class AgeTabSyntaxParser
  
  public abstract AgeTabModule parse( String txt ) throws ParserException;
 
+ public ClassReference string2ClassReference( CellValue cell ) throws ParserException
+ {
+  return string2ClassReference(cell, 0, cell.getValue().length());
+ }
  
- public ClassReference string2ClassReference( String str ) throws ParserException
+ public ClassReference string2ClassReference( CellValue cell, int start, int end ) throws ParserException
  {
   final ClassReference nm = new ClassReference();
   
-  nm.setRawReference( str.trim() );
+  String str = cell.getValue();
   
-  while( str.length() > 0 )
+  nm.setRawReference( str.substring(start,end).trim() );
+  
+  
+  while( start < end )
   {
    String ps = null;
    
    for(int i=0; i < prc.length; i++ ) // Looking for expressions in braces and calling 'process' for such expressions
    {
-    if( str.charAt(str.length()-1) == prc[i].getBrackets().charAt(1) )
+    if( str.charAt(end-1) == prc[i].getBrackets().charAt(1) && ! cell.isSymbolRed(end-1) )
     {
      int level = 0;
      
      int j;
-     for( j= str.length()-2; j>=0; j--)
+     for( j= end-2; j>=j+1; j--)
      {
-      if( str.charAt(j) == prc[i].getBrackets().charAt(1) ) //We've found another closing brace so assuming a nested expression
+      if( str.charAt(j) == prc[i].getBrackets().charAt(1) && ! cell.isSymbolRed(j) ) //We've found another closing brace so assuming a nested expression
        level++;
-      else if( str.charAt(j) == prc[i].getBrackets().charAt(0) )
+      else if( str.charAt(j) == prc[i].getBrackets().charAt(0) && ! cell.isSymbolRed(j)  )
       {
        if( level > 0 )
         level--;
        else
        {
-        ps = str.substring(j+1,str.length()-1);
-        prc[i].process(nm, ps);
-
-        str=str.substring(0,j);
+        
+        prc[i].process(nm, cell, j+1, end-1);
+        
+        end = j;
 
         break;
        }
@@ -158,35 +222,59 @@ public abstract class AgeTabSyntaxParser
   
   String name = null;
   
-  if( str.charAt(0) == syntaxProfileDef.getCustomTokenBrackets().charAt(0) )
+  if( str.charAt(start) == syntaxProfileDef.getCustomTokenBrackets().charAt(0) && ! cell.isSymbolRed(start) )
   {
-   int pos = str.indexOf(syntaxProfileDef.getCustomTokenBrackets().charAt(1));
+   int pos=start;
    
-   if( pos == -1 )
+   while( pos < end )
+   {
+    pos = str.indexOf(syntaxProfileDef.getCustomTokenBrackets().charAt(1), pos);
+    
+    if( pos == -1 || ! cell.isSymbolRed(pos) )
+     break;
+    
+    pos++;
+   }
+     
+     
+   
+   if( pos == -1 || pos >= end )
     throw new ParserException(0,0, "No closing bracket: '"+syntaxProfileDef.getCustomTokenBrackets().charAt(1)+"'");
    
-   if( pos != (str.length()-1) )
+   if( pos != (end-1) )
     throw new ParserException(0,0, "Invalid character at: "+(pos+1)+". The closing bracket must be the last symbol of the token.");
    
-   name = str.substring(1, pos);
+   name = str.substring(start+1, pos);
    nm.setCustom(true);
   }
   else
   {
-   if( str.charAt(str.length()-1) == syntaxProfileDef.getCustomTokenBrackets().charAt(1) )
+   if( str.charAt(end-1) == syntaxProfileDef.getCustomTokenBrackets().charAt(1)  && ! cell.isSymbolRed(end-1) )
    {
-    int pos = str.indexOf(syntaxProfileDef.getCustomTokenBrackets().charAt(0));
     
-    if( pos == -1 )
+    int pos=start;
+    
+    while( pos < end )
+    {
+     pos = str.indexOf(syntaxProfileDef.getCustomTokenBrackets().charAt(0), pos);
+     
+     if( pos == -1 || ! cell.isSymbolRed(pos) )
+      break;
+     
+     pos++;
+    }
+
+    
+    if( pos == -1 || pos >= end )
      throw new ParserException(0,0, "Invalid character at: "+(str.length())+". The closing bracket must correspond to opening one.");
     
-    name = str.substring(pos+1,str.length()-1);
-    nm.setParentClass( str.substring(0,pos) );
+    name = str.substring(pos+1,end-1);
+    nm.setParentClass( str.substring(start,pos) );
     nm.setCustom(true);
    }
    else
    {
-    name = str;
+    name = str.substring(start,end);
     nm.setCustom(false);
    }
   }

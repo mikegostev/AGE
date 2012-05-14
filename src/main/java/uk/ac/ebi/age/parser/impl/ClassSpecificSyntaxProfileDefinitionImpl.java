@@ -242,4 +242,10 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   return defaultRelReslvScope;
  }
 
+ @Override
+ public String getEscapeSequence()
+ {
+  return commonProfileDefinition.getEscapeSequence();
+ }
+
 }

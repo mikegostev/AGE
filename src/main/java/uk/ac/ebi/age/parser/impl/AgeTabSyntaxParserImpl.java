@@ -8,6 +8,7 @@ import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.parser.AgeTabModule;
 import uk.ac.ebi.age.parser.AgeTabObject;
 import uk.ac.ebi.age.parser.AgeTabSyntaxParser;
+import uk.ac.ebi.age.parser.AgeTabValue;
 import uk.ac.ebi.age.parser.BlockHeader;
 import uk.ac.ebi.age.parser.CellValue;
 import uk.ac.ebi.age.parser.ClassReference;
@@ -163,6 +164,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   AgeTabModule data = new AgeTabModuleImpl( getSyntaxProfile() );
   
   List<String> parts = new ArrayList<String>(100);
+  List<CellValue> cells = new ArrayList<CellValue>(100);
 
   SpreadsheetReader reader = new SpreadsheetReader(txt);
  
@@ -202,7 +204,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     header.setHorizontal(false);
    }
    
-   analyzeHeader(header, block.getRecord(parts), block.getRecNum() );
+   analyzeHeader(header, block.getRecord(cells), block.getRecNum() );
    data.addBlock(header);
    
    AgeTabObject cObj = null;
@@ -211,15 +213,17 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      profile.getCommonSyntaxProfile():profile.getClassSpecificSyntaxProfile(header.getClassColumnHeader().getName());
    
    parts.clear();
-   while( block.getRecord(parts) != null )
+   while( block.getRecord(cells) != null )
    {
-    Iterator<String> partIter = parts.iterator();
+    Iterator<CellValue> cellIter = cells.iterator();
     
-    String part = partIter.next();
+    CellValue cell = cellIter.next();
     
-    if( part.length() != 0 )
+    cell.trim();
+    
+    if( cell.getValue().length() != 0 )
     {
-     if( part.equals( profileDef.getAnonymousObjectId() ) )
+     if( cell.matchString(profileDef.getAnonymousObjectId()) )
      { 
       String id = "??"+IdGenerator.getInstance().getStringId("tempObjectId");
       cObj = data.createObject(id,header,block.getRecNum());
@@ -228,34 +232,35 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      }
      else
      {
-      String id = part;
-      boolean defined = ! part.startsWith( profileDef.getAnonymousObjectId());
+      boolean defined = cell.matchSubstring(profileDef.getAnonymousObjectId(), 0);
       
       IdScope scope = defined? profileDef.getDefaultIdScope() : IdScope.MODULE;
 
       String pfx = profileDef.getGlobalIdPrefix();
       
-      if( part.startsWith(pfx) )
+      String id = cell.getValue();
+      
+      if( cell.matchSubstring(pfx,0) )
       {
-       id = part.substring(pfx.length());
+       id = cell.getValue().substring(pfx.length());
        scope = IdScope.GLOBAL;
       }
       else
       {
        pfx = profileDef.getClusterIdPrefix();
        
-       if( part.startsWith(pfx) )
+       if( cell.matchSubstring(pfx,0) )
        {
-        id = part.substring(pfx.length());
+        id = cell.getValue().substring(pfx.length());
         scope = IdScope.CLUSTER;
        }
        else
        {
         pfx = profileDef.getModuleIdPrefix();
         
-        if( part.startsWith(pfx) )
+        if( cell.matchSubstring(pfx,0) )
         {
-         id = part.substring(pfx.length());
+         id = cell.getValue().substring(pfx.length());
          scope = IdScope.MODULE;
         }
        }
@@ -267,7 +272,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
       
       cObj.setIdScope(scope);
       cObj.setIdDefined( defined );
-      cObj.setPrototype( part.equals( profileDef.getPrototypeObjectId() ) );
+      cObj.setPrototype( cell.matchString( profileDef.getPrototypeObjectId() ) );
      }
     }
     else if( cObj == null )
@@ -278,17 +283,17 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     {
      col++;
      
-     if(!partIter.hasNext())
+     if(!cellIter.hasNext())
       break;
      
-     String val = partIter.next();
+     cell = cellIter.next();
 
      if( prop != null )
      {
-      if( val.length() > 0 )
-       cObj.addValue(block.getRecNum(),col,val,prop);
+      if( cell.getValue().length() > 0 )
+       cObj.addValue( new AgeTabValue(block.getRecNum(), col, prop, cell)  );
      }
-     else if( val.length() > 0 )
+     else if( cell.getValue().trim().length() > 0 )
      {
       throw new ParserException(block.getRecNum(),col,"Not empty value in the empty-headed column");
      }
@@ -301,16 +306,18 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   return data;
  }
 
- private void analyzeHeader(BlockHeader hdr, List<String> parts, int row) throws ParserException
+ private void analyzeHeader(BlockHeader hdr, List<CellValue> parts, int row) throws ParserException
  {
 //  BlockHeader hdr = new BlockHeaderImpl( this );
   
-  Iterator<String> itr = parts.iterator();
+  Iterator<CellValue> itr = parts.iterator();
+  
+  CellValue cell = itr.next();
   
   ClassReference partName;
   try
   {
-   partName = string2ClassReference(itr.next());
+   partName = string2ClassReference( cell );
    partName.setHorizontal(hdr.isHorizontal());
    partName.setRow(row);
    partName.setCol(1);
@@ -330,11 +337,11 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   {
    ord++;
    
-   String hdrStr = itr.next();
+   cell = itr.next();
 
    
    
-   if( hdrStr.trim().length() == 0 )
+   if( cell.getValue().trim().length() == 0 )
    {
     hdr.addColumnHeader(null);
     continue;
@@ -342,7 +349,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    
    try
    {
-    partName = string2ClassReference(hdrStr);
+    partName = string2ClassReference(cell);
     
     if( hdr.isHorizontal() )
     {

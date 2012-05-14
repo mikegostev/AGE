@@ -1,7 +1,7 @@
 package uk.ac.ebi.age.parser;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +26,7 @@ public class AgeTabObject
   List<AgeTabValue> vl = values.get(val.getColumnHeader());
   
   if( vl == null )
-   values.put(val.getColumnHeader(), vl=new LinkedList<AgeTabValue>() );
+   values.put(val.getColumnHeader(), vl=new ArrayList<AgeTabValue>(20) );
   
   vl.add(val);
  }

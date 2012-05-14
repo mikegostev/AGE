@@ -3,19 +3,22 @@ package uk.ac.ebi.age.parser;
 
 public class AgeTabValue extends AgeTabElement
 {
- private byte[] rbMarks;
- private String value;
+ private CellValue value;
  private ClassReference colHeader;
 
- public AgeTabValue(int row, int col, ClassReference prop, String value, byte[] rbMarks)
+ public AgeTabValue(int row, int col, ClassReference prop, CellValue value)
  {
   super(row, col);
   this.value=value;
   colHeader=prop;
-  this.rbMarks = rbMarks;
  }
 
  public String getValue()
+ {
+  return value.getValue();
+ }
+
+ public CellValue getCellValue()
  {
   return value;
  }
@@ -27,24 +30,12 @@ public class AgeTabValue extends AgeTabElement
 
  public boolean matchPrefix( String pfx )
  {
-  if( ! value.startsWith(pfx) )
-   return false;
-  
-  if( rbMarks == null )
-   return true;
-  
-  int pfxLen = pfx.length();
-  
-  for( int i=0; i < pfxLen; i++ )
-   if( rbMarks[i] != 0 )
-    return false;
-  
-  return true;
+  return value.matchSubstring(pfx, 0);
  }
 
  public void trim()
  {
-  value=value.trim();
+  value.trim();
  }
  
 }
