@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.model.writable;
 
 import java.util.Collection;
+import java.util.List;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
@@ -21,6 +22,8 @@ public interface AttributedWritable extends Attributed
 
 
  void addAttribute(AgeAttributeWritable attr);
+
+ void setAttributes(List<AgeAttributeWritable> attrs);
 
  void removeAttribute(AgeAttributeWritable attr);
 

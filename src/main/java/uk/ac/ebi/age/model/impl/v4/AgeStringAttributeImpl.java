@@ -21,6 +21,7 @@ public class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttri
   super(attrClass, host);
  }
 
+ // Will be called by deserializer
  private Object readResolve() throws ObjectStreamException
  {
   if( value instanceof String )

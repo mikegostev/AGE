@@ -2,6 +2,7 @@ package uk.ac.ebi.age.storage.impl.serswap.v3;
 
 import java.lang.ref.SoftReference;
 import java.util.Collection;
+import java.util.List;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
@@ -143,6 +144,12 @@ abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
   throw new UnsupportedOperationException();
  }
 
+ @Override
+ public void setAttributes(List<AgeAttributeWritable> attrs)
+ {
+  throw new UnsupportedOperationException();
+ }
+ 
  @Override
  public void removeAttribute(AgeAttributeWritable attr)
  {

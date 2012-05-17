@@ -100,6 +100,13 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
  {
   attributes = com.pri.util.collection.Collections.addToCompactList(attributes, attr);
  }
+ 
+ @Override
+ public synchronized void setAttributes(List<AgeAttributeWritable> attrs)
+ {
+  attributes = com.pri.util.collection.Collections.compactList(attrs);
+ }
+
 
  @Override
  public synchronized void removeAttribute(AgeAttributeWritable attr)

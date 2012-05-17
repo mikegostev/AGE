@@ -1,26 +1,27 @@
 package uk.ac.ebi.age.storage.impl.ser;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.DataType;
-import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
+import uk.ac.ebi.mg.packedstring.DualBandString;
+import uk.ac.ebi.mg.packedstring.SingleBandString;
 
 public class Stats
 {
 
- private Map<String,String> strMap = new HashMap<String,String>();
+// private Map<String,String> strMap = new HashMap<String,String>();
  
  private int modulesCount;
  private int fileCount;
  private long fileSize;
  private int objectsCount;
  private int attributesCount;
+ private int packedStringsSingleBand;
+ private int packedStringsDualBand;
+ private int packedStringsTotalLength;
  private int stringsObjects;
  private int stringsUnique;
  private int stringsCount;
@@ -84,32 +85,27 @@ public class Stats
     
     if( typ == DataType.STRING || typ == DataType.TEXT || typ == DataType.URI )
     {
-     stringsCount++;
+     Object val =  attr.getValue();
+
+     if( val instanceof String )
+     {
+      stringsCount++;
+      stringsSize += ((String)val).length();
+
+      if( ((String)val).length() > 100 )
+       longStrings++;
+     }
+     else if( val instanceof SingleBandString )
+     {
+      packedStringsSingleBand++;
+      packedStringsTotalLength+=((SingleBandString)val).length();
+     }
+     else if( val instanceof DualBandString )
+     {
+      packedStringsDualBand++;
+      packedStringsTotalLength+=((DualBandString)val).length();
+     }
      
-     String val =  attr.getValue().toString();
-     
-     stringsSize += val.length();
-     
-     if( val.length() > 100 )
-      longStrings++;
-     
-     String intrnval = val.intern();
-     
-//     String mapped = strMap.get(val);
-//
-//     if( mapped == null )
-//     {
-//      strMap.put(val, val);
-//      stringsUnique++;
-//      stringsObjects++;
-//     }
-//     else if( mapped != val )
-//      stringsObjects++;
-      
-     if( intrnval != val )
-      ((AgeAttributeWritable)attr).setValue(intrnval);
-     else
-      stringsUnique++;
      
     }
     
@@ -178,6 +174,21 @@ public class Stats
  public int getFailedModulesCount()
  {
   return failedMoules;
+ }
+
+ public int getPackedStringsSingleBand()
+ {
+  return packedStringsSingleBand;
+ }
+
+ public int getPackedStringsDualBand()
+ {
+  return packedStringsDualBand;
+ }
+
+ public int getPackedStringsTotalLength()
+ {
+  return packedStringsTotalLength;
  }
 
 

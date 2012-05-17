@@ -1,5 +1,7 @@
 package uk.ac.ebi.age.model.impl.v3;
 
+import java.io.ObjectStreamException;
+
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.FormatException;
@@ -17,6 +19,14 @@ public class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttri
   super(attrClass, host);
  }
 
+ // Will be called by deserializer
+ private Object readResolve() throws ObjectStreamException
+ {
+  value = value.intern();
+  
+  return this;
+ }
+ 
  public Object getValue()
  {
   return value;
@@ -35,9 +45,11 @@ public class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttri
  public void finalizeValue()
  {
   if( value != null )
+  {
    value = value.trim();
   
-  value = value.intern();
+   value = value.intern();
+  }
  }
  
 

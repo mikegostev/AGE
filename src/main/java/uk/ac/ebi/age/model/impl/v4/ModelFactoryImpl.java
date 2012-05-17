@@ -210,7 +210,7 @@ public class ModelFactoryImpl implements Serializable, ModelFactory
  @Override
  public AgeAttributeWritable createAgeStringAttribute(AttributeClassRef attrClass, AttributedWritable host)
  {
-  throw new UnsupportedOperationException();
+  return new AgeStringAttributeImpl(attrClass, host);
  }
 
  @Override

@@ -2,6 +2,7 @@ package uk.ac.ebi.age.storage.impl.serswap.v3;
 
 import java.lang.ref.SoftReference;
 import java.util.Collection;
+import java.util.List;
 
 import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.ext.entity.EntityDomain;
@@ -209,6 +210,12 @@ public class AgeObjectProxy implements AgeObjectWritable
  public void addAttribute(AgeAttributeWritable attr)
  {
   getObject().addAttribute(attr);
+ }
+ 
+ @Override
+ public void setAttributes(List<AgeAttributeWritable> attrs)
+ {
+  getObject().setAttributes(attrs);
  }
 
  @Override

@@ -30,7 +30,6 @@ import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.ModuleKey;
-import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.model.impl.ModelFactoryImpl;
@@ -664,7 +663,7 @@ public class SerializedStorage implements AgeStorageAdm
  
  private void loadData() throws StorageInstantiationException
  {
-  Map<AgeRelationClass, RelationClassRef> relRefMap = new HashMap<AgeRelationClass, RelationClassRef>();
+//  Map<AgeRelationClass, RelationClassRef> relRefMap = new HashMap<AgeRelationClass, RelationClassRef>();
 
   Stats totals = new Stats();
  
@@ -738,7 +737,7 @@ public class SerializedStorage implements AgeStorageAdm
       if( exr.getTargetObject() != null )
        continue;
       
-      String ref = exr.getTargetObjectId();
+//      String ref = exr.getTargetObjectId();
       
       AgeObjectWritable tgObj = null;
       
@@ -858,6 +857,8 @@ public class SerializedStorage implements AgeStorageAdm
    
    long totTime = System.currentTimeMillis()-stTime;
    
+   int pkdCount = totals.getPackedStringsSingleBand()+totals.getPackedStringsDualBand();
+   
    log.info("Loaded:"
      +"\nmodules: "+totals.getModulesCount()
      +"\nfailed modules: "+totals.getFailedModulesCount()
@@ -866,10 +867,12 @@ public class SerializedStorage implements AgeStorageAdm
      +"\nrelations: "+totals.getRelationsCount()
      +"\nstrings: "+totals.getStringsCount()
      +"\nlong strings (>100): "+totals.getLongStringsCount()
-     +"\nstrings objects: "+totals.getStringObjects()
-     +"\nstrings unique (only for J7): "+totals.getStringsUnique()
      +"\nstrings total length: "+totals.getStringsSize()
      +"\nstrings average length: "+(totals.getStringsCount()==0?0:totals.getStringsSize()/totals.getStringsCount())
+     +"\npacked strings (single band): "+totals.getPackedStringsSingleBand()
+     +"\npacked strings (dual band): "+totals.getPackedStringsDualBand()
+     +"\npacked strings total length: "+totals.getPackedStringsTotalLength()
+     +"\npacked strings average length: "+(pkdCount==0?0:totals.getPackedStringsTotalLength()/pkdCount)
      +"\ntotal time: "+totTime+"ms"
      +"\ntime per module: "+(totals.getModulesCount()==0?0:totTime/totals.getModulesCount())+"ms"
      +"\nmemory delta: "+(Runtime.getRuntime().totalMemory()-stMem)+"bytes"

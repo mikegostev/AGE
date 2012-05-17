@@ -2,6 +2,7 @@ package uk.ac.ebi.age.model.impl.v3;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
@@ -163,6 +164,12 @@ public class InferredInverseRelation implements AgeRelationWritable, Serializabl
  public void setInverseRelation(AgeRelationWritable invRl)
  {
   directRel = invRl;
+ }
+
+ @Override
+ public void setAttributes(List<AgeAttributeWritable> attrs)
+ {
+  throw new UnsupportedOperationException();
  }
 
 }

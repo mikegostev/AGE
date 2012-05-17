@@ -213,7 +213,7 @@ public class ModelFactoryImpl  implements Serializable, ModelFactory
  @Override
  public AgeAttributeWritable createAgeStringAttribute(AttributeClassRef attrClass, AttributedWritable host)
  {
-  return v3factory.createAgeStringAttribute(attrClass, host);
+  return v4factory.createAgeStringAttribute(attrClass, host);
  }
 
  @Override
