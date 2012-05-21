@@ -50,7 +50,7 @@ public class SwapStringAttribute extends AgeStringAttributeImpl
  @Override
  public AgeAttributeWritable createClone( AttributedWritable host )
  {
-  SwapStringAttribute clone  = new SwapStringAttribute(getClassRef(), host);
+  SwapStringAttribute clone  = new SwapStringAttribute(getClassReference(), host);
   
   clone.setValue(getValue());
   

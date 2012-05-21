@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.storage.impl.serswap.v3;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.RelationClassRef;
 
 public class SwapDefinedImplicitInvExtRelation extends SwapImplicitInvExtRelation
 {
@@ -25,4 +26,10 @@ public class SwapDefinedImplicitInvExtRelation extends SwapImplicitInvExtRelatio
   return relClass;
  }
 
+ @Override
+ public RelationClassRef getClassReference()
+ {
+  return null;
+ }
+ 
 }

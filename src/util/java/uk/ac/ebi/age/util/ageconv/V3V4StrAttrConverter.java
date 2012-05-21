@@ -137,7 +137,7 @@ public class V3V4StrAttrConverter
    {
     totalCount++;
     
-    AgeAttributeWritable newAttr = ModelFactoryImpl.getInstance().createAgeStringAttribute(attr.getClassRef(), host);
+    AgeAttributeWritable newAttr = ModelFactoryImpl.getInstance().createAgeStringAttribute(attr.getClassReference(), host);
     
     newAttr.setValue(attr.getValue());
     newAttr.finalizeValue();

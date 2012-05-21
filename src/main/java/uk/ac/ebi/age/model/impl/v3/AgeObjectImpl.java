@@ -154,6 +154,13 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  }
  
  @Override
+ public ClassRef getClassReference()
+ {
+  return classRef;
+ }
+
+ 
+ @Override
  public AgeClass getAgeElClass()
  {
   return classRef.getAgeClass();

@@ -95,7 +95,7 @@ public class AgeBooleanAttributeImpl extends AgeAttributeImpl
  @Override
  public AgeAttributeWritable createClone( AttributedWritable host )
  {
-  AgeBooleanAttributeImpl clone  = new AgeBooleanAttributeImpl(getClassRef(), host);
+  AgeBooleanAttributeImpl clone  = new AgeBooleanAttributeImpl(getClassReference(), host);
   clone.value=this.value;
   
   cloneAttributes( clone );

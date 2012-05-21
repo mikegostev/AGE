@@ -573,7 +573,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      for( AttrInfo ai : acInfo.attributes )
      {
       ai.obj.removeAttribute(ai.attr);
-      AgeAttributeWritable nAttr = ai.obj.createAgeAttribute(ai.attr.getClassRef());
+      AgeAttributeWritable nAttr = ai.obj.createAgeAttribute(ai.attr.getClassReference());
       
       if( typ == DataType.BOOLEAN )
        nAttr.setBooleanValue(ai.boolValue);

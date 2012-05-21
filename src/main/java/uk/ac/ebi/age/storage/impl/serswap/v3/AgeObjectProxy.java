@@ -12,6 +12,7 @@ import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
+import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.ModuleKey;
@@ -286,6 +287,13 @@ public class AgeObjectProxy implements AgeObjectWritable
  public ModuleKey getModuleKey()
  {
   return moduleId;
+ }
+
+
+ @Override
+ public ClassRef getClassReference()
+ {
+  return getObject().getClassReference();
  }
  
 }

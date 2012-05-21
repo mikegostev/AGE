@@ -113,7 +113,7 @@ public class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttri
  @Override
  public AgeAttributeWritable createClone(AttributedWritable host)
  {
-  AgeStringAttributeImpl clone  = new AgeStringAttributeImpl(getClassRef(), host);
+  AgeStringAttributeImpl clone  = new AgeStringAttributeImpl(getClassReference(), host);
   clone.value=this.value;
   
   cloneAttributes( clone );

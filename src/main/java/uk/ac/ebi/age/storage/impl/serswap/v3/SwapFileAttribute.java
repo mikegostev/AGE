@@ -50,7 +50,7 @@ public class SwapFileAttribute extends AgeFileAttributeImpl
  @Override
  public AgeAttributeWritable createClone( AttributedWritable host )
  {
-  SwapFileAttribute clone  = new SwapFileAttribute(getClassRef(), host, getTargetResolveScope());
+  SwapFileAttribute clone  = new SwapFileAttribute(getClassReference(), host, getTargetResolveScope());
   
   clone.setFileId( getFileId() );
   clone.setResolvedGlobal(isResolvedGlobal());

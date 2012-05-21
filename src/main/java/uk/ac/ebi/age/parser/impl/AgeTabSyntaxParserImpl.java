@@ -232,7 +232,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      }
      else
      {
-      boolean defined = cell.matchSubstring(profileDef.getAnonymousObjectId(), 0);
+      boolean defined = ! cell.matchSubstring(profileDef.getAnonymousObjectId(), 0);
       
       IdScope scope = defined? profileDef.getDefaultIdScope() : IdScope.MODULE;
 

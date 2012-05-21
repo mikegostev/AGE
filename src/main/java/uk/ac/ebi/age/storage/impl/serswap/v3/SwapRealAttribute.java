@@ -50,7 +50,7 @@ public class SwapRealAttribute extends AgeRealAttributeImpl
  @Override
  public AgeAttributeWritable createClone( AttributedWritable host )
  {
-  SwapRealAttribute clone  = new SwapRealAttribute(getClassRef(), host);
+  SwapRealAttribute clone  = new SwapRealAttribute(getClassReference(), host);
   
   clone.setDoubleValue(getValueAsDouble());
   

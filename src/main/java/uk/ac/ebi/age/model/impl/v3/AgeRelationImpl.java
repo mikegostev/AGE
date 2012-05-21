@@ -31,6 +31,12 @@ public class AgeRelationImpl extends AttributedObject implements AgeRelationWrit
  }
 
  @Override
+ public RelationClassRef getClassReference()
+ {
+  return relClassRef;
+ }
+ 
+ @Override
  public AgeObjectWritable getTargetObject()
  {
   return target;

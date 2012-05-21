@@ -76,7 +76,7 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
  @Override
  public AgeExternalObjectAttributeWritable createClone( AttributedWritable host )
  {
-  AgeExternalObjectAttributeImpl clone  = new SwapExternalObjectAttribute(getClassRef(), getTargetObjectId(), host, getTargetResolveScope());
+  AgeExternalObjectAttributeImpl clone  = new SwapExternalObjectAttribute(getClassReference(), getTargetObjectId(), host, getTargetResolveScope());
   
   
   cloneAttributes( clone );

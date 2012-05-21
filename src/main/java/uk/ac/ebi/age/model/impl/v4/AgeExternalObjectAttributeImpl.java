@@ -126,7 +126,7 @@ public class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements 
  @Override
  public AgeExternalObjectAttributeWritable createClone( AttributedWritable host )
  {
-  AgeExternalObjectAttributeImpl clone  = new AgeExternalObjectAttributeImpl(getClassRef(), objId, host, tgtScope);
+  AgeExternalObjectAttributeImpl clone  = new AgeExternalObjectAttributeImpl(getClassReference(), objId, host, tgtScope);
   clone.target=this.target;
   
   cloneAttributes( clone );

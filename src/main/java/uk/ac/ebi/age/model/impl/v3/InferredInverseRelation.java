@@ -10,6 +10,7 @@ import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -33,6 +34,12 @@ public class InferredInverseRelation implements AgeRelationWritable, Serializabl
  public AgeRelationClass getAgeElClass()
  {
   return directRel.getAgeElClass().getInverseRelationClass();
+ }
+ 
+ @Override
+ public RelationClassRef getClassReference()
+ {
+  return null;
  }
 
  @Override

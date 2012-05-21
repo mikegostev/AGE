@@ -38,6 +38,12 @@ public class AgeExternalRelationImpl extends AttributedObject implements AgeExte
  {
   return relClassRef.getAgeRelationClass();
  }
+ 
+ @Override
+ public RelationClassRef getClassReference()
+ {
+  return relClassRef;
+ }
 
  @Override
  public AgeObjectWritable getTargetObject()

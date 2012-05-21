@@ -22,12 +22,7 @@ abstract public class AgeAttributeImpl extends AttributedObject implements AgeAt
  protected AgeAttributeImpl()
  {}
  
- @Override
- public AttributeClassRef getClassRef()
- {
-  return classReference;
- }
- 
+
  public AgeAttributeImpl(AttributeClassRef attrClassR, AttributedWritable host)
  {
   classReference = attrClassR;
@@ -57,6 +52,12 @@ abstract public class AgeAttributeImpl extends AttributedObject implements AgeAt
   return classReference.getAttributeClass();
  }
  
+ @Override
+ public AttributeClassRef getClassReference()
+ {
+  return classReference;
+ }
+
 
  @Override
  public AttributedClass getAttributedClass()

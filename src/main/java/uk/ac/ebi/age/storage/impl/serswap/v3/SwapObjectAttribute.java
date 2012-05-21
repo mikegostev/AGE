@@ -65,7 +65,7 @@ public class SwapObjectAttribute extends AgeObjectAttributeImpl
  @Override
  public AgeAttributeWritable createClone( AttributedWritable host )
  {
-  AgeObjectAttributeImpl clone  = new SwapObjectAttribute(getClassRef(), host);
+  AgeObjectAttributeImpl clone  = new SwapObjectAttribute(getClassReference(), host);
   
   clone.setValue(getValue());
   

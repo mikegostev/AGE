@@ -95,7 +95,7 @@ public class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjec
  @Override
  public AgeAttributeWritable createClone( AttributedWritable host )
  {
-  AgeObjectAttributeImpl clone  = new AgeObjectAttributeImpl(getClassRef(), host);
+  AgeObjectAttributeImpl clone  = new AgeObjectAttributeImpl(getClassReference(), host);
   clone.value=this.value;
   
   cloneAttributes( clone );

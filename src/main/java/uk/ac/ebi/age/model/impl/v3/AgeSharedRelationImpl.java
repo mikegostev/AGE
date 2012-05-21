@@ -90,6 +90,12 @@ public class AgeSharedRelationImpl implements AgeRelation, Serializable
  {
   return relClassRef.getAgeRelationClass();
  }
+ 
+ @Override
+ public RelationClassRef getClassReference()
+ {
+  return relClassRef;
+ }
 
  @Override
  public AgeRelationWritable getInverseRelation()

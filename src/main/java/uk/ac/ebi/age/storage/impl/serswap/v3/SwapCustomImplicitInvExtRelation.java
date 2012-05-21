@@ -3,6 +3,7 @@ package uk.ac.ebi.age.storage.impl.serswap.v3;
 import java.lang.ref.SoftReference;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
+import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.ResolveScope;
 
 public class SwapCustomImplicitInvExtRelation extends SwapImplicitInvExtRelation
@@ -53,6 +54,12 @@ public class SwapCustomImplicitInvExtRelation extends SwapImplicitInvExtRelation
  public ResolveScope getTargetResolveScope()
  {
   return ResolveScope.CASCADE_CLUSTER;
+ }
+
+ @Override
+ public RelationClassRef getClassReference()
+ {
+  return null;
  }
 
 

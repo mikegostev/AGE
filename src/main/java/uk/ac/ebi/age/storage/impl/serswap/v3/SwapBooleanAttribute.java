@@ -51,7 +51,7 @@ public class SwapBooleanAttribute extends AgeBooleanAttributeImpl
  @Override
  public AgeAttributeWritable createClone( AttributedWritable host )
  {
-  AgeBooleanAttributeImpl clone  = new SwapBooleanAttribute(getClassRef(), host);
+  AgeBooleanAttributeImpl clone  = new SwapBooleanAttribute(getClassReference(), host);
   
   clone.setBooleanValue(getValueAsBoolean());
   

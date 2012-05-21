@@ -2655,7 +2655,7 @@ public class SubmissionManager
     {
      if(ageStorage.getAttachment(fattr.getFileId()) == null)
      {
-      AttributeClassRef clRef = fattr.getClassRef();
+      AttributeClassRef clRef = fattr.getClassReference();
 
       logCon.log(Level.ERROR, "Reference to file can't be resolved (in global scope). Module: " + mm.aux.getOrder()
         + (mm.meta.getId() != null ? (" (ID='" + mm.meta.getId() + "')") : "") + " Attribute: row: " + fattr.getOrder() + " col: " + clRef.getOrder());
@@ -2675,7 +2675,7 @@ public class SubmissionManager
      {
       if(ageStorage.getAttachment(fattr.getFileId()) == null)
       {
-       AttributeClassRef clRef = fattr.getClassRef();
+       AttributeClassRef clRef = fattr.getClassReference();
 
        logCon.log(Level.ERROR, "Reference to file can't be resolved (in global scope). Module: " + mm.aux.getOrder()
          + (mm.meta.getId() != null ? (" (ID='" + mm.meta.getId() + "')") : "") + " Attribute: row: " + fattr.getOrder() + " col: " + clRef.getOrder());
@@ -2775,7 +2775,7 @@ public class SubmissionManager
     {
      reconnLog.log(Level.ERROR,
        "Can't connect file attribute: '" + fattr.getFileId() + "'. Module: ID='" + mm.meta.getId() + "' Row: " + fattr.getOrder() + " Col: "
-         + fattr.getClassRef().getOrder());
+         + fattr.getClassReference().getOrder());
      res = false;
 
      continue;
@@ -2788,7 +2788,7 @@ public class SubmissionManager
      {
       reconnLog.log(Level.ERROR,
         "Can't connect file attribute: '" + fattr.getFileId() + "'. Module: ID='" + mm.meta.getId() + "' Row: " + fattr.getOrder() + " Col: "
-          + fattr.getClassRef().getOrder());
+          + fattr.getClassReference().getOrder());
       res = false;
      }
      else if( ageStorage.getAttachment(fattr.getFileId()) != null )

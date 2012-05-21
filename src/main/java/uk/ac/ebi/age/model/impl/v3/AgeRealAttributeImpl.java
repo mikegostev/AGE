@@ -99,7 +99,7 @@ public class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttribu
  @Override
  public AgeAttributeWritable createClone( AttributedWritable host )
  {
-  AgeRealAttributeImpl clone  = new AgeRealAttributeImpl(getClassRef(), host);
+  AgeRealAttributeImpl clone  = new AgeRealAttributeImpl(getClassReference(), host);
   clone.value=this.value;
   
   cloneAttributes( clone );
