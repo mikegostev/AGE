@@ -85,22 +85,22 @@ public class SubmissionManager
  }
 
  private static Extractor<ModMeta, DataModuleWritable> modExtractor    = new Extractor<ModMeta, DataModuleWritable>()
-                                                                       {
-                                                                        @Override
-                                                                        public DataModuleWritable extract(ModMeta obj)
-                                                                        {
-                                                                         return obj.newModule;
-                                                                        }
-                                                                       };
+   {
+    @Override
+    public DataModuleWritable extract(ModMeta obj)
+    {
+     return obj.newModule;
+    }
+   };
 
  private static Extractor<ModMeta, ModuleKey>          modkeyExtractor = new Extractor<ModMeta, ModuleKey>()
-                                                                       {
-                                                                        @Override
-                                                                        public ModuleKey extract(ModMeta obj)
-                                                                        {
-                                                                         return new ModuleKey(obj.origModule.getClusterId(), obj.origModule.getId());
-                                                                        }
-                                                                       };
+   {
+    @Override
+    public ModuleKey extract(ModMeta obj)
+    {
+     return new ModuleKey(obj.origModule.getClusterId(), obj.origModule.getId());
+    }
+   };
 
  private static class FileMeta
  {
@@ -139,10 +139,6 @@ public class SubmissionManager
   Map<AgeRelationClass, RelationClassRef> relRefMap      = new HashMap<AgeRelationClass, RelationClassRef>();
  }
 
- // public static SubmissionManager getInstance()
- // {
- // return instance;
- // }
 
  private AgeTabSyntaxParser   ageTabParser;
  private AgeTab2AgeConverter  converter = null;
@@ -326,8 +322,7 @@ public class SubmissionManager
       clusterMeta.mod4Use.add(mm);
      }
     }
-    else
-    // modAux.getStatus() == Status.NEW
+    else // modAux.getStatus() == Status.NEW
     {
      if(dm.getText() == null)
      {
@@ -367,10 +362,7 @@ public class SubmissionManager
    }
   }
 
-  if(origSbm != null && origSbm.getDataModules() != null) // now we are sorting
-                                                          // modules from the
-                                                          // existing cluster
-                                                          // (submission)
+  if(origSbm != null && origSbm.getDataModules() != null) // now we are sorting modules from the existing cluster (submission)
   {
    for(DataModuleMeta odm : origSbm.getDataModules())
    {
@@ -383,14 +375,10 @@ public class SubmissionManager
 
     if(updMod != null)
     {
-     if(updMod.meta.getDescription() == null) // if the new module has no
-                                              // description we keep the old one
+     if(updMod.meta.getDescription() == null) // if the new module has no description we keep the old one
       updMod.meta.setDescription(odm.getDescription());
 
-     updMod.meta.setSubmissionTime(odm.getSubmissionTime()); // Preserving
-                                                             // originsl
-                                                             // submitter and
-                                                             // submission time
+     updMod.meta.setSubmissionTime(odm.getSubmissionTime()); // Preserving original submitter and submission time
      updMod.meta.setSubmitter(odm.getSubmitter());
 
      if(updMod.meta.getText() != null)
@@ -399,8 +387,7 @@ public class SubmissionManager
       updMod.meta.setDocVersion(odm.getDocVersion());
 
     }
-    else if(!clusterMeta.mod4Del.containsKey(modID)) // i.e. module that will be
-                                                     // kept untouched
+    else if(!clusterMeta.mod4Del.containsKey(modID)) // i.e. module that will be kept untouched
     {
      ModMeta mm = new ModMeta();
      mm.meta = odm;
@@ -425,8 +412,7 @@ public class SubmissionManager
   if(!res)
    return false;
 
-  Map<String, Integer> globalFileConflicts = null; // = new HashMap<String,
-                                                   // Integer>();
+  Map<String, Integer> globalFileConflicts = null; // = new HashMap<String,Integer>();
 
   if(files != null && files.size() > 0) // Sorting incoming files
   {
@@ -437,21 +423,7 @@ public class SubmissionManager
     FileAttachmentMeta newFileMeta = files.get(n);
     AttachmentAux newAuxInfo = (AttachmentAux) newFileMeta.getAux();
 
-    String cAtId = newAuxInfo.getNewId() != null ? newAuxInfo.getNewId() : newFileMeta.getId(); // atax.getNewId()
-                                                                                                // !=
-                                                                                                // null
-                                                                                                // meant
-                                                                                                // that
-                                                                                                // we
-                                                                                                // want
-                                                                                                // to
-                                                                                                // assign
-                                                                                                // the
-                                                                                                // new
-                                                                                                // ID
-                                                                                                // to
-                                                                                                // some
-                                                                                                // attachment
+    String cAtId = newAuxInfo.getNewId() != null ? newAuxInfo.getNewId() : newFileMeta.getId(); // atax.getNewId()!=null meant that we want to assign the new ID to some attachment
 
     if(cAtId == null)
     {
@@ -462,8 +434,7 @@ public class SubmissionManager
 
     if(newAuxInfo.getStatus() != Status.DELETE)
     {
-     for(int k = n + 1; k < files.size(); k++) // All IDs must be unique within
-                                               // the submission
+     for(int k = n + 1; k < files.size(); k++) // All IDs must be unique within the submission
      {
       FileAttachmentMeta ofa = files.get(k);
 
@@ -546,28 +517,14 @@ public class SubmissionManager
      else
      // UPDATE
      {
-      if(newAuxInfo.getNewId() != null && !newAuxInfo.getNewId().equals(newFileMeta.getId())) // Submitter
-                                                                                              // wants
-                                                                                              // to
-                                                                                              // rename
-                                                                                              // this
-                                                                                              // attachment
+      if(newAuxInfo.getNewId() != null && !newAuxInfo.getNewId().equals(newFileMeta.getId())) // Submitter wants to rename this attachment
       {
 
-       // We have checked that all IDs are unique within this submission let's
-       // check conflicts with the global IDs
+       // We have checked that all IDs are unique within this submission let's check conflicts with the global IDs
 
        if(newFileMeta.isGlobal())
        {
-        if(ageStorage.getAttachment(newAuxInfo.getNewId()) != null) // ok, it
-                                                                    // could be
-                                                                    // a problem
-                                                                    // if it not
-                                                                    // some
-                                                                    // attachment
-                                                                    // that we a
-                                                                    // going to
-                                                                    // delete
+        if(ageStorage.getAttachment(newAuxInfo.getNewId()) != null) // ok, it could be a problem if it not some attachment that we a going to delete
         {
          if(globalFileConflicts == null)
           globalFileConflicts = new HashMap<String, Integer>();
@@ -614,8 +571,7 @@ public class SubmissionManager
       else
       // UPDATE not renaming
       {
-       FileMeta fmeta = new FileMeta(); // Our local structure to keep
-                                        // attachment info together
+       FileMeta fmeta = new FileMeta(); // Our local structure to keep attachment info together
 
        fmeta.newFile = newFileMeta;
        fmeta.origFile = origFileMeta;
@@ -659,18 +615,10 @@ public class SubmissionManager
       continue;
      }
 
-     if(newFileMeta.isGlobal()) // this is a new file with a new global ID. We
-                                // have to check its uniqueness
+     if(newFileMeta.isGlobal()) // this is a new file with a new global ID. We have to check its uniqueness
      {
 
-      if(ageStorage.getAttachment(newFileMeta.getId()) != null) // ok, it could
-                                                                // be a problem
-                                                                // if it not
-                                                                // some
-                                                                // attachment
-                                                                // that we a
-                                                                // going to
-                                                                // delete
+      if(ageStorage.getAttachment(newFileMeta.getId()) != null) // ok, it could be a problem if it not attachment that we are going to delete
       {
        if(globalFileConflicts == null)
         globalFileConflicts = new HashMap<String, Integer>();

@@ -13,7 +13,9 @@ public enum SystemAction
  CUSTRELCLASSDEF("Define custom relation class", ActionGroup.CUSTCLASSDEF),
  
  CREATESUBM("Create submission", ActionGroup.SUBMISSION ),
- EXPORT_GRAPH_DATA("Export full data graph", ActionGroup.EXPORT );
+ EXPORT_GRAPH_DATA("Export full data graph", ActionGroup.EXPORT ),
+ 
+ CTRLSUBMTAGS("Controll submission tags", ActionGroup.SUBMISSION );
 
  
  public static enum ActionGroup
