@@ -44,6 +44,12 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
  }
 
  @Override
+ public void setTargetResolveScope( ResolveScope rs )
+ {
+  scope=rs;
+ }
+ 
+ @Override
  public boolean isResolvedGlobal()
  {
   return resolvedScope;

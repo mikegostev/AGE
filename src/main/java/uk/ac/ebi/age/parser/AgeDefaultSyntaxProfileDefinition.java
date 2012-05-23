@@ -15,10 +15,19 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
  public static final String prototypeObjectId="*";
  public static final String anonymousObjectId="?";
  
- public static final String globalIdPrefix="^";
- public static final String clusterIdPrefix="&";
- public static final String moduleIdPrefix="$";
+ public static final String globalIdPrefix="G::";
+ public static final String clusterIdPrefix="C::";
+ public static final String moduleIdPrefix="M::";
+ public static final String defaultScopeIdPrefix="D::";
 
+ public static final String globalResolveScopePrefix="G::";
+ public static final String clusterResolveScopePrefix="C::";
+ public static final String moduleResolveScopePrefix="M::";
+ public static final String moduleCascadeResolveScopePrefix="MC::";
+ public static final String clusterCascadeResolveScopePrefix="CC::";
+ public static final String defaultResolveScopePrefix="D::";
+
+ 
  public static final String horizontalBlockPrefix="-";
  public static final String verticalBlockPrefix="|";
  
@@ -27,6 +36,7 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
  public static final Boolean resetPrototype = true;
  
  public static final ResolveScope defaultObjectAttributeResolveScope = ResolveScope.CASCADE_MODULE;
+ public static final ResolveScope defaultFileAttributeResolveScope = ResolveScope.CASCADE_CLUSTER;
  public static final ResolveScope defaultRelationResolveScope = ResolveScope.CASCADE_MODULE;
  
  private static AgeDefaultSyntaxProfileDefinition instance  = new AgeDefaultSyntaxProfileDefinition();
@@ -140,6 +150,48 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
  public String getEscapeSequence()
  {
   return escapeSequence;
+ }
+
+ @Override
+ public String getDefaultScopeIdPrefix()
+ {
+  return defaultScopeIdPrefix;
+ }
+
+ public String getGlobalResolveScopePrefix()
+ {
+  return globalResolveScopePrefix;
+ }
+
+ public String getClusterResolveScopePrefix()
+ {
+  return clusterResolveScopePrefix;
+ }
+
+ public String getModuleResolveScopePrefix()
+ {
+  return moduleResolveScopePrefix;
+ }
+
+ public String getModuleCascadeResolveScopePrefix()
+ {
+  return moduleCascadeResolveScopePrefix;
+ }
+
+ public String getClusterCascadeResolveScopePrefix()
+ {
+  return clusterCascadeResolveScopePrefix;
+ }
+
+ public String getDefaultResolveScopePrefix()
+ {
+  return defaultResolveScopePrefix;
+ }
+
+ @Override
+ public ResolveScope getDefaultFileAttributeResolveScope()
+ {
+  return defaultFileAttributeResolveScope;
  }
 
 }

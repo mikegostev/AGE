@@ -177,9 +177,8 @@ public abstract class AgeTabSyntaxParser
   nm.setRawReference( str.substring(start,end).trim() );
   
   
-  while( start < end )
+  outer: while( start < end )
   {
-   String ps = null;
    
    for(int i=0; i < prc.length; i++ ) // Looking for expressions in braces and calling 'process' for such expressions
    {
@@ -188,7 +187,7 @@ public abstract class AgeTabSyntaxParser
      int level = 0;
      
      int j;
-     for( j= end-2; j>=j+1; j--)
+     for( j= end-2; j>=start; j--)
      {
       if( str.charAt(j) == prc[i].getBrackets().charAt(1) && ! cell.isSymbolRed(j) ) //We've found another closing brace so assuming a nested expression
        level++;
@@ -203,20 +202,19 @@ public abstract class AgeTabSyntaxParser
         
         end = j;
 
-        break;
+        continue outer;
        }
       }
      }
      
-     if( j < 0 )
+     if( j < start )
       throw new ParserException(0,0, "No opening bracket for section: '"+prc[i].getBrackets().charAt(0)+"'");
      
     }
      
    }
    
-   if( ps == null )
-    break;
+   break;
   }
   
   

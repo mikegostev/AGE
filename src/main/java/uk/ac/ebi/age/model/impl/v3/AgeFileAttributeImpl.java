@@ -54,4 +54,10 @@ public class AgeFileAttributeImpl extends AgeStringAttributeImpl implements AgeF
   throw new UnsupportedOperationException();
  }
 
+ @Override
+ public void setTargetResolveScope(ResolveScope rs)
+ {
+  throw new UnsupportedOperationException();
+ }
+
 }

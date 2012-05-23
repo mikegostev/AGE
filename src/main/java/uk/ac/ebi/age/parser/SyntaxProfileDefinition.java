@@ -25,6 +25,8 @@ public interface SyntaxProfileDefinition
 
  public String getModuleIdPrefix();
 
+ public String getDefaultScopeIdPrefix();
+
  public IdScope getDefaultIdScope();
 
  public String getHorizontalBlockPrefix();
@@ -39,5 +41,21 @@ public interface SyntaxProfileDefinition
 
  public ResolveScope getDefaultRelationResolveScope();
 
+ public ResolveScope getDefaultFileAttributeResolveScope();
+
+ public String getGlobalResolveScopePrefix();
+
+ public String getClusterResolveScopePrefix();
+
+ public String getModuleResolveScopePrefix();
+ 
+ public String getClusterCascadeResolveScopePrefix();
+ 
+ public String getModuleCascadeResolveScopePrefix();
+
+ public String getDefaultResolveScopePrefix();
+ 
  public String getEscapeSequence();
+
+
 }

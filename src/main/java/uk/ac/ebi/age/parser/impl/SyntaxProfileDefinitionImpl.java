@@ -20,7 +20,15 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
  private String  globalIdPrefix         = AgeDefaultSyntaxProfileDefinition.globalIdPrefix;
  private String  clusterIdPrefix        = AgeDefaultSyntaxProfileDefinition.clusterIdPrefix;
  private String  moduleIdPrefix         = AgeDefaultSyntaxProfileDefinition.moduleIdPrefix;
+ private String  defaultScopeIdPrefix   = AgeDefaultSyntaxProfileDefinition.defaultScopeIdPrefix;
 
+ private String       globalResolveScopePrefix         = AgeDefaultSyntaxProfileDefinition.globalResolveScopePrefix;
+ private String       clusterResolveScopePrefix        = AgeDefaultSyntaxProfileDefinition.clusterResolveScopePrefix;
+ private String       moduleResolveScopePrefix         = AgeDefaultSyntaxProfileDefinition.moduleResolveScopePrefix;
+ private String       moduleCascadeResolveScopePrefix  = AgeDefaultSyntaxProfileDefinition.moduleCascadeResolveScopePrefix;
+ private String       clusterCascadeResolveScopePrefix = AgeDefaultSyntaxProfileDefinition.clusterCascadeResolveScopePrefix;
+ private String       defaultResolveScopePrefix        = AgeDefaultSyntaxProfileDefinition.defaultResolveScopePrefix;
+ 
  private String  horizontalBlockPrefix  = AgeDefaultSyntaxProfileDefinition.horizontalBlockPrefix;
  private String  verticalBlockPrefix    = AgeDefaultSyntaxProfileDefinition.verticalBlockPrefix;
 
@@ -29,6 +37,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
  private Boolean resetPrototype         = AgeDefaultSyntaxProfileDefinition.resetPrototype;
  
  private ResolveScope defaultObjAttrReslvScope = AgeDefaultSyntaxProfileDefinition.defaultObjectAttributeResolveScope;
+ private ResolveScope defaultFileAttrReslvScope = AgeDefaultSyntaxProfileDefinition.defaultFileAttributeResolveScope;
  private ResolveScope defaultRelReslvScope     = AgeDefaultSyntaxProfileDefinition.defaultRelationResolveScope;
 
  public String getCustomTokenBrackets()
@@ -199,4 +208,84 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   return escapeSequence;
  }
 
+ public String getDefaultScopeIdPrefix()
+ {
+  return defaultScopeIdPrefix;
+ }
+
+ public void setDefaultScopeIdPrefix(String defaultScopeIdPrefix)
+ {
+  this.defaultScopeIdPrefix = defaultScopeIdPrefix;
+ }
+
+ public String getGlobalResolveScopePrefix()
+ {
+  return globalResolveScopePrefix;
+ }
+
+ public void setGlobalResolveScopePrefix(String globalResolveScopePrefix)
+ {
+  this.globalResolveScopePrefix = globalResolveScopePrefix;
+ }
+
+ public String getClusterResolveScopePrefix()
+ {
+  return clusterResolveScopePrefix;
+ }
+
+ public void setClusterResolveScopePrefix(String clusterResolveScopePrefix)
+ {
+  this.clusterResolveScopePrefix = clusterResolveScopePrefix;
+ }
+
+ public String getModuleResolveScopePrefix()
+ {
+  return moduleResolveScopePrefix;
+ }
+
+ public void setModuleResolveScopePrefix(String moduleResolveScopePrefix)
+ {
+  this.moduleResolveScopePrefix = moduleResolveScopePrefix;
+ }
+
+ public String getModuleCascadeResolveScopePrefix()
+ {
+  return moduleCascadeResolveScopePrefix;
+ }
+
+ public void setModuleCascadeResolveScopePrefix(String moduleCascadeResolveScopePrefix)
+ {
+  this.moduleCascadeResolveScopePrefix = moduleCascadeResolveScopePrefix;
+ }
+
+ public String getClusterCascadeResolveScopePrefix()
+ {
+  return clusterCascadeResolveScopePrefix;
+ }
+
+ public void setClusterCascadeResolveScopePrefix(String clusterCascadeResolveScopePrefix)
+ {
+  this.clusterCascadeResolveScopePrefix = clusterCascadeResolveScopePrefix;
+ }
+
+ public String getDefaultResolveScopePrefix()
+ {
+  return defaultResolveScopePrefix;
+ }
+
+ public void setDefaultResolveScopePrefix(String defaultResolveScopePrefix)
+ {
+  this.defaultResolveScopePrefix = defaultResolveScopePrefix;
+ }
+
+ @Override
+ public ResolveScope getDefaultFileAttributeResolveScope()
+ {
+  return defaultFileAttrReslvScope;
+ }
+
+ public void setDefaultFileAttributeResolveScope( ResolveScope scp )
+ {
+  defaultFileAttrReslvScope=scp;
+ }
 }

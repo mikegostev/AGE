@@ -19,6 +19,14 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
  private String  globalIdPrefix;
  private String  clusterIdPrefix;
  private String  moduleIdPrefix;
+ private String  defaultScopeIdPrefix;
+
+ private String  globalResolveScopePrefix;
+ private String  clusterResolveScopePrefix;
+ private String  moduleResolveScopePrefix; 
+ private String  moduleCascadeResolveScopePrefix;
+ private String  clusterCascadeResolveScopePrefix;
+ private String  defaultResolveScopePrefix;
 
  private String  horizontalBlockPrefix;
  private String  verticalBlockPrefix;
@@ -28,6 +36,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
  private Boolean resetPrototype;
  
  private ResolveScope defaultObjAttrReslvScope;
+ private ResolveScope defaultFileAttrReslvScope;
  private ResolveScope defaultRelReslvScope;
 
  public ClassSpecificSyntaxProfileDefinitionImpl( SyntaxProfileDefinition comm )
@@ -232,20 +241,137 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
 
  @Override
  public ResolveScope getDefaultObjectAttributeResolveScope()
- {
-  return defaultObjAttrReslvScope;
+ {  
+  if( defaultObjAttrReslvScope != null )
+   return defaultObjAttrReslvScope;
+  
+  return commonProfileDefinition.getDefaultObjectAttributeResolveScope();
  }
+ 
+ public void setDefaultObjectAttributeResolveScope( ResolveScope sc )
+ {
+  defaultObjAttrReslvScope = sc;
+ }
+ 
+ @Override
+ public ResolveScope getDefaultFileAttributeResolveScope()
+ {  
+  if( defaultFileAttrReslvScope != null )
+   return defaultFileAttrReslvScope;
+  
+  return commonProfileDefinition.getDefaultFileAttributeResolveScope();
+ }
+ 
+ public void setDefaultFileAttributeResolveScope( ResolveScope sc )
+ {
+  defaultFileAttrReslvScope = sc;
+ }
+
 
  @Override
  public ResolveScope getDefaultRelationResolveScope()
  {
-  return defaultRelReslvScope;
+  if( defaultRelReslvScope != null )
+   return defaultRelReslvScope;
+  
+  return commonProfileDefinition.getDefaultRelationResolveScope();
  }
 
  @Override
  public String getEscapeSequence()
  {
   return commonProfileDefinition.getEscapeSequence();
+ }
+
+ public String getDefaultScopeIdPrefix()
+ {
+  if( defaultScopeIdPrefix != null )
+   return defaultScopeIdPrefix;
+  
+  return commonProfileDefinition.getDefaultScopeIdPrefix();
+ }
+
+ public void setDefaultScopeIdPrefix(String defaultScopeIdPrefix)
+ {
+  this.defaultScopeIdPrefix = defaultScopeIdPrefix;
+ }
+
+ public String getGlobalResolveScopePrefix()
+ {
+  if( globalResolveScopePrefix != null )
+   return globalResolveScopePrefix;
+  
+  return commonProfileDefinition.getGlobalResolveScopePrefix();
+ }
+
+ public void setGlobalResolveScopePrefix(String globalResolveScopePrefix)
+ {
+  this.globalResolveScopePrefix = globalResolveScopePrefix;
+ }
+
+ public String getClusterResolveScopePrefix()
+ {
+  if( clusterResolveScopePrefix != null )
+   return clusterResolveScopePrefix;
+  
+  return commonProfileDefinition.getClusterResolveScopePrefix();
+ }
+
+ public void setClusterResolveScopePrefix(String clusterResolveScopePrefix)
+ {
+  this.clusterResolveScopePrefix = clusterResolveScopePrefix;
+ }
+
+ public String getModuleResolveScopePrefix()
+ {
+  if( moduleResolveScopePrefix != null )
+   return moduleResolveScopePrefix;
+  
+  return commonProfileDefinition.getModuleResolveScopePrefix();
+ }
+
+ public void setModuleResolveScopePrefix(String moduleResolveScopePrefix)
+ {
+  this.moduleResolveScopePrefix = moduleResolveScopePrefix;
+ }
+
+ public String getModuleCascadeResolveScopePrefix()
+ {
+  if( moduleCascadeResolveScopePrefix != null )
+   return moduleCascadeResolveScopePrefix;
+  
+  return commonProfileDefinition.getModuleCascadeResolveScopePrefix();
+ }
+
+ public void setModuleCascadeResolveScopePrefix(String moduleCascadeResolveScopePrefix)
+ {
+  this.moduleCascadeResolveScopePrefix = moduleCascadeResolveScopePrefix;
+ }
+
+ public String getClusterCascadeResolveScopePrefix()
+ {
+  if( clusterCascadeResolveScopePrefix != null )
+   return clusterCascadeResolveScopePrefix;
+  
+  return commonProfileDefinition.getClusterCascadeResolveScopePrefix();
+ }
+
+ public void setClusterCascadeResolveScopePrefix(String clusterCascadeResolveScopePrefix)
+ {
+  this.clusterCascadeResolveScopePrefix = clusterCascadeResolveScopePrefix;
+ }
+
+ public String getDefaultResolveScopePrefix()
+ {
+  if( defaultResolveScopePrefix != null )
+   return defaultResolveScopePrefix;
+  
+  return commonProfileDefinition.getDefaultResolveScopePrefix();
+ }
+
+ public void setDefaultResolveScopePrefix(String defaultResolveScopePrefix)
+ {
+  this.defaultResolveScopePrefix = defaultResolveScopePrefix;
  }
 
 }

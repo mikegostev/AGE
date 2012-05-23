@@ -263,6 +263,16 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
          id = cell.getValue().substring(pfx.length());
          scope = IdScope.MODULE;
         }
+        else
+        {
+         pfx = profileDef.getDefaultScopeIdPrefix();
+         
+         if( cell.matchSubstring(pfx,0) )
+         {
+          id = cell.getValue().substring(pfx.length());
+          scope = profileDef.getDefaultIdScope();
+         }
+        }
        }
       }
       
@@ -321,6 +331,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    partName.setHorizontal(hdr.isHorizontal());
    partName.setRow(row);
    partName.setCol(1);
+   partName.setRawReference(cell.getRawValue());
   }
   catch(ParserException e)
   {
@@ -350,7 +361,8 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    try
    {
     partName = string2ClassReference(cell);
-    
+    partName.setRawReference(cell.getRawValue());
+
     if( hdr.isHorizontal() )
     {
      partName.setRow(row);

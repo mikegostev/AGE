@@ -5,9 +5,12 @@ public class CellValue
 {
  private byte[] rbMarks;
  private String value;
+ private String rawValue;
  
  public CellValue( String val, String escSeq )
  {
+  rawValue = val;
+  
   int len = val.length();
   StringBuilder sb = null;
   
@@ -124,4 +127,8 @@ public class CellValue
    rbMarks[i] = rbMarks[i+st];
  }
  
+ public String getRawValue()
+ {
+  return rawValue;
+ }
 }
