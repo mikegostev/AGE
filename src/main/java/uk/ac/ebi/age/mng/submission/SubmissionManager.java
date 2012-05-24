@@ -884,6 +884,9 @@ public class SubmissionManager
 
    if(!res)
     return false;
+   
+   if(verifyOnly)
+    return true;
 
 
    if(clusterMeta.id.charAt(0) == '\0')
@@ -1187,132 +1190,128 @@ public class SubmissionManager
    ageStorage.unlockWrite();
   }
 
-  if(!verifyOnly)
+  Transaction trn = annotationManager.startTransaction();
+
+  ClusterEntity cEnt = new ClusterEntity(sMeta.getId());
+
+  try
   {
-   Transaction trn = annotationManager.startTransaction();
-
-   ClusterEntity cEnt = new ClusterEntity(sMeta.getId());
-
-   try
+   if(sMeta.getStatus() == Status.NEW)
+    annotationManager.addAnnotation(trn, Topic.OWNER, cEnt, sMeta.getModifier());
+   else
    {
-    if(sMeta.getStatus() == Status.NEW)
-     annotationManager.addAnnotation(trn, Topic.OWNER, cEnt, sMeta.getModifier());
-    else
+    for(ModMeta mm : clusterMeta.mod4Del.values())
+     annotationManager.removeAnnotation(trn, Topic.OWNER, mm.newModule, true);
+
+    AttachmentEntity ate = new AttachmentEntity(cEnt, null);
+
+    for(FileAttachmentMeta fatm : clusterMeta.att4Del.values())
     {
-     for(ModMeta mm : clusterMeta.mod4Del.values())
-      annotationManager.removeAnnotation(trn, Topic.OWNER, mm.newModule, true);
-
-     AttachmentEntity ate = new AttachmentEntity(cEnt, null);
-
-     for(FileAttachmentMeta fatm : clusterMeta.att4Del.values())
-     {
-      ate.setEntityId(fatm.getId());
-      annotationManager.removeAnnotation(trn, Topic.OWNER, ate, true);
-     }
-
-     String cstOwner = (String) annotationManager.getAnnotation(trn, Topic.OWNER, cEnt, false);
-
-     if(!sMeta.getModifier().equals(cstOwner))
-     {
-      for(ModMeta mm : clusterMeta.mod4Ins)
-       annotationManager.addAnnotation(trn, Topic.OWNER, mm.newModule, sMeta.getModifier());
-
-      for(FileAttachmentMeta fatm : clusterMeta.att4Ins.values())
-      {
-       ate.setEntityId(fatm.getId());
-       annotationManager.addAnnotation(trn, Topic.OWNER, ate, sMeta.getModifier());
-      }
-     }
-
+     ate.setEntityId(fatm.getId());
+     annotationManager.removeAnnotation(trn, Topic.OWNER, ate, true);
     }
 
-    if(sMeta.getTags() != null)
+    String cstOwner = (String) annotationManager.getAnnotation(trn, Topic.OWNER, cEnt, false);
+
+    if(!sMeta.getModifier().equals(cstOwner))
     {
-     List<TagRef> tgs = sMeta.getTags();
+     for(ModMeta mm : clusterMeta.mod4Ins)
+      annotationManager.addAnnotation(trn, Topic.OWNER, mm.newModule, sMeta.getModifier());
+
+     for(FileAttachmentMeta fatm : clusterMeta.att4Ins.values())
+     {
+      ate.setEntityId(fatm.getId());
+      annotationManager.addAnnotation(trn, Topic.OWNER, ate, sMeta.getModifier());
+     }
+    }
+
+   }
+
+   if(sMeta.getTags() != null)
+   {
+    List<TagRef> tgs = sMeta.getTags();
+
+    if(!(tgs instanceof ArrayList))
+    {
+     tgs = new ArrayList<TagRef>(tgs.size());
+     tgs.addAll(sMeta.getTags());
+    }
+
+    Collections.sort(tgs);
+
+    annotationManager.addAnnotation(trn, Topic.TAG, cEnt, (Serializable) tgs);
+   }
+
+   for(ModMeta mm : clusterMeta.incomingMods)
+   {
+    if(mm.meta.getTags() != null)
+    {
+     List<TagRef> tgs = mm.meta.getTags();
 
      if(!(tgs instanceof ArrayList))
      {
       tgs = new ArrayList<TagRef>(tgs.size());
-      tgs.addAll(sMeta.getTags());
+      tgs.addAll(mm.meta.getTags());
      }
 
      Collections.sort(tgs);
 
-     annotationManager.addAnnotation(trn, Topic.TAG, cEnt, (Serializable) tgs);
+     annotationManager.addAnnotation(trn, Topic.TAG, mm.newModule, (Serializable) tgs);
     }
+   }
 
-    for(ModMeta mm : clusterMeta.incomingMods)
+   if(sMeta.getAttachments() != null)
+   {
+    AttachmentEntity ate = new AttachmentEntity(cEnt, null);
+
+    for(FileAttachmentMeta att : sMeta.getAttachments())
     {
-     if(mm.meta.getTags() != null)
-     {
-      List<TagRef> tgs = mm.meta.getTags();
+     List<TagRef> tgs = att.getTags();
 
+     if(tgs != null)
+     {
       if(!(tgs instanceof ArrayList))
       {
        tgs = new ArrayList<TagRef>(tgs.size());
-       tgs.addAll(mm.meta.getTags());
+       tgs.addAll(att.getTags());
       }
 
       Collections.sort(tgs);
 
-      annotationManager.addAnnotation(trn, Topic.TAG, mm.newModule, (Serializable) tgs);
+      ate.setEntityId(att.getId());
+
+      annotationManager.addAnnotation(trn, Topic.TAG, ate, (Serializable) tgs);
      }
     }
-
-    if(sMeta.getAttachments() != null)
-    {
-     AttachmentEntity ate = new AttachmentEntity(cEnt, null);
-
-     for(FileAttachmentMeta att : sMeta.getAttachments())
-     {
-      List<TagRef> tgs = att.getTags();
-
-      if(tgs != null)
-      {
-       if(!(tgs instanceof ArrayList))
-       {
-        tgs = new ArrayList<TagRef>(tgs.size());
-        tgs.addAll(att.getTags());
-       }
-
-       Collections.sort(tgs);
-
-       ate.setEntityId(att.getId());
-
-       annotationManager.addAnnotation(trn, Topic.TAG, ate, (Serializable) tgs);
-      }
-     }
-    }
-
    }
-   catch(AnnotationDBException e)
+
+  }
+  catch(AnnotationDBException e)
+  {
+   try
+   {
+    annotationManager.rollbackTransaction(trn);
+   }
+   catch(TransactionException e1)
+   {
+    e1.printStackTrace();
+   }
+
+   trn = null;
+  }
+  finally
+  {
+   if(trn != null)
    {
     try
     {
-     annotationManager.rollbackTransaction(trn);
+     annotationManager.commitTransaction(trn);
     }
-    catch(TransactionException e1)
+    catch(TransactionException e)
     {
-     e1.printStackTrace();
-    }
-
-    trn = null;
-   }
-   finally
-   {
-    if(trn != null)
-    {
-     try
-     {
-      annotationManager.commitTransaction(trn);
-     }
-     catch(TransactionException e)
-     {
-      e.printStackTrace();
-     }
+     e.printStackTrace();
     }
    }
-
   }
 
   // Impute reverse relation and revalidate.
@@ -2482,10 +2481,15 @@ public class SubmissionManager
 
   for(DataModule extDM : ageStorage.getDataModules())
   {
-   if(extDM.getClusterId().equals(cstMeta.id))
+   if( extDM.getExternalObjectAttributes() == null )
+    continue;
+   
+   if( extDM.getClusterId().equals(cstMeta.id) )
    {
     if(cstMeta.mod4Del.containsKey(extDM.getId()) || cstMeta.mod4DataUpd.containsKey(extDM.getId()))
      continue;
+
+    // CASCADE_CLUSTER ext obj attributes of the same cluster may need reconnection if they were connected globally but now we have appropriate object within this cluster
 
     for(Attributed atb : extDM.getExternalObjectAttributes())
     {

@@ -204,9 +204,9 @@ public class H2SubmissionDB extends SubmissionDB
    }
    catch (SQLException e)
    {
- //   System.out.println( e.getErrorCode() );
+//    System.out.println( "Duplicate index error code: "+e.getErrorCode() );
     
-    if( e.getErrorCode() != 23001 )
+    if( e.getErrorCode() != 23505 )
      e.printStackTrace();
    }
    

@@ -143,9 +143,12 @@ public class SerializedStorage implements AgeStorageAdm
   
   modelFile = new File(modelDir, modelFileName );
   dataDir = new File( baseDir, dmStoragePath ); 
-  filesDir = new File( baseDir, fileStoragePath ); 
-  indexDir = new File( baseDir, indexPath ); 
+  filesDir = new File( baseDir, fileStoragePath );
   
+  if( conf.getIndexDir() == null )
+   indexDir = new File( baseDir, indexPath );
+  else if( ! SerializedStorageConfiguration.ramIndexDir.equals( conf.getIndexDir() ) )
+   indexDir = new File( conf.getIndexDir() );
 
   if( baseDir.isFile() )
    throw new StorageInstantiationException("The initial path must be directory: "+baseDir.getAbsolutePath());
@@ -155,6 +158,9 @@ public class SerializedStorage implements AgeStorageAdm
 
   if( ! modelDir.exists() )
    modelDir.mkdirs();
+
+  if( indexDir!= null && ! indexDir.exists() )
+   indexDir.mkdirs();
   
   try
   {
@@ -226,10 +232,15 @@ public class SerializedStorage implements AgeStorageAdm
  
  public TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts) throws IndexIOException
  {
-  File dir = new File( indexDir, M2codec.encode(name) );
+  File dir = null;
+    
+  if( indexDir != null ) 
+  {
+   dir = new File( indexDir, M2codec.encode(name) );
   
-  if( ! dir.exists() )
-   dir.mkdirs();
+   if( ! dir.exists() )
+    dir.mkdirs();
+  }
   
   TextIndexWritable ti = null ;
   try
@@ -260,11 +271,16 @@ public class SerializedStorage implements AgeStorageAdm
  
  public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator) throws IndexIOException
  {
-  File dir = new File( indexDir, M2codec.encode(name) );
+  File dir = null;
   
-  if( ! dir.exists() )
-   dir.mkdirs();
-
+  if( indexDir != null ) 
+  {
+   dir = new File( indexDir, M2codec.encode(name) );
+  
+   if( ! dir.exists() )
+    dir.mkdirs();
+  }
+  
   SortedTextIndexWritable<KeyT> ti;
   try
   {

@@ -12,6 +12,8 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Collector;
@@ -69,7 +71,7 @@ public class LuceneFullTextIndex implements TextIndexWritable
 
    
    if( index.listAll().length != 0  )
-    searcher = new IndexSearcher(index, true);
+    searcher = new IndexSearcher(IndexReader.open(index));
   }
   
 
@@ -259,8 +261,12 @@ public class LuceneFullTextIndex implements TextIndexWritable
  {
   try
   {
-   IndexWriter iWriter = new IndexWriter(index, analyzer, ! append || searcher == null ,
-     IndexWriter.MaxFieldLength.UNLIMITED);
+   IndexWriterConfig idxCfg = new IndexWriterConfig(Version.LUCENE_36, analyzer);
+   
+   idxCfg.setRAMBufferSizeMB(50);
+   idxCfg.setOpenMode(append?OpenMode.APPEND:OpenMode.CREATE);
+   
+   IndexWriter iWriter = new IndexWriter(index, idxCfg );
 
    for(AgeObject ao : aol )
    {
@@ -284,7 +290,7 @@ public class LuceneFullTextIndex implements TextIndexWritable
    if( searcher != null )
     searcher.close();
    
-   searcher = new IndexSearcher(index, true);
+   searcher = new IndexSearcher( IndexReader.open(index) );
   }
   catch(CorruptIndexException e)
   {

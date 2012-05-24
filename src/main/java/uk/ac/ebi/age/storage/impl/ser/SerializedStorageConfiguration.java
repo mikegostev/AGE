@@ -4,9 +4,12 @@ import java.io.File;
 
 public class SerializedStorageConfiguration
 {
+ public static String ramIndexDir = "<<ram>>";
+
  private File storageBaseDir;
  private long maintenanceModeTimeout;
  private boolean master;
+ private String indexDir;
 
  public File getStorageBaseDir()
  {
@@ -36,6 +39,16 @@ public class SerializedStorageConfiguration
  public void setMaster(boolean master)
  {
   this.master = master;
+ }
+
+ public String getIndexDir()
+ {
+  return indexDir;
+ }
+
+ public void setIndexDir(String indexDir)
+ {
+  this.indexDir = indexDir;
  }
 
 }
