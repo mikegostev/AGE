@@ -288,7 +288,10 @@ public class LuceneFullTextIndex implements TextIndexWritable
    iWriter.close();
    
    if( searcher != null )
+   {
+    searcher.getIndexReader().close();
     searcher.close();
+   }
    
    searcher = new IndexSearcher( IndexReader.open(index) );
   }
