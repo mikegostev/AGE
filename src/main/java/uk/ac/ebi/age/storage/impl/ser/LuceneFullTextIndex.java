@@ -261,6 +261,12 @@ public class LuceneFullTextIndex implements TextIndexWritable
  {
   try
   {
+   if( searcher != null )
+   {
+    searcher.getIndexReader().close();
+    searcher.close();
+   }
+   
    IndexWriterConfig idxCfg = new IndexWriterConfig(Version.LUCENE_36, analyzer);
    
    idxCfg.setRAMBufferSizeMB(50);
@@ -287,11 +293,6 @@ public class LuceneFullTextIndex implements TextIndexWritable
 
    iWriter.close();
    
-   if( searcher != null )
-   {
-    searcher.getIndexReader().close();
-    searcher.close();
-   }
    
    searcher = new IndexSearcher( IndexReader.open(index) );
   }

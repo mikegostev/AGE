@@ -78,6 +78,8 @@ public class FixGroupId
  
  private static void convert( File infile, File outfile )
  {
+  boolean toConvert = false;
+  
   try
   {
 //   System.out.println("Processing file: "+infile.getAbsolutePath());
@@ -103,13 +105,44 @@ public class FixGroupId
      
      if( ! id.equals( accession ) )
      {
+      toConvert = true;
       System.out.print("---");
       
       System.out.println(" Group: "+id+" Accession: "+accession+" File: "+infile.getAbsolutePath());
      }
      
     }
+    else if( obj.getClassReference().getHeading().equals("Sample") )
+    {
+     String id = obj.getId();
+     
+     String accession = null;
+     
+     for( AgeAttributeWritable attr : obj.getAttributes() )
+     {
+ //     System.out.println(attr.getClassReference().getHeading());
+      
+      if( attr.getClassReference().getHeading().equals("{Sample Accession}") )
+      {
+       accession = attr.getValue().toString();
+       break;
+      }
+     }
+     
+     if( ! id.equals( accession ) )
+     {
+      toConvert = true;
+
+//      System.out.print("---");
+//      System.out.println(" Sample: "+id+" Accession: "+accession+" File: "+infile.getAbsolutePath());
+     }
+     
+    }
+    
    }
+
+   if( toConvert )
+    System.out.println("File: "+infile.getAbsolutePath());
    
 //   modRW.write(mod, outfile);
   }
