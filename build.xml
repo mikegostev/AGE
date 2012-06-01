@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="AGE" default="dist" basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+	<description>AGE core</description>
+	<!-- set global properties for this build -->
+
+	<!-- <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/> -->
+
+	<property name="src" location="src"/>
+	<property name="build" location="build"/>
+	<property name="dist" location="dist"/>
+
+	<property name="Commons" location="../Commons"/>
+
+
+  <path id="lib">
+    <fileset dir="lib/" includes="*.jar"/>
+  </path>
+
+
+   <target name="dist" description="generate the distribution" >
+
+    <tstamp>
+        <format property="BUILDTIME" pattern="yyyy-MM-dd HH:mm z Z" locale="en,UK"/>
+    </tstamp> 
+
+		<delete dir="${build}"/>
+		<delete dir="${dist}"/>
+
+		<mkdir dir="${build}"/>
+		<mkdir dir="${dist}"/>
+
+
+		<javac srcdir="${src}" destdir="${build}" classpath="${toString:lib}" sourcepath="${Commons}/src/main/java" source="1.6" target="1.6" debug="on" nowarn="on" includeAntRuntime="false">
+			<compilerarg value="-Xlint:deprecation"/>
+		</javac>
+
+    	<unzip dest="${build}">
+    	    <fileset dir="lib/" includes="*.jar"/>
+        </unzip>
+
+    <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
+ <jar jarfile="${dist}/AGE.jar" basedir="${build}" manifest="MANIFEST.MF" />
+ 
+ </target>
+
+ <target name="deps" description="download dependences jars" >
+
+ 	<artifact:dependencies filesetId="dependency.fileset">
+
+
+		<dependency
+			groupId="com.h2database"
+			artifactId="h2"
+			version="[1.0.0,)"
+			scope="compile"
+		/>
+		<dependency
+			groupId="org.apache.geronimo.specs"
+			artifactId="geronimo-jta_1.0.1B_spec"
+			version="1.1"
+			scope="compile"
+		/>
+		<dependency
+			groupId="commons-transaction"
+			artifactId="commons-transaction"
+			version="1.2"
+			scope="compile"
+		/>
+		<dependency
+			groupId="log4j"
+			artifactId="log4j"
+		    version="[1.2.0,)"
+			scope="compile"
+		/>
+		<dependency
+			groupId="org.apache.lucene"
+			artifactId="lucene-core"
+			version="[3.0.1,)"
+		/>
+		<dependency
+			groupId="net.java.dev.jna"
+			artifactId="jna"
+			version="[3.0.0,)"
+		/>
+		<dependency
+			groupId="org.apache.commons"
+			artifactId="commons-io"
+			version="[1.0.0,)"
+		/>
+	
+
+ 	</artifact:dependencies>
+
+
+ 	<copy todir="lib">
+ 	  <fileset refid="dependency.fileset" />
+ 	  <!-- This mapper strips off all leading directory information -->
+ 	  <mapper type="flatten" />
+ 	</copy>
+
+
+ </target>
+
+</project>
