@@ -4,4 +4,6 @@ public interface AgeObjectAttribute extends AgeAttribute
 {
  AgeObject getValue();
  String getTargetObjectId(); 
+ ResolveScope getTargetResolveScope();
+
 }

@@ -6,6 +6,7 @@ import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeObjectAttribute;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.FormatException;
+import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
@@ -25,6 +26,19 @@ public class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjec
  public AgeObjectWritable getValue()
  {
   return value;
+ }
+
+
+ @Override
+ public String getTargetObjectId()
+ {
+  return value.getId();
+ }
+
+ @Override
+ public ResolveScope getTargetResolveScope()
+ {
+  return ResolveScope.MODULE;
  }
 
  public void updateValue(String val) throws FormatException
@@ -119,12 +133,6 @@ public class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjec
 
   
   return value.getId().compareTo( ((AgeObjectAttribute)ob).getValue().getId() );
- }
-
- @Override
- public String getTargetObjectId()
- {
-  return value.getId();
  }
 
 
