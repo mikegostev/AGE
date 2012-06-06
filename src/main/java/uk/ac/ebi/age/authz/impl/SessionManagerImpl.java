@@ -50,7 +50,6 @@ public class SessionManagerImpl implements SessionManager, Runnable
     
   sess.setSessionKey(key);
   sess.setUser(userName);
-  sess.setLastAccessTime( System.currentTimeMillis() );
 
   try
   {
@@ -121,7 +120,7 @@ public class SessionManagerImpl implements SessionManager, Runnable
     {
      Session sess = sitr.next();
      
-     if( ( time - sess.getLastAccessTime() ) > MAX_SESSION_IDLE_TIME || shutdown )
+     if( ( ( time - sess.getLastAccessTime() ) > MAX_SESSION_IDLE_TIME && ! sess.isCheckedIn() ) || shutdown )
      {
       sitr.remove();
       sess.destroy();
@@ -216,10 +215,11 @@ public class SessionManagerImpl implements SessionManager, Runnable
    
    if( sess != null )
    {
-    sess.setLastAccessTime( System.currentTimeMillis() );
-    
     threadMap.put(Thread.currentThread(), sess);
+    
+    sess.setCheckedIn( true );
    }
+   
    return sess;
   }
   finally
@@ -235,7 +235,12 @@ public class SessionManagerImpl implements SessionManager, Runnable
   {
    lock.lock();
    
-   return threadMap.remove(Thread.currentThread());
+   Session sess = threadMap.remove(Thread.currentThread());
+   
+   if( sess != null )
+    sess.setCheckedIn( false );
+   
+   return sess;
   }
   finally
   {

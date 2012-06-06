@@ -7,6 +7,7 @@ public class Session
  private String sessionKey;
  private String user;
  private long lastAccessTime;
+ private boolean checkedIn=false;
  
  private File sessionDir;
  
@@ -15,6 +16,7 @@ public class Session
  public Session( File sessDir )
  {
   sessionDir = sessDir;
+  lastAccessTime = System.currentTimeMillis();
  }
  
  public String getUser()
@@ -63,5 +65,17 @@ public class Session
    
    sessionDir.delete();
   }
+ }
+
+ public boolean isCheckedIn()
+ {
+  return checkedIn;
+ }
+
+ public void setCheckedIn(boolean checkedIn)
+ {
+  lastAccessTime = System.currentTimeMillis();
+  
+  this.checkedIn = checkedIn;
  }
 }
