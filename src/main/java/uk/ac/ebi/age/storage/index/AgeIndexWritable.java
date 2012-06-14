@@ -8,6 +8,9 @@ import uk.ac.ebi.age.query.AgeQuery;
 public interface AgeIndexWritable extends AgeIndex
 {
 
+ boolean isDirty();
+ void setDirty( boolean dirty );
+ 
  AgeQuery getQuery();
 
  void index(List<AgeObject> res, boolean append);

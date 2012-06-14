@@ -7,6 +7,6 @@ public interface QueryExpression
 
  boolean test(AgeObject obj);
 
- boolean isTestingRelations();
+ boolean isCrossingObjectConnections();
 
 }

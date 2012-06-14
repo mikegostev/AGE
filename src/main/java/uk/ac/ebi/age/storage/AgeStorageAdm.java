@@ -36,9 +36,10 @@ public interface AgeStorageAdm extends AgeStorage
  File storeAttachment(String id, String clusterId, boolean global, File aux) throws AttachmentIOException;
  void changeAttachmentScope(String id, String clusterId, boolean global) throws AttachmentIOException;
 
- void rebuildIndices();
+ void invalidateIndices();
 
  boolean setMaintenanceMode( boolean mmode);
+ boolean setMaintenanceMode( boolean mmode, long timeout );
  
 
 }

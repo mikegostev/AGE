@@ -11,8 +11,9 @@ public class TrueExpression implements QueryExpression
   return true;
  }
 
+
  @Override
- public boolean isTestingRelations()
+ public boolean isCrossingObjectConnections()
  {
   return false;
  }

@@ -141,10 +141,14 @@ public class SerializedSwapStorage implements AgeStorageAdm
   
   private boolean dataDirty = false;
   
+  private SerializedStorageConfiguration config;
+
  public SerializedSwapStorage(SerializedStorageConfiguration conf) throws StorageInstantiationException
  {
   master = conf.isMaster();
 
+  config = conf;
+  
   mModeTimeout = conf.getMaintenanceModeTimeout();
 
   File baseDir = conf.getStorageBaseDir();
@@ -363,28 +367,24 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
  }
 
- private void updateIndices(Collection<DataModuleWritable> mods, boolean fullreset)
+ private void updateIndices( Collection<DataModuleWritable> mods, boolean fullreset )
  {
+  boolean hasDirty = false;
+  
+ 
   ArrayList<AgeObject> res = new ArrayList<AgeObject>();
 
-  for(AgeIndexWritable idx : indexMap.values())
+  for( AgeIndexWritable idx : indexMap.values() )
   {
-
-   if(!fullreset)
+   
+   if( fullreset || idx.getQuery().getExpression().isCrossingObjectConnections() )
    {
-    for(DataModuleWritable s : mods)
-    {
-     if(idx.getQuery().getExpression().isTestingRelations() && s.getExternalRelations() != null && s.getExternalRelations().size() > 0)
-     {
-      fullreset = true;
-      break;
-     }
-    }
+    idx.setDirty( true );
+    hasDirty = true;
+    continue;
    }
-
-   if(fullreset)
-    mods = new ModulesCollection();
-
+   
+   
    Iterable<AgeObject> trv = traverse(idx.getQuery(), mods);
 
    res.clear();
@@ -392,9 +392,17 @@ public class SerializedSwapStorage implements AgeStorageAdm
    for(AgeObject nd : trv)
     res.add(nd);
 
-   if(res.size() > 0 || fullreset)
-    idx.index(res, !fullreset);
+   
+   if(res.size() > 0 )
+    idx.index( res, ! fullreset );
   }
+  
+  if( hasDirty )
+  {
+   setMaintenanceMode(true, config.getAutoMModeTimeout());
+   return;
+  }
+
  }
 
  public List<AgeObject> executeQuery(AgeQuery qury)
@@ -1453,103 +1461,182 @@ public class SerializedSwapStorage implements AgeStorageAdm
   }
  }
  
- @Override
- public void rebuildIndices()
+ private void rebuildDirtyIndices()
  {
-  updateIndices(null, true);
+  ArrayList<AgeObject> res = new ArrayList<AgeObject>();
+  Collection<DataModuleWritable> mods = new ModulesCollection();
+;
+
+  for(AgeIndexWritable idx : indexMap.values())
+  {
+   if( ! idx.isDirty() )
+    continue;
+   
+   Iterable<AgeObject> trv = traverse(idx.getQuery(), mods);
+
+   res.clear();
+
+   for(AgeObject nd : trv)
+    res.add(nd);
+
+   idx.index(res, false);
+   
+   idx.setDirty( false );
+  }
+
  }
 
- @Override
- public boolean setMaintenanceMode(boolean mmode)
+ private boolean enterMMode( long timeout )
  {
-  lockWrite();
-
-  boolean dataModified = false;
-
   try
   {
-   if(maintenanceMode == mmode)
-    return false;
-
-   if(mmode == true)
+   lockWrite();
+   
+   if(maintenanceMode)
    {
-    Thread wdT = new Thread()
+    if( timeout > mModeTimeout )
+     mModeTimeout = timeout;
+    
+    return false;
+   }
+   
+   maintenanceMode = true;
+   
+   Thread wdT = new Thread()
+   {
+
+    @Override
+    public void run()
     {
+     long wtCycle =0;
 
-     @Override
-     public void run()
+     setName("MMode watchdog timer");
+
+     while(true)
      {
-      long wtCycle = mModeTimeout + 500;
-
-      setName("MaintenanceMode watch dog timer");
-
-      while(true)
+      wtCycle = mModeTimeout + 500;
+      
+      try
       {
-       try
-       {
-        sleep(wtCycle);
-       }
-       catch(InterruptedException e)
-       {
-       }
+       sleep(wtCycle);
+      }
+      catch(InterruptedException e)
+      {
+      }
 
-       if(!maintenanceMode)
-        return;
+      if(!maintenanceMode)
+       return;
 
-       if((System.currentTimeMillis() - lastUpdate) > mModeTimeout && !dbLock.isWriteLocked())
+      if((System.currentTimeMillis() - lastUpdate) > mModeTimeout && ! dbLock.isWriteLocked() )
+      {
+       if( dbLock.writeLock().tryLock() )
        {
-        setMaintenanceMode(false);
-        return;
+        try
+        {
+         leaveMMode();
+         return;
+        }
+        finally
+        {
+         dbLock.writeLock().unlock();
+        }
        }
 
       }
+
      }
-    };
+    }
+   };
 
-    wdT.start();
-   }
+   wdT.start();
+  }
+  finally
+  {
+   unlockWrite();
+  }
+  
+  synchronized(mmodListeners)
+  {
+   for(MaintenanceModeListener mml : mmodListeners)
+     mml.enterMaintenanceMode();
+  }
+  
+  return true;
+ }
 
-   maintenanceMode = mmode;
+ private boolean leaveMMode()
+ {
+  boolean dataModified = dataDirty;
+  
+  try
+  {
+   lockWrite();
 
-   if(dataDirty)
-   {
-    updateIndices(null, true);
-    saveIndexCache();
-    
-    dataModified = true;
+   if(! maintenanceMode )
+    return false;
 
-    dataDirty = false;
-   }
-
+   rebuildDirtyIndices();
+   
+   dataDirty = false;
+   
+   maintenanceMode = false;
   }
   finally
   {
    unlockWrite();
   }
 
-  if(dataModified)
+  if( dataModified )
   {
    synchronized(chgListeners)
    {
-    for(DataChangeListener chls : chgListeners)
+    for(DataChangeListener chls : chgListeners )
      chls.dataChanged();
    }
   }
-
+  
   synchronized(mmodListeners)
   {
    for(MaintenanceModeListener mml : mmodListeners)
-   {
-    if(mmode)
-     mml.enterMaintenanceMode();
-    else
      mml.exitMaintenanceMode();
-   }
   }
 
   return true;
  }
+ 
+ @Override
+ public boolean setMaintenanceMode( boolean mmode )
+ {
+  return setMaintenanceMode(mmode, config.getMaintenanceModeTimeout());
+ }
 
+ @Override
+ public boolean setMaintenanceMode( boolean mmode, long timeout )
+ {
+  if( mmode )
+   return enterMMode(timeout);
+  else
+   return leaveMMode();
+ }
+ 
+
+ @Override
+ public void invalidateIndices()
+ {
+  lockWrite();
+  
+  try
+  {
+   for( AgeIndexWritable idx : indexMap.values() )
+    idx.setDirty(true);
+   
+   enterMMode( config.getAutoMModeTimeout() );
+  }
+  finally
+  {
+   unlockWrite();
+  }
+ }
  public AgeObjectWritable getLowLevelObject(ModuleKey moduleId, String objectId)
  {
   ModuleRef mr = moduleMap.get(moduleId);

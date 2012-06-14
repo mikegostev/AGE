@@ -27,11 +27,11 @@ public class AndExpression implements QueryExpression
  
 
  @Override
- public boolean isTestingRelations()
+ public boolean isCrossingObjectConnections()
  {
   for( QueryExpression expr : exprs )
   {
-   if( expr.isTestingRelations() )
+   if( expr.isCrossingObjectConnections() )
     return true;
   }
   

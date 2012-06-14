@@ -47,6 +47,7 @@ public class LuceneFullTextIndex implements TextIndexWritable
  private AgeQuery query;
  private Collection<TextFieldExtractor> extractors;
  
+ private boolean dirty=false;
 
  public LuceneFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts) throws IOException
  {
@@ -381,5 +382,17 @@ public class LuceneFullTextIndex implements TextIndexWritable
   objectList = lst;
   
   indexList(objectList, false);
+ }
+
+ @Override
+ public boolean isDirty()
+ {
+  return dirty;
+ }
+
+ @Override
+ public void setDirty(boolean dirty)
+ {
+  this.dirty=dirty;
  }
 }

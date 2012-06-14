@@ -24,7 +24,7 @@ public class ObjectSelectExpression implements QueryExpression
  }
 
  @Override
- public boolean isTestingRelations()
+ public boolean isCrossingObjectConnections()
  {
   // TODO Auto-generated method stub
   throw new dev.NotImplementedYetException();

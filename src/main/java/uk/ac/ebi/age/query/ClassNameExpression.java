@@ -53,7 +53,7 @@ public class ClassNameExpression implements QueryExpression
  }
 
  @Override
- public boolean isTestingRelations()
+ public boolean isCrossingObjectConnections()
  {
   return false;
  }

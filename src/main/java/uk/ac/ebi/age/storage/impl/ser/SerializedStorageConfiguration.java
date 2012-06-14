@@ -8,6 +8,7 @@ public class SerializedStorageConfiguration
 
  private File storageBaseDir;
  private long maintenanceModeTimeout;
+ private long autoMModeTimeout;
  private boolean master;
  private String indexDir;
 
@@ -49,6 +50,16 @@ public class SerializedStorageConfiguration
  public void setIndexDir(String indexDir)
  {
   this.indexDir = indexDir;
+ }
+
+ public long getAutoMModeTimeout()
+ {
+  return autoMModeTimeout;
+ }
+
+ public void setAutoMModeTimeout(long autoMModeTimeout)
+ {
+  this.autoMModeTimeout = autoMModeTimeout;
  }
 
 }
