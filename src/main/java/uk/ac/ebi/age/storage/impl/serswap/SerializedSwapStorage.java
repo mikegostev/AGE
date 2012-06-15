@@ -1492,6 +1492,8 @@ public class SerializedSwapStorage implements AgeStorageAdm
   {
    lockWrite();
    
+   assert log.debug("Entering mmode. Current state: "+(maintenanceMode?"on":"off")+" Timeout: "+timeout+(maintenanceMode?("Current timeout: "+mModeTimeout):""));
+   
    if(maintenanceMode)
    {
     if( timeout > mModeTimeout )
@@ -1533,6 +1535,8 @@ public class SerializedSwapStorage implements AgeStorageAdm
        {
         try
         {
+         assert log.debug("mmode watchdog: leaving mmode");
+
          leaveMMode();
          return;
         }
@@ -1572,6 +1576,8 @@ public class SerializedSwapStorage implements AgeStorageAdm
   {
    lockWrite();
 
+   assert log.debug("Leaving mmode. Current state: "+(maintenanceMode?"on":"off")+" Data dirty: "+dataDirty);
+   
    if(! maintenanceMode )
     return false;
 

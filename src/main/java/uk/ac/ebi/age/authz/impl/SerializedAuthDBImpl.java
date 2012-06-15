@@ -699,24 +699,30 @@ public class SerializedAuthDBImpl implements AuthDB
   {
    for( TagWritable tb : clsb.getTags() )
    {
-    Iterator<? extends PermissionForUserACRWritable> pmgIter = tb.getPermissionForUserACRs().iterator();
-    
-    while( pmgIter.hasNext() )
+    if( tb.getPermissionForUserACRs() != null )
     {
-     PermissionForUserACRWritable p = pmgIter.next();
+     Iterator<? extends PermissionForUserACRWritable> pmgIter = tb.getPermissionForUserACRs().iterator();
      
-     if( p.getSubject() == rmUsr )
-      pmgIter.remove();
+     while( pmgIter.hasNext() )
+     {
+      PermissionForUserACRWritable p = pmgIter.next();
+      
+      if( p.getSubject() == rmUsr )
+       pmgIter.remove();
+     }
     }
     
-    Iterator<? extends ProfileForUserACRWritable> pfgIter = tb.getProfileForUserACRs().iterator();
-    
-    while( pfgIter.hasNext() )
+    if( tb.getProfileForUserACRs() != null )
     {
-     ProfileForUserACRWritable p = pfgIter.next();
+     Iterator<? extends ProfileForUserACRWritable> pfgIter = tb.getProfileForUserACRs().iterator();
      
-     if( p.getSubject() == rmUsr )
-      pfgIter.remove();
+     while( pfgIter.hasNext() )
+     {
+      ProfileForUserACRWritable p = pfgIter.next();
+      
+      if( p.getSubject() == rmUsr )
+       pfgIter.remove();
+     }
     }
    }
   }
