@@ -116,10 +116,10 @@ public interface AuthDB extends TransactionalDB
  boolean removeSysPermissionForGroupACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
  boolean removeSysProfileForUserACR(Transaction trn, String subjId, String profileId) throws AuthDBException;
  boolean removeSysPermissionForUserACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
- void addSysProfileForGroupACR(Transaction trn, String subjId, String profileId) throws AuthDBException;
- void addSysActionForGroupACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
- void addSysProfileForUserACR(Transaction trn, String subjId, String profileId) throws AuthDBException;
- void addSysActionForUserACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
+ ProfileForGroupACR addSysProfileForGroupACR(Transaction trn, String subjId, String profileId) throws AuthDBException;
+ PermissionForGroupACR addSysActionForGroupACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
+ ProfileForUserACR addSysProfileForUserACR(Transaction trn, String subjId, String profileId) throws AuthDBException;
+ PermissionForUserACR addSysActionForUserACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException;
  Collection< ? extends ACR> getSysACL(ReadLock rl) throws AuthDBException;
 
  void shutdown();

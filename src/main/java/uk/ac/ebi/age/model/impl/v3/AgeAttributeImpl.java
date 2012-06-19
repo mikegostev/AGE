@@ -82,19 +82,14 @@ abstract public class AgeAttributeImpl extends AttributedObject implements AgeAt
  {
   AttributedWritable host = getAttributedHost();
   
-  while( host != null )
-  {
-   if( host instanceof AgeObjectWritable )
-    return (AgeObjectWritable)host;
-   
-   if( host instanceof AgeRelationWritable )
-    return ((AgeRelationWritable)host).getSourceObject();
-   
-   if( host instanceof AgeAttributeWritable )
-    host = ((AgeAttributeWritable)host).getAttributedHost();
-
-   return null;
-  }
+  if( host instanceof AgeObjectWritable )
+   return (AgeObjectWritable)host;
+  
+  if( host instanceof AgeRelationWritable )
+   return ((AgeRelationWritable)host).getSourceObject();
+  
+  if( host instanceof AgeAttributeWritable )
+   return ((AgeAttributeWritable)host).getMasterObject();
   
   return null;
  }

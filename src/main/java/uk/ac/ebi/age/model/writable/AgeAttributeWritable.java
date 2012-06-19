@@ -18,6 +18,7 @@ public interface AgeAttributeWritable extends AgeAttribute, AttributedWritable, 
  void setAttributedHost( AttributedWritable host );
 
  AttributedWritable getAttributedHost();
+ AgeObjectWritable  getMasterObject();
 
  
  AgeAttributeWritable createClone(AttributedWritable hst);

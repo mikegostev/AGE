@@ -1858,7 +1858,7 @@ public class SerializedAuthDBImpl implements AuthDB
  }
 
  @Override
- public void addSysProfileForGroupACR(Transaction trn, String subjId, String profileId) throws AuthDBException
+ public ProfileForGroupACR addSysProfileForGroupACR(Transaction trn, String subjId, String profileId) throws AuthDBException
  {
   checkState(trn);
 
@@ -1879,10 +1879,12 @@ public class SerializedAuthDBImpl implements AuthDB
   acr.setSubject(gb);
   
   sysTag.addProfileForGroupACR( acr );
+
+  return acr;
  }
 
  @Override
- public void addSysActionForGroupACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException
+ public PermissionForGroupACR addSysActionForGroupACR(Transaction trn, String subjId, SystemAction action, boolean allow) throws AuthDBException
  {
   checkState(trn);
 
@@ -1902,10 +1904,11 @@ public class SerializedAuthDBImpl implements AuthDB
   
   sysTag.addPermissionForGroupACR( acr );
   
+  return acr;
  }
 
  @Override
- public void addSysProfileForUserACR(Transaction trn, String subjId, String profileId) throws AuthDBException
+ public ProfileForUserACR addSysProfileForUserACR(Transaction trn, String subjId, String profileId) throws AuthDBException
  {
   checkState(trn);
 
@@ -1925,10 +1928,12 @@ public class SerializedAuthDBImpl implements AuthDB
   acr.setSubject(gb);
   
   sysTag.addProfileForUserACR( acr );  
+ 
+  return acr;
  }
 
  @Override
- public void addSysActionForUserACR(Transaction trn, String subjId, SystemAction action, boolean allow)  throws AuthDBException
+ public PermissionForUserACR addSysActionForUserACR(Transaction trn, String subjId, SystemAction action, boolean allow)  throws AuthDBException
  {
   checkState(trn);
 
@@ -1947,6 +1952,8 @@ public class SerializedAuthDBImpl implements AuthDB
   acr.setSubject(gb);
   
   sysTag.addPermissionForUserACR( acr );  
+
+  return acr;
  }
 
  @SuppressWarnings("unchecked")
