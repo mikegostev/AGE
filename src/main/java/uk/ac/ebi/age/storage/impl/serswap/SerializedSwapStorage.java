@@ -1349,6 +1349,18 @@ public class SerializedSwapStorage implements AgeStorageAdm
  }
 
  @Override
+ public void lockRead()
+ {
+  dbLock.readLock().lock();
+ }
+
+ @Override
+ public void unlockRead()
+ {
+  dbLock.readLock().unlock();
+ }
+
+ @Override
  public void lockWrite()
  {
   dbLock.writeLock().lock();

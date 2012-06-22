@@ -17,6 +17,9 @@ import uk.ac.ebi.age.storage.index.TextIndex;
 
 public interface AgeStorage
 {
+ void lockRead();
+ void unlockRead();
+ 
  Collection<AgeObject> executeQuery( AgeQuery qury );
  
 

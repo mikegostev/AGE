@@ -8,7 +8,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -335,7 +334,7 @@ public class SerializedStorage implements AgeStorageAdm
 
    
    if(res.size() > 0 )
-    idx.index( res, ! fullreset );
+    idx.index( res, true );
   }
   
   if( hasDirty )
@@ -531,7 +530,8 @@ public class SerializedStorage implements AgeStorageAdm
   
 
  }
- 
+
+ /*
  private void storeDataModule(DataModuleWritable dm) throws RelationResolveException, ModuleStoreException
  {
   if( ! master )
@@ -583,7 +583,9 @@ public class SerializedStorage implements AgeStorageAdm
   }
 
  }
-
+*/
+ 
+ 
  @Override
  public Collection<? extends AgeObjectWritable> getAllObjects()
  {
@@ -1242,6 +1244,19 @@ public class SerializedStorage implements AgeStorageAdm
  }
 
 
+ @Override
+ public void lockRead()
+ {
+  dbLock.readLock().lock();
+ }
+
+ @Override
+ public void unlockRead()
+ {
+  dbLock.readLock().unlock();
+ }
+
+ 
  @Override
  public void lockWrite()
  {

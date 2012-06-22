@@ -164,8 +164,14 @@ public class LuceneFullTextIndex implements TextIndexWritable
   return -1;
  }
 
- 
+ @Override
  public List<AgeObject> select(String query)
+ {
+  return select(query,0,-1);
+ }
+
+ @Override
+ public List<AgeObject> select(String query, final int offs, final int limit)
  {
   if( searcher == null )
    return Collections.emptyList();
@@ -178,10 +184,10 @@ public class LuceneFullTextIndex implements TextIndexWritable
   {
    q = queryParser.parse(query);
    
-   
-   searcher.search(q, new Collector()
+   Collector coll = new Collector()
    {
     int base;
+    int count=-1;
     
     @Override
     public void setScorer(Scorer arg0) throws IOException
@@ -198,11 +204,10 @@ public class LuceneFullTextIndex implements TextIndexWritable
     @Override
     public void collect(int docId) throws IOException
     {
-     int ind = docId+base;
-     
+     count++;
 //     System.out.println("Found doc: "+ind+". Object: "+objectList.get(ind).getId()+". Class: "+objectList.get(ind).getAgeElClass().getName() );
-     
-     res.add( objectList.get(ind) );
+     if( count >= offs && (limit <= 0 || count < (offs+limit) ) )
+      res.add( objectList.get(docId+base) );
     }
     
     @Override
@@ -210,7 +215,10 @@ public class LuceneFullTextIndex implements TextIndexWritable
     {
      return false;
     }
-   });
+   };
+
+   searcher.search(q,coll);
+
   }
   catch(ParseException e)
   {
