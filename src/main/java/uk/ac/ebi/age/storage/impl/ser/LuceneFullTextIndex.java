@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -283,23 +282,9 @@ public class LuceneFullTextIndex implements TextIndexWritable
    
    IndexWriter iWriter = new IndexWriter(index, idxCfg );
 
-   for(AgeObject ao : aol )
-   {
-    Document doc = new Document();
-    
-//    System.out.println("---Index rec--");
-    for(TextFieldExtractor tfe : extractors )
-    {
-     String name = tfe.getName();
-     String val = tfe.getExtractor().getValue(ao);
-     
-     doc.add(new Field(name, val, Field.Store.NO, Field.Index.ANALYZED));
-//     System.out.println(name+" = "+val);
-    }
-    
-    iWriter.addDocument(doc);
-   }
-
+   for( Document d : new DocCollection(aol, extractors))
+    iWriter.addDocument(d);
+   
    iWriter.close();
    
    
@@ -317,7 +302,6 @@ public class LuceneFullTextIndex implements TextIndexWritable
   }
   
  }
-
 
 // @Override
 // public void reset()

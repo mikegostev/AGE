@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -65,6 +66,7 @@ import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
 import uk.ac.ebi.mg.assertlog.Log;
 import uk.ac.ebi.mg.assertlog.LogFactory;
+import uk.ac.ebi.mg.executor.DefaultExecutorService;
 import uk.ac.ebi.mg.filedepot.FileDepot;
 import uk.ac.ebi.mg.time.UniqTime;
 
@@ -129,6 +131,8 @@ public class SerializedStorage implements AgeStorageAdm
  private boolean dataDirty = false;
  
  private SerializedStorageConfiguration config;
+ 
+ private volatile Future<?> mmodeWDTimerFuture;
  
  public SerializedStorage( SerializedStorageConfiguration conf ) throws StorageInstantiationException
  {
@@ -597,19 +601,24 @@ public class SerializedStorage implements AgeStorageAdm
  {
   private BlockingQueue<File> queue;
   private Stats               totals;
+  private String threadName;
   
   private CountDownLatch latch;
   
-  ModuleLoader( BlockingQueue<File> qu, Stats st, CountDownLatch ltch )
+  ModuleLoader( BlockingQueue<File> qu, Stats st, CountDownLatch ltch, String tName )
   {
    queue=qu;
    totals=st;
    latch=ltch;
+   threadName = tName;
   }
   
   @Override
   public void run()
   {
+   String oldTName = Thread.currentThread().getName();
+   Thread.currentThread().setName( threadName );
+   
    while(true)
    {
     File modFile = null;
@@ -632,6 +641,8 @@ public class SerializedStorage implements AgeStorageAdm
        queue.put(modFile);
        
        latch.countDown();
+
+       Thread.currentThread().setName( oldTName );
        
        return;
       }
@@ -742,7 +753,8 @@ public class SerializedStorage implements AgeStorageAdm
    assert ( startTime = System.currentTimeMillis() ) != 0;
 
    for( int i=1; i <= nCores; i++ )
-    new Thread( new ModuleLoader(queue,totals,latch), "Data Loader "+i).start();
+    DefaultExecutorService.getExecutorService().execute(new ModuleLoader(queue,totals,latch, "Data Loader "+i));
+//    new Thread( new ModuleLoader(queue,totals,latch), "Data Loader "+i).start();
    
    for( File modFile : dataDepot )
    {
@@ -927,7 +939,7 @@ public class SerializedStorage implements AgeStorageAdm
      +"\npacked strings (dual band): "+totals.getPackedStringsDualBand()
      +"\npacked strings total length: "+totals.getPackedStringsTotalLength()
      +"\npacked strings average length: "+(pkdCount==0?0:totals.getPackedStringsTotalLength()/pkdCount)
-     +"\ntotal time: "+totTime+"ms"
+     +"\ntotal time: "+StringUtils.millisToString(totTime)
      +"\ntime per module: "+(totals.getModulesCount()==0?0:totTime/totals.getModulesCount())+"ms"
      +"\nmemory delta: "+(Runtime.getRuntime().totalMemory()-stMem)+"bytes"
      );
@@ -1401,9 +1413,10 @@ public class SerializedStorage implements AgeStorageAdm
     return false;
    }
    
+   mModeTimeout = timeout;
    maintenanceMode = true;
    
-   Thread wdT = new Thread()
+   mmodeWDTimerFuture = DefaultExecutorService.getExecutorService().submit( new Runnable()
    {
 
     @Override
@@ -1411,7 +1424,10 @@ public class SerializedStorage implements AgeStorageAdm
     {
      long wtCycle =0;
 
-     setName("MMode watchdog timer");
+     Thread myThread = Thread.currentThread();
+     String thName = myThread.getName();
+     
+     myThread.setName("MMode watchdog timer");
 
      while(true)
      {
@@ -1419,7 +1435,7 @@ public class SerializedStorage implements AgeStorageAdm
       
       try
       {
-       sleep(wtCycle);
+       Thread.sleep(wtCycle);
       }
       catch(InterruptedException e)
       {
@@ -1434,12 +1450,14 @@ public class SerializedStorage implements AgeStorageAdm
        {
         try
         {
+         mmodeWDTimerFuture = null;
          leaveMMode();
          return;
         }
         finally
         {
          dbLock.writeLock().unlock();
+         myThread.setName(thName);
         }
        }
 
@@ -1447,9 +1465,8 @@ public class SerializedStorage implements AgeStorageAdm
 
      }
     }
-   };
+   });
 
-   wdT.start();
   }
   finally
   {
@@ -1481,6 +1498,9 @@ public class SerializedStorage implements AgeStorageAdm
    dataDirty = false;
    
    maintenanceMode = false;
+   
+   if( mmodeWDTimerFuture != null )
+    mmodeWDTimerFuture.cancel( true );
   }
   finally
   {
