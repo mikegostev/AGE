@@ -75,7 +75,7 @@
 		<dependency
 			groupId="org.apache.lucene"
 			artifactId="lucene-core"
-			version="[3.0.1,)"
+			version="[3.6.0,)"
 		/>
 		<dependency
 			groupId="net.java.dev.jna"
