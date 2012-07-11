@@ -26,6 +26,7 @@ import org.apache.lucene.util.Version;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.query.AgeQuery;
+import uk.ac.ebi.age.storage.index.Selection;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
 import uk.ac.ebi.age.storage.index.TextIndexWritable;
 
@@ -166,14 +167,20 @@ public class LuceneFullTextIndex implements TextIndexWritable
  @Override
  public List<AgeObject> select(String query)
  {
-  return select(query,0,-1);
+  return select(query,0,-1, null).getObjects();
  }
 
  @Override
- public List<AgeObject> select(String query, final int offs, final int limit)
+ public Selection select(String query, final int offs, final int limit, final Collection<String> aggs )
  {
+  final Selection selection = new Selection();
+  
   if( searcher == null )
-   return Collections.emptyList();
+  {
+   selection.setObjects(Collections.<AgeObject>emptyList());
+   
+   return selection;
+  }
   
   final List<AgeObject> res = new ArrayList<AgeObject>();
   
@@ -183,10 +190,16 @@ public class LuceneFullTextIndex implements TextIndexWritable
   {
    q = queryParser.parse(query);
    
-   Collector coll = new Collector()
+   CountCollector coll = new CountCollector()
    {
     int base;
     int count=-1;
+    IndexReader reader;
+    
+    int getCount()
+    {
+     return count+1;
+    }
     
     @Override
     public void setScorer(Scorer arg0) throws IOException
@@ -196,7 +209,7 @@ public class LuceneFullTextIndex implements TextIndexWritable
     @Override
     public void setNextReader(IndexReader arg0, int arg1) throws IOException
     {
-//     System.out.println("Next Reader: "+arg1);
+     reader=arg0;
      base=arg1;
     }
     
@@ -207,6 +220,28 @@ public class LuceneFullTextIndex implements TextIndexWritable
 //     System.out.println("Found doc: "+ind+". Object: "+objectList.get(ind).getId()+". Class: "+objectList.get(ind).getAgeElClass().getName() );
      if( count >= offs && (limit <= 0 || count < (offs+limit) ) )
       res.add( objectList.get(docId+base) );
+     
+     if( aggs != null )
+     {
+      Document doc = reader.document(docId);
+      
+      for(String fld : aggs)
+      {
+       String val = doc.get(fld);
+       
+       int ival = 0;
+       
+       try
+       {
+        ival = Integer.parseInt(val);
+       }
+       catch (Throwable e)
+       {
+       }
+       
+       selection.aggregate(fld,ival);
+      }
+     }
     }
     
     @Override
@@ -218,6 +253,8 @@ public class LuceneFullTextIndex implements TextIndexWritable
 
    searcher.search(q,coll);
 
+   selection.setObjects(res);
+   selection.setTotalCount(coll.getCount());
   }
   catch(ParseException e)
   {
@@ -232,7 +269,7 @@ public class LuceneFullTextIndex implements TextIndexWritable
   
   //ScoreDoc[] hits = collector.topDocs().scoreDocs;
   
-  return res;
+  return selection;
  }
 
  @Override

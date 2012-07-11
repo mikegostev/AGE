@@ -8,11 +8,18 @@ public class TextFieldExtractor
 {
  private String name;
  private TextValueExtractor extractor;
+ private boolean store;
  
  public TextFieldExtractor(String fName, TextValueExtractor extr)
  {
+  this( fName, extr, false);
+ }
+
+ public TextFieldExtractor(String fName, TextValueExtractor extr, boolean stor)
+ {
   name=fName;
   extractor = extr;
+  store=stor;
  }
 
  public String getName()
@@ -33,6 +40,11 @@ public class TextFieldExtractor
  public void setExtractor(TextValueExtractor extractor)
  {
   this.extractor = extractor;
+ }
+
+ public boolean isStoreValue()
+ {
+  return store;
  }
  
 

@@ -199,7 +199,7 @@ public class DocCollection implements Iterable<Document>
    String name = tfe.getName();
    String val = tfe.getExtractor().getValue(obj);
  
-   doc.add(new Field(name, val, Field.Store.NO, Field.Index.ANALYZED));
+   doc.add(new Field(name, val, tfe.isStoreValue()?Field.Store.YES:Field.Store.NO, Field.Index.ANALYZED));
   }
   
   return doc;

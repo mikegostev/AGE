@@ -111,4 +111,10 @@ public class AgeRelationImpl extends AttributedObject implements AgeRelationWrit
  {
   return getSourceObject().getSemanticModel();
  }
+
+ @Override
+ public String getTargetObjectId()
+ {
+  return getTargetObject().getId();
+ }
 }

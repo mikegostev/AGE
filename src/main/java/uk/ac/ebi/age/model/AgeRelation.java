@@ -9,6 +9,8 @@ public interface AgeRelation extends AgeObjectProperty, Attributed
  AgeObject getSourceObject();
  AgeObject getTargetObject();
 
+ String getTargetObjectId();
+
  AgeRelation getInverseRelation();
  
  boolean isInferred();

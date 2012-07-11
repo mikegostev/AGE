@@ -179,4 +179,9 @@ public class InferredInverseRelation implements AgeRelationWritable, Serializabl
   throw new UnsupportedOperationException();
  }
 
+ @Override
+ public String getTargetObjectId()
+ {
+  return getTargetObject().getId();
+ }
 }

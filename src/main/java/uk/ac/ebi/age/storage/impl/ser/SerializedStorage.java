@@ -1105,6 +1105,8 @@ public class SerializedStorage implements AgeStorageAdm
  
  public void shutdown()
  {
+  lockWrite();
+  
   for( AgeIndexWritable idx : indexMap.values() )
    idx.close();
  }

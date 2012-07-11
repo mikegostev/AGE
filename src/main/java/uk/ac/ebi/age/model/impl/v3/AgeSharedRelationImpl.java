@@ -109,5 +109,11 @@ public class AgeSharedRelationImpl implements AgeRelation, Serializable
   return true;
  }
 
+ @Override
+ public String getTargetObjectId()
+ {
+  return getTargetObject().getId();
+ }
+
  
 }
