@@ -1311,6 +1311,19 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
   return clstMap.get(objID);
  }
+ 
+ @Override
+ public AgeObjectWritable getObject(String clustId, String modId, String objID)
+ {
+  ModuleKey mk = new ModuleKey(clustId,modId);
+  
+  ModuleRef mod = moduleMap.get(mk);
+  
+  if( mod == null )
+   return null;
+  
+  return mod.getObjectProxy(objID);
+ }
 
  // @Override
  // public boolean hasObject(String objID)

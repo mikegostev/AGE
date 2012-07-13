@@ -30,6 +30,7 @@ public interface AgeStorage
  public Collection<? extends AgeObject> getAllObjects();
  public AgeObject getGlobalObject(String objID);
  public AgeObject getClusterObject(String clustId, String objID);
+ AgeObject getObject(String clusterId, String moduleId, String objectId);
 
 // boolean hasObject(String id);
  boolean hasDataModule(String clstId, String id);
