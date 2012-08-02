@@ -95,7 +95,7 @@ public class H2SubmissionDB extends SubmissionDB
  private static final Charset docCharset = Charset.forName("UTF-8");
  
  private Connection permConn;
- private AtomicBoolean permConnFree = new AtomicBoolean( true );
+ private final AtomicBoolean permConnFree = new AtomicBoolean( true );
  
  private FileDepot docDepot;
  private FileDepot attachmentDepot;
@@ -954,7 +954,12 @@ public class H2SubmissionDB extends SubmissionDB
   
   if( q.getCreatedFrom() != -1 )
   {
-   condExpr.append(" WHERE S.ctime >= "+ q.getCreatedFrom());
+   if(hasCond)
+    condExpr.append(" AND");
+   else
+    condExpr.append(" WHERE");
+
+   condExpr.append(" S.ctime >= "+ q.getCreatedFrom());
    hasCond=true;
   }
   
@@ -1077,14 +1082,14 @@ public class H2SubmissionDB extends SubmissionDB
    else
     rep.setTotalSubmissions( q.getTotal() );
 
-   if( q.getLimit() <= 0 || q.getLimit() > REQUEST_LIMIT )
+   if( q.getLimit() <= 0 )
     q.setLimit(REQUEST_LIMIT);
    
    condExpr.append(" LIMIT ").append(q.getLimit());
    condExpr.append(" OFFSET ").append(q.getOffset());
    
    
-   List<SubmissionMeta> slist = new ArrayList<SubmissionMeta>( q.getLimit() );
+   List<SubmissionMeta> slist = new ArrayList<SubmissionMeta>( REQUEST_LIMIT );
    
    extractSubmission(conn, condExpr.toString(), slist);
    

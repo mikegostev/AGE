@@ -9,6 +9,7 @@ public class NotAuthorizedException extends Exception implements Serializable
 
  public NotAuthorizedException()
  {
+  super("Not authorized");
  }
  
  public NotAuthorizedException( String msg )

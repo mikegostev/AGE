@@ -16,7 +16,7 @@ public class SubmissionQuery implements Serializable
    title=s;
   }
   
-  private String title;
+  private final String title;
   
   public String title()
   {
@@ -34,13 +34,13 @@ public class SubmissionQuery implements Serializable
  private String submitter;
  private String modifier;
 
- private long createdFrom;
- private long modifiedFrom;
- private long createdTo;
- private long modifiedTo;
+ private long createdFrom=-1;
+ private long modifiedFrom=-1;
+ private long createdTo=-1;
+ private long modifiedTo=-1;
  
- private int limit;
- private int offset;
+ private int limit=-1;
+ private int offset=0;
  
  private Selector remSelector=Selector.ACTIVE;
  
