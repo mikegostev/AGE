@@ -12,16 +12,16 @@
 	<property name="Commons" location="../Commons"/>
 
 
-  <path id="lib">
-    <fileset dir="lib/" includes="*.jar"/>
-  </path>
+	<path id="lib">
+		<fileset dir="lib/" includes="*.jar"/>
+	</path>
 
 
-   <target name="dist" description="generate the distribution" >
+	<target name="dist" description="generate the distribution" >
 
-    <tstamp>
-        <format property="BUILDTIME" pattern="yyyy-MM-dd HH:mm z Z" locale="en,UK"/>
-    </tstamp> 
+		<tstamp>
+			<format property="BUILDTIME" pattern="yyyy-MM-dd HH:mm z Z" locale="en,UK"/>
+		</tstamp>
 
 		<delete dir="${build}"/>
 		<delete dir="${dist}"/>
@@ -34,71 +34,80 @@
 			<compilerarg value="-Xlint:deprecation"/>
 		</javac>
 
-    	<unzip dest="${build}">
-    	    <fileset dir="lib/" includes="*.jar"/>
-        </unzip>
+		<unzip dest="${build}">
+			<fileset dir="lib/" includes="*.jar"/>
+		</unzip>
 
-    <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
- <jar jarfile="${dist}/AGE.jar" basedir="${build}" manifest="MANIFEST.MF" />
- 
- </target>
+		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
+		<jar jarfile="${dist}/AGE.jar" basedir="${build}" manifest="MANIFEST.MF" />
 
- <target name="deps" description="download dependences jars" >
+	</target>
 
- 	<artifact:dependencies filesetId="dependency.fileset">
+	<target name="deps" description="download dependences jars" >
+
+		<artifact:dependencies filesetId="dependency.fileset">
 
 
+		<dependency
+			groupId="commons-logging"
+			artifactId="commons-logging"
+			version="[1.1.1,)"
+		/>
+		<dependency
+			groupId="commons-codec"
+			artifactId="commons-codec"
+			version="[1.6,)"
+		/>
 		<dependency
 			groupId="com.h2database"
 			artifactId="h2"
 			version="[1.0.0,)"
 			scope="compile"
 		/>
-		<dependency
-			groupId="org.apache.geronimo.specs"
-			artifactId="geronimo-jta_1.0.1B_spec"
-			version="1.1"
-			scope="compile"
+		
+		<dependency 
+			groupId="org.apache.geronimo.specs" 
+			artifactId="geronimo-jta_1.0.1B_spec" 
+			version="1.1" scope="compile"
 		/>
-		<dependency
-			groupId="commons-transaction"
-			artifactId="commons-transaction"
+			
+		<dependency 
+			groupId="commons-transaction" 
+			artifactId="commons-transaction" 
 			version="1.2"
-			scope="compile"
 		/>
 		<dependency
 			groupId="log4j"
 			artifactId="log4j"
-		    version="[1.2.0,)"
-			scope="compile"
+		    version="[1.2.17,)"
 		/>
 		<dependency
 			groupId="org.apache.lucene"
 			artifactId="lucene-core"
-			version="[3.6.0,3.7)"
+			version="[3.6.0,4.0.0-ALPHA)"
 		/>
 		<dependency
 			groupId="net.java.dev.jna"
 			artifactId="jna"
-			version="[3.0.0,)"
+			version="3.3.0"
 		/>
 		<dependency
-			groupId="org.apache.commons"
+			groupId="commons-io"
 			artifactId="commons-io"
 			version="[1.0.0,)"
 		/>
-	
-
- 	</artifact:dependencies>
 
 
- 	<copy todir="lib">
- 	  <fileset refid="dependency.fileset" />
- 	  <!-- This mapper strips off all leading directory information -->
- 	  <mapper type="flatten" />
- 	</copy>
+		</artifact:dependencies>
 
 
- </target>
+		<copy todir="lib">
+			<fileset refid="dependency.fileset" />
+			<!-- This mapper strips off all leading directory information -->
+			<mapper type="flatten" />
+		</copy>
+
+
+	</target>
 
 </project>

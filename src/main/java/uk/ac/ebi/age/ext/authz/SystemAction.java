@@ -15,6 +15,10 @@ public enum SystemAction
  CREATESUBM("Create submission", ActionGroup.SUBMISSION ),
  EXPORT_GRAPH_DATA("Export full data graph", ActionGroup.EXPORT ),
  
+ READOBJTAGS("Read object tags", ActionGroup.OBJECT_ACCESS ),
+ CTRLOBJTAGS("Controll object tags", ActionGroup.OBJECT_ACCESS ),
+ 
+ READSUBMTAGS("Read submission tags", ActionGroup.SUBMISSION ),
  CTRLSUBMTAGS("Controll submission tags", ActionGroup.SUBMISSION );
 
  
