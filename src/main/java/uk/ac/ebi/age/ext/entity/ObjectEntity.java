@@ -2,21 +2,21 @@ package uk.ac.ebi.age.ext.entity;
 
 import java.io.Serializable;
 
-public class ModuleEntity implements Entity, Serializable
+public class ObjectEntity implements Entity, Serializable
 {
 
  private static final long serialVersionUID = 1L;
 
  private String id;
- private ClusterEntity clusterEntity;
+ private ModuleEntity moduleEntity;
 
- ModuleEntity()
+ ObjectEntity()
  {}
 
- public ModuleEntity( ClusterEntity ce, String id )
+ public ObjectEntity( ModuleEntity ce, String id )
  {
   this.id=id;
-  clusterEntity = ce;
+  moduleEntity = ce;
  }
  
  @Override
@@ -28,13 +28,13 @@ public class ModuleEntity implements Entity, Serializable
  @Override
  public EntityDomain getEntityDomain()
  {
-  return EntityDomain.DATAMODULE;
+  return EntityDomain.AGEOBJECT;
  }
 
  @Override
  public Entity getParentEntity()
  {
-  return clusterEntity;
+  return moduleEntity;
  }
 
  public void setEntityId(String id)
