@@ -15,6 +15,8 @@ public class ClassReference extends AgeTabElement
  private LinkedList<ClassReference> qualifiers;
  private String parentClass;
  
+ private ClassReference embeddedClassRef;
+ 
  private ClassReference targetClassRef;
  private ClassReference rangeClassRef;
  private String rawRef;
@@ -140,6 +142,7 @@ public class ClassReference extends AgeTabElement
  }
 
 
+ @Override
  public boolean equals( Object obj )
  {
   if( obj instanceof ClassReference )
@@ -215,6 +218,16 @@ public class ClassReference extends AgeTabElement
  public void setHorizontal(boolean horizontal)
  {
   this.horizontal = horizontal;
+ }
+
+ public ClassReference getEmbeddedClassRef()
+ {
+  return embeddedClassRef;
+ }
+
+ public void setEmbeddedClassRef(ClassReference embeddedClassRef)
+ {
+  this.embeddedClassRef = embeddedClassRef;
  }
 
 }

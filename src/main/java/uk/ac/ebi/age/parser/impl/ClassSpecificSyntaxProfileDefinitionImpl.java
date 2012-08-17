@@ -6,7 +6,7 @@ import uk.ac.ebi.age.parser.SyntaxProfileDefinition;
 
 public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
 {
- private SyntaxProfileDefinition commonProfileDefinition;
+ private final SyntaxProfileDefinition commonProfileDefinition;
  
  private String  customTokenBrackets;
  private String  flagsTokenBrackets;
@@ -39,11 +39,14 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
  private ResolveScope defaultFileAttrReslvScope;
  private ResolveScope defaultRelReslvScope;
 
+ private String defaultEmbeddedObjectAttributeSeparator;
+
  public ClassSpecificSyntaxProfileDefinitionImpl( SyntaxProfileDefinition comm )
  {
   commonProfileDefinition = comm;
  }
  
+ @Override
  public String getCustomTokenBrackets()
  {
   if( customTokenBrackets != null )
@@ -57,6 +60,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.customTokenBrackets = customTokenBrackets;
  }
 
+ @Override
  public String getFlagsTokenBrackets()
  {
   if( flagsTokenBrackets != null )
@@ -70,6 +74,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.flagsTokenBrackets = flagsTokenBrackets;
  }
 
+ @Override
  public String getQualifierTokenBrackets()
  {
   if( qualifierTokenBrackets != null )
@@ -83,6 +88,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.qualifierTokenBrackets = qualifierTokenBrackets;
  }
 
+ @Override
  public String getFlagsSeparatorSign()
  {
   if( flagsSeparatorSign != null )
@@ -96,6 +102,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.flagsSeparatorSign = flagsSeparatorSign;
  }
 
+ @Override
  public String getFlagsEqualSign()
  {
   if( flagsEqualSign != null )
@@ -109,6 +116,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.flagsEqualSign = flagsEqualSign;
  }
 
+ @Override
  public String getPrototypeObjectId()
  {
   if( prototypeObjectId != null )
@@ -122,6 +130,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.prototypeObjectId = prototypeObjectId;
  }
 
+ @Override
  public String getAnonymousObjectId()
  {
   if( anonymousObjectId != null )
@@ -135,6 +144,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.anonymousObjectId = anonymousObjectId;
  }
 
+ @Override
  public String getGlobalIdPrefix()
  {
   if( globalIdPrefix != null )
@@ -148,6 +158,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.globalIdPrefix = globalIdPrefix;
  }
 
+ @Override
  public String getClusterIdPrefix()
  {
   if( clusterIdPrefix != null )
@@ -161,6 +172,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.clusterIdPrefix = clusterIdPrefix;
  }
 
+ @Override
  public String getModuleIdPrefix()
  {
   if( moduleIdPrefix != null )
@@ -174,6 +186,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.moduleIdPrefix = moduleIdPrefix;
  }
 
+ @Override
  public String getHorizontalBlockPrefix()
  {
   if( horizontalBlockPrefix != null )
@@ -187,6 +200,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.horizontalBlockPrefix = horizontalBlockPrefix;
  }
 
+ @Override
  public String getVerticalBlockPrefix()
  {
   if( verticalBlockPrefix != null )
@@ -200,6 +214,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.verticalBlockPrefix = verticalBlockPrefix;
  }
 
+ @Override
  public IdScope getDefaultIdScope()
  {
   if( defaultIdScope != null )
@@ -213,6 +228,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.defaultIdScope = defaultScope;
  }
 
+ @Override
  public Boolean isHorizontalBlockDefault()
  {
   if( horizontalBlockDefault != null )
@@ -226,6 +242,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.horizontalBlockDefault = defaultHorizontal;
  }
 
+ @Override
  public Boolean isResetPrototype()
  {
   if( resetPrototype != null )
@@ -283,6 +300,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   return commonProfileDefinition.getEscapeSequence();
  }
 
+ @Override
  public String getDefaultScopeIdPrefix()
  {
   if( defaultScopeIdPrefix != null )
@@ -296,6 +314,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.defaultScopeIdPrefix = defaultScopeIdPrefix;
  }
 
+ @Override
  public String getGlobalResolveScopePrefix()
  {
   if( globalResolveScopePrefix != null )
@@ -309,6 +328,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.globalResolveScopePrefix = globalResolveScopePrefix;
  }
 
+ @Override
  public String getClusterResolveScopePrefix()
  {
   if( clusterResolveScopePrefix != null )
@@ -322,6 +342,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.clusterResolveScopePrefix = clusterResolveScopePrefix;
  }
 
+ @Override
  public String getModuleResolveScopePrefix()
  {
   if( moduleResolveScopePrefix != null )
@@ -335,6 +356,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.moduleResolveScopePrefix = moduleResolveScopePrefix;
  }
 
+ @Override
  public String getModuleCascadeResolveScopePrefix()
  {
   if( moduleCascadeResolveScopePrefix != null )
@@ -348,6 +370,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.moduleCascadeResolveScopePrefix = moduleCascadeResolveScopePrefix;
  }
 
+ @Override
  public String getClusterCascadeResolveScopePrefix()
  {
   if( clusterCascadeResolveScopePrefix != null )
@@ -361,6 +384,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.clusterCascadeResolveScopePrefix = clusterCascadeResolveScopePrefix;
  }
 
+ @Override
  public String getDefaultResolveScopePrefix()
  {
   if( defaultResolveScopePrefix != null )
@@ -372,6 +396,15 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
  public void setDefaultResolveScopePrefix(String defaultResolveScopePrefix)
  {
   this.defaultResolveScopePrefix = defaultResolveScopePrefix;
+ }
+
+ @Override
+ public String getDefaultEmbeddedObjectAttributeSeparator()
+ {
+  if( defaultEmbeddedObjectAttributeSeparator != null )
+   return defaultEmbeddedObjectAttributeSeparator;
+  
+  return commonProfileDefinition.getDefaultEmbeddedObjectAttributeSeparator();
  }
 
 }

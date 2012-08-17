@@ -38,8 +38,8 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
  
  class HorizontalBlockSupplier implements BlockSupplier
  {
-  private List<String> firstLine;
-  private SpreadsheetReader reader;
+  private final List<String> firstLine;
+  private final SpreadsheetReader reader;
   
   HorizontalBlockSupplier(SpreadsheetReader r, List<String> fstLine)
   {
@@ -102,7 +102,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 //  private List<List<String>> matrix = new ArrayList<List<String>>( 100 );
   
   private int ptr = 0;
-  private List<List<String>> lines = new ArrayList<List<String>>( 50 );
+  private final List<List<String>> lines = new ArrayList<List<String>>( 50 );
   private int maxDim = 0;
  
   VerticalBlockSupplier(SpreadsheetReader reader, List<String> fstLine)
@@ -175,24 +175,24 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    if( isEmptyLine(parts) )
     continue;
 
-   String classRef = parts.get(0);
+   CellValue classRef = new CellValue(parts.get(0), profile.getEscapeSequence());
    
    BlockHeader header = new BlockHeaderImpl(data);
 
-   if( classRef.startsWith(profile.getCommonSyntaxProfile().getHorizontalBlockPrefix()) )
+   if( classRef.matchSubstring(profile.getCommonSyntaxProfile().getHorizontalBlockPrefix(), 0) )
    {
-    parts.set(0, classRef.substring(profile.getCommonSyntaxProfile().getHorizontalBlockPrefix().length()));
+    parts.set(0, classRef.getRawValue().substring(profile.getCommonSyntaxProfile().getHorizontalBlockPrefix().length()));
     block = new HorizontalBlockSupplier( reader, parts );
     
     header.setHorizontal(true);
    }
-   else if( classRef.startsWith(profile.getCommonSyntaxProfile().getVerticalBlockPrefix()) )
+   else if( classRef.matchSubstring(profile.getCommonSyntaxProfile().getVerticalBlockPrefix(), 0) )
    {
-    parts.set(0, classRef.substring(profile.getCommonSyntaxProfile().getVerticalBlockPrefix().length()));
+    parts.set(0, classRef.getRawValue().substring(profile.getCommonSyntaxProfile().getVerticalBlockPrefix().length()));
     block = new VerticalBlockSupplier( reader, parts );
     header.setHorizontal(false);
    }
-   else if( profile.getClassSpecificSyntaxProfile(classRef).isHorizontalBlockDefault() )
+   else if( profile.getClassSpecificSyntaxProfile(classRef.getRawValue()).isHorizontalBlockDefault() )
    {
     block = new HorizontalBlockSupplier( reader, parts );
     header.setHorizontal(true);

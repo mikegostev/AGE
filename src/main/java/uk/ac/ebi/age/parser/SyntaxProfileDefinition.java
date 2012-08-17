@@ -57,5 +57,7 @@ public interface SyntaxProfileDefinition
  
  public String getEscapeSequence();
 
+ public String getDefaultEmbeddedObjectAttributeSeparator();
+
 
 }

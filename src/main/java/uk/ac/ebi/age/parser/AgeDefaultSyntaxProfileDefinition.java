@@ -3,6 +3,7 @@ package uk.ac.ebi.age.parser;
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.ResolveScope;
 
+//This in immutable SyntaxProfileDefinition with default AGE profile
 public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinition
 {
  public static final String escapeSequence="\\";
@@ -27,7 +28,8 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
  public static final String clusterCascadeResolveScopePrefix="CC::";
  public static final String defaultResolveScopePrefix="D::";
 
- 
+ public static final String defaultEmbeddedObjectAttributeSeparator=": ";
+
  public static final String horizontalBlockPrefix="-";
  public static final String verticalBlockPrefix="|";
  
@@ -158,31 +160,37 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
   return defaultScopeIdPrefix;
  }
 
+ @Override
  public String getGlobalResolveScopePrefix()
  {
   return globalResolveScopePrefix;
  }
 
+ @Override
  public String getClusterResolveScopePrefix()
  {
   return clusterResolveScopePrefix;
  }
 
+ @Override
  public String getModuleResolveScopePrefix()
  {
   return moduleResolveScopePrefix;
  }
 
+ @Override
  public String getModuleCascadeResolveScopePrefix()
  {
   return moduleCascadeResolveScopePrefix;
  }
 
+ @Override
  public String getClusterCascadeResolveScopePrefix()
  {
   return clusterCascadeResolveScopePrefix;
  }
 
+ @Override
  public String getDefaultResolveScopePrefix()
  {
   return defaultResolveScopePrefix;
@@ -192,6 +200,12 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
  public ResolveScope getDefaultFileAttributeResolveScope()
  {
   return defaultFileAttributeResolveScope;
+ }
+
+ @Override
+ public String getDefaultEmbeddedObjectAttributeSeparator()
+ {
+  return defaultEmbeddedObjectAttributeSeparator;
  }
 
 }

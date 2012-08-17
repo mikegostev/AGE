@@ -5,9 +5,10 @@ import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.parser.AgeDefaultSyntaxProfileDefinition;
 import uk.ac.ebi.age.parser.SyntaxProfileDefinition;
 
+//This in mutable SyntaxProfileDefinition initialized by AgeDefaultSyntaxProfileDefinition
 public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
 {
- private String escapeSequence = AgeDefaultSyntaxProfileDefinition.escapeSequence;
+ private final String escapeSequence = AgeDefaultSyntaxProfileDefinition.escapeSequence;
  
  private String  customTokenBrackets    = AgeDefaultSyntaxProfileDefinition.customTokenBrackets;
  private String  flagsTokenBrackets     = AgeDefaultSyntaxProfileDefinition.flagsTokenBrackets;
@@ -29,6 +30,8 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
  private String       clusterCascadeResolveScopePrefix = AgeDefaultSyntaxProfileDefinition.clusterCascadeResolveScopePrefix;
  private String       defaultResolveScopePrefix        = AgeDefaultSyntaxProfileDefinition.defaultResolveScopePrefix;
  
+ private String defaultEmbeddedObjectAttributeSeparator= AgeDefaultSyntaxProfileDefinition.defaultEmbeddedObjectAttributeSeparator;
+ 
  private String  horizontalBlockPrefix  = AgeDefaultSyntaxProfileDefinition.horizontalBlockPrefix;
  private String  verticalBlockPrefix    = AgeDefaultSyntaxProfileDefinition.verticalBlockPrefix;
 
@@ -36,10 +39,11 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
  private Boolean horizontalBlockDefault = AgeDefaultSyntaxProfileDefinition.horizontalBlockDefault;
  private Boolean resetPrototype         = AgeDefaultSyntaxProfileDefinition.resetPrototype;
  
- private ResolveScope defaultObjAttrReslvScope = AgeDefaultSyntaxProfileDefinition.defaultObjectAttributeResolveScope;
+ private final ResolveScope defaultObjAttrReslvScope = AgeDefaultSyntaxProfileDefinition.defaultObjectAttributeResolveScope;
  private ResolveScope defaultFileAttrReslvScope = AgeDefaultSyntaxProfileDefinition.defaultFileAttributeResolveScope;
- private ResolveScope defaultRelReslvScope     = AgeDefaultSyntaxProfileDefinition.defaultRelationResolveScope;
+ private final ResolveScope defaultRelReslvScope     = AgeDefaultSyntaxProfileDefinition.defaultRelationResolveScope;
 
+ @Override
  public String getCustomTokenBrackets()
  {
   return customTokenBrackets;
@@ -50,6 +54,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.customTokenBrackets = customTokenBrackets;
  }
 
+ @Override
  public String getFlagsTokenBrackets()
  {
   return flagsTokenBrackets;
@@ -60,6 +65,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.flagsTokenBrackets = flagsTokenBrackets;
  }
 
+ @Override
  public String getQualifierTokenBrackets()
  {
   return qualifierTokenBrackets;
@@ -70,6 +76,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.qualifierTokenBrackets = qualifierTokenBrackets;
  }
 
+ @Override
  public String getFlagsSeparatorSign()
  {
   return flagsSeparatorSign;
@@ -80,6 +87,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.flagsSeparatorSign = flagsSeparatorSign;
  }
 
+ @Override
  public String getFlagsEqualSign()
  {
   return flagsEqualSign;
@@ -90,6 +98,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.flagsEqualSign = flagsEqualSign;
  }
 
+ @Override
  public String getPrototypeObjectId()
  {
   return prototypeObjectId;
@@ -100,6 +109,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.prototypeObjectId = prototypeObjectId;
  }
 
+ @Override
  public String getAnonymousObjectId()
  {
   return anonymousObjectId;
@@ -110,6 +120,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.anonymousObjectId = anonymousObjectId;
  }
 
+ @Override
  public String getGlobalIdPrefix()
  {
   return globalIdPrefix;
@@ -120,6 +131,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.globalIdPrefix = globalIdPrefix;
  }
 
+ @Override
  public String getClusterIdPrefix()
  {
   return clusterIdPrefix;
@@ -130,6 +142,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.clusterIdPrefix = clusterIdPrefix;
  }
 
+ @Override
  public String getModuleIdPrefix()
  {
   return moduleIdPrefix;
@@ -140,6 +153,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.moduleIdPrefix = moduleIdPrefix;
  }
 
+ @Override
  public String getHorizontalBlockPrefix()
  {
   return horizontalBlockPrefix;
@@ -150,6 +164,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.horizontalBlockPrefix = horizontalBlockPrefix;
  }
 
+ @Override
  public String getVerticalBlockPrefix()
  {
   return verticalBlockPrefix;
@@ -160,6 +175,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.verticalBlockPrefix = verticalBlockPrefix;
  }
 
+ @Override
  public IdScope getDefaultIdScope()
  {
   return defaultIdScope;
@@ -170,6 +186,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.defaultIdScope = defaultScope;
  }
 
+ @Override
  public Boolean isHorizontalBlockDefault()
  {
   return horizontalBlockDefault;
@@ -180,6 +197,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.horizontalBlockDefault = defaultHorizontal;
  }
 
+ @Override
  public Boolean isResetPrototype()
  {
   return resetPrototype;
@@ -208,6 +226,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   return escapeSequence;
  }
 
+ @Override
  public String getDefaultScopeIdPrefix()
  {
   return defaultScopeIdPrefix;
@@ -218,6 +237,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.defaultScopeIdPrefix = defaultScopeIdPrefix;
  }
 
+ @Override
  public String getGlobalResolveScopePrefix()
  {
   return globalResolveScopePrefix;
@@ -228,6 +248,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.globalResolveScopePrefix = globalResolveScopePrefix;
  }
 
+ @Override
  public String getClusterResolveScopePrefix()
  {
   return clusterResolveScopePrefix;
@@ -238,6 +259,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.clusterResolveScopePrefix = clusterResolveScopePrefix;
  }
 
+ @Override
  public String getModuleResolveScopePrefix()
  {
   return moduleResolveScopePrefix;
@@ -248,6 +270,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.moduleResolveScopePrefix = moduleResolveScopePrefix;
  }
 
+ @Override
  public String getModuleCascadeResolveScopePrefix()
  {
   return moduleCascadeResolveScopePrefix;
@@ -258,6 +281,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.moduleCascadeResolveScopePrefix = moduleCascadeResolveScopePrefix;
  }
 
+ @Override
  public String getClusterCascadeResolveScopePrefix()
  {
   return clusterCascadeResolveScopePrefix;
@@ -268,6 +292,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.clusterCascadeResolveScopePrefix = clusterCascadeResolveScopePrefix;
  }
 
+ @Override
  public String getDefaultResolveScopePrefix()
  {
   return defaultResolveScopePrefix;
@@ -288,4 +313,16 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
  {
   defaultFileAttrReslvScope=scp;
  }
+
+ @Override
+ public String getDefaultEmbeddedObjectAttributeSeparator()
+ {
+  return defaultEmbeddedObjectAttributeSeparator;
+ }
+
+ public void setDefaultEmbeddedObjectAttributeSeparator(String defaultEmbeddedObjectAttributeSeparator)
+ {
+  this.defaultEmbeddedObjectAttributeSeparator = defaultEmbeddedObjectAttributeSeparator;
+ }
+
 }
