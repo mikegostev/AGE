@@ -316,13 +316,75 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   return data;
  }
 
+ private ClassReference createClassReference( CellValue cell, int row, int col, SyntaxProfileDefinition profDef ) throws ParserException
+ {
+  int embedSepLen = profDef.getDefaultEmbeddedObjectAttributeSeparator().length(); 
+  
+   String rawVal = cell.getRawValue();
+   
+   ClassReference embeddedProperty=null;
+   
+   int offs=0;
+   while( true )
+   {
+    int pos = rawVal.indexOf( profDef.getDefaultEmbeddedObjectAttributeSeparator(), offs );
+    
+    if( pos == -1 )
+     break;
+    
+    offs = pos+embedSepLen;
+
+    if( ! cell.hasRed(pos, offs) )
+    {
+     embeddedProperty = createClassReference( new CellValue(cell.getRawValue().substring(offs), profDef.getEscapeSequence()), row, col, profDef );
+     cell =  new CellValue(cell.getRawValue().substring(0,pos), profDef.getEscapeSequence() );
+     break;
+    }
+    
+   }
+  
+   if( cell.getValue().trim().length() == 0 )
+    return null;
+   
+   ClassReference partName = null;
+   
+   try
+   {
+    partName = string2ClassReference(cell);
+    partName.setRawReference(rawVal);
+
+    partName.setRow(row);
+    partName.setCol(col);
+
+    if( partName.getQualifiers() != null )
+    {
+     for( ClassReference qref : partName.getQualifiers() )
+     {
+      qref.setRow(row);
+      qref.setCol(col);
+     }
+    }
+    
+    if( embeddedProperty != null )
+     partName.setEmbeddedClassRef(embeddedProperty);
+   }
+   catch(ParserException e)
+   {
+    e.setLineNumber(row);
+    e.setColumn(col);
+
+    throw e;
+   }
+
+   return partName;
+ }
+ 
  private void analyzeHeader(BlockHeader hdr, List<CellValue> parts, int row) throws ParserException
  {
-//  BlockHeader hdr = new BlockHeaderImpl( this );
-  
   Iterator<CellValue> itr = parts.iterator();
   
   CellValue cell = itr.next();
+  
   
   ClassReference partName;
   try
@@ -343,6 +405,8 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   
   hdr.setClassColumnHeader(partName);
   
+  SyntaxProfileDefinition profDef = getSyntaxProfile().getClassSpecificSyntaxProfile(partName.getName());
+  
   int ord=1;
   while( itr.hasNext() )
   {
@@ -350,69 +414,21 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    
    cell = itr.next();
 
+   int r,c;
    
-   
-   if( cell.getValue().trim().length() == 0 )
+   if( hdr.isHorizontal() )
    {
-    hdr.addColumnHeader(null);
-    continue;
+    r = row;
+    c = ord;
+   }
+   else
+   {
+    r =row+ord;
+    c = 1;
    }
    
-   try
-   {
-    partName = string2ClassReference(cell);
-    partName.setRawReference(cell.getRawValue());
-
-    if( hdr.isHorizontal() )
-    {
-     partName.setRow(row);
-     partName.setCol(ord);
-    }
-    else
-    {
-     partName.setRow(row+ord);
-     partName.setCol(1);
-    }
-    
-    if( partName.getQualifiers() != null )
-    {
-     for( ClassReference qref : partName.getQualifiers() )
-     {
-      if( hdr.isHorizontal() )
-      {
-       qref.setRow(row);
-       qref.setCol(ord);
-      }
-      else
-      {
-       qref.setRow(row+ord);
-       qref.setCol(1);
-      }
-     }
-    }
-   }
-   catch(ParserException e)
-   {
-    if( hdr.isHorizontal() )
-    {
-     e.setLineNumber(row);
-     e.setColumn(ord);
-    }
-    else
-    {
-     e.setLineNumber(row+ord);
-     e.setColumn(1);
-    }
-
-    throw e;
-   }
-   
-   
-   hdr.addColumnHeader(partName);
+   hdr.addColumnHeader( createClassReference(cell, r, c, profDef) );
   }
-  
-  
-//  return hdr;
  }
 
  

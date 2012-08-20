@@ -7,6 +7,9 @@ public class CellValue
  private String value;
  private String rawValue;
  
+ private CellValue( )
+ {}
+ 
  public CellValue( String val, String escSeq )
  {
   rawValue = val;
@@ -50,6 +53,8 @@ public class CellValue
   else
    value = val;
  }
+ 
+
  
  public String getValue()
  {

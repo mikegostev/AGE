@@ -48,8 +48,8 @@ import uk.ac.ebi.age.parser.SyntaxProfileDefinition;
 
 public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 {
- private PermissionManager permissionManager;
- private SyntaxProfile syntaxProfile;
+ private final PermissionManager permissionManager;
+ private final SyntaxProfile syntaxProfile;
  
  public AgeTab2AgeConverterImpl( PermissionManager pMngr, SyntaxProfile syntaxProfile )
  {
@@ -817,7 +817,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      addConverter(convs, new InvalidColumnConvertor(attHd) );
      result = false;
      continue;
-     //throw new SemanticException(attHd.getRow(), attHd.getCol(), "A qualifier reference must not be qualified ifself. Use syntax attr[qual1][qual2]");
     }
     
     ValueConverter hostConverter = null;
@@ -842,7 +841,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      addConverter(convs, new InvalidColumnConvertor(attHd) );
      result = false;
      continue;
-//     throw new SemanticException(attHd.getRow(), attHd.getCol(), "A qualifier must follow to a qualified property.");
     }
 
     
@@ -852,7 +850,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      addConverter(convs, new InvalidColumnConvertor(attHd) );
      result = false;
      continue;
-//     throw new SemanticException(attHd.getRow(), attHd.getCol(), "Custom qualifier ("+qualif.getName()+") is not allowed within this context.");
     }
     
     AgeAttributeClass qClass = null;
@@ -878,7 +875,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       addConverter(convs, new InvalidColumnConvertor(attHd) );
       result = false;
       continue;
-//      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Unknown attribute class (qualifier): '"+qualif.getName()+"'");
      }
      
      if( qClass.isAbstract() )
@@ -915,20 +911,11 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     else
      dupCol = addConverter(convs, new ScalarQualifierConvertor( attHd, qClass, hostConverter, sm ) );
     
-//    if( dupCol != -1 )
-//    {
-//     log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
-//       +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
-//     result = false;
-//    }
-    
     continue;
    }
    
    if( attHd.isCustom() )
    {
-//    String rangeClassName = attHd.getFlagValue(rangeFlag);
-    
     ClassReference rgHdr=attHd.getRangeClassRef();
     
     if( rgHdr != null )
@@ -939,7 +926,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       addConverter(convs, new InvalidColumnConvertor(attHd) );
       result = false;
       continue;
-//      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Custom relation class ("+attHd.getName()+") is not allowed within this context.");
      }
       
      AgeClass rangeClass=null;
@@ -956,7 +942,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       addConverter(convs, new InvalidColumnConvertor(attHd) );
       result = false;
       continue;
-//      throw new SemanticException(attHd.getRow(), attHd.getCol(), "Invalid range class: '"+rangeClassName+"'");
      }
 
      AgeRelationClass parent = null;
@@ -1180,9 +1165,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  private class DefinedRelationConvertor extends ValueConverter
  {
   private Collection<Map<String, AgeObjectWritable>> rangeObjects;
-  private AgeRelationClass relClass;
+  private final AgeRelationClass relClass;
   private AgeObjectWritable hostObject;
-  private RelationClassRef rClsRef;
+  private final RelationClassRef rClsRef;
   
   public DefinedRelationConvertor(ClassReference hd, AgeRelationClass rlClass, ContextSemanticModel sm, Map<AgeClass, Map<String, AgeObjectWritable>> classMap)
   {
@@ -1214,6 +1199,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    rClsRef = sm.getModelFactory().createRelationClassRef(sm.getAgeRelationClassPlug(rlClass), hd.isHorizontal()?hd.getCol():hd.getRow(), hd.getOriginalReference());
   }
   
+  @Override
   public void reset( AgeObjectWritable obj )
   {
    hostObject = obj;
@@ -1231,6 +1217,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
 
   
+  @Override
   public AgeClassProperty getProperty()
   {
    return relClass;
@@ -1344,10 +1331,10 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  
  private class ObjectAttributeConvertor extends ValueConverter
  {
-  private Map<String, AgeObjectWritable> rangeObjects;
+  private final Map<String, AgeObjectWritable> rangeObjects;
 //  private AgeAttributeClass       attrClass;
   private AgeObjectWritable hostObject;
-  private AttributeClassRef classRef;
+  private final AttributeClassRef classRef;
   
   public ObjectAttributeConvertor(ClassReference hd, AgeAttributeClass aCls, Map<String, AgeObjectWritable> map, ContextSemanticModel sm)
   {
@@ -1359,6 +1346,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    rangeObjects = map;
   }
 
+  @Override
   public void reset( AgeObjectWritable obj )
   {
    hostObject = obj;
@@ -1471,7 +1459,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  {
 //  private AgeAttributeClass       attrClass;
   private AgeObjectWritable hostObject;
-  private AttributeClassRef classRef;
+  private final AttributeClassRef classRef;
   
   public FileAttributeConvertor(ClassReference hd, AgeAttributeClass aCls, ContextSemanticModel sm)
   {
@@ -1481,6 +1469,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    classRef = sm.getModelFactory().createAttributeClassRef(cPlug, hd.getCol(), hd.getOriginalReference());
   }
 
+  @Override
   public void reset( AgeObjectWritable obj )
   {
    hostObject = obj;
@@ -1561,10 +1550,10 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  
  private class CustomRelationConvertor extends ValueConverter
  {
-  private Map<String, AgeObjectWritable> rangeObjects;
-  private AgeRelationClass       relClass;
+  private final Map<String, AgeObjectWritable> rangeObjects;
+  private final AgeRelationClass       relClass;
   private AgeObjectWritable hostObject;
-  private RelationClassRef rClsRef;
+  private final RelationClassRef rClsRef;
 
   public CustomRelationConvertor(ClassReference hd, AgeRelationClass relCls, ContextSemanticModel sm, Map<String, AgeObjectWritable> map)
   {
@@ -1575,6 +1564,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    rClsRef = sm.getModelFactory().createRelationClassRef(sm.getAgeRelationClassPlug(relCls), hd.isHorizontal()?hd.getCol():hd.getRow(), hd.getOriginalReference());
   }
 
+  @Override
   public void reset( AgeObjectWritable obj )
   {
    hostObject = obj;
@@ -1685,6 +1675,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    super(cr);
   }
 
+  @Override
   public void reset( AgeObjectWritable ob )
   {}
   
@@ -1741,7 +1732,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  
  private class AttributeConvertor extends ValueConverter
  {
-  private AttributeClassRef classRef;
+  private final AttributeClassRef classRef;
   private AgeObjectWritable hostObject;
 
   public AttributeConvertor(ClassReference hd, AgeAttributeClass attCls, ContextSemanticModel sm) // throws SemanticException
@@ -1752,6 +1743,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    classRef = sm.getModelFactory().createAttributeClassRef(cPlug, hd.getCol(), hd.getOriginalReference());
   }
 
+  @Override
   public void reset( AgeObjectWritable obj )
   {
    hostObject = obj;
@@ -1833,6 +1825,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     setLastConvertedValue(attr);
   }
   
+  @Override
   public AgeClassProperty getProperty()
   {
    return classRef.getAttributeClass();
@@ -1848,7 +1841,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  private abstract class QualifierConvertor extends ValueConverter
  {
   protected AttributeClassRef classRef;
-  private ValueConverter hostConverter;
+  private final ValueConverter hostConverter;
   protected AttributedWritable contextProperty;
 
   public QualifierConvertor(ClassReference attHd, AgeAttributeClass qClass, ValueConverter hc, ContextSemanticModel sm)// throws SemanticException
@@ -1866,6 +1859,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    return hostConverter;
   }
   
+  @Override
   public void reset( AgeObjectWritable obj )
   {
    List<AgeAttributeClass> chain = new ArrayList<AgeAttributeClass>(5);
@@ -1899,6 +1893,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    return classRef.getAttributeClass();
   }
 
+  @Override
   protected AttributedWritable getLastConvertedProperty()
   {
    if( contextProperty == hostConverter.getLastConvertedProperty() )
@@ -1986,8 +1981,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  
  private class ObjectQualifierConvertor extends QualifierConvertor
  {
-  private Map<String, AgeObjectWritable> rangeObjects;
-  private SyntaxProfileDefinition profDef;
+  private final Map<String, AgeObjectWritable> rangeObjects;
+  private final SyntaxProfileDefinition profDef;
 
   public ObjectQualifierConvertor(ClassReference attHd, AgeAttributeClass qClass, ValueConverter hc, Map<String, AgeObjectWritable> rangeMap,
     ContextSemanticModel sm, SyntaxProfileDefinition pd)
@@ -2089,7 +2084,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  
  private class FileQualifierConvertor extends QualifierConvertor
  {
-  private SyntaxProfileDefinition profDef;
+  private final SyntaxProfileDefinition profDef;
 
   public FileQualifierConvertor(ClassReference attHd, AgeAttributeClass qClass, ValueConverter hc,
     ContextSemanticModel sm, SyntaxProfileDefinition pd)
