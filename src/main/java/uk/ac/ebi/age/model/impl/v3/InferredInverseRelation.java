@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
-import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
@@ -67,7 +66,7 @@ public class InferredInverseRelation implements AgeRelationWritable, Serializabl
  }
 
  @Override
- public AgeAttribute getAttribute(AgeAttributeClass cls)
+ public AgeAttributeWritable getAttribute(AgeAttributeClass cls)
  {
   return null;
  }

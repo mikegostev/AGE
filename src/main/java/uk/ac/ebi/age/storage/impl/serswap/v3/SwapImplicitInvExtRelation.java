@@ -4,7 +4,6 @@ import java.lang.ref.SoftReference;
 import java.util.Collection;
 import java.util.List;
 
-import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
@@ -20,8 +19,8 @@ import com.pri.util.collection.Collections;
 
 abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
 {
- private AgeObjectProxy sourceObject;
- private AgeObjectProxy targetObject;
+ private final AgeObjectProxy sourceObject;
+ private final AgeObjectProxy targetObject;
  
  private SoftReference<AgeExternalRelationWritable> invRelRef;
  
@@ -79,7 +78,7 @@ abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
  }
 
  @Override
- public AgeAttribute getAttribute(AgeAttributeClass cls)
+ public AgeAttributeWritable getAttribute(AgeAttributeClass cls)
  {
   return null;
  }

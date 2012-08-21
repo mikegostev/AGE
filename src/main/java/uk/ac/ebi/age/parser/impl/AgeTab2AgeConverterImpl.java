@@ -26,11 +26,13 @@ import uk.ac.ebi.age.model.ClassRef;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
 import uk.ac.ebi.age.model.FormatException;
+import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.model.RelationClassRef;
 import uk.ac.ebi.age.model.ResolveScope;
 import uk.ac.ebi.age.model.writable.AgeAttributeClassWritable;
 import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
+import uk.ac.ebi.age.model.writable.AgeObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
@@ -1129,7 +1131,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  }
  
  
- private abstract class ValueConverter
+ private static abstract class ValueConverter
  {
   protected ClassReference colHdr;
   protected AttributedWritable lastProp;
@@ -2082,7 +2084,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  }
 
  
- private class FileQualifierConvertor extends QualifierConvertor
+ private  class FileQualifierConvertor extends QualifierConvertor
  {
   private final SyntaxProfileDefinition profDef;
 
@@ -2156,4 +2158,103 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
  }
 
+ 
+ private static class ChainConverter extends ValueConverter
+ {
+  static class ChainElement
+  {
+   boolean isQualifier;
+   boolean isEmbedded;
+   AttributeClassRef elClassRef;
+  }
+
+  private final List<ChainElement> chain;
+//  private List<ChainElement> path = null;
+  private AgeObjectWritable hostObject;
+  
+  private int counter=1;
+
+ 
+  protected ChainConverter( List<ChainElement> chn, AgeAttributeClass attrClass, ClassReference cref )
+  {
+   super(cref);
+
+   chain = chn;
+  }
+
+
+  @Override
+  public AgeClassProperty getProperty()
+  {
+   // TODO Auto-generated method stub
+   return null;
+  }
+
+  @Override
+  public void convert(AgeTabValue vls) throws ConvertionException
+  {
+   AttributedWritable chainEnd = hostObject;
+   
+   List<ChainElement> path = null;
+   
+   int cLen = chain.size();
+   
+   for( ChainElement  ce: chain )
+   {
+    AgeAttributeWritable att = chainEnd.getAttribute(ce.elClassRef.getAttributeClass());
+
+    if( att == null )
+     att = chainEnd.createAgeAttribute(ce.elClassRef);
+    
+    if( ce.isEmbedded )
+    {
+     AgeObjectWritable embObj = (AgeObjectWritable)att.getValue();
+     
+     if( embObj == null )
+     {
+      AgeObjectAttributeWritable objatt = (AgeObjectAttributeWritable)att;
+      
+      ContextSemanticModel sm = hostObject.getSemanticModel();
+      
+      ClassRef clsRef = sm.getModelFactory().createClassRef( 
+        sm.getAgeClassPlug(objatt.getAgeElClass().getTargetClass()),
+        vls.getColumnHeader().getOrder(),
+        vls.getColumnHeader().getOriginalReference(),
+        vls.getColumnHeader().isHorizontal(), sm);
+
+      
+      embObj = sm.createAgeObject(clsRef, "__emb_"+objatt.getAgeElClass().getTargetClass()+counter++);
+      
+      embObj.setIdScope(IdScope.MODULE);
+      
+      objatt.setValue(embObj);
+      
+      chainEnd = embObj;
+      
+      continue;
+     }
+    }
+    
+    if( ! ce.isQualifier )
+    {
+    }
+    else
+    {
+//     if( ce.isEmbedded )
+//      chainEnd = (att).
+    }
+   }
+   
+  }
+
+  @Override
+  public void reset( AgeObjectWritable obj )
+  {
+   hostObject = obj;
+   
+   setLastConvertedValue(null);
+  }
+
+   
+ }
 }

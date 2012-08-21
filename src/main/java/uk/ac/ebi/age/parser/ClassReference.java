@@ -32,6 +32,11 @@ public class ClassReference extends AgeTabElement
  }
  
  
+ public int getOrder()
+ {
+  return horizontal?getCol():getRow();
+ }
+ 
  public void setCustom(boolean t)
  {
   custom=t;

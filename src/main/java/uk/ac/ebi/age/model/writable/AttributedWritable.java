@@ -15,9 +15,13 @@ public interface AttributedWritable extends Attributed
  AgeAttributeWritable createExternalObjectAttribute(AttributeClassRef attrClass, String val, ResolveScope scope );
 
  
+ @Override
+ AgeAttributeWritable getAttribute(AgeAttributeClass cls);
+ @Override
  Collection<? extends AgeAttributeWritable> getAttributes();
 
 
+ @Override
  Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls);
 
 

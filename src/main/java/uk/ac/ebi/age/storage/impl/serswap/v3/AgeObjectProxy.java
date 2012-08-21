@@ -6,7 +6,6 @@ import java.util.List;
 
 import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.ext.entity.EntityDomain;
-import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -30,10 +29,10 @@ public class AgeObjectProxy implements AgeObjectWritable
 {
  private transient SoftReference<AgeObjectWritable> objectRef;
 
- private StoragePlug storage;
+ private final StoragePlug storage;
  
- private ModuleKey moduleId;
- private String objectId;
+ private final ModuleKey moduleId;
+ private final String objectId;
  
  public AgeObjectProxy(String objId, ModuleKey mk, StoragePlug sss)
  {
@@ -124,7 +123,7 @@ public class AgeObjectProxy implements AgeObjectWritable
  }
 
  @Override
- public AgeAttribute getAttribute(AgeAttributeClass cls)
+ public AgeAttributeWritable getAttribute(AgeAttributeClass cls)
  {
   return getObject().getAttribute( cls );
  }
@@ -284,6 +283,7 @@ public class AgeObjectProxy implements AgeObjectWritable
   return storage.getStorage();
  }
  
+ @Override
  public ModuleKey getModuleKey()
  {
   return moduleId;

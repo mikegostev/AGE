@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeContextSemanticElement;
 import uk.ac.ebi.age.model.AttributeClassRef;
@@ -124,7 +123,7 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
 // }
 
  @Override
- public synchronized AgeAttribute getAttribute(AgeAttributeClass cls)
+ public synchronized AgeAttributeWritable getAttribute(AgeAttributeClass cls)
  {
   for( AgeAttributeWritable  at : attributes )
   {
@@ -232,6 +231,7 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
   }
  }
  
+ @Override
  public synchronized void sortAttributes()
  {
   if( attributes == null )
