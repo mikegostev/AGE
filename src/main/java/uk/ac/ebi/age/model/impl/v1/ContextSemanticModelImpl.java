@@ -11,7 +11,7 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeClassPlug;
-import uk.ac.ebi.age.model.AgeClassProperty;
+import uk.ac.ebi.age.model.AgePropertyClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AgeRelationClassPlug;
 import uk.ac.ebi.age.model.AttributeClassRef;
@@ -298,7 +298,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  }
 
  @Override
- public AgeClassProperty getDefinedAgeClassProperty( String name )
+ public AgePropertyClass getDefinedAgeClassProperty( String name )
  {
   return masterModel.getDefinedAgeClassProperty(name);
  }

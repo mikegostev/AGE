@@ -10,7 +10,7 @@ import uk.ac.ebi.age.model.AgeAnnotation;
 import uk.ac.ebi.age.model.AgeAnnotationClass;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeClass;
-import uk.ac.ebi.age.model.AgeClassProperty;
+import uk.ac.ebi.age.model.AgePropertyClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.ContextSemanticModel;
 import uk.ac.ebi.age.model.DataType;
@@ -105,9 +105,9 @@ public class SemanticModelImpl implements SemanticModel, Serializable
  }
 
  
- public AgeClassProperty getDefinedAgeClassProperty(String name)
+ public AgePropertyClass getDefinedAgeClassProperty(String name)
  {
-  AgeClassProperty prop = attributeMap.get(name);
+  AgePropertyClass prop = attributeMap.get(name);
   
   if( prop != null )
    return prop;

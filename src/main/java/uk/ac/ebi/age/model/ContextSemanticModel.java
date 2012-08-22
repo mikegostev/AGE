@@ -22,7 +22,7 @@ public interface ContextSemanticModel extends SemanticModel
  AgeAttributeClassWritable getOrCreateCustomAgeAttributeClass(String name, DataType type, AgeClass owner, AgeAttributeClassWritable superClass);
  AgeRelationClassWritable getOrCreateCustomAgeRelationClass(String name, AgeClass range, AgeClass owner, AgeRelationClass superClass);
 
- AgeClassProperty getDefinedAgeClassProperty( String name );
+ AgePropertyClass getDefinedAgeClassProperty( String name );
 
  DataModuleWritable createDataModule();
 

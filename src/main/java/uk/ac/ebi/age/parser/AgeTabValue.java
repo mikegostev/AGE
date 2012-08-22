@@ -3,8 +3,8 @@ package uk.ac.ebi.age.parser;
 
 public class AgeTabValue extends AgeTabElement
 {
- private CellValue value;
- private ClassReference colHeader;
+ private final CellValue value;
+ private final ClassReference colHeader;
 
  public AgeTabValue(int row, int col, ClassReference prop, CellValue value)
  {
@@ -38,4 +38,9 @@ public class AgeTabValue extends AgeTabElement
   value.trim();
  }
  
+ @Override
+ public String toString()
+ {
+  return colHeader.getOriginalReference()+"="+value.getValue();
+ }
 }

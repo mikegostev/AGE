@@ -4,6 +4,7 @@ package uk.ac.ebi.age.parser.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,8 +18,8 @@ import uk.ac.ebi.age.ext.log.LogNode.Level;
 import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
-import uk.ac.ebi.age.model.AgeClassProperty;
 import uk.ac.ebi.age.model.AgeExternalRelation;
+import uk.ac.ebi.age.model.AgePropertyClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
 import uk.ac.ebi.age.model.AttributeClassRef;
 import uk.ac.ebi.age.model.AttributedClass;
@@ -198,7 +199,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      obj = objectMap.get(atObj.getId());
 
     for( ValueConverter cnv : convs )
-     cnv.reset(obj);
+     cnv.resetObject(obj);
     
     if( prototype != null && ! atObj.isPrototype() )
      applyPrototype(obj, prototype);
@@ -211,6 +212,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      
      for( ValueConverter cnv : convs )
      {
+      cnv.resetLine(ln);
       
       List<AgeTabValue> vals = atObj.getValues(cnv.getClassReference());
       
@@ -809,6 +811,19 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    }
    
    List<ClassReference> qList = attHd.getQualifiers();
+   
+   if( attHd.getEmbeddedClassRef() != null )
+   {
+    List<ChainConverter.ChainElement> chain = new ArrayList<ChainConverter.ChainElement>();
+    
+    createEmbeddedObjectChain(blkCls, attHd, chain, sm, log);
+    
+    addConverter(convs, new ChainConverter(chain, attHd));
+    
+    continue;
+   }
+   
+   
    if( qList != null && qList.size() > 0 )
    {
     ClassReference qualif = qList.get(qList.size()-1);
@@ -1021,7 +1036,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    }
    else
    {
-    AgeClassProperty prop = sm.getDefinedAgeClassProperty(attHd.getName());
+    AgePropertyClass prop = sm.getDefinedAgeClassProperty(attHd.getName());
     
     if( prop == null )
     {
@@ -1131,6 +1146,48 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  }
  
  
+ private void createEmbeddedObjectChain(AgeClass aCls, ClassReference attHd, List<ChainConverter.ChainElement> chain, ContextSemanticModel sm, LogNode log)
+ {
+  ChainConverter.ChainElement cEl = new ChainConverter.ChainElement();
+  
+  
+  AgeAttributeClass atClass = null;
+  
+  if( attHd.isCustom() )
+   atClass = getCustomAttributeClass(attHd, aCls, sm, log);
+  else
+   atClass = sm.getDefinedAgeAttributeClass(attHd.getName());
+
+  AttributeClassRef atCR = sm.getModelFactory().createAttributeClassRef(sm.getAgeAttributeClassPlug(atClass), attHd.getOrder(), attHd.getOriginalReference());
+  
+  cEl.isQualifier = false;
+  cEl.elClassRef = atCR;
+  
+  chain.add( cEl );
+
+  if( attHd.getQualifiers() != null )
+  {
+   for( ClassReference qcr : attHd.getQualifiers() )
+   {
+    if( qcr.isCustom() )
+     atClass = getCustomAttributeClass(qcr, aCls, sm, log);
+    else
+     atClass = sm.getDefinedAgeAttributeClass(qcr.getName());
+
+    atCR = sm.getModelFactory().createAttributeClassRef(sm.getAgeAttributeClassPlug(atClass), qcr.getOrder(), attHd.getOriginalReference());
+    
+    cEl.isQualifier = true;
+    cEl.elClassRef = atCR;
+
+    chain.add( cEl );
+   }
+  }
+  
+  if( attHd.getEmbeddedClassRef() != null )
+   createEmbeddedObjectChain(aCls, attHd.getEmbeddedClassRef(), chain, sm, log);
+ }
+
+
  private static abstract class ValueConverter
  {
   protected ClassReference colHdr;
@@ -1141,12 +1198,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    colHdr=hd;
   }
 
-  abstract public AgeClassProperty getProperty();
+  abstract public AgePropertyClass getProperty();
 //  abstract public AgeClassProperty getQualifiedProperty();
 
   public abstract void convert(AgeTabValue vls) throws ConvertionException;
 
-  public abstract void reset( AgeObjectWritable obj );
+  public abstract void resetObject( AgeObjectWritable obj );
+  public void resetLine( int ln )
+  {}
   
   public ClassReference getClassReference()
   {
@@ -1202,7 +1261,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
   
   @Override
-  public void reset( AgeObjectWritable obj )
+  public void resetObject( AgeObjectWritable obj )
   {
    hostObject = obj;
    
@@ -1220,7 +1279,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
   
   @Override
-  public AgeClassProperty getProperty()
+  public AgePropertyClass getProperty()
   {
    return relClass;
   }
@@ -1349,7 +1408,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
 
   @Override
-  public void reset( AgeObjectWritable obj )
+  public void resetObject( AgeObjectWritable obj )
   {
    hostObject = obj;
    
@@ -1444,7 +1503,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
   
   @Override
-  public AgeClassProperty getProperty()
+  public AgePropertyClass getProperty()
   {
    return classRef.getAttributeClass();
   }
@@ -1472,7 +1531,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
 
   @Override
-  public void reset( AgeObjectWritable obj )
+  public void resetObject( AgeObjectWritable obj )
   {
    hostObject = obj;
    
@@ -1541,7 +1600,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
   
   @Override
-  public AgeClassProperty getProperty()
+  public AgePropertyClass getProperty()
   {
    return classRef.getAttributeClass();
   }
@@ -1567,7 +1626,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
 
   @Override
-  public void reset( AgeObjectWritable obj )
+  public void resetObject( AgeObjectWritable obj )
   {
    hostObject = obj;
    
@@ -1656,7 +1715,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
   
   @Override
-  public AgeClassProperty getProperty()
+  public AgePropertyClass getProperty()
   {
    return relClass;
   }
@@ -1678,7 +1737,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
 
   @Override
-  public void reset( AgeObjectWritable ob )
+  public void resetObject( AgeObjectWritable ob )
   {}
   
   @Override
@@ -1692,7 +1751,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
 
   @Override
-  public AgeClassProperty getProperty()
+  public AgePropertyClass getProperty()
   {
    return null;
   }
@@ -1715,7 +1774,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
   
   @Override
-  public AgeClassProperty getProperty()
+  public AgePropertyClass getProperty()
   {
    return null;
   }
@@ -1727,7 +1786,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
 
   @Override
-  public void reset(AgeObjectWritable obj)
+  public void resetObject(AgeObjectWritable obj)
   {
   }
  }
@@ -1746,7 +1805,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
 
   @Override
-  public void reset( AgeObjectWritable obj )
+  public void resetObject( AgeObjectWritable obj )
   {
    hostObject = obj;
    
@@ -1828,7 +1887,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
   
   @Override
-  public AgeClassProperty getProperty()
+  public AgePropertyClass getProperty()
   {
    return classRef.getAttributeClass();
   }
@@ -1862,7 +1921,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
   
   @Override
-  public void reset( AgeObjectWritable obj )
+  public void resetObject( AgeObjectWritable obj )
   {
    List<AgeAttributeClass> chain = new ArrayList<AgeAttributeClass>(5);
    
@@ -1876,7 +1935,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     cHost = ((QualifierConvertor)cHost).getHostConvertor();
    }
 
-   AgeClassProperty topProp = cHost.getProperty();
+   AgePropertyClass topProp = cHost.getProperty();
    
    if( topProp instanceof AgeRelationClass && obj.getRelations() != null )
    {
@@ -1890,7 +1949,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
   
   @Override
-  public AgeClassProperty getProperty()
+  public AgePropertyClass getProperty()
   {
    return classRef.getAttributeClass();
   }
@@ -2164,18 +2223,18 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   static class ChainElement
   {
    boolean isQualifier;
-   boolean isEmbedded;
    AttributeClassRef elClassRef;
   }
 
   private final List<ChainElement> chain;
-//  private List<ChainElement> path = null;
   private AgeObjectWritable hostObject;
+
+  private int lineNum;
   
-  private int counter=1;
+  private static int counter=1;
 
  
-  protected ChainConverter( List<ChainElement> chn, AgeAttributeClass attrClass, ClassReference cref )
+  protected ChainConverter( List<ChainElement> chn, ClassReference cref )
   {
    super(cref);
 
@@ -2184,77 +2243,97 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
 
   @Override
-  public AgeClassProperty getProperty()
+  public AgePropertyClass getProperty()
   {
-   // TODO Auto-generated method stub
-   return null;
+   return chain.get(chain.size()-1).elClassRef.getAttributeClass();
   }
 
   @Override
   public void convert(AgeTabValue vls) throws ConvertionException
   {
-   AttributedWritable chainEnd = hostObject;
-   
-   List<ChainElement> path = null;
-   
-   int cLen = chain.size();
+   if( vls == null || vls.getValue().length() == 0 )
+    return;
+
+   AgeAttributeWritable pathAttr = null;
    
    for( ChainElement  ce: chain )
    {
-    AgeAttributeWritable att = chainEnd.getAttribute(ce.elClassRef.getAttributeClass());
-
-    if( att == null )
-     att = chainEnd.createAgeAttribute(ce.elClassRef);
+    AttributedWritable attrHost = null;
     
-    if( ce.isEmbedded )
-    {
-     AgeObjectWritable embObj = (AgeObjectWritable)att.getValue();
-     
-     if( embObj == null )
-     {
-      AgeObjectAttributeWritable objatt = (AgeObjectAttributeWritable)att;
-      
-      ContextSemanticModel sm = hostObject.getSemanticModel();
-      
-      ClassRef clsRef = sm.getModelFactory().createClassRef( 
-        sm.getAgeClassPlug(objatt.getAgeElClass().getTargetClass()),
-        vls.getColumnHeader().getOrder(),
-        vls.getColumnHeader().getOriginalReference(),
-        vls.getColumnHeader().isHorizontal(), sm);
-
-      
-      embObj = sm.createAgeObject(clsRef, "__emb_"+objatt.getAgeElClass().getTargetClass()+counter++);
-      
-      embObj.setIdScope(IdScope.MODULE);
-      
-      objatt.setValue(embObj);
-      
-      chainEnd = embObj;
-      
-      continue;
-     }
-    }
-    
-    if( ! ce.isQualifier )
-    {
-    }
+    if( pathAttr == null )
+     attrHost = hostObject;
     else
     {
-//     if( ce.isEmbedded )
-//      chainEnd = (att).
+     if( ce.isQualifier )
+      attrHost = pathAttr;
+     else
+      attrHost = ((AgeObjectAttributeWritable)pathAttr).getValue();
     }
+    
+    if( attrHost == null )
+    {
+     AgeObjectAttributeWritable objatt = (AgeObjectAttributeWritable)pathAttr;
+     ContextSemanticModel sm = hostObject.getSemanticModel();
+     
+     ClassRef clsRef = sm.getModelFactory().createClassRef( 
+       sm.getAgeClassPlug(objatt.getAgeElClass().getTargetClass()),
+       vls.getColumnHeader().getOrder(),
+       vls.getColumnHeader().getOriginalReference(),
+       vls.getColumnHeader().isHorizontal(), sm);
+
+     
+     AgeObjectWritable embObj = sm.createAgeObject(clsRef, "__emb_"+objatt.getAgeElClass().getTargetClass()+counter++);
+     
+     embObj.setIdScope(IdScope.MODULE);
+     
+     objatt.setValue(embObj);
+     
+     attrHost = embObj;
+    }    
+
+    if(attrHost == hostObject)
+    {
+     Collection<? extends AgeAttributeWritable> oattrs =  attrHost.getAttributesByClass(ce.elClassRef.getAttributeClass(), false);
+     
+     if( oattrs == null || oattrs.size() <= lineNum )
+      pathAttr = null;
+     else
+     {
+      Iterator<? extends AgeAttributeWritable> itr = oattrs.iterator();
+      
+      for( int i=0; i <=lineNum; i++ )
+       pathAttr = itr.next();
+     }
+    }
+    else
+     pathAttr = attrHost.getAttribute(ce.elClassRef.getAttributeClass());
+
+    if( pathAttr == null )
+     pathAttr = attrHost.createAgeAttribute(ce.elClassRef);
    }
-   
+  
+   try
+   {
+    pathAttr.updateValue(vls.getValue());
+   }
+   catch(FormatException e)
+   {
+    throw new ConvertionException(vls.getRow(), vls.getCol(), "Invalid value ("+vls.getValue()+") for attribute: "+pathAttr.getAgeElClass().getName() );
+   }
   }
 
   @Override
-  public void reset( AgeObjectWritable obj )
+  public void resetObject( AgeObjectWritable obj )
   {
    hostObject = obj;
    
    setLastConvertedValue(null);
   }
 
-   
+  @Override
+  public void resetLine( int ln )
+  {
+   lineNum = ln;
+  }
  }
 }

@@ -235,4 +235,9 @@ public class ClassReference extends AgeTabElement
   this.embeddedClassRef = embeddedClassRef;
  }
 
+ @Override
+ public String toString()
+ {
+  return rawRef;
+ }
 }

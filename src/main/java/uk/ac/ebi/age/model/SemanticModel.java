@@ -55,7 +55,7 @@ public interface SemanticModel
  AgeRelationClass getDefinedAgeRelationClass(String name);
  AgeRelationClass getDefinedAgeRelationClassById(String name);
 
- AgeClassProperty getDefinedAgeClassProperty(String name);
+ AgePropertyClass getDefinedAgeClassProperty(String name);
 
 // AgeRelationClass getAttributeAttachmentClass();
  

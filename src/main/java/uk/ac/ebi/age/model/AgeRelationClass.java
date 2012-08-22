@@ -2,7 +2,7 @@ package uk.ac.ebi.age.model;
 
 import java.util.Collection;
 
-public interface AgeRelationClass extends AgeClassProperty, AgeAbstractClass, AgeSemanticElement, AttributedClass
+public interface AgeRelationClass extends AgePropertyClass, AgeAbstractClass, AgeSemanticElement, AttributedClass
 {
  Collection<AgeRelationClass> getSuperClasses();
  Collection<AgeRelationClass> getSubClasses();
