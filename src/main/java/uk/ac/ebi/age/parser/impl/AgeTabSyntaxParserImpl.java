@@ -300,8 +300,8 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 
      if( prop != null )
      {
-      if( cell.getValue().length() > 0 )
-       cObj.addValue( new AgeTabValue(block.getRecNum(), col, prop, cell)  );
+//      if( cell.getValue().length() > 0 )
+      cObj.addValue( new AgeTabValue(block.getRecNum(), col, prop, cell)  );
      }
      else if( cell.getValue().trim().length() > 0 )
      {

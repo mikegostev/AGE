@@ -766,6 +766,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  
  private int addConverter( List<ValueConverter> convs, ValueConverter cnv )
  {
+  /*
+  
   int i=0;
   
   if( cnv.getClassReference() != null )
@@ -791,6 +793,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     // "Column header duplicates header at column "+exstC.getClassReference().getCol());
    }
   }
+  */
+  
   convs.add(cnv);
   return -1;
  }
@@ -1176,6 +1180,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
     atCR = sm.getModelFactory().createAttributeClassRef(sm.getAgeAttributeClassPlug(atClass), qcr.getOrder(), attHd.getOriginalReference());
     
+    cEl = new ChainConverter.ChainElement();
     cEl.isQualifier = true;
     cEl.elClassRef = atCR;
 
@@ -2255,10 +2260,10 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     return;
 
    AgeAttributeWritable pathAttr = null;
+   AttributedWritable attrHost = null;
    
    for( ChainElement  ce: chain )
    {
-    AttributedWritable attrHost = null;
     
     if( pathAttr == null )
      attrHost = hostObject;
@@ -2311,6 +2316,11 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     if( pathAttr == null )
      pathAttr = attrHost.createAgeAttribute(ce.elClassRef);
    }
+   
+   AttributeClassRef lastCR = chain.get(chain.size()-1).elClassRef;
+   
+   if( pathAttr.getClassReference() != lastCR )
+    pathAttr = attrHost.createAgeAttribute(lastCR);
   
    try
    {

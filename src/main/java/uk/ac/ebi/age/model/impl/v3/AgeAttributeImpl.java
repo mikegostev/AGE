@@ -30,6 +30,7 @@ abstract public class AgeAttributeImpl extends AttributedObject implements AgeAt
  }
 
 
+ @Override
  public void finalizeValue()
  {
  }
@@ -66,6 +67,7 @@ abstract public class AgeAttributeImpl extends AttributedObject implements AgeAt
  }
  
  
+ @Override
  public int getOrder()
  {
   return classReference.getOrder( );
@@ -94,8 +96,11 @@ abstract public class AgeAttributeImpl extends AttributedObject implements AgeAt
   return null;
  }
  
+ @Override
  public String toString()
  {
-  return getAgeElClass().getName()+"="+getValue().toString();
+  Object val = getValue();
+  
+  return getAgeElClass().getName()+"="+(val!=null?val.toString():"null");
  }
 }
