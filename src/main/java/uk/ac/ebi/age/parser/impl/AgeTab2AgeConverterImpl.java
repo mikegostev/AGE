@@ -35,6 +35,7 @@ import uk.ac.ebi.age.model.writable.AgeAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeFileAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectAttributeWritable;
 import uk.ac.ebi.age.model.writable.AgeObjectWritable;
+import uk.ac.ebi.age.model.writable.AgeRelationClassWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.model.writable.AttributedWritable;
 import uk.ac.ebi.age.model.writable.DataModuleWritable;
@@ -808,7 +809,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  }
  
  private boolean createConvertors( BlockHeader blck, AgeClass blkCls, List<ValueConverter> convs, ContextSemanticModel sm,
-   Map<AgeClass, Map<String,AgeObjectWritable>> classMap, LogNode log )// throws SemanticException
+   Map<AgeClass, Map<String,AgeObjectWritable>> classMap, boolean implCustom, LogNode log )// throws SemanticException
  {
   boolean result = true;
   
@@ -828,7 +829,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    {
     List<ChainConverter.ChainElement> chain = new ArrayList<ChainConverter.ChainElement>();
     
-    createEmbeddedObjectChain(blkCls, attHd, chain, sm, log);
+    createEmbeddedObjectChain(blkCls, attHd, chain, sm, implCustom, log);
     
     addConverter(convs, new ChainConverter(chain, attHd));
     
@@ -883,12 +884,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     AgeAttributeClass qClass = null;
     
+    
     if( qualif.isCustom() )
     {
      qClass = getCustomAttributeClass(qualif, blkCls, sm, log);
     
      if( qClass == null )
      {
+      log.log(Level.ERROR, "Can't create custom class: '" + qualif.getName() + "'. Row: " + attHd.getRow() + " Col: " + attHd.getCol());
       addConverter(convs, new InvalidColumnConvertor(attHd) );
       result = false;
       continue;
@@ -900,10 +903,35 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      
      if( qClass == null )
      {
-      log.log(Level.ERROR, "Unknown attribute class (qualifier): '"+qualif.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
-      addConverter(convs, new InvalidColumnConvertor(attHd) );
-      result = false;
-      continue;
+      if( ! implCustom )
+      {
+       log.log(Level.ERROR, "Unknown attribute class (qualifier): '" + qualif.getName() + "'. Row: " + attHd.getRow() + " Col: " + attHd.getCol());
+       addConverter(convs, new InvalidColumnConvertor(attHd));
+       result = false;
+       continue;
+      }
+      
+      log.log(Level.WARN, "Defined qualifier class ("+qualif.getName()+") not found. Generating custom class. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      qualif.setCustom(true);
+      
+      if( permissionManager.checkSystemPermission(SystemAction.CUSTQUALCLASSDEF) != Permit.ALLOW )
+      {
+       log.log(Level.ERROR, "Custom qualifier ("+qualif.getName()+") is not allowed within this context. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+       addConverter(convs, new InvalidColumnConvertor(attHd) );
+       result = false;
+       continue;
+      }
+
+      qClass = getCustomAttributeClass(qualif, blkCls, sm, log);
+
+      if( qClass == null )
+      {
+       log.log(Level.ERROR, "Can't create custom class: '" + qualif.getName() + "'. Row: " + attHd.getRow() + " Col: " + attHd.getCol());
+       addConverter(convs, new InvalidColumnConvertor(attHd) );
+       result = false;
+       continue;
+      }
+
      }
      
      if( qClass.isAbstract() )
@@ -916,7 +944,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
     }
     
-    int dupCol = -1;
     
     if( qClass.getDataType() == DataType.OBJECT )
     {
@@ -928,17 +955,17 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      }
      else
      {
-      dupCol = addConverter(convs, new ObjectQualifierConvertor(attHd, qClass, hostConverter, classMap.get(qClass.getTargetClass()),
+      addConverter(convs, new ObjectQualifierConvertor(attHd, qClass, hostConverter, classMap.get(qClass.getTargetClass()),
         sm, syntaxProfile.getClassSpecificSyntaxProfile(blkCls.getName()) ) );
      }
     }
     else if( qClass.getDataType() == DataType.FILE )
     {
-      dupCol = addConverter(convs, new FileQualifierConvertor(attHd, qClass, hostConverter,
+     addConverter(convs, new FileQualifierConvertor(attHd, qClass, hostConverter,
         sm, syntaxProfile.getClassSpecificSyntaxProfile(blkCls.getName()) ) );
     }
     else
-     dupCol = addConverter(convs, new ScalarQualifierConvertor( attHd, qClass, hostConverter, sm ) );
+     addConverter(convs, new ScalarQualifierConvertor( attHd, qClass, hostConverter, sm ) );
     
     continue;
    }
@@ -990,34 +1017,31 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       
      AgeRelationClass relCls = sm.getOrCreateCustomAgeRelationClass(attHd.getName(), rangeClass, blkCls, parent);
      
-//     AgeRelationClass relCls = sm.getCustomAgeRelationClass(attHd.getName());
-//     
-//     if( relCls == null )
-//      relCls = sm.createCustomAgeRelationClass(attHd.getName(), rangeClass, blkCls);
      
      int dupCol = addConverter(convs, new CustomRelationConvertor(attHd,relCls,sm,classMap.get(rangeClass)) );
      
-//     if( dupCol != -1 )
-//     {
-//      log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
-//        +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
-//      result = false;
-//     }
 
     }
     else
     {
+     if( permissionManager.checkSystemPermission(SystemAction.CUSTATTRCLASSDEF) != Permit.ALLOW )
+     {
+      log.log(Level.ERROR, "Custom attribute class ("+attHd.getName()+") is not allowed within this context. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      addConverter(convs, new InvalidColumnConvertor(attHd) );
+      result = false;
+      continue;
+     }
+
      AgeAttributeClass attrClass = getCustomAttributeClass(attHd, blkCls, sm, log);
      
      if( attrClass == null )
      {
+      log.log(Level.ERROR, "Can't create custom class: '" + attHd.getName() + "'. Row: " + attHd.getRow() + " Col: " + attHd.getCol());
       result=false;
       addConverter(convs, new InvalidColumnConvertor(attHd) );
      }
      else
      {
-      int dupCol = -1;
-
       if( attrClass.getDataType() == DataType.OBJECT )
       {
        if( attrClass.getTargetClass() == null )
@@ -1027,22 +1051,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
         addConverter(convs, new InvalidColumnConvertor(attHd) );
        }
        else
-       {
-        dupCol = addConverter(convs, new ObjectAttributeConvertor(attHd,attrClass, classMap.get(attrClass.getTargetClass()), sm ) );
-       }
+        addConverter(convs, new ObjectAttributeConvertor(attHd,attrClass, classMap.get(attrClass.getTargetClass()), sm ) );
         
       }
       else if( attrClass.getDataType() == DataType.FILE )
-       dupCol = addConverter(convs, new FileAttributeConvertor(attHd, attrClass, sm ) );
+       addConverter(convs, new FileAttributeConvertor(attHd, attrClass, sm ) );
       else
-       dupCol = addConverter(convs, new AttributeConvertor(attHd, attrClass, sm));
+       addConverter(convs, new AttributeConvertor(attHd, attrClass, sm));
 
-//      if(dupCol != -1)
-//      {
-//       log.log(Level.ERROR, "Column header duplicates header at column " + convs.get(dupCol).getClassReference().getCol() + ". Row: " + attHd.getRow()
-//         + " Col: " + attHd.getCol());
-//       result = false;
-//      }
      }
     }
    }
@@ -1052,17 +1068,41 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     
     if( prop == null )
     {
-     log.log(Level.ERROR, "Defined property '"+attHd.getName()+"' not found. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
-     addConverter(convs, new InvalidColumnConvertor(attHd) );
-     result = false;
+     
+     if( ! implCustom )
+     {
+      log.log(Level.ERROR, "Defined property '" + attHd.getName() + "' not found. Row: " + attHd.getRow() + " Col: " + attHd.getCol());
+      addConverter(convs, new InvalidColumnConvertor(attHd));
+      result = false;
+      continue;
+     }
+     
+     log.log(Level.WARN, "Defined attribute/relation class ("+attHd.getName()+") not found. Generating custom class. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+     attHd.setCustom(true);
+
+     if( permissionManager.checkSystemPermission(SystemAction.CUSTATTRCLASSDEF) != Permit.ALLOW )
+     {
+      log.log(Level.ERROR, "Custom attribute class ("+attHd.getName()+") is not allowed within this context. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      addConverter(convs, new InvalidColumnConvertor(attHd) );
+      result = false;
+      continue;
+     }
+
+     AgeAttributeClass attrClass = getCustomAttributeClass(attHd, blkCls, sm, log);
+     
+     if( attrClass == null )
+     {
+      log.log(Level.ERROR, "Can't create custom class: '" + attHd.getName() + "'. Row: " + attHd.getRow() + " Col: " + attHd.getCol());
+      result=false;
+      addConverter(convs, new InvalidColumnConvertor(attHd) );
+      continue;
+     }
+     
+     addConverter(convs, new AttributeConvertor(attHd, attrClass, sm) );
      continue;
-//     throw new SemanticException(attHd.getRow(), attHd.getCol(), "Unknown object property: '"+attHd.getName()+"'");
     }
     
     
-//    if( ! sm.isValidProperty( prop, blck.ageClass ) )
-//     throw new SemanticException(attHd.getRow(), attHd.getCol(), "Defined property '"+attHd.getName()+"' is not valid for class '"+blck.ageClass.getName()+"'");
-
     if( prop instanceof AgeAttributeClass )
     {
      AgeAttributeClass attClass = (AgeAttributeClass)prop;
@@ -1141,14 +1181,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       }
      }
      
-     int dupCol = addConverter(convs, new DefinedRelationConvertor( attHd, rCls, sm, classMap) );
+     addConverter(convs, new DefinedRelationConvertor( attHd, rCls, sm, classMap) );
      
-//     if( dupCol != -1 )
-//     {
-//      log.log(Level.ERROR, "Column header duplicates header at column "+convs.get(dupCol).getClassReference().getCol()
-//        +". Row: "+attHd.getRow()+" Col: "+attHd.getCol());
-//      result = false;
-//     }
 
     }
    }
@@ -1158,18 +1192,168 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  }
  
  
- private void createEmbeddedObjectChain(AgeClass aCls, ClassReference attHd, List<ChainConverter.ChainElement> chain, ContextSemanticModel sm, LogNode log)
+ private AgePropertyClass getPropertyClass( ClassReference attHd, AgeClass blkOwner, ContextSemanticModel sm, boolean implCust, LogNode log )
+ {
+  if( attHd.isCustom() )
+  {
+   ClassReference rgHdr=attHd.getRangeClassRef();
+   
+   if( rgHdr != null )
+   {
+    if( permissionManager.checkSystemPermission(SystemAction.CUSTRELCLASSDEF) != Permit.ALLOW )
+    {
+     log.log(Level.ERROR, "Custom relation class ("+attHd.getName()+") is not allowed within this context. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+     return null;
+    }
+     
+    AgeClass rangeClass=null;
+  
+    if( rgHdr.isCustom() )
+     rangeClass = sm.getCustomAgeClass(rgHdr.getName());
+    else
+     rangeClass = sm.getDefinedAgeClass(rgHdr.getName());
+
+    if( rangeClass == null )
+    {
+     log.log(Level.ERROR, "Invalid range class: '"+rgHdr.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+     return null;
+    }
+
+    AgeRelationClass parent = null;
+    
+    if( attHd.getParentClass() != null )
+    {
+     parent = sm.getDefinedAgeRelationClass(attHd.getParentClass());
+     
+     if( parent == null )
+     {
+      log.log(Level.ERROR, "Defined relation class '"+attHd.getParentClass()+"' (used as superclass) is not found. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
+      return null;
+     }
+    }
+     
+    AgeRelationClassWritable relCls = sm.getOrCreateCustomAgeRelationClass(attHd.getName(), rangeClass, blkOwner, parent);
+    
+    if( relCls == null )
+    {
+     log.log(Level.ERROR, "Can't create custom relation class: '" + attHd.getName() + "'. Row: " + attHd.getRow() + " Col: " + attHd.getCol());
+     return null;
+    }
+    
+    return relCls;
+    
+   }
+   else
+   {
+    if( permissionManager.checkSystemPermission(SystemAction.CUSTATTRCLASSDEF) != Permit.ALLOW )
+    {
+     log.log(Level.ERROR, "Custom attribute class ("+attHd.getName()+") is not allowed within this context. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+     return null;
+    }
+
+    AgeAttributeClass attrClass = getCustomAttributeClass(attHd, blkOwner, sm, log);
+    
+    if( attrClass == null )
+    {
+     log.log(Level.ERROR, "Can't create custom attribute class: '" + attHd.getName() + "'. Row: " + attHd.getRow() + " Col: " + attHd.getCol());
+     return null;
+    }
+    
+    return attrClass;
+   }
+  }
+  else
+  {
+   AgePropertyClass prop = sm.getDefinedAgeClassProperty(attHd.getName());
+   
+  
+   if( prop == null )
+   {
+    
+    if( ! implCust )
+    {
+     log.log(Level.ERROR, "Defined property '" + attHd.getName() + "' not found. Row: " + attHd.getRow() + " Col: " + attHd.getCol());
+     return null;
+    }
+    
+    log.log(Level.WARN, "Defined attribute/relation class ("+attHd.getName()+") not found. Generating custom class. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+    attHd.setCustom(true);
+
+    return getPropertyClass(attHd, blkOwner, sm, implCust, log);
+   }
+   
+   
+   if( prop instanceof AgeAttributeClass )
+   {
+    AgeAttributeClass attClass = (AgeAttributeClass)prop;
+
+    if( attClass.isAbstract() )
+    {
+     log.log(Level.ERROR, "Abstract attribute class instantiation '"+attHd.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
+     return null;
+    }
+
+   }
+   else
+   {
+    AgeRelationClass rCls = (AgeRelationClass)prop;
+    
+    if( rCls.isAbstract() )
+    {
+     log.log(Level.ERROR, "Abstract relation class instantiation '"+attHd.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
+     return null;
+    }
+
+    
+    if( rCls.getDomain() != null && rCls.getDomain().size() > 0 )
+    {
+     boolean found=false;
+     
+     for( AgeClass dmcls : rCls.getDomain() )
+     {
+      if( blkOwner.isClassOrSubclass(dmcls) )
+      {
+       found=true;
+       break;
+      }
+     }
+     
+     if( !found )
+     {
+      log.log(Level.ERROR, "Class '"+blkOwner+"' is not in the domain of relation class '"+rCls+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol() );
+      return null;
+     }
+    }
+   }
+
+  }
+ }
+ 
+ private boolean createEmbeddedObjectChain(AgeClass blkOwner, ClassReference attHd, List<ChainConverter.ChainElement> chain, ContextSemanticModel sm, boolean implCust, LogNode log)
  {
   ChainConverter.ChainElement cEl = new ChainConverter.ChainElement();
   
   
-  AgeAttributeClass atClass = null;
+  AgePropertyClass prop = getPropertyClass(attHd, blkOwner, sm, implCust, log);
   
-  if( attHd.isCustom() )
-   atClass = getCustomAttributeClass(attHd, aCls, sm, log);
-  else
-   atClass = sm.getDefinedAgeAttributeClass(attHd.getName());
+  if( prop == null )
+   return false;
+  
+  if( prop instanceof AgeRelationClass )
+  {
+   if( attHd.getQualifiers() == null && attHd.getEmbeddedClassRef() != null )
+   {
+    log.log(Level.ERROR, "Object attribute class expexted instead of relation class '"+((AgeRelationClass)prop).getName());
+    return false;
+   }
+  }
+  else if( attHd.getQualifiers() == null && attHd.getEmbeddedClassRef() != null && ((AgeAttributeClass)prop).getDataType() != DataType.OBJECT )
+  {
+   log.log(Level.ERROR, "Object attribute class expexted instead of '"+((AgeAttributeClass)prop).getName());
+   return false;
+  }
 
+  
   AttributeClassRef atCR = sm.getModelFactory().createAttributeClassRef(sm.getAgeAttributeClassPlug(atClass), attHd.getOrder(), attHd.getOriginalReference());
   
   cEl.isQualifier = false;
@@ -1197,7 +1381,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
   
   if( attHd.getEmbeddedClassRef() != null )
-   createEmbeddedObjectChain(aCls, attHd.getEmbeddedClassRef(), chain, sm, log);
+   createEmbeddedObjectChain(aCls, attHd.getEmbeddedClassRef(), chain, sm, implCust, log);
  }
 
 
