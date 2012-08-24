@@ -34,8 +34,9 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
  public static final String verticalBlockPrefix="|";
  
  public static final IdScope defaultIdScope=IdScope.CLUSTER;
- public static final Boolean horizontalBlockDefault = true;
- public static final Boolean resetPrototype = true;
+ public static final boolean horizontalBlockDefault = true;
+ public static final boolean resetPrototype = true;
+ public static final boolean allowImplicitCustomClasses = false;
  
  public static final ResolveScope defaultObjectAttributeResolveScope = ResolveScope.CASCADE_MODULE;
  public static final ResolveScope defaultFileAttributeResolveScope = ResolveScope.CASCADE_CLUSTER;
@@ -125,13 +126,13 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
  }
 
  @Override
- public Boolean isHorizontalBlockDefault()
+ public boolean isHorizontalBlockDefault()
  {
   return horizontalBlockDefault;
  }
 
  @Override
- public Boolean isResetPrototype()
+ public boolean isResetPrototype()
  {
   return resetPrototype;
  }
@@ -206,6 +207,12 @@ public class AgeDefaultSyntaxProfileDefinition implements SyntaxProfileDefinitio
  public String getDefaultEmbeddedObjectAttributeSeparator()
  {
   return defaultEmbeddedObjectAttributeSeparator;
+ }
+
+ @Override
+ public boolean allowImplicitCustomClasses()
+ {
+  return allowImplicitCustomClasses;
  }
 
 }

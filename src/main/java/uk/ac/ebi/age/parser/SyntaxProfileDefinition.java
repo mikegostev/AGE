@@ -33,9 +33,11 @@ public interface SyntaxProfileDefinition
  
  public String getVerticalBlockPrefix();
  
- public Boolean isHorizontalBlockDefault();
+ public boolean isHorizontalBlockDefault();
  
- public Boolean isResetPrototype();
+ public boolean isResetPrototype();
+ 
+ public boolean allowImplicitCustomClasses();
 
  public ResolveScope getDefaultObjectAttributeResolveScope();
 

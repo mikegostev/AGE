@@ -34,6 +34,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
  private IdScope defaultIdScope;
  private Boolean horizontalBlockDefault;
  private Boolean resetPrototype;
+ private Boolean allowImplicitCustomClasses;
  
  private ResolveScope defaultObjAttrReslvScope;
  private ResolveScope defaultFileAttrReslvScope;
@@ -228,8 +229,21 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
   this.defaultIdScope = defaultScope;
  }
 
+ public boolean allowImplicitCustomClasses()
+ {
+  if( allowImplicitCustomClasses != null )
+   return allowImplicitCustomClasses;
+  
+  return commonProfileDefinition.allowImplicitCustomClasses();
+ }
+
+ public void setAllowImplicitCustomClasses(boolean allowImplicitCustomClasses)
+ {
+  this.allowImplicitCustomClasses = allowImplicitCustomClasses;
+ }
+ 
  @Override
- public Boolean isHorizontalBlockDefault()
+ public boolean isHorizontalBlockDefault()
  {
   if( horizontalBlockDefault != null )
   return horizontalBlockDefault;
@@ -243,7 +257,7 @@ public class ClassSpecificSyntaxProfileDefinitionImpl implements SyntaxProfileDe
  }
 
  @Override
- public Boolean isResetPrototype()
+ public boolean isResetPrototype()
  {
   if( resetPrototype != null )
   return resetPrototype;

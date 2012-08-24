@@ -36,8 +36,9 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
  private String  verticalBlockPrefix    = AgeDefaultSyntaxProfileDefinition.verticalBlockPrefix;
 
  private IdScope defaultIdScope           = AgeDefaultSyntaxProfileDefinition.defaultIdScope;
- private Boolean horizontalBlockDefault = AgeDefaultSyntaxProfileDefinition.horizontalBlockDefault;
- private Boolean resetPrototype         = AgeDefaultSyntaxProfileDefinition.resetPrototype;
+ private boolean horizontalBlockDefault = AgeDefaultSyntaxProfileDefinition.horizontalBlockDefault;
+ private boolean resetPrototype         = AgeDefaultSyntaxProfileDefinition.resetPrototype;
+ private boolean allowImplicitCustomClasses         = AgeDefaultSyntaxProfileDefinition.allowImplicitCustomClasses;
  
  private final ResolveScope defaultObjAttrReslvScope = AgeDefaultSyntaxProfileDefinition.defaultObjectAttributeResolveScope;
  private ResolveScope defaultFileAttrReslvScope = AgeDefaultSyntaxProfileDefinition.defaultFileAttributeResolveScope;
@@ -187,7 +188,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
  }
 
  @Override
- public Boolean isHorizontalBlockDefault()
+ public boolean isHorizontalBlockDefault()
  {
   return horizontalBlockDefault;
  }
@@ -198,7 +199,7 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
  }
 
  @Override
- public Boolean isResetPrototype()
+ public boolean isResetPrototype()
  {
   return resetPrototype;
  }
@@ -325,4 +326,13 @@ public class SyntaxProfileDefinitionImpl implements SyntaxProfileDefinition
   this.defaultEmbeddedObjectAttributeSeparator = defaultEmbeddedObjectAttributeSeparator;
  }
 
+ public boolean allowImplicitCustomClasses()
+ {
+  return allowImplicitCustomClasses;
+ }
+
+ public void setAllowImplicitCustomClasses(boolean allowImplicitCustomClasses)
+ {
+  this.allowImplicitCustomClasses = allowImplicitCustomClasses;
+ }
 }

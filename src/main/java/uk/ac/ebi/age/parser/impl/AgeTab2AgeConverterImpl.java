@@ -78,8 +78,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   {
    ClassReference colHdr = hdr.getClassColumnHeader();
 
-   SyntaxProfileDefinition profileDef = colHdr.isCustom()?
-     syntaxProfile.getCommonSyntaxProfile():syntaxProfile.getClassSpecificSyntaxProfile(colHdr.getName());
 
    LogNode blkLog = log.branch("Processing block for class "+colHdr.getName()+" at line: "+colHdr.getRow());
    
@@ -97,6 +95,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     result = false;
     continue;
    }
+
+   SyntaxProfileDefinition profileDef = colHdr.isCustom()?
+     syntaxProfile.getCommonSyntaxProfile():syntaxProfile.getClassSpecificSyntaxProfile(colHdr.getName());
   
    ClassRef clsRef = sm.getModelFactory().createClassRef(sm.getAgeClassPlug(cls), colHdr.getRow(), colHdr.getOriginalReference(), hdr.isHorizontal(), sm);
    
@@ -390,6 +391,13 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    if( cls == null )
    {
+    if( syntaxProfile.getCommonSyntaxProfile().allowImplicitCustomClasses() )
+    {
+     blkLog.log(Level.WARN, "Defined class '"+colHdr.getName()+"' not found, generating custom class. Row: "+colHdr.getRow()+" Col: "+colHdr.getCol());
+     colHdr.setCustom(true);
+     return getClassForBlock(colHdr, sm, blkLog);
+    }
+    
     blkLog.log(Level.ERROR, "Defined class '"+colHdr.getName()+"' not found. Row: "+colHdr.getRow()+" Col: "+colHdr.getCol());
 
     return null;
