@@ -129,8 +129,8 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
   
   relationMap = new HashMap<AgeRelationClass, List<AgeRelationWritable>>();
   
-   for( AgeRelationWritable attr : relations )
-    addRelToMap(attr);
+  for( AgeRelationWritable attr : relations )
+   addRelToMap(attr);
   
   return relationMap;
  }
@@ -182,6 +182,16 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  public Collection<AgeRelationWritable> getRelations()
  {
   return relations;
+ }
+ 
+ @Override
+ public AgeRelationWritable getRelation(AgeRelationClass cls)
+ {
+  for(AgeRelationWritable rw : relations )
+   if( cls.equals(rw.getAgeElClass()) )
+    return rw;
+ 
+  return null;
  }
 
  

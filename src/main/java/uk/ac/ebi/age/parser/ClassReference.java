@@ -119,6 +119,16 @@ public class ClassReference extends AgeTabElement
 
  public boolean isQualifierFor(ClassReference cr)
  {
+  if( embeddedClassRef != null )
+  {
+   if( cr.getEmbeddedClassRef() != null )
+    return equalsBasis(cr) && embeddedClassRef.isQualifierFor(cr.getEmbeddedClassRef());
+   else
+    return false;
+  }
+  else if( cr.getEmbeddedClassRef() != null)
+   return false;
+  
   if( ! ( getName().equals( cr.getName()) && isCustom() == isCustom() ) ) // Different bases
    return false;
 
@@ -158,6 +168,23 @@ public class ClassReference extends AgeTabElement
  
  public boolean equals( ClassReference cr )
  {
+  if( ! equalsBasis(cr) )
+    return false;
+  
+  if( embeddedClassRef != null )
+  {
+   if( cr.getEmbeddedClassRef() != null )
+    return embeddedClassRef.equals(cr.getEmbeddedClassRef());
+   else
+    return false;
+  }
+  else
+   return cr.getEmbeddedClassRef() == null;
+  
+ }
+
+ public boolean equalsBasis( ClassReference cr )
+ {
   if( ! ( getName().equals( cr.getName()) && isCustom() == isCustom() ) )
    return false;
 
@@ -185,6 +212,7 @@ public class ClassReference extends AgeTabElement
   return true;
  }
 
+ 
  public ClassReference getTargetClassRef()
  {
   return targetClassRef;

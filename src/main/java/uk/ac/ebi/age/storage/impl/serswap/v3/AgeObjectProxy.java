@@ -195,6 +195,12 @@ public class AgeObjectProxy implements AgeObjectWritable
  }
 
  @Override
+ public AgeRelationWritable getRelation(AgeRelationClass cls)
+ {
+  return getObject().getRelation(cls);
+ }
+
+ @Override
  public Collection< ? extends AgeRelationWritable> getRelations()
  {
   return getObject().getRelations();

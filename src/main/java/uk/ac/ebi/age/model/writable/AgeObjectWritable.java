@@ -21,6 +21,7 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  Collection<? extends AgeRelationWritable> getRelations();
  
 // Collection< ? extends AgeRelationWritable> getRelationsByClassId(String cid);
+ AgeRelationWritable getRelation(AgeRelationClass cls);
  Collection< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSbCl);
  
  

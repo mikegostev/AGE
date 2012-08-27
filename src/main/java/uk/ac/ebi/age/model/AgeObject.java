@@ -25,6 +25,7 @@ public interface AgeObject extends AgeAbstractObject, Entity
  Collection< ? extends AgeRelationClass> getRelationClasses();
 
 // Collection< ? extends AgeRelation> getRelationsByClassId(String cid);
+ AgeRelation getRelation(AgeRelationClass cls);
  Collection< ? extends AgeRelation> getRelationsByClass(AgeRelationClass cls, boolean wSubCls);
 
  
