@@ -19,7 +19,6 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeExternalRelation;
-import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeObjectProperty;
 import uk.ac.ebi.age.model.AgePropertyClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -889,7 +888,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      
     ClassReference qualif = qList.get(qList.size()-1);
     
-    AgeAttributeClass qClass = (AgeAttributeClass)getPropertyClass(attHd, blkCls, sm, implCustom, true, log);
+    AgeAttributeClass qClass = (AgeAttributeClass)getPropertyClass(qualif, blkCls, sm, implCustom, true, log);
     
     if( qClass == null )
     {
@@ -1210,6 +1209,133 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   {
    return lastProp;
   }
+  
+
+  protected static AgeFileAttributeWritable convertFileValue(AgeTabValue atVal, AttributeClassRef classRef,  SyntaxProfileDefinition profDef, AttributedWritable prop)
+  {
+   if(atVal == null )
+    return null;
+   
+   String val = null;
+   ResolveScope scope = null;
+   
+   
+   if( atVal.matchPrefix( profDef.getClusterResolveScopePrefix() ) )
+   {
+    scope =  ResolveScope.CLUSTER;
+   
+    val = atVal.getValue().substring(profDef.getClusterResolveScopePrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getGlobalResolveScopePrefix() ) )
+   {
+    scope =  ResolveScope.GLOBAL;
+   
+    val = atVal.getValue().substring(profDef.getGlobalResolveScopePrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getClusterCascadeResolveScopePrefix() ) )
+   {
+    scope =  ResolveScope.CASCADE_CLUSTER;
+   
+    val = atVal.getValue().substring(profDef.getClusterCascadeResolveScopePrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getDefaultResolveScopePrefix() ) )
+   {
+    scope =  profDef.getDefaultFileAttributeResolveScope();
+   
+    val = atVal.getValue().substring(profDef.getDefaultResolveScopePrefix().length());
+   }
+   else
+   {
+    scope = profDef.getDefaultFileAttributeResolveScope();
+    
+    val = atVal.getValue();
+   }
+
+   if(val.length() == 0)
+    return null;
+
+
+   
+   AgeFileAttributeWritable fAttr = (AgeFileAttributeWritable)prop.createAgeAttribute(classRef);
+   fAttr.setValue(val);
+   fAttr.setTargetResolveScope(scope);
+   
+   return fAttr;
+  }
+  
+  protected static AgeAttributeWritable convertObjectValue(AgeTabValue atVal, AttributeClassRef classRef,
+    SyntaxProfileDefinition profDef, AttributedWritable prop, Map<String,AgeObjectWritable> rangeObjects)
+  {
+   String val = null;
+   ResolveScope scope = null;
+   
+   
+   if( atVal.matchPrefix( profDef.getModuleResolveScopePrefix() ) )
+   {
+    scope =  ResolveScope.MODULE;
+   
+    val = atVal.getValue().substring(profDef.getModuleResolveScopePrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getClusterResolveScopePrefix() ) )
+   {
+    scope =  ResolveScope.CLUSTER;
+   
+    val = atVal.getValue().substring(profDef.getClusterResolveScopePrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getGlobalResolveScopePrefix() ) )
+   {
+    scope =  ResolveScope.GLOBAL;
+   
+    val = atVal.getValue().substring(profDef.getGlobalResolveScopePrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getModuleCascadeResolveScopePrefix() ) )
+   {
+    scope =  ResolveScope.CASCADE_MODULE;
+   
+    val = atVal.getValue().substring(profDef.getModuleCascadeResolveScopePrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getClusterCascadeResolveScopePrefix() ) )
+   {
+    scope =  ResolveScope.CASCADE_CLUSTER;
+   
+    val = atVal.getValue().substring(profDef.getClusterCascadeResolveScopePrefix().length());
+   }
+   else if( atVal.matchPrefix( profDef.getDefaultResolveScopePrefix() ) )
+   {
+    scope =  profDef.getDefaultObjectAttributeResolveScope();
+   
+    val = atVal.getValue().substring(profDef.getDefaultResolveScopePrefix().length());
+   }
+   else
+   {
+    scope = profDef.getDefaultObjectAttributeResolveScope();
+    
+    val = atVal.getValue();
+   }
+
+   if(val.length() == 0)
+    return null;
+
+   AgeObjectWritable targetObj = null;
+
+   if(rangeObjects != null)
+    targetObj = rangeObjects.get(val);
+
+   AgeAttributeWritable obAttr = null;
+   if(targetObj == null)
+   {
+    obAttr = prop.createExternalObjectAttribute( classRef, val, scope );
+   }
+   else
+   {
+    obAttr = prop.createAgeAttribute(classRef);
+    obAttr.setValue(targetObj);
+   }
+   
+   return obAttr;
+
+  }
+
  }
  
  private class DefinedRelationConvertor extends ValueConverter
@@ -1420,75 +1546,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    atVal.trim();
    
-   String val = null;
-   ResolveScope scope = null;
-   
    SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass().getName());
    
-   if( atVal.matchPrefix( profDef.getModuleResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.MODULE;
-   
-    val = atVal.getValue().substring(profDef.getModuleResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getClusterResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.CLUSTER;
-   
-    val = atVal.getValue().substring(profDef.getClusterResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getGlobalResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.GLOBAL;
-   
-    val = atVal.getValue().substring(profDef.getGlobalResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getModuleCascadeResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.CASCADE_MODULE;
-   
-    val = atVal.getValue().substring(profDef.getModuleCascadeResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getClusterCascadeResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.CASCADE_CLUSTER;
-   
-    val = atVal.getValue().substring(profDef.getClusterCascadeResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getDefaultResolveScopePrefix() ) )
-   {
-    scope =  profDef.getDefaultObjectAttributeResolveScope();
-   
-    val = atVal.getValue().substring(profDef.getDefaultResolveScopePrefix().length());
-   }
-   else
-   {
-    scope = profDef.getDefaultObjectAttributeResolveScope();
-    
-    val = atVal.getValue();
-   }
+   AgeAttributeWritable obAttr = convertObjectValue(atVal, classRef, profDef, hostObject, rangeObjects);
 
-   if(val.length() == 0)
+   if( obAttr == null )
     return;
-
-   AgeObjectWritable targetObj = null;
-
-   if(rangeObjects != null)
-    targetObj = rangeObjects.get(val);
-
-   AgeAttributeWritable obAttr = null;
-   if(targetObj == null)
-   {
-    obAttr = hostObject.createExternalObjectAttribute( classRef, val, scope );
-   }
-   else
-   {
-    obAttr = hostObject.createAgeAttribute(classRef);
-    obAttr.setValue(targetObj);
-   }
    
    setLastConvertedValue(obAttr);
-
   }
   
   @Override
@@ -1580,8 +1645,11 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    if(val.length() == 0)
     return;
 
+   AgeFileAttributeWritable obAttr = convertFileValue(atVal, classRef, profDef, hostObject);
 
-   AgeFileAttributeWritable obAttr = (AgeFileAttributeWritable)hostObject.createAgeAttribute(classRef);
+   if( obAttr == null )
+    return;
+   
    obAttr.setValue(val);
    obAttr.setTargetResolveScope(scope);
    
@@ -2050,81 +2118,16 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    if(atVal == null )
     return;
    
-   String val = null;
-   ResolveScope scope = null;
-   
-   
-   if( atVal.matchPrefix( profDef.getModuleResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.MODULE;
-   
-    val = atVal.getValue().substring(profDef.getModuleResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getClusterResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.CLUSTER;
-   
-    val = atVal.getValue().substring(profDef.getClusterResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getGlobalResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.GLOBAL;
-   
-    val = atVal.getValue().substring(profDef.getGlobalResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getModuleCascadeResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.CASCADE_MODULE;
-   
-    val = atVal.getValue().substring(profDef.getModuleCascadeResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getClusterCascadeResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.CASCADE_CLUSTER;
-   
-    val = atVal.getValue().substring(profDef.getClusterCascadeResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getDefaultResolveScopePrefix() ) )
-   {
-    scope =  profDef.getDefaultObjectAttributeResolveScope();
-   
-    val = atVal.getValue().substring(profDef.getDefaultResolveScopePrefix().length());
-   }
-   else
-   {
-    scope = profDef.getDefaultObjectAttributeResolveScope();
-    
-    val = atVal.getValue();
-   }
-
-   if(val.length() == 0)
-    return;
-
-
    AttributedWritable prop = getHostConvertor().getLastConvertedProperty();
 
 
    if(prop == null )
     throw new ConvertionException(atVal.getRow(), atVal.getCol(), "There is no main value for qualification");
 
+   AgeAttributeWritable obAttr = convertObjectValue(atVal, classRef, profDef, prop, rangeObjects);
    
-   AgeObjectWritable targetObj = null;
-
-   if(rangeObjects != null && (scope == ResolveScope.MODULE || scope == ResolveScope.CASCADE_MODULE) )
-    targetObj = rangeObjects.get(val);
-
-   if(scope == ResolveScope.MODULE && targetObj == null )
-    throw new ConvertionException(atVal.getRow(), atVal.getCol(), "Unresolved object qualifier target");
-
-
-   AgeAttributeWritable obAttr = null;
-   if(targetObj == null)
-    obAttr = prop.createExternalObjectAttribute(classRef, val, scope);
-   else
-   {
-    obAttr = prop.createAgeAttribute(classRef);
-    obAttr.setValue(targetObj);
-   }
+   if( obAttr == null )
+    return;
    
    contextProperty = prop;
    setLastConvertedValue(obAttr);
@@ -2151,55 +2154,16 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    if(atVal == null )
     return;
    
-   String val = null;
-   ResolveScope scope = null;
-   
-   
-   if( atVal.matchPrefix( profDef.getClusterResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.CLUSTER;
-   
-    val = atVal.getValue().substring(profDef.getClusterResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getGlobalResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.GLOBAL;
-   
-    val = atVal.getValue().substring(profDef.getGlobalResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getClusterCascadeResolveScopePrefix() ) )
-   {
-    scope =  ResolveScope.CASCADE_CLUSTER;
-   
-    val = atVal.getValue().substring(profDef.getClusterCascadeResolveScopePrefix().length());
-   }
-   else if( atVal.matchPrefix( profDef.getDefaultResolveScopePrefix() ) )
-   {
-    scope =  profDef.getDefaultFileAttributeResolveScope();
-   
-    val = atVal.getValue().substring(profDef.getDefaultResolveScopePrefix().length());
-   }
-   else
-   {
-    scope = profDef.getDefaultFileAttributeResolveScope();
-    
-    val = atVal.getValue();
-   }
-
-   if(val.length() == 0)
-    return;
-
-
    AttributedWritable prop = getHostConvertor().getLastConvertedProperty();
-
 
    if(prop == null )
     throw new ConvertionException(atVal.getRow(), atVal.getCol(), "There is no main value for qualification");
 
    
-   AgeFileAttributeWritable obAttr = (AgeFileAttributeWritable)prop.createAgeAttribute(classRef);
-   obAttr.setValue(val);
-   obAttr.setTargetResolveScope(scope);
+   AgeFileAttributeWritable obAttr = convertFileValue(atVal, classRef, profDef, prop);
+   
+   if( obAttr == null )
+    return;
    
    contextProperty = prop;
    setLastConvertedValue(obAttr);
@@ -2243,7 +2207,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   @Override
   public AgePropertyClass getProperty()
   {
-   return (AgePropertyClass)chain.get(chain.size()-1).elClassRef.getAttributeClass();
+   return ((AgeObjectProperty)chain.get(chain.size()-1).elClassRef).getAgeElClass();
   }
 
   @Override
@@ -2310,7 +2274,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      }
     }
     else if( ce.elType == ChainElement.ELTYPE.RELATION )
-     pathProp = ((AgeObject)attrHost).getRelation(((RelationClassRef)ce.elClassRef).getAgeRelationClass());
+     pathProp = ((AgeObjectWritable)attrHost).getRelation(((RelationClassRef)ce.elClassRef).getAgeRelationClass());
     else
      pathProp = attrHost.getAttribute(((AttributeClassRef)ce.elClassRef).getAttributeClass());
 
