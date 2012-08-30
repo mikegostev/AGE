@@ -34,7 +34,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  
  private transient Map<AgeRelationClass, List<AgeRelationWritable>> relationMap;
  
- private ClassRef classRef;
+ private final ClassRef classRef;
 
  private String id;
  private IdScope idScope;
@@ -179,7 +179,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
 // }
  
  @Override
- public Collection<AgeRelationWritable> getRelations()
+ public List<AgeRelationWritable> getRelations()
  {
   return relations;
  }
@@ -197,7 +197,7 @@ class AgeObjectImpl extends AttributedObject implements Serializable, AgeObjectW
  
 
  @Override
- public Collection< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSubCls)
+ public List< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSubCls)
  {
   Map<AgeRelationClass,List<AgeRelationWritable>> map = getRelMap();
   

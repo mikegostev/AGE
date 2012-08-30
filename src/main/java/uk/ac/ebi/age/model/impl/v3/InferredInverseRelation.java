@@ -48,7 +48,7 @@ public class InferredInverseRelation implements AgeRelationWritable, Serializabl
  }
 
  @Override
- public Collection< ? extends AgeAttributeWritable> getAttributes()
+ public List< ? extends AgeAttributeWritable> getAttributes()
  {
   return Collections.emptyList();
  }
@@ -72,7 +72,7 @@ public class InferredInverseRelation implements AgeRelationWritable, Serializabl
  }
 
  @Override
- public Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
+ public List< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
  {
   return Collections.emptyList();
  }

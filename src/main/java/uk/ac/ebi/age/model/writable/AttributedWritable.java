@@ -1,6 +1,5 @@
 package uk.ac.ebi.age.model.writable;
 
-import java.util.Collection;
 import java.util.List;
 
 import uk.ac.ebi.age.model.AgeAttributeClass;
@@ -18,11 +17,11 @@ public interface AttributedWritable extends Attributed
  @Override
  AgeAttributeWritable getAttribute(AgeAttributeClass cls);
  @Override
- Collection<? extends AgeAttributeWritable> getAttributes();
+ List<? extends AgeAttributeWritable> getAttributes();
 
 
  @Override
- Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls);
+ List< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls);
 
 
  void addAttribute(AgeAttributeWritable attr);

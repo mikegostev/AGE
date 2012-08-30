@@ -2,6 +2,7 @@ package uk.ac.ebi.age.model.impl.v3;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 
 import uk.ac.ebi.age.model.AgeAttribute;
 import uk.ac.ebi.age.model.AgeAttributeClass;
@@ -26,7 +27,7 @@ public class AgeSharedRelationImpl implements AgeRelation, Serializable
 
  
  @Override
- public Collection< ? extends AgeAttributeWritable> getAttributes()
+ public List< ? extends AgeAttributeWritable> getAttributes()
  {
   return Collections.emptyList();
  }
@@ -50,7 +51,7 @@ public class AgeSharedRelationImpl implements AgeRelation, Serializable
  }
 
  @Override
- public Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
+ public List< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
  {
   return Collections.emptyList();
  }

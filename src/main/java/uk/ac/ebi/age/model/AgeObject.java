@@ -1,6 +1,7 @@
 package uk.ac.ebi.age.model;
 
 import java.util.Collection;
+import java.util.List;
 
 import uk.ac.ebi.age.ext.entity.Entity;
 
@@ -19,14 +20,14 @@ public interface AgeObject extends AgeAbstractObject, Entity
  AgeClass getAgeElClass();
  ClassRef getClassReference();
  
- Collection<? extends AgeRelation> getRelations();
+ List<? extends AgeRelation> getRelations();
 
 // Collection<String> getRelationClassesIds();
  Collection< ? extends AgeRelationClass> getRelationClasses();
 
 // Collection< ? extends AgeRelation> getRelationsByClassId(String cid);
  AgeRelation getRelation(AgeRelationClass cls);
- Collection< ? extends AgeRelation> getRelationsByClass(AgeRelationClass cls, boolean wSubCls);
+ List< ? extends AgeRelation> getRelationsByClass(AgeRelationClass cls, boolean wSubCls);
 
  
  

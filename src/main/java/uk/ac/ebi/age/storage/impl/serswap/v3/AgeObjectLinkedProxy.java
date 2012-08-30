@@ -3,6 +3,7 @@ package uk.ac.ebi.age.storage.impl.serswap.v3;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -15,7 +16,7 @@ import com.pri.util.collection.Collections;
 
 public class AgeObjectLinkedProxy extends AgeObjectProxy
 {
- private Collection< AgeRelationWritable > relations = null;
+ private List< AgeRelationWritable > relations = null;
  
  public AgeObjectLinkedProxy(AgeObjectWritable obj, ModuleKey mk, StoragePlug sss)
  {
@@ -37,13 +38,13 @@ public class AgeObjectLinkedProxy extends AgeObjectProxy
  }
  
  @Override
- public Collection< ? extends AgeRelationWritable> getRelations()
+ public List< ? extends AgeRelationWritable> getRelations()
  {
   return relations;
  }
 
  @Override
- public Collection< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSbCl)
+ public List< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSbCl)
  {
   if( relations == null )
    return Collections.emptyList();

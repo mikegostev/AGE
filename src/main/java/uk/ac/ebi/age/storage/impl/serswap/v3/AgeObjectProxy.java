@@ -117,7 +117,7 @@ public class AgeObjectProxy implements AgeObjectWritable
  }
 
  @Override
- public Collection< ? extends AgeAttributeWritable> getAttributes()
+ public List< ? extends AgeAttributeWritable> getAttributes()
  {
   return getObject().getAttributes();
  }
@@ -129,7 +129,7 @@ public class AgeObjectProxy implements AgeObjectWritable
  }
 
  @Override
- public Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
+ public List< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
  {
   return getObject().getAttributesByClass( cls, wSubCls );
  }
@@ -201,13 +201,13 @@ public class AgeObjectProxy implements AgeObjectWritable
  }
 
  @Override
- public Collection< ? extends AgeRelationWritable> getRelations()
+ public List< ? extends AgeRelationWritable> getRelations()
  {
   return getObject().getRelations();
  }
 
  @Override
- public Collection< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSbCl)
+ public List< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSbCl)
  {
   return getObject().getRelationsByClass(cls,wSbCl);
  }

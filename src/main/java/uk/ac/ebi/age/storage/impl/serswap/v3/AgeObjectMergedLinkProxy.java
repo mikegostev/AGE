@@ -3,6 +3,7 @@ package uk.ac.ebi.age.storage.impl.serswap.v3;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -11,11 +12,11 @@ import uk.ac.ebi.age.model.writable.AgeObjectWritable;
 import uk.ac.ebi.age.model.writable.AgeRelationWritable;
 import uk.ac.ebi.age.storage.impl.serswap.StoragePlug;
 
-import com.pri.util.collection.CollectionsUnion;
+import com.pri.util.collection.ListUnionRO;
 
 public class AgeObjectMergedLinkProxy extends AgeObjectProxy
 {
- private Collection< AgeRelationWritable > relations = new ArrayList<AgeRelationWritable>(5);
+ private final List< AgeRelationWritable > relations = new ArrayList<AgeRelationWritable>(5);
 
  public AgeObjectMergedLinkProxy(String objId, ModuleKey mk, StoragePlug sss)
  {
@@ -43,15 +44,14 @@ public class AgeObjectMergedLinkProxy extends AgeObjectProxy
   return set;
  }
  
- @SuppressWarnings("unchecked")
  @Override
- public Collection< ? extends AgeRelationWritable> getRelations()
+ public List< ? extends AgeRelationWritable> getRelations()
  {
-  return new CollectionsUnion<AgeRelationWritable>( super.getRelations(), relations );
+  return new ListUnionRO<AgeRelationWritable>( super.getRelations(), relations );
  }
 
  @Override
- public Collection< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSbCl)
+ public List< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSbCl)
  {
   ArrayList<AgeRelationWritable> rels = null;
   

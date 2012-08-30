@@ -60,7 +60,7 @@ abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
  }
 
  @Override
- public Collection< ? extends AgeAttributeWritable> getAttributes()
+ public List< ? extends AgeAttributeWritable> getAttributes()
  {
   return Collections.emptyList();
  }
@@ -84,7 +84,7 @@ abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
  }
 
  @Override
- public Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
+ public List< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
  {
   return null;
  }

@@ -117,25 +117,25 @@ public class ClassReference extends AgeTabElement
   this.parentClass = parentClass;
  }
 
- public boolean isQualifierFor(ClassReference cr)
+ public boolean isQualifierFor(ClassReference hostPretender)
  {
-  if( embeddedClassRef != null )
-  {
-   if( cr.getEmbeddedClassRef() != null )
-    return equalsBasis(cr) && embeddedClassRef.isQualifierFor(cr.getEmbeddedClassRef());
-   else
-    return false;
-  }
-  else if( cr.getEmbeddedClassRef() != null)
-   return false;
+//  if( embeddedClassRef != null )
+//  {
+//   if( cr.getEmbeddedClassRef() != null )
+//    return equalsBasis(cr) && embeddedClassRef.isQualifierFor(cr.getEmbeddedClassRef());
+//   else
+//    return false;
+//  }
+//  else if( cr.getEmbeddedClassRef() != null)
+//   return false;
   
-  if( ! ( getName().equals( cr.getName()) && isCustom() == isCustom() ) ) // Different bases
+  if( ! ( getName().equals( hostPretender.getName() ) && isCustom() == isCustom() ) ) // Different bases
    return false;
 
   if( getQualifiers() == null || getQualifiers().size() == 0 )  // This is not qualifier at all
     return false;
   
-  if( cr.getQualifiers() == null )
+  if( hostPretender.getQualifiers() == null ) // case hostPretender.getQualifiers().size() == 0 will be checked later on
    {
     if( getQualifiers().size() != 1 ) // If cr is the main attribute then out qualifier chain must consist of one link
      return false;
@@ -143,14 +143,14 @@ public class ClassReference extends AgeTabElement
      return true;
    }
 
-  if( getQualifiers().size() != ( cr.getQualifiers().size()+1 ) ) // Our chain must be 1 link longer
+  if( getQualifiers().size() != ( hostPretender.getQualifiers().size()+1 ) ) // Our chain must be 1 link longer
    return false;
   
   Iterator<ClassReference> iter1 = getQualifiers().iterator();
-  Iterator<ClassReference> iter2 = cr.getQualifiers().iterator();
+  Iterator<ClassReference> iter2 = hostPretender.getQualifiers().iterator();
  
   while( iter2.hasNext() )
-   if( ! iter1.next().equals(iter2.next()) )
+   if( ! iter1.next().equalsBasis(iter2.next()) )
     return false;
   
   return true;

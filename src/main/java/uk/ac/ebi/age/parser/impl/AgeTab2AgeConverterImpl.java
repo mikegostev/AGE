@@ -1200,7 +1200,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    return colHdr;
   }
   
-  protected void setLastConvertedValue( AttributedWritable p )
+  protected void setLastConvertedProperty( AttributedWritable p )
   {
    lastProp=p;
   }
@@ -1387,7 +1387,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       obj.removeRelation(r);
    }
    
-   setLastConvertedValue(null);
+   setLastConvertedProperty(null);
 
   }
 
@@ -1498,7 +1498,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    else
     rel = hostObject.createRelation( rClsRef, targetObj );
 
-   setLastConvertedValue(rel);
+   setLastConvertedProperty(rel);
 
   }
  }
@@ -1553,7 +1553,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    if( obAttr == null )
     return;
    
-   setLastConvertedValue(obAttr);
+   setLastConvertedProperty(obAttr);
   }
   
   @Override
@@ -1653,7 +1653,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    obAttr.setValue(val);
    obAttr.setTargetResolveScope(scope);
    
-   setLastConvertedValue(obAttr);
+   setLastConvertedProperty(obAttr);
   }
   
   @Override
@@ -1768,7 +1768,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    else
     rel = hostObject.createRelation(rClsRef, targetObj);
 
-   setLastConvertedValue(rel);
+   setLastConvertedProperty(rel);
   }
   
   @Override
@@ -1873,7 +1873,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       obj.removeAttribute(a);
    }
    
-   setLastConvertedValue(null);
+   setLastConvertedProperty(null);
   }
   
   @Override
@@ -1940,7 +1940,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     }
    
    
-    setLastConvertedValue(attr);
+    setLastConvertedProperty(attr);
   }
   
   @Override
@@ -2092,7 +2092,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
    
    contextProperty=prop;
-   setLastConvertedValue(attrAlt);
+   setLastConvertedProperty(attrAlt);
   }
 
  }
@@ -2130,7 +2130,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     return;
    
    contextProperty = prop;
-   setLastConvertedValue(obAttr);
+   setLastConvertedProperty(obAttr);
   }
  }
 
@@ -2166,7 +2166,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     return;
    
    contextProperty = prop;
-   setLastConvertedValue(obAttr);
+   setLastConvertedProperty(obAttr);
   }
  }
 
@@ -2219,6 +2219,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    AgeObjectPropertyWritable pathProp = null;
    AttributedWritable attrHost = null;
    
+   AttributedWritable topLevelProp = null;
+   
    int level=0;
    
    for( int i=0; i < chainLength; i++ )
@@ -2233,6 +2235,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
       attrHost = pathProp;
      else
      {
+      if( level == 0 )
+       topLevelProp = pathProp;
+      
       attrHost = ((AgeObjectAttributeWritable)pathProp).getValue();
       level++;
      }
@@ -2259,6 +2264,17 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      attrHost = embObj;
     }    
 
+    if( ce.elType == ChainElement.ELTYPE.RELATION )
+    {
+     List<? extends AgeRelationWritable> rels = ((AgeObjectWritable)attrHost).getRelationsByClass( ((RelationClassRef)ce.elClassRef).getAgeRelationClass(), false);
+     
+     pathProp = rels.get(rels.size()-1);
+    }
+    else
+    {
+     pathProp = attrHost.getAttribute(((AttributeClassRef)ce.elClassRef).getAttributeClass());
+    }
+    
     if(level == 0 && chain.get(i+1).elType != ChainElement.ELTYPE.QUALIFIER )
     {
      Collection<? extends AgeAttributeWritable> oattrs =  attrHost.getAttributesByClass(((AttributeClassRef)ce.elClassRef).getAttributeClass(), false);
@@ -2302,7 +2318,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   {
    hostObject = obj;
    
-   setLastConvertedValue(null);
+   setLastConvertedProperty(null);
   }
 
   @Override

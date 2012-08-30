@@ -89,7 +89,7 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
 
  
  @Override
- public Collection<AgeAttributeWritable> getAttributes()
+ public List<AgeAttributeWritable> getAttributes()
  {
   return attributes;
  }
@@ -184,7 +184,7 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
 // }
 
  @Override
- public synchronized Collection< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
+ public synchronized List< ? extends AgeAttributeWritable> getAttributesByClass(AgeAttributeClass cls, boolean wSubCls)
  {
 //  Map<AgeAttributeClass,List<AgeAttributeWritable>> map = getAttribMap();
 //  
@@ -193,11 +193,23 @@ public abstract class AttributedObject implements AttributedWritable, AgeContext
   
   List< AgeAttributeWritable > lst = new ArrayList<AgeAttributeWritable>();
   
-  for( AgeAttributeWritable  at : attributes )
+  if( wSubCls )
   {
-   if( at.getAgeElClass().isClassOrSubclass(cls) )
-    lst.add(at);
+   for( AgeAttributeWritable  at : attributes )
+   {
+    if( at.getAgeElClass().isClassOrSubclass(cls) )
+     lst.add(at);
+   }
   }
+  else
+  {
+   for( AgeAttributeWritable  at : attributes )
+   {
+    if( at.getAgeElClass().equals(cls) )
+     lst.add(at);
+   }
+  }
+  
   
   return lst;
  }

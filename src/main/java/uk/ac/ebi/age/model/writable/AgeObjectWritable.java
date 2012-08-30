@@ -1,6 +1,6 @@
 package uk.ac.ebi.age.model.writable;
 
-import java.util.Collection;
+import java.util.List;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -16,16 +16,21 @@ import uk.ac.ebi.age.model.ResolveScope;
 
 public interface AgeObjectWritable extends AgeObject, AttributedWritable
 {
+ @Override
  DataModuleWritable getDataModule();
  
- Collection<? extends AgeRelationWritable> getRelations();
+ @Override
+ List<? extends AgeRelationWritable> getRelations();
  
-// Collection< ? extends AgeRelationWritable> getRelationsByClassId(String cid);
+ @Override
  AgeRelationWritable getRelation(AgeRelationClass cls);
- Collection< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSbCl);
+ @Override
+ List< ? extends AgeRelationWritable> getRelationsByClass(AgeRelationClass cls, boolean wSbCl);
  
  
+ @Override
  void addAttribute(AgeAttributeWritable attr);
+ @Override
  void removeAttribute(AgeAttributeWritable attr);
 
  void addRelation(AgeRelationWritable r);
@@ -45,6 +50,7 @@ public interface AgeObjectWritable extends AgeObject, AttributedWritable
  void setIdScope( IdScope scp );
 // void setOriginalId(String nId);
 
+ @Override
  void pack();
 
 
