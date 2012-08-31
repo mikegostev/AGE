@@ -3,13 +3,14 @@ package uk.ac.ebi.age.parser;
 import java.util.HashMap;
 import java.util.Map;
 
+import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.IdScope;
 
 
 public class SyntaxProfile
 {
  private SyntaxProfileDefinition commonSyntaxProfileDefinition = AgeDefaultSyntaxProfileDefinition.getInstance();
- private Map<String,SyntaxProfileDefinition> classDefMap = new HashMap<String, SyntaxProfileDefinition>();
+ private final Map<String,SyntaxProfileDefinition> classDefMap = new HashMap<String, SyntaxProfileDefinition>();
  
  public SyntaxProfileDefinition getCommonSyntaxProfile()
  {
@@ -19,6 +20,14 @@ public class SyntaxProfile
  public void setCommonSyntaxProfile( SyntaxProfileDefinition def )
  {
   commonSyntaxProfileDefinition = def;
+ }
+
+ public SyntaxProfileDefinition getClassSpecificSyntaxProfile( AgeClass cls )
+ {
+  if( cls.isCustom() )
+   return commonSyntaxProfileDefinition;
+  
+  return getClassSpecificSyntaxProfile(cls.getName());
  }
 
  public SyntaxProfileDefinition getClassSpecificSyntaxProfile( String className )

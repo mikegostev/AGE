@@ -140,13 +140,13 @@ public class SubmissionManager
  }
 
 
- private AgeTabSyntaxParser   ageTabParser;
+ private final AgeTabSyntaxParser   ageTabParser;
  private AgeTab2AgeConverter  converter = null;
- private AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
- private AnnotationManager    annotationManager;
+ private final AgeSemanticValidator validator = new AgeSemanticValidatorImpl();
+ private final AnnotationManager    annotationManager;
 
- private SubmissionDB         submissionDB;
- private AgeStorageAdm        ageStorage;
+ private final SubmissionDB         submissionDB;
+ private final AgeStorageAdm        ageStorage;
 
  public SubmissionManager(AgeStorageAdm ageS, SubmissionDB sDB, AgeTabSyntaxParser prs, AgeTab2AgeConverter conv, AnnotationManager aMngr)
  {
@@ -690,7 +690,7 @@ public class SubmissionManager
    catch(ParserException e)
    {
     atLog.log(Level.ERROR, "Parsing failed: " + e.getMessage() + ". Row: " + e.getLineNumber() + ". Col: " + e.getColumnNumber());
-    modRes = false;
+    res = false;
     continue;
    }
 
@@ -2018,7 +2018,7 @@ public class SubmissionManager
      // continue;
      // }
 
-     tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
+     tgObj = ageStorage.getGlobalObject(ref);
 
      if(tgObj == null || cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId()))
       tgObj = null;
@@ -2438,7 +2438,7 @@ public class SubmissionManager
    tgObj = cstMeta.newGlobalIdMap.get(ref);
 
    if(tgObj == null)
-    tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
+    tgObj = ageStorage.getGlobalObject(ref);
 
    if(tgObj != null && (cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId())))
     tgObj = null;
@@ -2449,7 +2449,7 @@ public class SubmissionManager
 
    if(tgObj == null && rslv.getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER)
    {
-    tgObj = (AgeObjectWritable) ageStorage.getGlobalObject(ref);
+    tgObj = ageStorage.getGlobalObject(ref);
 
     if(tgObj != null && (cstMeta.mod4Del.containsKey(tgObj.getDataModule().getId()) || cstMeta.mod4DataUpd.containsKey(tgObj.getDataModule().getId())))
      tgObj = null;

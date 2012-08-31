@@ -18,6 +18,7 @@ import uk.ac.ebi.age.model.AgeAttributeClass;
 import uk.ac.ebi.age.model.AgeAttributeClassPlug;
 import uk.ac.ebi.age.model.AgeClass;
 import uk.ac.ebi.age.model.AgeExternalRelation;
+import uk.ac.ebi.age.model.AgeObjectAttribute;
 import uk.ac.ebi.age.model.AgeObjectProperty;
 import uk.ac.ebi.age.model.AgePropertyClass;
 import uk.ac.ebi.age.model.AgeRelationClass;
@@ -98,8 +99,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     continue;
    }
 
-   SyntaxProfileDefinition profileDef = colHdr.isCustom()?
-     syntaxProfile.getCommonSyntaxProfile():syntaxProfile.getClassSpecificSyntaxProfile(colHdr.getName());
+   SyntaxProfileDefinition profileDef = syntaxProfile.getClassSpecificSyntaxProfile(cls);
   
    ClassRef clsRef = sm.getModelFactory().createClassRef(sm.getAgeClassPlug(cls), colHdr.getRow(), colHdr.getOriginalReference(), hdr.isHorizontal(), sm);
    
@@ -161,14 +161,14 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   {
    LogNode subLog = log.branch("Creating value converters for class '"+me.getValue()+"'. Block at: "+me.getKey().getClassColumnHeader().getRow());
    
-   if( ! createConvertors( me.getKey(), me.getValue(), convs, sm, classMap, subLog ) )
+   SyntaxProfileDefinition profileDef = syntaxProfile.getClassSpecificSyntaxProfile(me.getValue());
+
+   if( ! createConvertors( me.getKey(), me.getValue(), convs, sm, classMap, profileDef.allowImplicitCustomClasses(), subLog ) )
    {
     subLog.log(Level.ERROR,"Convertors creation failed");
     result = false; //We don't stop here, erroneous columns will be ignored
    }
  
-   SyntaxProfileDefinition profileDef = me.getKey().getClassColumnHeader().isCustom()?
-     syntaxProfile.getCommonSyntaxProfile():syntaxProfile.getClassSpecificSyntaxProfile(me.getKey().getClassColumnHeader().getName());
 
    AgeObjectWritable prototype = prototypeMap.get(me.getValue());
    
@@ -852,6 +852,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
   convs.clear();
   
+  SyntaxProfileDefinition profileDef = syntaxProfile.getClassSpecificSyntaxProfile(blkCls);
+  
   for( ClassReference attHd : blck.getColumnHeaders() )
   {
    if( attHd == null )
@@ -866,9 +868,10 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    {
     List<ChainConverter.ChainElement> chain = new ArrayList<ChainConverter.ChainElement>();
     
-    createEmbeddedObjectChain(blkCls, attHd, chain, sm, implCustom, log);
-    
-    addConverter(convs, new ChainConverter(chain, attHd));
+    if( createEmbeddedObjectChain(blkCls, attHd, chain, sm, classMap, implCustom, log) )
+     addConverter(convs, new ChainConverter(chain, attHd, profileDef));
+    else
+     addConverter(convs, new InvalidColumnConvertor(attHd));
     
     continue;
    }
@@ -908,13 +911,13 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      else
      {
       addConverter(convs, new ObjectQualifierConvertor(attHd, qClass, hostConverter, classMap.get(qClass.getTargetClass()),
-        sm, syntaxProfile.getClassSpecificSyntaxProfile(blkCls.getName()) ) );
+        sm, profileDef ) );
      }
     }
     else if( qClass.getDataType() == DataType.FILE )
     {
      addConverter(convs, new FileQualifierConvertor(attHd, qClass, hostConverter,
-        sm, syntaxProfile.getClassSpecificSyntaxProfile(blkCls.getName()) ) );
+        sm, profileDef ) );
     }
     else
      addConverter(convs, new ScalarQualifierConvertor( attHd, qClass, hostConverter, sm ) );
@@ -1112,11 +1115,12 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   }
  }
  
- private boolean createEmbeddedObjectChain(AgeClass blkOwner, ClassReference attHd, List<ChainConverter.ChainElement> chain, ContextSemanticModel sm, boolean implCust, LogNode log)
+ private boolean createEmbeddedObjectChain(AgeClass blkOwner, ClassReference attHd, List<ChainConverter.ChainElement> chain,
+   ContextSemanticModel sm, Map<AgeClass, Map<String,AgeObjectWritable>> classMap, boolean implCust, LogNode log)
  {
   ChainConverter.ChainElement cEl = new ChainConverter.ChainElement();
 
-  AgePropertyClass prop = getPropertyClass(attHd, blkOwner, sm, implCust, log);
+  AgePropertyClass prop = getPropertyClass(attHd, blkOwner, sm, implCust, false, log);
 
   if(prop == null)
    return false;
@@ -1133,12 +1137,30 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    cEl.elType = ChainConverter.ChainElement.ELTYPE.RELATION;
    cEl.elClassRef = sm.getModelFactory().createRelationClassRef(sm.getAgeRelationClassPlug((AgeRelationClass) prop),
      attHd.getOrder(), attHd.getOriginalReference());
+   
+   if( attHd.isCustom() )
+    cEl.range = classMap.get( ((AgeRelationClass) prop).getRange().iterator().next() );
+   else
+    cEl.range = classMap;
+
   }
   else
   {
-   if(attHd.getQualifiers() == null && attHd.getEmbeddedClassRef() != null && ((AgeAttributeClass) prop).getDataType() != DataType.OBJECT)
+   AgeAttributeClass atCls = (AgeAttributeClass) prop;
+   
+   if( atCls.getDataType() == DataType.OBJECT )
    {
-    log.log(Level.ERROR, "Object attribute class expexted instead of '" + ((AgeAttributeClass) prop).getName()+"'");
+    if( atCls.getTargetClass() == null )
+    {
+     log.log(Level.ERROR, "No target class defined for OBJECT attribute class '"+atCls.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+     return false;
+    }
+    else
+     cEl.range = classMap.get(atCls.getTargetClass());
+   }
+   else if( attHd.getQualifiers() == null && attHd.getEmbeddedClassRef() != null )
+   {
+    log.log(Level.ERROR, "Object attribute class expected instead of '" + ((AgeAttributeClass) prop).getName()+"'");
     return false;
    }
    
@@ -1150,17 +1172,28 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
   chain.add(cEl);
 
-  if(attHd.getQualifiers() != null)
+  if(attHd.getQualifiers() != null && attHd.getQualifiers().size() > 0 )
   {
    for(ClassReference qcr : attHd.getQualifiers())
    {
-    AgeAttributeClass qClass = (AgeAttributeClass)  getPropertyClass(qcr, blkOwner, sm, implCust, log);
+    AgeAttributeClass qClass = (AgeAttributeClass)  getPropertyClass(qcr, blkOwner, sm, implCust, true, log);
     
     if( qClass == null )
      return false;
 
     cEl = new ChainConverter.ChainElement();
 
+    if( qClass.getDataType() == DataType.OBJECT )
+    {
+     if( qClass.getTargetClass() == null )
+     {
+      log.log(Level.ERROR, "No target class defined for OBJECT attribute class '"+qClass.getName()+"'. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+      return false;
+     }
+     else
+      cEl.range = classMap.get(qClass.getTargetClass());
+    }
+    
     cEl.elClassRef = sm.getModelFactory().createAttributeClassRef(sm.getAgeAttributeClassPlug(qClass), qcr.getOrder(),
       attHd.getOriginalReference());
 
@@ -1168,10 +1201,19 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
 
     chain.add(cEl);
    }
+   
+   if( attHd.getEmbeddedClassRef() != null && ((AttributeClassRef)cEl.elClassRef).getAttributeClass().getDataType() != DataType.OBJECT )
+   {
+    log.log(Level.ERROR, "Object qualifier class expected instead of '" + ((AttributeClassRef)cEl.elClassRef).getAttributeClass().getName()+"'");
+    return false;
+   }
+
   }
 
   if(attHd.getEmbeddedClassRef() != null)
-   createEmbeddedObjectChain(blkOwner, attHd.getEmbeddedClassRef(), chain, sm, implCust, log);
+   return createEmbeddedObjectChain(blkOwner, attHd.getEmbeddedClassRef(), chain, sm, classMap, implCust, log);
+  
+  return true;
  }
 
 
@@ -1493,9 +1535,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    if(atVal == null)
     return;
    
-   SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass().getName());
+   SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass());
+   
    AgeRelationWritable rel = convertRelationValue(atVal, rClsRef, profDef, hostObject, rangeObjects);
-
 
    setLastConvertedProperty(rel);
   }
@@ -1544,7 +1586,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    atVal.trim();
    
-   SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass().getName());
+   SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass());
    
    AgeAttributeWritable obAttr = convertObjectValue(atVal, classRef, profDef, hostObject, rangeObjects);
 
@@ -1607,7 +1649,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    String val = null;
    ResolveScope scope = null;
    
-   SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass().getName());
+   SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass());
    
    if( atVal.matchPrefix( profDef.getClusterResolveScopePrefix() ) )
    {
@@ -1701,7 +1743,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    if(atVal == null )
     return;
    
-   SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass().getName());
+   SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass());
    AgeRelationWritable rel = convertRelationValue(atVal, rClsRef, profDef, hostObject, java.util.Collections.singleton(rangeObjects) );
    
    if( rel == null )
@@ -1814,8 +1856,6 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   @Override
   public void convert(AgeTabValue vl) throws ConvertionException
   {
-//   setLastConvertedProperty(null);
-   
    if( vl == null || vl.getValue().length() == 0 )
    {
     if( classRef.getAttributeClass().getDataType().isMultiline() )
@@ -1837,45 +1877,30 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    }
    
    AgeAttributeWritable attr = null;
-   boolean exstAttr=false;
    
    if( classRef.getAttributeClass().getDataType().isMultiline() )
    {
-    Collection<? extends AgeAttributeWritable> atcoll = hostObject.getAttributesByClass(classRef.getAttributeClass(), false);
+    List<? extends AgeAttributeWritable> atcoll = hostObject.getAttributesByClass(classRef.getAttributeClass(), false);
     
     if( atcoll == null || atcoll.size() == 0 )
      attr = hostObject.createAgeAttribute(classRef);
     else
-    {
-     attr = atcoll.iterator().next();
-     exstAttr=true;
-    }
+     attr = atcoll.get(atcoll.size()-1);
    }
    else
     attr = hostObject.createAgeAttribute(classRef);
    
- 
-//   AgeAttribute attr = obj.getAttribute(attrClass);
-//   AgeAttributeWritable attrAlt = obj.createAgeAttribute(attrClass);
-//   
-//   if( attr == null )
-//    attrAlt = obj.createAgeAttribute(attrClass);
-//   else if( attr instanceof AgeAttributeWritable )
-//    attrAlt= (AgeAttributeWritable) attr;
-//   else
-//    throw new ConvertionException(getColumnHeader().getRow(), getColumnHeader().getRow(), "Attribute '"+attrClass+"' already exists in the object '"+obj.getId()+"' and isn't alterable" );
-   
-    try
-    {
-     attr.updateValue(vl.getValue());
-    }
-    catch(FormatException e)
-    {
-     throw new ConvertionException(vl.getRow(), vl.getCol(), "Invalid value ("+vl.getValue()+") for attribute: "+classRef.getAttributeClass().getName() );
-    }
+   try
+   {
+    attr.updateValue(vl.getValue());
+   }
+   catch(FormatException e)
+   {
+    throw new ConvertionException(vl.getRow(), vl.getCol(), "Invalid value ("+vl.getValue()+") for attribute: "+classRef.getAttributeClass().getName() );
+   }
    
    
-    setLastConvertedProperty(attr);
+   setLastConvertedProperty(attr);
   }
   
   @Override
@@ -2162,7 +2187,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    int level=0;
    
-   for( int i=0; i < chainLength-1; i++ )
+   for( int i=0; i < chainLength; i++ )
    {
     ChainElement  ce = chain.get(i);
     
@@ -2200,61 +2225,89 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      
      objatt.setValue(embObj);
      
+     embObj.setOrder(lineNum);
+     
      attrHost = embObj;
     }    
 
-    if( ce.elType == ChainElement.ELTYPE.RELATION )
+    if( i == chain.size()-1 )
+     break;
+    
+    if( level == 0 && chain.get(i+1).elType != ChainElement.ELTYPE.QUALIFIER ) //taking object attribute/qualifier on the top level. Relations can't be here
     {
-     List<? extends AgeRelationWritable> rels = ((AgeObjectWritable)attrHost).getRelationsByClass( ((RelationClassRef)ce.elClassRef).getAgeRelationClass(), false);
+     AgeAttributeClass cls = ((AttributeClassRef)ce.elClassRef).getAttributeClass();
      
-     if( rels != null && rels.size() > 0)
-      pathProp = rels.get(rels.size()-1);
+     List<? extends AgeAttributeWritable> attrs = attrHost.getAttributesByClass(cls, false);
+     
+     if( attrs != null && attrs.size() > 0 )
+     {
+      pathProp = null;
+      
+      for( AgeAttributeWritable at : attrs ) //Looking for an embedded object defined at the same line 
+      {
+       if( ((AgeObjectAttribute)at).getValue().getOrder() == lineNum )
+       {
+        pathProp = at;
+        break;
+       }
+      }
+     }
+     
+     if( pathProp == null )
+      pathProp = attrHost.createAgeAttribute((AttributeClassRef)ce.elClassRef);
+    }
+    else if( ce.elType == ChainElement.ELTYPE.RELATION )
+    {
+     List< ? extends AgeRelationWritable> rels = ((AgeObjectWritable) attrHost).getRelationsByClass(((RelationClassRef) ce.elClassRef).getAgeRelationClass(), false);
+
+     if(rels != null && rels.size() > 0)
+      pathProp = rels.get(rels.size() - 1);
      else
       throw new ConvertionException(vls.getRow(), vls.getCol(), "Relation not defined");
     }
     else
     {
-     AgeAttributeClass cls = ((AttributeClassRef)ce.elClassRef).getAttributeClass();
-     
-     List<? extends AgeAttributeWritable> attrs = attrHost.getAttributesByClass(cls, false);
+     AgeAttributeClass cls = ((AttributeClassRef) ce.elClassRef).getAttributeClass();
 
-     if( attrs != null && attrs.size() > 0 )
-      pathProp = attrs.get( attrs.size()-1 );
+     List< ? extends AgeAttributeWritable> attrs = attrHost.getAttributesByClass(cls, false);
+
+     if(attrs != null && attrs.size() > 0)
+      pathProp = attrs.get(attrs.size() - 1);
      else
+      pathProp = attrHost.createAgeAttribute((AttributeClassRef) ce.elClassRef);
+    }
+    
+   }
+   
+   ChainElement lastEl = chain.get(chain.size()-1);
+   
+   if( lastEl.elType == ChainElement.ELTYPE.RELATION)
+    convertRelationValue(vls, (RelationClassRef)lastEl.elClassRef, profileDef, (AgeObjectWritable)attrHost, (Collection< Map<String,AgeObjectWritable> >)lastEl.range);
+   else
+   {
+    AgeAttributeClass cls = ((AttributeClassRef)lastEl.elClassRef).getAttributeClass();
+    
+    if( cls.getDataType() == DataType.OBJECT )
+     convertObjectValue(vls, (AttributeClassRef)lastEl.elClassRef, profileDef, attrHost, (Map<String,AgeObjectWritable>)lastEl.range);
+    else if( cls.getDataType() == DataType.FILE )
+     convertFileValue(vls, (AttributeClassRef)lastEl.elClassRef, profileDef, attrHost);
+    else
+    {
+     AgeAttributeWritable at = attrHost.createAgeAttribute((AttributeClassRef)lastEl.elClassRef);
+
+     try
      {
-      if( i < chain.size()-1 )
-       pathProp = attrHost.createAgeAttribute((AttributeClassRef)ce.elClassRef);
-      
+      at.updateValue(vls.getValue());
+     }
+     catch(FormatException e)
+     {
+      throw new ConvertionException(vls.getRow(), vls.getCol(), "Invalid value ("+vls.getValue()+") for attribute: "+at.getAgeElClass().getName() );
      }
     }
    }
    
-   AgeAttributeClass cls = ((AttributeClassRef)ce.elClassRef).getAttributeClass();
-
-   AttributeClassRef lastCR = chain.get(chain.size()-1).elClassRef;
+   setLastConvertedProperty(topLevelProp);
    
-   if( pathProp.getClassReference() != lastCR )
-    pathAttr = attrHost.createAgeAttribute(lastCR);
-  
-   pathProp = convertRelationValue(vls, (RelationClassRef)ce.elClassRef, profileDef, (AgeObjectWritable)attrHost, (Collection< Map<String,AgeObjectWritable> >)ce.range);
-
-   if( cls.getDataType() == DataType.OBJECT )
-    at = convertObjectValue(vls, (AttributeClassRef)ce.elClassRef, profileDef, attrHost, (Map<String,AgeObjectWritable>)ce.range);
-   else if( cls.getDataType() == DataType.FILE )
-    at = convertFileValue(vls, (AttributeClassRef)ce.elClassRef, profileDef, attrHost);
-   else
-   {
-    at = attrHost.createAgeAttribute((AttributeClassRef)ce.elClassRef);
-   }
-   
-   try
-   {
-    pathAttr.updateValue(vls.getValue());
-   }
-   catch(FormatException e)
-   {
-    throw new ConvertionException(vls.getRow(), vls.getCol(), "Invalid value ("+vls.getValue()+") for attribute: "+pathAttr.getAgeElClass().getName() );
-   }
   }
 
   @Override

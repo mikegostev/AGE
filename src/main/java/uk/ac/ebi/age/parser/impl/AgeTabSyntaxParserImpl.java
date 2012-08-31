@@ -32,6 +32,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 //  List<String> getHeaderLine();
 
   int getRecNum();
+  boolean isHorizontal();
 
   List<CellValue> getRecord(List<CellValue> parts);
  }
@@ -51,12 +52,11 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   }
   
 
-//  @Override
-//  public List<String> getHeaderLine()
-//  {
-//   return firstLine;
-//  }
-
+  @Override
+  public boolean isHorizontal()
+  {
+   return true;
+  }
 
   @Override
   public int getRecNum()
@@ -125,7 +125,12 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   
   }
   
-
+  @Override
+  public boolean isHorizontal()
+  {
+   return false;
+  }
+  
   @Override
   public int getRecNum()
   {
@@ -192,7 +197,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     block = new VerticalBlockSupplier( reader, parts );
     header.setHorizontal(false);
    }
-   else if( profile.getClassSpecificSyntaxProfile(classRef.getRawValue()).isHorizontalBlockDefault() )
+   else if(  profile.getClassSpecificSyntaxProfile(classRef.getRawValue()).isHorizontalBlockDefault() ) //If class is custom raw value will not match any specific profile 
    {
     block = new HorizontalBlockSupplier( reader, parts );
     header.setHorizontal(true);
@@ -405,7 +410,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   
   hdr.setClassColumnHeader(partName);
   
-  SyntaxProfileDefinition profDef = getSyntaxProfile().getClassSpecificSyntaxProfile(partName.getName());
+  SyntaxProfileDefinition profDef = partName.isCustom()?getSyntaxProfile().getCommonSyntaxProfile():getSyntaxProfile().getClassSpecificSyntaxProfile(partName.getName());
   
   int ord=1;
   while( itr.hasNext() )
