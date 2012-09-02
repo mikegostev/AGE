@@ -7,10 +7,18 @@ public class CellValue
  private String value;
  private String rawValue;
  
+ private int row;
+ private int col;
+ 
  private CellValue( )
  {}
  
  public CellValue( String val, String escSeq )
+ {
+  this(val, escSeq, 0, 0);
+ }
+
+ public CellValue( String val, String escSeq, int r, int c )
  {
   rawValue = val;
   
@@ -52,6 +60,9 @@ public class CellValue
    value = sb.toString();
   else
    value = val;
+  
+  row=r;
+  col=c;
  }
  
 
@@ -135,5 +146,25 @@ public class CellValue
  public String getRawValue()
  {
   return rawValue;
+ }
+ 
+ public int getRow()
+ {
+  return row;
+ }
+
+ public void setRow(int row)
+ {
+  this.row = row;
+ }
+
+ public int getCol()
+ {
+  return col;
+ }
+
+ public void setCol(int col)
+ {
+  this.col = col;
  }
 }

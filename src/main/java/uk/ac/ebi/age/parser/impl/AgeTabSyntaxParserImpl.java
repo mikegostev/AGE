@@ -31,10 +31,12 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
  {
 //  List<String> getHeaderLine();
 
-  int getRecNum();
-  boolean isHorizontal();
+//  int getRecNum();
+//  boolean isHorizontal();
 
   List<CellValue> getRecord(List<CellValue> parts);
+ 
+  int getOrder( CellValue cv );
  }
  
  class HorizontalBlockSupplier implements BlockSupplier
@@ -45,6 +47,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   HorizontalBlockSupplier(SpreadsheetReader r, List<String> fstLine)
   {
    reader = r;
+   
    firstLine = new ArrayList<String>( fstLine.size() );
    
    for( String s : fstLine )
@@ -53,17 +56,10 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   
 
   @Override
-  public boolean isHorizontal()
+  public int getOrder(CellValue cv)
   {
-   return true;
+   return cv.getRow();
   }
-
-  @Override
-  public int getRecNum()
-  {
-   return reader.getLineNumber();
-  }
-
 
   @Override
   public List<CellValue> getRecord(List<CellValue> parts)
@@ -86,10 +82,21 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    else
     parts.clear();
     
-     
+   int ln = reader.getLineNumber();
+   
+   int col=0;  
    for( String s : firstLine )
-    parts.add( new CellValue(s, getSyntaxProfile().getEscapeSequence() ) );
-     
+   {
+    col++;
+    
+    CellValue cv = new CellValue(s, getSyntaxProfile().getEscapeSequence() );
+    
+    cv.setRow(ln);
+    cv.setCol(col);
+    
+    parts.add( cv );
+   }
+   
    firstLine.clear();
      
    return parts;
@@ -104,9 +111,12 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   private int ptr = 0;
   private final List<List<String>> lines = new ArrayList<List<String>>( 50 );
   private int maxDim = 0;
+  private final int firstLineNum;
  
   VerticalBlockSupplier(SpreadsheetReader reader, List<String> fstLine)
   {
+   firstLineNum = reader.getLineNumber();
+   
    List<String> line = new ArrayList<String>( fstLine.size() );
    
    for( String s : fstLine )
@@ -124,20 +134,13 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    
   
   }
-  
+
   @Override
-  public boolean isHorizontal()
+  public int getOrder(CellValue cv)
   {
-   return false;
+   return cv.getCol();
   }
   
-  @Override
-  public int getRecNum()
-  {
-   return ptr;
-  }
-
-
   @Override
   public List<CellValue> getRecord(List<CellValue> line)
   {
@@ -149,8 +152,20 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    else
     line.clear();
    
+   int row=firstLineNum;
+   int col = ptr+1;
+   
    for( List<String> l : lines )
-    line.add(  new CellValue(ptr >= l.size()?"":l.get(ptr), getSyntaxProfile().getEscapeSequence() ) );
+   {
+    row++;
+    
+    CellValue cv = new CellValue(ptr >= l.size()?"":l.get(ptr), getSyntaxProfile().getEscapeSequence() ) ;
+    
+    cv.setCol(col);
+    cv.setRow(row);
+    
+    line.add(  cv );
+   }
    
    ptr++;
    
@@ -209,7 +224,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     header.setHorizontal(false);
    }
    
-   analyzeHeader(header, block.getRecord(cells), block.getRecNum() );
+   analyzeHeader( header, block.getRecord(cells) );
    data.addBlock(header);
    
    AgeTabObject cObj = null;
@@ -231,7 +246,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      if( cell.matchString(profileDef.getAnonymousObjectId()) )
      { 
       String id = "??"+IdGenerator.getInstance().getStringId("tempObjectId");
-      cObj = data.createObject(id,header,block.getRecNum());
+      cObj = data.createObject( id, header, block.getOrder(cell) );
       cObj.setIdDefined(false);
       cObj.setIdScope(IdScope.MODULE);
      }
@@ -283,7 +298,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
       
    
 
-      cObj = data.getOrCreateObject(id,header, block.getRecNum() );
+      cObj = data.getOrCreateObject(id,header,block.getOrder(cell) );
       
       cObj.setIdScope(scope);
       cObj.setIdDefined( defined );
@@ -291,12 +306,10 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      }
     }
     else if( cObj == null )
-     throw new ParserException(block.getRecNum(), 1, "Object identifier is expected"); // TODO provide correct coords here
+     throw new ParserException(cell.getRow(), cell.getCol(), "Object identifier is expected");
    
-    int col=1; 
     for( ClassReference prop : header.getColumnHeaders() )
     {
-     col++;
      
      if(!cellIter.hasNext())
       break;
@@ -306,11 +319,11 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
      if( prop != null )
      {
 //      if( cell.getValue().length() > 0 )
-      cObj.addValue( new AgeTabValue(block.getRecNum(), col, prop, cell)  );
+      cObj.addValue( new AgeTabValue(cell.getRow(), cell.getCol() , prop, cell)  );
      }
      else if( cell.getValue().trim().length() > 0 )
      {
-      throw new ParserException(block.getRecNum(),col,"Not empty value in the empty-headed column");
+      throw new ParserException(cell.getRow(), cell.getCol(),"Not empty value in the empty-headed column");
      }
      
     }
@@ -321,7 +334,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   return data;
  }
 
- private ClassReference createClassReference( CellValue cell, int row, int col, SyntaxProfileDefinition profDef ) throws ParserException
+ private ClassReference createClassReference( CellValue cell, SyntaxProfileDefinition profDef ) throws ParserException
  {
   int embedSepLen = profDef.getDefaultEmbeddedObjectAttributeSeparator().length(); 
   
@@ -341,8 +354,8 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 
     if( ! cell.hasRed(pos, offs) )
     {
-     embeddedProperty = createClassReference( new CellValue(cell.getRawValue().substring(offs), profDef.getEscapeSequence()), row, col, profDef );
-     cell =  new CellValue(cell.getRawValue().substring(0,pos), profDef.getEscapeSequence() );
+     embeddedProperty = createClassReference( new CellValue(cell.getRawValue().substring(offs), profDef.getEscapeSequence(),cell.getRow(),cell.getCol()), profDef );
+     cell =  new CellValue(cell.getRawValue().substring(0,pos), profDef.getEscapeSequence(), cell.getRow(), cell.getCol() );
      break;
     }
     
@@ -358,15 +371,15 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
     partName = string2ClassReference(cell);
     partName.setRawReference(rawVal);
 
-    partName.setRow(row);
-    partName.setCol(col);
+    partName.setRow(cell.getRow());
+    partName.setCol(cell.getCol());
 
     if( partName.getQualifiers() != null )
     {
      for( ClassReference qref : partName.getQualifiers() )
      {
-      qref.setRow(row);
-      qref.setCol(col);
+      qref.setRow(cell.getRow());
+      qref.setCol(cell.getCol());
      }
     }
     
@@ -375,8 +388,8 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    }
    catch(ParserException e)
    {
-    e.setLineNumber(row);
-    e.setColumn(col);
+    e.setLineNumber(cell.getRow());
+    e.setColumn(cell.getCol());
 
     throw e;
    }
@@ -384,7 +397,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    return partName;
  }
  
- private void analyzeHeader(BlockHeader hdr, List<CellValue> parts, int row) throws ParserException
+ private void analyzeHeader(BlockHeader hdr, List<CellValue> parts) throws ParserException
  {
   Iterator<CellValue> itr = parts.iterator();
   
@@ -396,14 +409,14 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   {
    partName = string2ClassReference( cell );
    partName.setHorizontal(hdr.isHorizontal());
-   partName.setRow(row);
-   partName.setCol(1);
+   partName.setRow(cell.getRow());
+   partName.setCol(cell.getCol());
    partName.setRawReference(cell.getRawValue());
   }
   catch(ParserException e)
   {
-   e.setLineNumber(row);
-   e.setColumn(1);
+   e.setLineNumber(cell.getRow());
+   e.setColumn(cell.getCol());
    throw e;
   }
   
@@ -412,27 +425,11 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   
   SyntaxProfileDefinition profDef = partName.isCustom()?getSyntaxProfile().getCommonSyntaxProfile():getSyntaxProfile().getClassSpecificSyntaxProfile(partName.getName());
   
-  int ord=1;
   while( itr.hasNext() )
   {
-   ord++;
-   
    cell = itr.next();
 
-   int r,c;
-   
-   if( hdr.isHorizontal() )
-   {
-    r = row;
-    c = ord;
-   }
-   else
-   {
-    r =row+ord;
-    c = 1;
-   }
-   
-   hdr.addColumnHeader( createClassReference(cell, r, c, profDef) );
+   hdr.addColumnHeader( createClassReference(cell, profDef) );
   }
  }
 
