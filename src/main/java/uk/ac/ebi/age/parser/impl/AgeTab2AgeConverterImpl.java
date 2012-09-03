@@ -868,7 +868,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    {
     List<ChainConverter.ChainElement> chain = new ArrayList<ChainConverter.ChainElement>();
     
-    if( createEmbeddedObjectChain(blkCls, attHd, chain, sm, classMap, implCustom, log) )
+    if( createEmbeddedObjectChain(blkCls, attHd, chain, sm, classMap, implCustom, log) && validateChain( chain, convs, log ) )
      addConverter(convs, new ChainConverter(chain, attHd, profileDef));
     else
      addConverter(convs, new InvalidColumnConvertor(attHd));
@@ -971,6 +971,15 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  }
  
  
+ private boolean validateChain(List<ChainConverter.ChainElement> chain, List<ValueConverter> convs, LogNode log)
+ {
+  int level=0;
+  
+  for( ChainConverter.ChainElement cel : chain );
+  
+  return false;
+ }
+
  private AgePropertyClass getPropertyClass( ClassReference attHd, AgeClass blkOwner, ContextSemanticModel sm, boolean implCust, boolean qualf, LogNode log )
  {
   if( attHd.isCustom() )
@@ -2239,10 +2248,10 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      
      List<? extends AgeAttributeWritable> attrs = attrHost.getAttributesByClass(cls, false);
      
+     pathProp = null;
+
      if( attrs != null && attrs.size() > 0 )
      {
-      pathProp = null;
-      
       for( AgeAttributeWritable at : attrs ) //Looking for an embedded object defined at the same line 
       {
        if( ((AgeObjectAttribute)at).getValue().getOrder() == lineNum )

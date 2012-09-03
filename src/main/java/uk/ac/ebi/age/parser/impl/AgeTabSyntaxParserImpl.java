@@ -3,6 +3,7 @@ package uk.ac.ebi.age.parser.impl;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 import uk.ac.ebi.age.model.IdScope;
 import uk.ac.ebi.age.parser.AgeTabModule;
@@ -122,19 +123,41 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    for( String s : fstLine )
     line.add(s);
 
+   maxDim = lineSize(line);
+
    lines.add(line);
    
    while( ( line = reader.readRow(null) ) != null && ! isEmptyLine(line) )
    {
     lines.add(line);
    
-    if( maxDim < line.size() )
-     maxDim = line.size();
+    int sz = lineSize(line);
+    
+    if( maxDim < sz )
+     maxDim = sz;
    }
    
-  
   }
 
+  private int lineSize( List<String> line )
+  {
+   ListIterator<String> litr = line.listIterator(line.size());
+  
+   int eCnt=0;
+   
+   while( litr.hasPrevious() )
+   {
+    String pt = litr.previous();
+    
+    if( pt.length() > 0 )
+     break;
+   
+    eCnt++;
+   }
+  
+   return line.size()-eCnt;
+  }
+  
   @Override
   public int getOrder(CellValue cv)
   {
@@ -152,7 +175,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
    else
     line.clear();
    
-   int row=firstLineNum;
+   int row=firstLineNum-1;
    int col = ptr+1;
    
    for( List<String> l : lines )

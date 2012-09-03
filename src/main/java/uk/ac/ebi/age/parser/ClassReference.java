@@ -157,16 +157,16 @@ public class ClassReference extends AgeTabElement
  }
 
 
- @Override
- public boolean equals( Object obj )
- {
-  if( obj instanceof ClassReference )
-   return equals((ClassReference)obj);
-  
-  return false;
- }
+// @Override
+// public boolean equals( Object obj )
+// {
+//  if( obj instanceof ClassReference )
+//   return equals((ClassReference)obj);
+//  
+//  return false;
+// }
  
- public boolean equals( ClassReference cr )
+ public boolean equalsTo( ClassReference cr )
  {
   if( ! equalsBasis(cr) )
     return false;

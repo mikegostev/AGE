@@ -9,8 +9,8 @@ public abstract class AgeTabSyntaxParser
  public static final String typeFlag="TYPE";
  public static final String targetFlag="TARGET";
 
- private SyntaxProfile syntaxProfile;
- private SyntaxProfileDefinition syntaxProfileDef;
+ private final SyntaxProfile syntaxProfile;
+ private final SyntaxProfileDefinition syntaxProfileDef;
 
  protected AgeTabSyntaxParser(SyntaxProfile sp)
  {
@@ -37,11 +37,13 @@ public abstract class AgeTabSyntaxParser
   }
  }
  
- private StrProc[] prc = new StrProc[]{
+ private final StrProc[] prc = new StrProc[]{
    new StrProc()
    {
+    @Override
     public String getBrackets(){ return syntaxProfileDef.getFlagsTokenBrackets(); }
     
+    @Override
     public void process(ClassReference nm, CellValue cell, int start, int end) throws ParserException
     {
      String str = cell.getValue();
@@ -134,7 +136,9 @@ public abstract class AgeTabSyntaxParser
    
    new StrProc()
    {
+    @Override
     public String getBrackets(){ return syntaxProfileDef.getQualifierTokenBrackets(); }
+    @Override
     public void process(ClassReference nm, CellValue cell, int start, int end) throws ParserException
     {
      ClassReference cr = string2ClassReference(cell, start, end);
@@ -165,6 +169,8 @@ public abstract class AgeTabSyntaxParser
 
  public ClassReference string2ClassReference( CellValue cell ) throws ParserException
  {
+  cell.trim();
+  
   return string2ClassReference(cell, 0, cell.getValue().length());
  }
  
