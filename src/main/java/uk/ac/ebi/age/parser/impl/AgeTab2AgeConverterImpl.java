@@ -809,26 +809,55 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   return -1;
  }
  
- private ValueConverter findHostConverter(ClassReference attHd, List<ValueConverter> convs, LogNode log )
+ private ValueConverter findHostConverter(ClassReference attHd, int lvl, List<ValueConverter> convs, LogNode log )
  {
-  List<ClassReference> qList = attHd.getQualifiers();
-  ClassReference qualif = qList.get(qList.size()-1);
-
-  
-  if( qualif.getQualifiers() != null )
-  {
-   log.log(Level.ERROR, "A qualifier reference must not be qualified ifself. Use syntax attr[qual1][qual2]. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
-   return null;
-  }
+//  ClassReference lCR = attHd;
+//  
+//  for( int i=0; i < lvl; i++ )
+//  {
+//   lCR = lCR.getEmbeddedClassRef();
+//   
+//   if( lCR == null )
+//    return null;
+//  }
+//  
+//  List<ClassReference> qList = lCR.getQualifiers();
+//  ClassReference qualif = qList.get(qList.size()-1);
+//
+//  
+//  if( qualif.getQualifiers() != null )
+//  {
+//   log.log(Level.ERROR, "A qualifier reference must not be qualified ifself. Use syntax attr[qual1][qual2]. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+//   return null;
+//  }
   
   ValueConverter hostConverter = null;
+  
+  convs:
   for( int i=convs.size()-1; i >= 0; i-- )
   {
    ValueConverter vc = convs.get(i);
    
-   ClassReference cr = vc.getClassReference();
+   ClassReference levelCR = attHd;
+   ClassReference pretenderLCR = vc.getClassReference();
    
-   if( cr == null || ! attHd.isQualifierFor(cr) )
+   if( lvl != 0 )
+   {
+    for( int j=0; j < lvl; j++ )
+    {
+     if( !levelCR.equalsBasis(pretenderLCR) )
+      continue convs;
+     
+     levelCR = levelCR.getEmbeddedClassRef();
+     pretenderLCR = pretenderLCR.getEmbeddedClassRef();
+     
+     if( levelCR == null || pretenderLCR == null )
+      continue convs;
+    }
+
+   }
+   
+   if( ! levelCR.isQualifierFor(pretenderLCR) )
     continue;
    else
    {
@@ -866,9 +895,15 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    if( attHd.getEmbeddedClassRef() != null )
    {
+    if( ! validateChainClassReference( attHd, blkCls, sm, implCustom, convs, log ) )
+    {
+     addConverter(convs, new InvalidColumnConvertor(attHd));
+     continue;
+    }
+    
     List<ChainConverter.ChainElement> chain = new ArrayList<ChainConverter.ChainElement>();
     
-    if( createEmbeddedObjectChain(blkCls, attHd, chain, sm, classMap, implCustom, log) && validateChain( chain, convs, log ) )
+    if( createEmbeddedObjectChain(blkCls, attHd, chain, sm, classMap, implCustom, log) )
      addConverter(convs, new ChainConverter(chain, attHd, profileDef));
     else
      addConverter(convs, new InvalidColumnConvertor(attHd));
@@ -879,7 +914,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    if( qList != null && qList.size() > 0 )
    {
-    ValueConverter hostConverter = findHostConverter(attHd, convs, log);
+    ValueConverter hostConverter = findHostConverter(attHd, 0, convs, log);
     
     if( hostConverter == null )
     {
@@ -971,14 +1006,56 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
  }
  
  
- private boolean validateChain(List<ChainConverter.ChainElement> chain, List<ValueConverter> convs, LogNode log)
+ private boolean validateChainClassReference(ClassReference attHd, AgeClass blkOwner, ContextSemanticModel sm, boolean implCust, List<ValueConverter> convs, LogNode log)
  {
+  ValueConverter hostConverter = null;
+  
+  ClassReference cCR = attHd;
+  
   int level=0;
   
-  for( ChainConverter.ChainElement cel : chain );
+  do
+  {
   
-  return false;
+   ClassReference termCR = cCR;
+   
+   if( cCR.getQualifiers() != null && cCR.getQualifiers().size() > 0  )
+   {
+    hostConverter = findHostConverter(attHd, level, convs, log);
+   
+    if( hostConverter == null )
+     return false;
+    
+    termCR = cCR.getQualifiers().get( cCR.getQualifiers().size()-1 );
+   }
+   
+   if( cCR.getEmbeddedClassRef() != null )
+   {
+    AgePropertyClass pcls = getPropertyClass(termCR, blkOwner, sm, implCust, false, log);
+    
+    if( pcls == null )
+    {
+     log.log(Level.ERROR, "Class '"+cCR.getName()+"' not found. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+     return false;
+    }
+
+    if( ! ( pcls instanceof AgeAttributeClass && ((AgeAttributeClass)pcls).getDataType() == DataType.OBJECT) )
+    {
+     log.log(Level.ERROR, "Class '"+termCR.getName()+"' is not OBJECT attribute class. Row: "+attHd.getRow()+" Col: "+attHd.getCol());
+     return false;
+    }
+
+   }
+  
+   cCR = cCR.getEmbeddedClassRef();
+   level++;
+   
+  }while( cCR != null);
+  
+  return true;
  }
+
+
 
  private AgePropertyClass getPropertyClass( ClassReference attHd, AgeClass blkOwner, ContextSemanticModel sm, boolean implCust, boolean qualf, LogNode log )
  {

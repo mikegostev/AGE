@@ -174,7 +174,7 @@ public class ClassReference extends AgeTabElement
   if( embeddedClassRef != null )
   {
    if( cr.getEmbeddedClassRef() != null )
-    return embeddedClassRef.equals(cr.getEmbeddedClassRef());
+    return embeddedClassRef.equalsTo(cr.getEmbeddedClassRef());
    else
     return false;
   }
@@ -206,7 +206,7 @@ public class ClassReference extends AgeTabElement
   Iterator<ClassReference> iter2 = cr.getQualifiers().iterator();
  
   while( iter1.hasNext() )
-   if( ! iter1.next().equals(iter2.next()) )
+   if( ! iter1.next().equalsBasis(iter2.next()) )
     return false;
   
   return true;
