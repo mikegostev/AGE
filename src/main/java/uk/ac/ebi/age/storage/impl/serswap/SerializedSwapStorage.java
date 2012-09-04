@@ -117,16 +117,16 @@ public class SerializedSwapStorage implements AgeStorageAdm
   private static volatile boolean iterateModulesDirect=true;  
   private TreeMap<ModuleKey, ModuleRef > moduleMap = new TreeMap<ModuleKey, ModuleRef >();
 
-  private Map<String,AgeIndexWritable> indexMap = new HashMap<String, AgeIndexWritable>();
+  private final Map<String,AgeIndexWritable> indexMap = new HashMap<String, AgeIndexWritable>();
 
   private SemanticModel model;
   
-  private ReentrantReadWriteLock dbLock = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock dbLock = new ReentrantReadWriteLock();
   
-  private DataModuleReaderWriter submRW = new SerializedDataModuleReaderWriter();
+  private final DataModuleReaderWriter submRW = new SerializedDataModuleReaderWriter();
 
-  private Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
-  private Collection<MaintenanceModeListener> mmodListeners = new ArrayList<MaintenanceModeListener>(3);
+  private final Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
+  private final Collection<MaintenanceModeListener> mmodListeners = new ArrayList<MaintenanceModeListener>(3);
   
   private FileDepot dataDepot; 
   private FileDepot fileDepot; 
@@ -141,7 +141,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
   
   private boolean dataDirty = false;
   
-  private SerializedStorageConfiguration config;
+  private final SerializedStorageConfiguration config;
 
  public SerializedSwapStorage(SerializedStorageConfiguration conf) throws StorageInstantiationException
  {
@@ -158,7 +158,17 @@ public class SerializedSwapStorage implements AgeStorageAdm
   modelFile = new File(modelDir, modelFileName);
   dataDir = new File(baseDir, dmStoragePath);
   filesDir = new File(baseDir, fileStoragePath);
-  indexDir = new File(baseDir, indexPath);
+  
+  if( conf.getIndexDir() == null )
+   indexDir = new File( baseDir, indexPath );
+  else if( ! SerializedStorageConfiguration.ramIndexDir.equals( conf.getIndexDir() ) )
+   indexDir = new File( conf.getIndexDir() );
+  else
+   indexDir =null;
+  
+  if( indexDir!= null && ! indexDir.exists() )
+   indexDir.mkdirs();
+
   indexCacheFile = new File(filesDir,indexCacheFileName);
   
   if(baseDir.isFile())
@@ -269,6 +279,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
   }
  }
  
+ @Override
  public SemanticModel getSemanticModel()
  {
   return model;
@@ -298,12 +309,18 @@ public class SerializedSwapStorage implements AgeStorageAdm
   return new ModulesCollection();
  }
 
+ @Override
  public TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts) throws IndexIOException
  {
-  File dir = new File(indexDir, M2codec.encode(name));
-
-  if(!dir.exists())
-   dir.mkdirs();
+  File dir = null;
+  
+  if( indexDir != null ) 
+  {
+   dir = new File( indexDir, M2codec.encode(name) );
+  
+   if( ! dir.exists() )
+    dir.mkdirs();
+  }
 
   TextIndexWritable ti = null;
   try
@@ -332,13 +349,19 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
  }
 
+ @Override
  public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts,
    KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator) throws IndexIOException
  {
-  File dir = new File(indexDir, M2codec.encode(name));
-
-  if(!dir.exists())
-   dir.mkdirs();
+  File dir = null;
+  
+  if( indexDir != null ) 
+  {
+   dir = new File( indexDir, M2codec.encode(name) );
+  
+   if( ! dir.exists() )
+    dir.mkdirs();
+  }
 
   SortedTextIndexWritable<KeyT> ti;
   try
@@ -405,6 +428,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
  }
 
+ @Override
  public List<AgeObject> executeQuery(AgeQuery qury)
  {
   try
@@ -635,12 +659,12 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
  private class ModuleLoader implements Runnable
  {
-  private BlockingQueue<File>           queue;
-  private Stats                         totals;
+  private final BlockingQueue<File>           queue;
+  private final Stats                         totals;
 
-  private CountDownLatch                latch;
+  private final CountDownLatch                latch;
 
-  private Map<String, List<ExtRelInfo>> extRelMap;
+  private final Map<String, List<ExtRelInfo>> extRelMap;
 
   ModuleLoader(BlockingQueue<File> qu, Stats st, CountDownLatch ltch, Map<String, List<ExtRelInfo>> erm)
   {
@@ -848,7 +872,6 @@ public class SerializedSwapStorage implements AgeStorageAdm
    return null;
   }
 
-  File modFile = dataDepot.getFilePath(getModuleFile(key));
 
   synchronized(modref)
   {
@@ -1196,6 +1219,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
   return true;
  }
 
+ @Override
  public void shutdown()
  {
   for(AgeIndexWritable idx : indexMap.values())
@@ -1466,6 +1490,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
  }
 
 
+ @Override
  public void changeAttachmentScope( String id, String clusterId, boolean global ) throws AttachmentIOException
  {
   File globFile = fileDepot.getFilePath(makeFileSysRef(id));
@@ -1705,7 +1730,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
    return new Iterator<DataModuleWritable>()
    {
-    private Iterator<ModuleRef> iterator = dir ? moduleMap.values().iterator() 
+    private final Iterator<ModuleRef> iterator = dir ? moduleMap.values().iterator() 
       : moduleMap.descendingMap().values().iterator();
 
     @Override
