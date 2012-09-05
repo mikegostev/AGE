@@ -102,12 +102,6 @@ abstract class SwapImplicitInvExtRelation implements AgeExternalRelationWritable
  }
 
  @Override
- public String getId()
- {
-  throw new UnsupportedOperationException();
- }
-
- @Override
  public void setInferred(boolean inf)
  {
   throw new UnsupportedOperationException();

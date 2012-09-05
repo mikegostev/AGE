@@ -8,7 +8,7 @@ public class AgeAnnotationImpl extends AgeSemanticElementImpl implements AgeAnno
 {
  private static final long serialVersionUID = 1L;
 
- private AgeAnnotationClass antCls;
+ private final AgeAnnotationClass antCls;
  private String text;
  private String id;
 
@@ -19,22 +19,24 @@ public class AgeAnnotationImpl extends AgeSemanticElementImpl implements AgeAnno
   antCls = cls;
  }
  
+ @Override
  public void setText(String text)
  {
   this.text = text;
  }
 
+ @Override
  public String getText()
  {
   return text;
  }
 
+ @Override
  public AgeAnnotationClass getAgeElClass()
  {
   return antCls;
  }
 
- @Override
  public String getId()
  {
   return id;

@@ -4,5 +4,5 @@ public interface AgeSemanticElement
 {
  SemanticModel getSemanticModel();
  
- String getId();
+// String getId();
 }

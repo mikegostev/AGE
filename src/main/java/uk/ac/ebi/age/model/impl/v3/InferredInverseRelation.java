@@ -89,12 +89,6 @@ public class InferredInverseRelation implements AgeRelationWritable, Serializabl
   return directRel.getSemanticModel();
  }
 
- @Override
- public String getId()
- {
-  // TODO Auto-generated method stub
-  return "!!!inv-"+directRel.getId();
- }
 
  @Override
  public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass)

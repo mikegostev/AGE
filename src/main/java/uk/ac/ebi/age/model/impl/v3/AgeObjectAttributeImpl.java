@@ -23,6 +23,7 @@ public class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjec
   super(attrClass, host);
  }
 
+ @Override
  public AgeObjectWritable getValue()
  {
   return value;
@@ -41,21 +42,17 @@ public class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjec
   return ResolveScope.MODULE;
  }
 
+ @Override
  public void updateValue(String val) throws FormatException
  {
   throw new UnsupportedOperationException();
  }
 
+ @Override
  public void finalizeValue()
  {
  }
- 
 
- @Override
- public String getId()
- {
-  return null;
- }
 
  @Override
  public boolean getValueAsBoolean()
@@ -117,6 +114,7 @@ public class AgeObjectAttributeImpl extends AgeAttributeImpl implements AgeObjec
   return clone;
  }
  
+ @Override
  public boolean equals( Object ob )
  {
   if( ! (ob instanceof AgeAttribute) )

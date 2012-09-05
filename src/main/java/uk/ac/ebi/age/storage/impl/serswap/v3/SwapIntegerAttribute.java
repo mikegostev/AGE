@@ -18,18 +18,18 @@ public class SwapIntegerAttribute extends AgeIntegerAttributeImpl
  }
  
  @Override
- public AgeObjectProxy getAttributedHost()
+ public AttributedWritable getAttributedHost()
  {
   AttributedWritable host = super.getAttributedHost();
-  
-  if( host instanceof AgeObjectProxy)
-   return (AgeObjectProxy)host;
-  
-  AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
-  
-  setAttributedHost(pxo);
-  
-  return pxo;
+
+  if( host instanceof AgeObjectWritable && ! (host instanceof AgeObjectProxy) )
+  {
+   host = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( ((AgeObject)host).getId() );
+   
+   setAttributedHost(host);
+  }
+
+  return host;
  }
  
  @Override

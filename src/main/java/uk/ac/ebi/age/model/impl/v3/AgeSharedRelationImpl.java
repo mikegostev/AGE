@@ -68,11 +68,6 @@ public class AgeSharedRelationImpl implements AgeRelation, Serializable
   return getSourceObject().getSemanticModel();
  }
 
- @Override
- public String getId()
- {
-  return null;
- }
 
  @Override
  public AgeObjectWritable getSourceObject()

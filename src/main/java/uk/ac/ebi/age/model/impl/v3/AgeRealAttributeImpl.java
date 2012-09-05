@@ -18,11 +18,13 @@ public class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttribu
   super(attrClass, host);
  }
 
+ @Override
  public Object getValue()
  {
   return value;
  }
 
+ @Override
  public void updateValue(String val) throws FormatException
  {
   val=val.trim();
@@ -40,11 +42,6 @@ public class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttribu
   }
  }
 
- @Override
- public String getId()
- {
-  return null;
- }
 
  @Override
  public boolean getValueAsBoolean()
@@ -107,6 +104,7 @@ public class AgeRealAttributeImpl extends AgeAttributeImpl implements AgeAttribu
   return clone;
  }
  
+ @Override
  public boolean equals( Object ob )
  {
   if( ! (ob instanceof AgeAttribute) )

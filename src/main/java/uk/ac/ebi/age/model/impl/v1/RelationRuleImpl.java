@@ -27,7 +27,7 @@ public class RelationRuleImpl implements Serializable, RelationRuleWritable, Age
  private boolean subClassesIncludedRel=true;
  private boolean subclassesIncludedTarg=true;
 
- private SemanticModel model;
+ private final SemanticModel model;
 
  private int id;
 
@@ -38,41 +38,49 @@ public class RelationRuleImpl implements Serializable, RelationRuleWritable, Age
  }
  
 
+ @Override
  public RestrictionType getType()
  {
   return type;
  }
 
+ @Override
  public void setType(RestrictionType type)
  {
   this.type = type;
  }
 
+ @Override
  public Cardinality getCardinalityType()
  {
   return cardType;
  }
 
+ @Override
  public void setCardinalityType(Cardinality cardType)
  {
   this.cardType = cardType;
  }
 
+ @Override
  public int getCardinality()
  {
   return cardinality;
  }
 
+ @Override
  public void setCardinality(int cardinality)
  {
   this.cardinality = cardinality;
  }
 
+ @Override
  public Collection<QualifierRule> getQualifiers()
  {
   return qualifiers;
  }
 
+ @Override
  public void addQualifier( QualifierRule qr )
  {
   if( qualifiers == null )
@@ -91,11 +99,13 @@ public class RelationRuleImpl implements Serializable, RelationRuleWritable, Age
  }
 
 
+ @Override
  public boolean isSubclassesIncluded()
  {
   return subclassesIncludedTarg;
  }
 
+ @Override
  public void setSubclassesIncluded(boolean subclassesIncluded)
  {
   this.subclassesIncludedTarg = subclassesIncluded;
@@ -124,14 +134,6 @@ public class RelationRuleImpl implements Serializable, RelationRuleWritable, Age
  {
   this.id=id;
  }
-
- @Override
- public String getId()
- {
-  return null;
- }
-
-
 
  @Override
  public boolean isRelationSubclassesIncluded()

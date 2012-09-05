@@ -15,7 +15,7 @@ public class AgeExternalRelationImpl extends AttributedObject implements AgeExte
 {
  private static final long serialVersionUID = 3L;
 
- private RelationClassRef relClassRef; 
+ private final RelationClassRef relClassRef; 
  private String objId;
  private AgeObjectWritable sourceObject;
  private transient AgeExternalRelationWritable invRelation;
@@ -75,11 +75,6 @@ public class AgeExternalRelationImpl extends AttributedObject implements AgeExte
   target = obj;
  }
 
- @Override
- public String getId()
- {
-  return null;
- }
 
  @Override
  public void setInferred(boolean inf)

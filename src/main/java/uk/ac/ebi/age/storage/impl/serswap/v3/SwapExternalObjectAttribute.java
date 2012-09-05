@@ -21,18 +21,18 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
  }
 
  @Override
- public AgeObjectProxy getAttributedHost()
+ public AttributedWritable getAttributedHost()
  {
   AttributedWritable host = super.getAttributedHost();
-  
-  if( host instanceof AgeObjectProxy)
-   return (AgeObjectProxy)host;
-  
-  AgeObjectProxy pxo = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( host.getId() );
-  
-  setAttributedHost(pxo);
-  
-  return pxo;
+
+  if( host instanceof AgeObjectWritable && ! (host instanceof AgeObjectProxy) )
+  {
+   host = ((SwapDataModuleImpl)((AgeObject)host).getDataModule()).getModuleRef().getObjectProxy( ((AgeObject)host).getId() );
+   
+   setAttributedHost(host);
+  }
+
+  return host;
  }
  
  @Override
@@ -58,14 +58,21 @@ class SwapExternalObjectAttribute extends AgeExternalObjectAttributeImpl
   if( val != null )
    return val;
   
-  SerializedSwapStorage stor = getAttributedHost().getStorage();
+  AgeObjectProxy masterObj = getMasterObject();
+  
+  SerializedSwapStorage stor = masterObj.getStorage();
   
   AgeObjectWritable tgt = null;
   
   if( getTargetResolveScope() == ResolveScope.GLOBAL )
    tgt = stor.getGlobalObject( getTargetObjectId() );
   else
-   tgt = stor.getClusterObject(getAttributedHost().getModuleKey().getClusterId(), getTargetObjectId());
+  {
+   tgt = stor.getClusterObject(masterObj.getModuleKey().getClusterId(), getTargetObjectId());
+  
+   if( tgt == null && getTargetResolveScope() == ResolveScope.CASCADE_CLUSTER )
+    tgt = stor.getGlobalObject( getTargetObjectId() );
+  }
   
   setTargetObject(tgt);
 

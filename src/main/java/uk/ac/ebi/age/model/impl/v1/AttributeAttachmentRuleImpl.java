@@ -27,7 +27,7 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
  private boolean subclassesCountedSeparately=true;
  
  
- private SemanticModel model;
+ private final SemanticModel model;
 
  private int id;
 
@@ -43,41 +43,49 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
   return attributeClass;
  }
 
+ @Override
  public RestrictionType getType()
  {
   return type;
  }
 
+ @Override
  public void setType(RestrictionType type)
  {
   this.type = type;
  }
 
+ @Override
  public Cardinality getCardinalityType()
  {
   return cardType;
  }
 
+ @Override
  public void setCardinalityType(Cardinality cardType)
  {
   this.cardType = cardType;
  }
 
+ @Override
  public int getCardinality()
  {
   return cardinality;
  }
 
+ @Override
  public void setCardinality(int cardinality)
  {
   this.cardinality = cardinality;
  }
 
+ @Override
  public Collection<QualifierRule> getQualifiers()
  {
   return qualifiers;
  }
 
+ @Override
  public void addQualifier( QualifierRule qr )
  {
   if( qualifiers == null )
@@ -87,6 +95,7 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
  
  }
  
+ @Override
  public void setAttributeClass(AgeAttributeClass attributeClass)
  {
   this.attributeClass = attributeClass;
@@ -225,23 +234,27 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
    qualifiers.clear();
  }
 
+ @Override
  public boolean isValueUnique()
  {
   return valueUnique;
  }
  
 
+ @Override
  public void setValueUnique(boolean valueUnique)
  {
   this.valueUnique = valueUnique;
  }
 
 
+ @Override
  public boolean isSubclassesIncluded()
  {
   return subclassesIncluded;
  }
 
+ @Override
  public void setSubclassesIncluded(boolean subclassesIncluded)
  {
   this.subclassesIncluded = subclassesIncluded;
@@ -272,16 +285,12 @@ public class AttributeAttachmentRuleImpl implements Serializable, AttributeAttac
  }
 
  @Override
- public String getId()
- {
-  return null;
- }
-
  public boolean isSubclassesCountedSeparately()
  {
   return subclassesCountedSeparately;
  }
 
+ @Override
  public void setSubclassesCountedSeparately(boolean subclassesCountedSeparately)
  {
   this.subclassesCountedSeparately = subclassesCountedSeparately;

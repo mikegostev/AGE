@@ -49,11 +49,6 @@ public class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements 
   objId = target.getId();
  }
 
- @Override
- public String getId()
- {
-  return null;
- }
 
  @Override
  public AttributedClass getAttributedClass()
@@ -131,6 +126,7 @@ public class AgeExternalObjectAttributeImpl extends AgeAttributeImpl implements 
   return clone;
  }
  
+ @Override
  public boolean equals( Object ob )
  {
   if( ! (ob instanceof AgeObjectAttribute) )

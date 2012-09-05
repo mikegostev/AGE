@@ -14,9 +14,9 @@ public class AgeRelationImpl extends AttributedObject implements AgeRelationWrit
 {
  private static final long serialVersionUID = 4L;
  
- private RelationClassRef relClassRef;
- private AgeObjectWritable source;
- private AgeObjectWritable target;
+ private final RelationClassRef relClassRef;
+ private final AgeObjectWritable source;
+ private final AgeObjectWritable target;
  private AgeRelationWritable invRelation;
  private boolean inferred=false;
  
@@ -70,12 +70,6 @@ public class AgeRelationImpl extends AttributedObject implements AgeRelationWrit
   return inferred;
  }
 
-
- @Override
- public String getId()
- {
-  return null;
- }
 
  @Override
  public AttributedClass getAttributedClass()

@@ -31,11 +31,13 @@ public class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttri
  }
 
  
+ @Override
  public Object getValue()
  {
   return value;
  }
 
+ @Override
  public void updateValue(String val) throws FormatException
  {
   if( value == null )
@@ -49,6 +51,7 @@ public class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttri
   }
  }
 
+ @Override
  public void finalizeValue()
  {
 //  if( value != null )
@@ -61,13 +64,6 @@ public class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttri
    value = ((String)value).intern();
  }
  
-
- @Override
- public String getId()
- {
-  return null;
- }
-
  @Override
  public boolean getValueAsBoolean()
  {
@@ -121,6 +117,7 @@ public class AgeStringAttributeImpl extends AgeAttributeImpl implements AgeAttri
   return clone;
  }
  
+ @Override
  public boolean equals( Object ob )
  {
   if( ! (ob instanceof AgeAttribute) )

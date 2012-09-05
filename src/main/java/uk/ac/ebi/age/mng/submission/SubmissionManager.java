@@ -2569,7 +2569,7 @@ public class SubmissionManager
      {
       if(!replObj.getAgeElClass().isClassOrSubclass(extObjAttr.getAgeElClass().getTargetClass()))
       {
-       Attributed ch = extObjAttr.getMasterObject();
+       AgeObjectWritable ch = extObjAttr.getMasterObject();
 
        String hostId = ch != null ? ch.getId() : "???";
 

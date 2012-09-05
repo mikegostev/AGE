@@ -12,7 +12,7 @@ public class QualifierRuleImpl implements QualifierRuleWritable, AgeSemanticElem
 
  private static final long serialVersionUID = 1L;
 
- private SemanticModel model;
+ private final SemanticModel model;
  private int id;
  private boolean uniq;
  private AgeAttributeClass attrClass;
@@ -63,12 +63,6 @@ public class QualifierRuleImpl implements QualifierRuleWritable, AgeSemanticElem
  public SemanticModel getSemanticModel()
  {
   return model;
- }
-
- @Override
- public String getId()
- {
-  return String.valueOf(id);
  }
 
 }

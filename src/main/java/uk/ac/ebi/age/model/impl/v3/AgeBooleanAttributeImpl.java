@@ -17,11 +17,13 @@ public class AgeBooleanAttributeImpl extends AgeAttributeImpl
   super(attrClass, host);
  }
 
+ @Override
  public Object getValue()
  {
   return value;
  }
 
+ @Override
  public void updateValue(String val) throws FormatException
  {  
   val=val.trim();
@@ -33,11 +35,6 @@ public class AgeBooleanAttributeImpl extends AgeAttributeImpl
 
  }
 
- @Override
- public String getId()
- {
-  return null;
- }
 
  @Override
  public boolean getValueAsBoolean()
@@ -103,6 +100,7 @@ public class AgeBooleanAttributeImpl extends AgeAttributeImpl
   return clone;
  }
 
+ @Override
  public boolean equals( Object ob )
  {
   if( ! (ob instanceof AgeAttribute) )

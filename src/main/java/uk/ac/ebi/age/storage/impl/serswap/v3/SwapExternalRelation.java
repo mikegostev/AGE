@@ -21,6 +21,7 @@ public class SwapExternalRelation extends AgeExternalRelationImpl
   super(cRef, srcOb, id, scp);
  }
 
+ @Override
  public AgeObjectProxy getSourceObject()
  {
   AgeObjectWritable src = super.getSourceObject();
@@ -36,16 +37,17 @@ public class SwapExternalRelation extends AgeExternalRelationImpl
  }
 
  
+ @Override
  public AgeObjectWritable getTargetObject()
  {
-  if( super.getTargetObject() != null )
-   return super.getTargetObject();
+  AgeObjectWritable tgObj =  super.getTargetObject();
+  
+  if( tgObj != null )
+   return tgObj;
   
   SerializedSwapStorage stor = getSourceObject().getStorage();
   
  
-  AgeObjectWritable tgObj = null;
-  
   if( getTargetResolveScope() == ResolveScope.GLOBAL  )
    tgObj = stor.getGlobalObject( getTargetObjectId() );
   else
@@ -62,6 +64,7 @@ public class SwapExternalRelation extends AgeExternalRelationImpl
   return tgObj;
  }
  
+ @Override
  public AgeExternalRelationWritable getInverseRelation()
  {
   if( super.getInverseRelation() != null )
