@@ -64,6 +64,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   masterModel=mm;
  }
 
+ @Override
  public SemanticModel getMasterModel()
  {
   return masterModel;
@@ -169,17 +170,20 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
   return masterModel.createAgeAnnotationClass(name, aliases, id, parent);
  }
 
+ @Override
  public AgeClassWritable createAgeClass(String name, String id, String pfx, AgeClass parent)
  {
   return masterModel.createAgeClass(name, id, pfx, parent);
  }
  
+ @Override
  public AgeClassWritable createAgeClass(String name, Collection<String> aliases, String id, String pfx, AgeClass parent)
  {
   return masterModel.createAgeClass(name, aliases, id, pfx, parent);
  }
 
  
+ @Override
  public AgeClassWritable getOrCreateCustomAgeClass(String name, String pfx, AgeClass parent)
  {
   AgeClassWritable cls = null;
@@ -308,6 +312,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
 //  return masterModel.isValidProperty(prop, ageClass);
 // }
 
+ @Override
  public DataModuleWritable createDataModule()
  {
   return masterModel.getModelFactory().createDataModule(this);
@@ -360,7 +365,7 @@ public class ContextSemanticModelImpl implements ContextSemanticModel, Serializa
  @Override
  public AgeAttributeWritable createAgeAttribute(AttributeClassRef attrClass, AttributedWritable host )
  {
-  switch(attrClass.getAttributeClass().getDataType())
+  switch(attrClass.getAgeElClass().getDataType())
   {
    case BOOLEAN:
     return masterModel.getModelFactory().createAgeBooleanAttribute(attrClass, host);

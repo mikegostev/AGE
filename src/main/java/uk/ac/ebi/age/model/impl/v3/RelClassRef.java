@@ -10,9 +10,9 @@ public class RelClassRef implements RelationClassRef, Serializable
 {
  private static final long serialVersionUID = 3L;
 
- private int order;
- private String heading;
- private AgeRelationClassPlug relClassPlug;
+ private final int order;
+ private final String heading;
+ private final AgeRelationClassPlug relClassPlug;
 
  public RelClassRef(AgeRelationClassPlug attrClassPlug, int order, String heading )
  {
@@ -23,7 +23,7 @@ public class RelClassRef implements RelationClassRef, Serializable
  }
 
  @Override
- public AgeRelationClass getAgeRelationClass()
+ public AgeRelationClass getAgeElClass()
  {
   return relClassPlug.getAgeRelationClass();
  }

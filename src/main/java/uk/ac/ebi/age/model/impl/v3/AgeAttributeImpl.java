@@ -50,7 +50,7 @@ abstract public class AgeAttributeImpl extends AttributedObject implements AgeAt
  @Override
  public AgeAttributeClass getAgeElClass()
  {
-  return classReference.getAttributeClass();
+  return classReference.getAgeElClass();
  }
  
  @Override

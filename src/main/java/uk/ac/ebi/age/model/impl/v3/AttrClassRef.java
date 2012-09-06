@@ -10,9 +10,9 @@ public class AttrClassRef implements AttributeClassRef, Serializable
 {
  private static final long serialVersionUID = 3L;
 
- private int order;
- private String heading;
- private AgeAttributeClassPlug attrClassPlug;
+ private final int order;
+ private final String heading;
+ private final AgeAttributeClassPlug attrClassPlug;
 
  public AttrClassRef(AgeAttributeClassPlug attrClassPlug, int order, String heading )
  {
@@ -23,7 +23,7 @@ public class AttrClassRef implements AttributeClassRef, Serializable
  }
 
  @Override
- public AgeAttributeClass getAttributeClass()
+ public AgeAttributeClass getAgeElClass()
  {
   return attrClassPlug.getAgeAttributeClass();
  }

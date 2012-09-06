@@ -1,8 +1,7 @@
 package uk.ac.ebi.age.model;
 
-public interface RelationClassRef
+public interface RelationClassRef extends PropertyClassRef
 {
- AgeRelationClass getAgeRelationClass();
- int getOrder();
- String getHeading();
+ @Override
+ AgeRelationClass getAgeElClass();
 }

@@ -27,7 +27,7 @@ public class AgeRelationImpl extends AttributedObject implements AgeRelationWrit
  @Override
  public AgeRelationClass getAgeElClass()
  {
-  return relClassRef.getAgeRelationClass();
+  return relClassRef.getAgeElClass();
  }
 
  @Override

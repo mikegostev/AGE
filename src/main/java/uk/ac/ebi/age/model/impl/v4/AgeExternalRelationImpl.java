@@ -36,7 +36,7 @@ public class AgeExternalRelationImpl extends AttributedObject implements AgeExte
  @Override
  public AgeRelationClass getAgeElClass()
  {
-  return relClassRef.getAgeRelationClass();
+  return relClassRef.getAgeElClass();
  }
  
  @Override
