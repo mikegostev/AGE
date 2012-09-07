@@ -2049,8 +2049,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   public void resetObject( AgeObjectWritable obj )
   {}
 
-  // Не могу вспомнить, зачем мне понадобилось это делать. По идее hostConverter должен удалить вcе отношения... Зачем тогда удалять квалификаторы!
-  // Заменил на пустой resetObject
+  // РќРµ РјРѕРіСѓ РІСЃРїРѕРјРЅРёС‚СЊ, Р·Р°С‡РµРј РјРЅРµ РїРѕРЅР°РґРѕР±РёР»РѕСЃСЊ СЌС‚Рѕ РґРµР»Р°С‚СЊ. РџРѕ РёРґРµРµ hostConverter РґРѕР»Р¶РµРЅ СѓРґР°Р»РёС‚СЊ РІcРµ РѕС‚РЅРѕС€РµРЅРёСЏ... Р—Р°С‡РµРј С‚РѕРіРґР° СѓРґР°Р»СЏС‚СЊ РєРІР°Р»РёС„РёРєР°С‚РѕСЂС‹!
+  // Р—Р°РјРµРЅРёР» РЅР° РїСѓСЃС‚РѕР№ resetObject
   public void resetObjectX( AgeObjectWritable obj )
   {
    List<AgeAttributeClass> chain = new ArrayList<AgeAttributeClass>(5);

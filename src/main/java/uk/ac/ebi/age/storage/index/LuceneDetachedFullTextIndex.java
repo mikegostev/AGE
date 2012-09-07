@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.storage.impl.ser;
+package uk.ac.ebi.age.storage.index;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,16 +26,16 @@ import org.apache.lucene.util.Version;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.query.AgeQuery;
-import uk.ac.ebi.age.storage.index.AgeAttachedIndex;
-import uk.ac.ebi.age.storage.index.DocCollection;
-import uk.ac.ebi.age.storage.index.Selection;
-import uk.ac.ebi.age.storage.index.TextFieldExtractor;
-import uk.ac.ebi.age.storage.index.TextIndexWritable;
+import uk.ac.ebi.age.storage.AgeStorage;
 
 import com.pri.util.collection.Collections;
 
-public class LuceneFullTextIndex implements TextIndexWritable, AgeAttachedIndex
+public class LuceneDetachedFullTextIndex implements TextIndexWritable
 {
+ private String objectIdField = "_###ObjID";
+ private String moduleIdField = "_###ModID";
+ private String clusterIdField = "_###ClstID";
+ 
 // private static final String AGEOBJECTFIELD="AgeObject";
  private final String defaultFieldName;
  
@@ -44,24 +44,64 @@ public class LuceneFullTextIndex implements TextIndexWritable, AgeAttachedIndex
  private final QueryParser queryParser;
  private IndexSearcher searcher;
  
- private List<AgeObject> objectList = Collections.emptyList();
+ private final AgeStorage storage;
  
  private final AgeQuery query;
- private final Collection<TextFieldExtractor> extractors;
+ private final List<TextFieldExtractor> extractors;
  
  private boolean dirty=false;
 
- public LuceneFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts) throws IOException
+ public LuceneDetachedFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, AgeStorage st) throws IOException
  {
-  this(qury,exts,null);
+  this(qury,exts,st,null);
  }
 
- public LuceneFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, File path) throws IOException
+ public LuceneDetachedFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, AgeStorage st, File path) throws IOException
  {
   query=qury;
-  extractors=exts;
+  extractors=new ArrayList<TextFieldExtractor>(exts.size()+3);
+  storage = st;
   
-  defaultFieldName = extractors.iterator().next().getName();
+  extractors.addAll(exts);
+  
+  defaultFieldName = extractors.get(0).getName();
+  
+  for( TextFieldExtractor ext : extractors )
+  {
+   if(objectIdField.equals( ext.getName() ) )
+    objectIdField += "#";
+   else if(moduleIdField.equals( ext.getName() ) )
+    moduleIdField += "#";
+   else if(clusterIdField.equals( ext.getName() ) )
+    clusterIdField += "#";
+  }
+  
+  extractors.add( new TextFieldExtractor(objectIdField, new TextValueExtractor()
+  {
+   @Override
+   public String getValue(AgeObject ao)
+   {
+    return ao.getId();
+   }
+  }, true) );
+
+  extractors.add( new TextFieldExtractor(moduleIdField, new TextValueExtractor()
+  {
+   @Override
+   public String getValue(AgeObject ao)
+   {
+    return ao.getModuleKey().getModuleId();
+   }
+  }, true) );
+  
+  extractors.add( new TextFieldExtractor(clusterIdField, new TextValueExtractor()
+  {
+   @Override
+   public String getValue(AgeObject ao)
+   {
+    return ao.getModuleKey().getClusterId();
+   }
+  }, true) );
   
   queryParser = new QueryParser( Version.LUCENE_30, defaultFieldName, analyzer);
 
@@ -94,44 +134,6 @@ public class LuceneFullTextIndex implements TextIndexWritable, AgeAttachedIndex
    e.printStackTrace();
   }
  }
- 
-// public void index(List<AgeObject> aol, Collection<TextFieldExtractor> extf)
-// {
-//  try
-//  {
-//   IndexWriter iWriter = new IndexWriter(index, analyzer, false,
-//     IndexWriter.MaxFieldLength.UNLIMITED);
-//
-//   if( objectList == null )
-//    objectList=aol;
-//   else
-//    objectList.addAll(aol);
-//   
-//   for(AgeObject ao : objectList )
-//   {
-//    Document doc = new Document();
-//    
-//    for(TextFieldExtractor tfe : extf )
-//     doc.add(new Field(tfe.getName(), tfe.getExtractor().getValue(ao), Field.Store.NO, Field.Index.ANALYZED));
-//    
-//    iWriter.addDocument(doc);
-//   }
-//
-//   iWriter.close();
-//   
-//   defaultFieldName = extf.iterator().next().getName();
-//  }
-//  catch(CorruptIndexException e)
-//  {
-//   // TODO Auto-generated catch block
-//   e.printStackTrace();
-//  }
-//  catch(IOException e)
-//  {
-//   // TODO Auto-generated catch block
-//   e.printStackTrace();
-//  }
-// }
  
  
  @Override
@@ -223,12 +225,16 @@ public class LuceneFullTextIndex implements TextIndexWritable, AgeAttachedIndex
     {
      count++;
 //     System.out.println("Found doc: "+ind+". Object: "+objectList.get(ind).getId()+". Class: "+objectList.get(ind).getAgeElClass().getName() );
+
+     Document doc = reader.document(docId);
+     
+     AgeObject obj = storage.getObject(doc.get(clusterIdField), doc.get(moduleIdField), doc.get(objectIdField));
+     
      if( count >= offs && (limit <= 0 || count < (offs+limit) ) )
-      res.add( objectList.get(docId+base) );
+      res.add( obj );
      
      if( aggs != null )
      {
-      Document doc = reader.document(docId);
       
       for(String fld : aggs)
       {
@@ -252,7 +258,7 @@ public class LuceneFullTextIndex implements TextIndexWritable, AgeAttachedIndex
     @Override
     public boolean acceptsDocsOutOfOrder()
     {
-     return false;
+     return true;
     }
    };
 
@@ -286,24 +292,6 @@ public class LuceneFullTextIndex implements TextIndexWritable, AgeAttachedIndex
  @Override
  public void index(List<AgeObject> aol, boolean append)
  {
-  List<AgeObject> naol = null;
-  
-  if( append )
-  {
-   naol = new ArrayList<AgeObject>( aol.size() + objectList.size() );
-   
-   naol.addAll(objectList);
-   naol.addAll(aol);
-  }
-  else
-  {
-   naol = new ArrayList<AgeObject>( aol.size() );
-   
-   naol.addAll(aol);
-  }
-  
-  objectList = naol;
-  
   indexList( aol, append );
  }
  
@@ -403,19 +391,6 @@ public class LuceneFullTextIndex implements TextIndexWritable, AgeAttachedIndex
   {
    return count;
   }
- }
-
- @Override
- public List<AgeObject> getObjectList()
- {
-  return objectList;
- }
-
- protected void setObjectList( List<AgeObject> lst )
- {
-  objectList = lst;
-  
-  indexList(objectList, false);
  }
 
  @Override

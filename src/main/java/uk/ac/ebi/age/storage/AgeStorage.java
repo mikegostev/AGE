@@ -10,8 +10,9 @@ import uk.ac.ebi.age.model.ModuleKey;
 import uk.ac.ebi.age.model.SemanticModel;
 import uk.ac.ebi.age.query.AgeQuery;
 import uk.ac.ebi.age.storage.exeption.IndexIOException;
+import uk.ac.ebi.age.storage.index.AttachedSortedTextIndex;
+import uk.ac.ebi.age.storage.index.AttachedTextIndex;
 import uk.ac.ebi.age.storage.index.KeyExtractor;
-import uk.ac.ebi.age.storage.index.SortedTextIndex;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
 import uk.ac.ebi.age.storage.index.TextIndex;
 
@@ -45,9 +46,11 @@ public interface AgeStorage
  Collection<? extends DataModule> getDataModules();
 
 
- TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> cb ) throws IndexIOException;
- public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts,
+ AttachedTextIndex createAttachedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> cb ) throws IndexIOException;
+ public <KeyT> AttachedSortedTextIndex<KeyT> createAttachedSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts,
    KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator) throws IndexIOException;
+
+ TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> cb ) throws IndexIOException;
 
  File getAttachment(String id);
  File getAttachment(String id, String clustId);

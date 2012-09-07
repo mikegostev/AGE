@@ -54,9 +54,10 @@ import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
 import uk.ac.ebi.age.storage.impl.SerializedDataModuleReaderWriter;
 import uk.ac.ebi.age.storage.index.AgeIndexWritable;
+import uk.ac.ebi.age.storage.index.AttachedSortedTextIndex;
+import uk.ac.ebi.age.storage.index.AttachedTextIndex;
 import uk.ac.ebi.age.storage.index.IndexFactory;
 import uk.ac.ebi.age.storage.index.KeyExtractor;
-import uk.ac.ebi.age.storage.index.SortedTextIndex;
 import uk.ac.ebi.age.storage.index.SortedTextIndexWritable;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
 import uk.ac.ebi.age.storage.index.TextIndex;
@@ -96,26 +97,26 @@ public class SerializedStorage implements AgeStorageAdm
  private static final String fileStoragePath = "files";
  private static final String modelFileName = "model.ser";
  
- private File modelFile;
- private File dataDir;
- private File filesDir;
+ private final File modelFile;
+ private final File dataDir;
+ private final File filesDir;
  private File indexDir;
  
- private Map<String, AgeObjectWritable> globalIndexMap = new HashMap<String, AgeObjectWritable>();
- private Map<String, Map<String,AgeObjectWritable>> clusterIndexMap = new HashMap<String, Map<String,AgeObjectWritable>>();
+ private final Map<String, AgeObjectWritable> globalIndexMap = new HashMap<String, AgeObjectWritable>();
+ private final Map<String, Map<String,AgeObjectWritable>> clusterIndexMap = new HashMap<String, Map<String,AgeObjectWritable>>();
  
- private Map<ModuleKey, DataModuleWritable> moduleMap = new HashMap<ModuleKey, DataModuleWritable>();
+ private final Map<ModuleKey, DataModuleWritable> moduleMap = new HashMap<ModuleKey, DataModuleWritable>();
 
- private Map<String,AgeIndexWritable> indexMap = new HashMap<String, AgeIndexWritable>();
+ private final Map<String,AgeIndexWritable> indexMap = new HashMap<String, AgeIndexWritable>();
 
  private SemanticModel model;
  
- private ReentrantReadWriteLock dbLock = new ReentrantReadWriteLock();
+ private final ReentrantReadWriteLock dbLock = new ReentrantReadWriteLock();
  
- private DataModuleReaderWriter submRW = new SerializedDataModuleReaderWriter();
+ private final DataModuleReaderWriter submRW = new SerializedDataModuleReaderWriter();
 
- private Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
- private Collection<MaintenanceModeListener> mmodListeners = new ArrayList<MaintenanceModeListener>(3);
+ private final Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
+ private final Collection<MaintenanceModeListener> mmodListeners = new ArrayList<MaintenanceModeListener>(3);
  
  private FileDepot dataDepot; 
  private FileDepot fileDepot; 
@@ -130,7 +131,7 @@ public class SerializedStorage implements AgeStorageAdm
  
  private boolean dataDirty = false;
  
- private SerializedStorageConfiguration config;
+ private final SerializedStorageConfiguration config;
  
  private volatile Future<?> mmodeWDTimerFuture;
  
@@ -192,6 +193,7 @@ public class SerializedStorage implements AgeStorageAdm
   loadData();
  }
  
+ @Override
  public SemanticModel getSemanticModel()
  {
   return model;
@@ -232,11 +234,11 @@ public class SerializedStorage implements AgeStorageAdm
   return moduleMap.values();
  }
 
- 
- public TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts) throws IndexIOException
+ @Override
+ public TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> cb) throws IndexIOException
  {
   File dir = null;
-    
+  
   if( indexDir != null ) 
   {
    dir = new File( indexDir, M2codec.encode(name) );
@@ -248,7 +250,7 @@ public class SerializedStorage implements AgeStorageAdm
   TextIndexWritable ti = null ;
   try
   {
-   ti = IndexFactory.getInstance().createFullTextIndex( qury, exts, dir );
+   ti = IndexFactory.getInstance().createFullTextIndex( qury, cb, this, dir );
   }
   catch(IOException e)
   {
@@ -269,10 +271,50 @@ public class SerializedStorage implements AgeStorageAdm
   {
    dbLock.readLock().unlock();
   }
+ }
+ 
+ @Override
+ public AttachedTextIndex createAttachedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts) throws IndexIOException
+ {
+  File dir = null;
+    
+  if( indexDir != null ) 
+  {
+   dir = new File( indexDir, M2codec.encode(name) );
+  
+   if( ! dir.exists() )
+    dir.mkdirs();
+  }
+  
+  TextIndexWritable ti = null ;
+  try
+  {
+   ti = IndexFactory.getInstance().createAttachedFullTextIndex( qury, exts, dir );
+  }
+  catch(IOException e)
+  {
+   throw new IndexIOException(e.getMessage(),e);
+  }
+
+  try
+  {
+   dbLock.readLock().lock();
+
+   ti.index( executeQuery(qury), false );
+
+   indexMap.put(name, ti);
+
+   return (AttachedTextIndex)ti;
+  }
+  finally
+  {
+   dbLock.readLock().unlock();
+  }
 
  }
  
- public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator) throws IndexIOException
+ @Override
+ public <KeyT> AttachedSortedTextIndex<KeyT> createAttachedSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts, KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator) throws IndexIOException
  {
   File dir = null;
   
@@ -384,6 +426,7 @@ public class SerializedStorage implements AgeStorageAdm
  }
  
  
+ @Override
  public List<AgeObject> executeQuery(AgeQuery qury)
  {
   try
@@ -599,11 +642,11 @@ public class SerializedStorage implements AgeStorageAdm
  
  private class ModuleLoader implements Runnable
  {
-  private BlockingQueue<File> queue;
-  private Stats               totals;
-  private String threadName;
+  private final BlockingQueue<File> queue;
+  private final Stats               totals;
+  private final String threadName;
   
-  private CountDownLatch latch;
+  private final CountDownLatch latch;
   
   ModuleLoader( BlockingQueue<File> qu, Stats st, CountDownLatch ltch, String tName )
   {
@@ -1103,6 +1146,7 @@ public class SerializedStorage implements AgeStorageAdm
  }
 
  
+ @Override
  public void shutdown()
  {
   lockWrite();
@@ -1391,6 +1435,7 @@ public class SerializedStorage implements AgeStorageAdm
  }
 
 
+ @Override
  public void changeAttachmentScope( String id, String clusterId, boolean global ) throws AttachmentIOException
  {
   File globFile = fileDepot.getFilePath(makeFileSysRef(id));

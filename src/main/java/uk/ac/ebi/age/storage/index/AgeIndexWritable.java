@@ -5,9 +5,8 @@ import java.util.List;
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.query.AgeQuery;
 
-public interface AgeIndexWritable extends AgeIndex
+public interface AgeIndexWritable
 {
-
  boolean isDirty();
  void setDirty( boolean dirty );
  
@@ -16,6 +15,4 @@ public interface AgeIndexWritable extends AgeIndex
  void index(List<AgeObject> res, boolean append);
 
  void close();
-// void reset();
- 
 }

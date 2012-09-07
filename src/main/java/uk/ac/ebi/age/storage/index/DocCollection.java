@@ -1,4 +1,4 @@
-package uk.ac.ebi.age.storage.impl.ser;
+package uk.ac.ebi.age.storage.index;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -11,7 +11,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 
 import uk.ac.ebi.age.model.AgeObject;
-import uk.ac.ebi.age.storage.index.TextFieldExtractor;
 import uk.ac.ebi.mg.executor.DefaultExecutorService;
 
 public class DocCollection implements Iterable<Document>

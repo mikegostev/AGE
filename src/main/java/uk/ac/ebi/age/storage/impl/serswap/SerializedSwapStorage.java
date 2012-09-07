@@ -61,9 +61,10 @@ import uk.ac.ebi.age.storage.impl.serswap.v3.SwapDataModuleImpl;
 import uk.ac.ebi.age.storage.impl.serswap.v3.SwapModelFactory;
 import uk.ac.ebi.age.storage.impl.serswap.v3.SwapModelFactoryImpl;
 import uk.ac.ebi.age.storage.index.AgeIndexWritable;
+import uk.ac.ebi.age.storage.index.AttachedSortedTextIndex;
+import uk.ac.ebi.age.storage.index.AttachedTextIndex;
 import uk.ac.ebi.age.storage.index.IndexFactory;
 import uk.ac.ebi.age.storage.index.KeyExtractor;
-import uk.ac.ebi.age.storage.index.SortedTextIndex;
 import uk.ac.ebi.age.storage.index.SortedTextIndexWritable;
 import uk.ac.ebi.age.storage.index.TextFieldExtractor;
 import uk.ac.ebi.age.storage.index.TextIndex;
@@ -308,9 +309,48 @@ public class SerializedSwapStorage implements AgeStorageAdm
  {
   return new ModulesCollection();
  }
-
+ 
  @Override
- public TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts) throws IndexIOException
+ public TextIndex createTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> cb) throws IndexIOException
+ {
+  File dir = null;
+  
+  if( indexDir != null ) 
+  {
+   dir = new File( indexDir, M2codec.encode(name) );
+  
+   if( ! dir.exists() )
+    dir.mkdirs();
+  }
+  
+  TextIndexWritable ti = null ;
+  try
+  {
+   ti = IndexFactory.getInstance().createFullTextIndex( qury, cb, this, dir );
+  }
+  catch(IOException e)
+  {
+   throw new IndexIOException(e.getMessage(),e);
+  }
+
+  try
+  {
+   dbLock.readLock().lock();
+
+   ti.index( executeQuery(qury), false );
+
+   indexMap.put(name, ti);
+
+   return ti;
+  }
+  finally
+  {
+   dbLock.readLock().unlock();
+  }
+ }
+ 
+ @Override
+ public AttachedTextIndex createAttachedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts) throws IndexIOException
  {
   File dir = null;
   
@@ -325,7 +365,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
   TextIndexWritable ti = null;
   try
   {
-   ti = IndexFactory.getInstance().createFullTextIndex(qury, exts, dir);
+   ti = IndexFactory.getInstance().createAttachedFullTextIndex(qury, exts, dir);
   }
   catch(IOException e)
   {
@@ -340,7 +380,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
    indexMap.put(name, ti);
 
-   return ti;
+   return (AttachedTextIndex)ti;
   }
   finally
   {
@@ -350,7 +390,7 @@ public class SerializedSwapStorage implements AgeStorageAdm
  }
 
  @Override
- public <KeyT> SortedTextIndex<KeyT> createSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts,
+ public <KeyT> AttachedSortedTextIndex<KeyT> createAttachedSortedTextIndex(String name, AgeQuery qury, Collection<TextFieldExtractor> exts,
    KeyExtractor<KeyT> keyExtractor, Comparator<KeyT> comparator) throws IndexIOException
  {
   File dir = null;

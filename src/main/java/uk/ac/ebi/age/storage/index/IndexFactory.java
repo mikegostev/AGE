@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Comparator;
 
 import uk.ac.ebi.age.query.AgeQuery;
+import uk.ac.ebi.age.storage.AgeStorage;
 import uk.ac.ebi.age.storage.impl.ser.LuceneFullTextIndex;
 import uk.ac.ebi.age.storage.impl.ser.LuceneSortedFullTextIndex;
 
@@ -18,7 +19,7 @@ public class IndexFactory
   return instance;
  }
 
- public TextIndexWritable createFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, File path) throws IOException
+ public TextIndexWritable createAttachedFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> exts, File path) throws IOException
  {
   return new LuceneFullTextIndex( qury, exts, path );
  }
@@ -27,6 +28,11 @@ public class IndexFactory
      KeyExtractor<KeyT> kext, Comparator<KeyT> keyComp, File path) throws IOException
  {
   return new LuceneSortedFullTextIndex<KeyT>( qury, exts, kext, keyComp, path );
+ }
+
+ public TextIndexWritable createFullTextIndex(AgeQuery qury, Collection<TextFieldExtractor> cb, AgeStorage st, File dir) throws IOException
+ {
+  return new LuceneDetachedFullTextIndex( qury, cb, st, dir );
  }
 
 }

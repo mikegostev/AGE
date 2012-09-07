@@ -4,7 +4,7 @@ import java.util.List;
 
 import uk.ac.ebi.age.model.AgeObject;
 
-public interface AgeIndex
+public interface AgeAttachedIndex
 {
  List<? extends AgeObject> getObjectList();
 }
