@@ -12,6 +12,7 @@ import java.util.NoSuchElementException;
 import uk.ac.ebi.age.ext.entity.ClusterEntity;
 import uk.ac.ebi.age.ext.entity.Entity;
 import uk.ac.ebi.age.ext.entity.EntityDomain;
+import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.age.model.AgeRelation;
 import uk.ac.ebi.age.model.Attributed;
 import uk.ac.ebi.age.model.ContextSemanticModel;
@@ -55,7 +56,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
 // private long version;
  private List<AgeObjectWritable> objects = new ArrayList<AgeObjectWritable>(50);
 
- private ContextSemanticModel model;
+ private final ContextSemanticModel model;
  private List<AgeExternalRelationWritable> extRels ;
  private List<AgeExternalObjectAttributeWritable> extObjAttrs ;
  private List<AgeFileAttributeWritable> fileRefs ;
@@ -69,6 +70,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  }
 
 
+ @Override
  public void addObject(AgeObjectWritable obj)
  {
   objects = Collections.addToCompactList(objects, obj);
@@ -221,12 +223,14 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
    resetAttributedObject(atw);
  }
 
+ @Override
  public String getClusterId()
  {
   return modKey.getClusterId();
  }
 
 
+ @Override
  public void setClusterId(String clusterId)
  {
   if( modKey == null )
@@ -238,7 +242,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
  //Collection of all attributes (recursively!) in the module filtered by the selector
  private class SelectionCollection<T extends AttributedWritable> extends AbstractCollection<T>
  {
-  private AttributedSelector selector;
+  private final AttributedSelector selector;
   
   SelectionCollection( AttributedSelector sel )
   {
@@ -247,7 +251,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   
   class SelAttrIter implements Iterator<T>
   {
-   private List<Iterator<? extends Attributed>> stk = new ArrayList<Iterator<? extends Attributed>>(5);
+   private final List<Iterator<? extends Attributed>> stk = new ArrayList<Iterator<? extends Attributed>>(5);
    
    {
     stk.add(objects.iterator());
@@ -283,6 +287,12 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
      if( ! atbt.getAttributes().isEmpty() )
      {
       stk.add(cIter = atbt.getAttributes().iterator());
+      last++;
+     }
+     
+     if( (atbt instanceof AgeObject) && ((AgeObject)atbt).getRelations() != null && !((AgeObject)atbt).getRelations().isEmpty() )
+     {
+      stk.add(cIter = ((AgeObject)atbt).getRelations().iterator());
       last++;
      }
      
@@ -332,7 +342,7 @@ class DataModuleImpl  implements DataModuleWritable, Serializable
   if(extRels == null)
    extRels = new ArrayList<AgeExternalRelationWritable>(10);
 
-  extRels = Collections.addToCompactList(extRels, (AgeExternalRelationWritable) rel);
+  extRels = Collections.addToCompactList(extRels, rel);
  }
 
 
