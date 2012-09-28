@@ -163,7 +163,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
    
    SyntaxProfileDefinition profileDef = syntaxProfile.getClassSpecificSyntaxProfile(me.getValue());
 
-   if( ! createConvertors( me.getKey(), me.getValue(), convs, sm, classMap, profileDef.allowImplicitCustomClasses(), subLog ) )
+   if( ! createConvertors( me.getKey(), res, me.getValue(), convs, sm, classMap, profileDef.allowImplicitCustomClasses(), subLog ) )
    {
     subLog.log(Level.ERROR,"Convertors creation failed");
     result = false; //We don't stop here, erroneous columns will be ignored
@@ -874,7 +874,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   
  }
  
- private boolean createConvertors( BlockHeader blck, AgeClass blkCls, List<ValueConverter> convs, ContextSemanticModel sm,
+ private boolean createConvertors( BlockHeader blck, DataModuleWritable dm, AgeClass blkCls, List<ValueConverter> convs, ContextSemanticModel sm,
    Map<AgeClass, Map<String,AgeObjectWritable>> classMap, boolean implCustom, LogNode log )// throws SemanticException
  {
   boolean result = true;
@@ -904,7 +904,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
     List<ChainConverter.ChainElement> chain = new ArrayList<ChainConverter.ChainElement>();
     
     if( createEmbeddedObjectChain(blkCls, attHd, chain, sm, classMap, implCustom, log) )
-     addConverter(convs, new ChainConverter(chain, attHd, profileDef));
+     addConverter(convs, new ChainConverter(chain, dm, attHd, profileDef));
     else
      addConverter(convs, new InvalidColumnConvertor(attHd));
     
@@ -2246,19 +2246,21 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   private final int chainLength;
   private AgeObjectWritable hostObject;
   private final SyntaxProfileDefinition profileDef;
+  private final DataModuleWritable dmod;
   
   private int lineNum;
   
   private static int counter=1;
 
  
-  protected ChainConverter( List<ChainElement> chn, ClassReference cref, SyntaxProfileDefinition profDef )
+  protected ChainConverter( List<ChainElement> chn, DataModuleWritable dm,  ClassReference cref, SyntaxProfileDefinition profDef )
   {
    super(cref);
 
    chain = chn;
    chainLength = chain.size();
    profileDef = profDef;
+   dmod = dm;
   }
 
 
@@ -2321,6 +2323,9 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
      objatt.setValue(embObj);
      
      embObj.setOrder(lineNum);
+     
+     embObj.setDataModule(dmod);
+     dmod.addObject(embObj);
      
      attrHost = embObj;
     }    
