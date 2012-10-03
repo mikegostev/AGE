@@ -443,8 +443,7 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
    return false;
   }
 
-  Collection<AttributeAttachmentRule> atRules = cls.getAttributeAttachmentRules() != null?
-    cls.getAttributeAttachmentRules() : Collections.<AttributeAttachmentRule>emptyList();
+  Collection<AttributeAttachmentRule> atRules = cls.getAllAttributeAttachmentRules();
   
   Collection<? extends AgeAttributeClass> atClasses = obj.getAttributeClasses();
   
@@ -1163,8 +1162,8 @@ public class AgeSemanticValidatorImpl implements AgeSemanticValidator
  
  private static class ExtModelResolver extends Resolver
  {
-  private SemanticModel origModel;
-  private SemanticModel newModel;
+  private final SemanticModel origModel;
+  private final SemanticModel newModel;
   
   ExtModelResolver(SemanticModel oldM,SemanticModel newM)
   {

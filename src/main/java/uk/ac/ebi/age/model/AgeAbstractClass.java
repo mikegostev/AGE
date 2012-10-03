@@ -21,4 +21,8 @@ public interface AgeAbstractClass
  Collection<AgeAnnotation> getAnnotations();
  
  Collection<String> getAliases();
+ 
+ Collection<AttributeAttachmentRule> getAttributeAttachmentRules();
+ Collection<AttributeAttachmentRule> getAllAttributeAttachmentRules();
+
 }
