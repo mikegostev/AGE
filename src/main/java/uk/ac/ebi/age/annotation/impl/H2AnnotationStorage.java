@@ -31,8 +31,8 @@ import uk.ac.ebi.mg.assertlog.Log;
 import uk.ac.ebi.mg.assertlog.LogFactory;
 import uk.ac.ebi.mg.rwarbiter.InvalidTokenException;
 import uk.ac.ebi.mg.rwarbiter.RWArbiter;
+import uk.ac.ebi.mg.rwarbiter.Token;
 import uk.ac.ebi.mg.rwarbiter.TokenFactory;
-import uk.ac.ebi.mg.rwarbiter.TokenW;
 
 import com.pri.util.ObjectRecycler;
 
@@ -60,22 +60,36 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
 
  private AnnotationCache               cache;
 
- private ObjectRecycler<StringBuilder> sbRecycler          = new ObjectRecycler<StringBuilder>(3);
+ private final ObjectRecycler<StringBuilder> sbRecycler          = new ObjectRecycler<StringBuilder>(3);
 
- private FileResourceManager           txManager;
- private String                        cacheFileRelPath;
- private File                          cacheFile;
+ private final FileResourceManager           txManager;
+ private final String                        cacheFileRelPath;
+ private final File                          cacheFile;
 
- private AtomicBoolean                 cacheDirty          = new AtomicBoolean(false);
+ private final AtomicBoolean                 cacheDirty          = new AtomicBoolean(false);
 
- private RWArbiter<TrnInfo>            arbiter             = new RWArbiter<TrnInfo>(new TokenFactory<TrnInfo>()
-                                                           {
-                                                            @Override
-                                                            public TrnInfo createToken()
-                                                            {
-                                                             return new TrnInfo();
-                                                            }
-                                                           });
+ private final RWArbiter<TrnInfo,TrnInfo,TrnInfo>  arbiter = new RWArbiter<TrnInfo,TrnInfo,TrnInfo>(new TokenFactory<TrnInfo,TrnInfo,TrnInfo>()
+  {
+
+   @Override
+   public TrnInfo createReadToken()
+   {
+    return new TrnInfo();
+   }
+ 
+   @Override
+   public TrnInfo createWriteToken()
+   {
+    return new TrnInfo();
+   }
+ 
+   @Override
+   public TrnInfo createUpgradableReadToken()
+   {
+    return new TrnInfo();
+   }
+
+  });
 
  private long lastUpdateTime;
 
@@ -254,7 +268,7 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
     {
      if( System.currentTimeMillis()-lastUpdateTime > CACHE_DUMP_DELAY )
      {
-      TokenW wtok = arbiter.getWriteLock();
+      Token wtok = arbiter.getWriteLock();
       
       try
       {
@@ -788,21 +802,10 @@ public class H2AnnotationStorage extends AbstractAnnotationStorage
   }
  }
 
- private static class TrnInfo implements TokenW, Transaction
+ private static class TrnInfo extends Token implements Transaction
  {
-  private boolean   active   = true;
   private boolean   prepared = false;
   private Statement stmt;
-
-  public boolean isActive()
-  {
-   return active;
-  }
-
-  public void setActive(boolean active)
-  {
-   this.active = active;
-  }
 
   public Statement getStatement()
   {

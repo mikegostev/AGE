@@ -28,8 +28,8 @@ import uk.ac.ebi.age.transaction.Transaction;
 import uk.ac.ebi.age.transaction.TransactionException;
 import uk.ac.ebi.mg.rwarbiter.InvalidTokenException;
 import uk.ac.ebi.mg.rwarbiter.RWArbiter;
+import uk.ac.ebi.mg.rwarbiter.Token;
 import uk.ac.ebi.mg.rwarbiter.TokenFactory;
-import uk.ac.ebi.mg.rwarbiter.TokenW;
 
 import com.pri.util.collection.Collections;
 
@@ -39,33 +39,36 @@ public abstract class AbstractInMemoryAnnotationStorage extends AbstractAnnotati
 
  private Map< Topic, SortedMap<String,Serializable> > annotMap;
 
- private static class TrnImp implements Transaction, TokenW
+ private static class TrnImp extends Token  implements Transaction
  {
-  boolean active = true;
-
-  public boolean isActive()
-  {
-   return active;
-  }
-
-  public void setActive(boolean active)
-  {
-   this.active = active;
-  }
  }
  
- private RWArbiter<TrnImp> arbiter = new RWArbiter<TrnImp>( new TokenFactory<TrnImp>()
+ private final RWArbiter<TrnImp,TrnImp,TrnImp> arbiter = new RWArbiter<TrnImp,TrnImp,TrnImp>( new TokenFactory<TrnImp,TrnImp,TrnImp>()
  {
+
   @Override
-  public TrnImp createToken()
+  public TrnImp createReadToken()
   {
    return new TrnImp();
   }
+
+  @Override
+  public TrnImp createWriteToken()
+  {
+   return new TrnImp();
+  }
+
+  @Override
+  public TrnImp createUpgradableReadToken()
+  {
+   return new TrnImp();
+  }
+
  });
  
- private FileResourceManager txManager;
- private String serialFileRelPath;
- private File serialFile;
+ private final FileResourceManager txManager;
+ private final String serialFileRelPath;
+ private final File serialFile;
  
  private boolean dirty = false;
  
