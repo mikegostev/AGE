@@ -1622,7 +1622,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   public void convert( AgeTabValue atVal ) throws ConvertionException
   {
 
-   if(atVal == null)
+   if( atVal == null || atVal.getValue().length() == 0 )
     return;
    
    SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass());
@@ -1671,7 +1671,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   {
 //   setLastConvertedProperty(null);
 
-   if(atVal == null )
+   if( atVal == null || atVal.getValue().length() == 0 )
     return;
    
    atVal.trim();
@@ -1731,7 +1731,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   @Override
   public void convert(AgeTabValue atVal)
   {
-   if(atVal == null )
+   if( atVal == null || atVal.getValue().length() == 0 )
     return;
    
    atVal.trim();
@@ -1830,7 +1830,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   @Override
   public void convert(AgeTabValue atVal) throws ConvertionException
   {
-   if(atVal == null )
+   if( atVal == null || atVal.getValue().length() == 0 )
     return;
    
    SyntaxProfileDefinition profDef = syntaxProfile.getClassSpecificSyntaxProfile(hostObject.getAgeElClass());
@@ -1867,7 +1867,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   @Override
   public void convert( AgeTabValue vls) throws ConvertionException
   {
-   if(vls == null)
+   if(vls == null || vls.getValue().length() == 0 )
     return;
 
    if(vls.getValue().length() > 0)
@@ -2170,7 +2170,8 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   @Override
   public void convert(AgeTabValue atVal) throws ConvertionException
   {
-   if(atVal == null )
+   
+   if(atVal == null || atVal.getValue().length() == 0 )
     return;
    
    AttributedWritable prop = getHostConvertor().getLastConvertedProperty();
@@ -2206,7 +2207,7 @@ public class AgeTab2AgeConverterImpl implements AgeTab2AgeConverter
   @Override
   public void convert(AgeTabValue atVal) throws ConvertionException
   {
-   if(atVal == null )
+   if(atVal == null || atVal.getValue().length() == 0 )
     return;
    
    AttributedWritable prop = getHostConvertor().getLastConvertedProperty();
