@@ -46,6 +46,10 @@ public class SubmissionQuery implements Serializable
  
  private int total=0;
  
+ public SubmissionQuery()
+ {
+ }
+ 
  public String getQuery()
  {
   return query;

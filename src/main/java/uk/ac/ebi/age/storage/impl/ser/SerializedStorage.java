@@ -46,6 +46,7 @@ import uk.ac.ebi.age.storage.ConnectionInfo;
 import uk.ac.ebi.age.storage.DataChangeListener;
 import uk.ac.ebi.age.storage.DataModuleReaderWriter;
 import uk.ac.ebi.age.storage.MaintenanceModeListener;
+import uk.ac.ebi.age.storage.ModelChangeListener;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
 import uk.ac.ebi.age.storage.exeption.IndexIOException;
@@ -116,6 +117,7 @@ public class SerializedStorage implements AgeStorageAdm
  private final DataModuleReaderWriter submRW = new SerializedDataModuleReaderWriter();
 
  private final Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
+ private final Collection<ModelChangeListener> modListeners = new ArrayList<ModelChangeListener>(3);
  private final Collection<MaintenanceModeListener> mmodListeners = new ArrayList<MaintenanceModeListener>(3);
  
  private FileDepot dataDepot; 
@@ -1235,7 +1237,13 @@ public class SerializedStorage implements AgeStorageAdm
 
 //   SemanticManager.getInstance().setMasterModel(model);
    
+   invalidateIndices();
+   rebuildDirtyIndices();
+   
    setupBranch.success();
+   
+   for( ModelChangeListener mls : modListeners )
+    mls.modelChanged();
   }
   finally
   {
@@ -1303,6 +1311,16 @@ public class SerializedStorage implements AgeStorageAdm
    chgListeners.add(dataChangeListener);
   }
  }
+ 
+ @Override
+ public void addModelChangeListener( ModelChangeListener lsn)
+ {
+  synchronized(modListeners)
+  {
+   modListeners.add(lsn);
+  }
+ }
+
  
  @Override
  public void addMaintenanceModeListener(MaintenanceModeListener mmListener)

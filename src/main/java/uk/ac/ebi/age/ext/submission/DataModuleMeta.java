@@ -27,9 +27,12 @@ public interface DataModuleMeta
 
  void setModifier(String modifier);
 
- String getText();
-
- void setText(String text);
+ Object getInputStream();
+ void setInputStream(Object is);
+ 
+// String getText();
+//
+// void setText(String text);
 
  void setAux(Object aux);
 
@@ -46,5 +49,9 @@ public interface DataModuleMeta
  List<TagRef> getTags();
 
  void setTags(List<TagRef> annotation);
+
+ String getFileName();
+ void setFileName( String fn );
+
 
 }

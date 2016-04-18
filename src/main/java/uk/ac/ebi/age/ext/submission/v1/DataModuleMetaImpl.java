@@ -18,8 +18,9 @@ public class DataModuleMetaImpl implements Serializable, DataModuleMeta
  private String modifier;
  private long docVersion;
  private List<TagRef> tags;
+ private String fileName;
  
- private transient String text;
+ private transient Object data;
  private transient Object aux;
  
  
@@ -121,18 +122,18 @@ public class DataModuleMetaImpl implements Serializable, DataModuleMeta
   * @see uk.ac.ebi.age.ext.submission.v1.DataModuleMeta#getText()
   */
  @Override
- public String getText()
+ public Object getInputStream()
  {
-  return text;
+  return data;
  }
 
  /* (non-Javadoc)
   * @see uk.ac.ebi.age.ext.submission.v1.DataModuleMeta#setText(java.lang.String)
   */
  @Override
- public void setText(String text)
+ public void setInputStream( Object data )
  {
-  this.text = text;
+  this.data = data;
  }
 
 
@@ -200,6 +201,18 @@ public class DataModuleMetaImpl implements Serializable, DataModuleMeta
  public void setTags(List<TagRef> tags)
  {
   this.tags = tags;
+ }
+
+ @Override
+ public String getFileName()
+ {
+  return fileName;
+ }
+
+ @Override
+ public void setFileName(String fileName)
+ {
+  this.fileName = fileName;
  }
 
 }

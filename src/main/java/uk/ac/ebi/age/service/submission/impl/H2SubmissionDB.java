@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -40,6 +40,7 @@ import uk.ac.ebi.mg.filedepot.FileDepot;
 
 import com.pri.util.M2Pcodec;
 import com.pri.util.StringUtils;
+import com.pri.util.stream.StreamPump;
 
 public class H2SubmissionDB extends SubmissionDB
 {
@@ -73,10 +74,10 @@ public class H2SubmissionDB extends SubmissionDB
  +" WHERE id=?";
  
  private static final String insertSubmissionSQL = "INSERT INTO "+submissionDB+"."+submissionTable
- +" (id,desc,ctime,mtime,creator,modifier,ft_desc) VALUES (?,?,?,?,?,?,?)";
+ +" (id,desc,ctime,mtime,creator,modifier, ft_desc) VALUES (?,?,?,?,?,?,?)";
  
  private static final String insertModuleSQL = "INSERT INTO "+submissionDB+"."+moduleTable
- +" (id,submid,desc,ctime,mtime,creator,modifier,docver) VALUES (?,?,?,?,?,?,?,?)";
+ +" (id,submid,desc,ctime,mtime,creator,modifier,docver, filename) VALUES (?,?,?,?,?,?,?,?,?)";
  
  private static final String insertAttachmentSQL = "INSERT INTO "+submissionDB+"."+attachmentTable
  +" (id,submid,desc,ctime,mtime,creator,modifier,filever,isglobal) VALUES (?,?,?,?,?,?,?,?,?)";
@@ -109,13 +110,13 @@ public class H2SubmissionDB extends SubmissionDB
                   new StringUtils.ReplacePair('*',"%") 
                  };
  
- public H2SubmissionDB( File sbmDbRoot )
+ public H2SubmissionDB( File sbmDbRoot, String dbConnStr )
  {
   try
   {
    Class.forName("org.h2.Driver");
    
-   connectionString = "jdbc:h2:"+new File(sbmDbRoot,h2DbPath).getAbsolutePath();
+   connectionString = "jdbc:h2:"+dbConnStr;
    
    permConn = DriverManager.getConnection(connectionString, "sa", "");
    permConn.setAutoCommit(false);
@@ -178,7 +179,7 @@ public class H2SubmissionDB extends SubmissionDB
    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS removedIdx ON "+submissionDB+'.'+submissionTable+"(removed)");
  
    stmt.executeUpdate("CREATE TABLE IF NOT EXISTS "+submissionDB+'.'+moduleTable+" ("+
-     "id VARCHAR PRIMARY KEY, submid VARCHAR NOT NULL, desc VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL," +
+     "id VARCHAR PRIMARY KEY, submid VARCHAR NOT NULL, desc VARCHAR, filename VARCHAR, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL," +
      " creator VARCHAR NOT NULL, modifier VARCHAR NOT NULL, docver BIGINT NOT NULL," +
      " FOREIGN KEY(submid) REFERENCES "
      +submissionDB+'.'+submissionTable+"(id) ON DELETE CASCADE )");
@@ -307,7 +308,7 @@ public class H2SubmissionDB extends SubmissionDB
 
    if(sMeta.getDataModules() != null)
    {
-    //(id,submid,desc,ctime,mtime,creator,modifier,docver)
+    //(id,submid,desc,ctime,mtime,creator,modifier,docver,filename)
     pstsmt = conn.prepareStatement(insertModuleSQL);
     for(DataModuleMeta dmm : sMeta.getDataModules())
     {
@@ -319,16 +320,21 @@ public class H2SubmissionDB extends SubmissionDB
      pstsmt.setString(6, dmm.getSubmitter());
      pstsmt.setString(7, dmm.getModifier());
      pstsmt.setLong(8, dmm.getDocVersion());
+     pstsmt.setString(9, dmm.getFileName());
 
      pstsmt.executeUpdate();
 
-     if( dmm.getText() != null )
+     if( dmm.getInputStream() != null )
      {
       File outPFile = docDepot.getFilePath(dmm.getId(), dmm.getDocVersion());
       
-      OutputStreamWriter wrtr = new OutputStreamWriter(new FileOutputStream(outPFile), docCharset);
+      OutputStream wrtr = new FileOutputStream(outPFile);
       
-      wrtr.write(dmm.getText());
+      InputStream is = (InputStream)  dmm.getInputStream();
+      
+      is.reset();
+      
+      StreamPump.doPump(is, wrtr);
       
       wrtr.close();
      }
@@ -1201,6 +1207,8 @@ public class H2SubmissionDB extends SubmissionDB
      dmm.setModifier(rstMF.getString("modifier") );
 
      dmm.setDocVersion(rstMF.getLong("docver"));
+     
+     dmm.setFileName(rstMF.getString("filename"));
      
      simp.addDataModule(dmm);
     }

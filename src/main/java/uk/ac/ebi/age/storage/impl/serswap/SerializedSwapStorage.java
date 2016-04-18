@@ -44,6 +44,7 @@ import uk.ac.ebi.age.storage.ConnectionInfo;
 import uk.ac.ebi.age.storage.DataChangeListener;
 import uk.ac.ebi.age.storage.DataModuleReaderWriter;
 import uk.ac.ebi.age.storage.MaintenanceModeListener;
+import uk.ac.ebi.age.storage.ModelChangeListener;
 import uk.ac.ebi.age.storage.RelationResolveException;
 import uk.ac.ebi.age.storage.exeption.AttachmentIOException;
 import uk.ac.ebi.age.storage.exeption.IndexIOException;
@@ -128,7 +129,8 @@ public class SerializedSwapStorage implements AgeStorageAdm
 
   private final Collection<DataChangeListener> chgListeners = new ArrayList<DataChangeListener>(3);
   private final Collection<MaintenanceModeListener> mmodListeners = new ArrayList<MaintenanceModeListener>(3);
-  
+  private final Collection<ModelChangeListener> modListeners = new ArrayList<ModelChangeListener>(3);
+
   private FileDepot dataDepot; 
   private FileDepot fileDepot; 
   
@@ -1350,6 +1352,9 @@ public class SerializedSwapStorage implements AgeStorageAdm
    model = sm;
 
    setupBranch.success();
+   
+   for( ModelChangeListener mlsn: modListeners )
+    mlsn.modelChanged();
   }
   finally
   {
@@ -1416,6 +1421,15 @@ public class SerializedSwapStorage implements AgeStorageAdm
   }
  }
 
+ @Override
+ public void addModelChangeListener( ModelChangeListener lsn)
+ {
+  synchronized(modListeners)
+  {
+   modListeners.add(lsn);
+  }
+ }
+ 
  @Override
  public void addMaintenanceModeListener(MaintenanceModeListener mmListener)
  {

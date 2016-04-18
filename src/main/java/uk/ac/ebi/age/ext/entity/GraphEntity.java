@@ -9,7 +9,7 @@ public class GraphEntity implements Entity, Serializable
 
  private static GraphEntity instance = new GraphEntity(); 
  
- private GraphEntity()
+ public GraphEntity()
  {}
 
  public static Entity getInstance()

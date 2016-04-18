@@ -1,11 +1,9 @@
 package uk.ac.ebi.age.mng.submission;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -62,13 +60,14 @@ import uk.ac.ebi.age.transaction.Transaction;
 import uk.ac.ebi.age.transaction.TransactionException;
 import uk.ac.ebi.age.validator.AgeSemanticValidator;
 import uk.ac.ebi.age.validator.impl.AgeSemanticValidatorImpl;
+import uk.ac.ebi.mg.io.DelayedFileInputStream;
+import uk.ac.ebi.mg.spreadsheet.readers.SpreadsheetReaderFactory;
 
 import com.pri.util.Extractor;
 import com.pri.util.Pair;
 import com.pri.util.collection.CollectionMapCollection;
 import com.pri.util.collection.CollectionsUnion;
 import com.pri.util.collection.ExtractorCollection;
-import com.pri.util.stream.StreamPump;
 
 public class SubmissionManager
 {
@@ -310,7 +309,7 @@ public class SubmissionManager
      {
       clusterMeta.mod4Del.put(mm.meta.getId(), mm);
      }
-     else if(dm.getText() != null)
+     else if(dm.getInputStream() != null)
      {
       clusterMeta.mod4DataUpd.put(mm.meta.getId(), mm);
       clusterMeta.mod4Use.add(mm);
@@ -324,7 +323,7 @@ public class SubmissionManager
     }
     else // modAux.getStatus() == Status.NEW
     {
-     if(dm.getText() == null)
+     if(dm.getInputStream() == null)
      {
       logRoot.log(Level.ERROR, "Module " + modAux.getOrder() + " is marked for insertion but no data were provided");
       res = false;
@@ -381,7 +380,7 @@ public class SubmissionManager
      updMod.meta.setSubmissionTime(odm.getSubmissionTime()); // Preserving original submitter and submission time
      updMod.meta.setSubmitter(odm.getSubmitter());
 
-     if(updMod.meta.getText() != null)
+     if(updMod.meta.getInputStream() != null)
       updMod.meta.setDocVersion(updMod.meta.getModificationTime());
      else
       updMod.meta.setDocVersion(odm.getDocVersion());
@@ -675,7 +674,7 @@ public class SubmissionManager
    boolean modRes = true;
    LogNode modNode = logRoot.branch("Processing module: " + mm.aux.getOrder());
 
-   if(mm.meta.getText() == null) // Modules to be deleted or meta update
+   if(mm.meta.getInputStream() == null) // Modules to be deleted or meta update
     continue;
 
    LogNode atLog = modNode.branch("Parsing AgeTab");
@@ -683,9 +682,22 @@ public class SubmissionManager
    AgeTabModule atMod = null;
    try
    {
-    atMod = ageTabParser.parse(mm.meta.getText());
+    try
+    {
+     InputStream is = (InputStream)  mm.meta.getInputStream();
 
-    atLog.success();
+     atMod = ageTabParser.parse( SpreadsheetReaderFactory.getReader( is, mm.meta.getFileName() ) );
+     atLog.success();
+    }
+    catch(IOException e)
+    {
+     e.printStackTrace();
+     
+     atLog.log(Level.ERROR, "Internal I/O error");
+     res = false;
+     continue;
+    }
+
    }
    catch(ParserException e)
    {
@@ -1392,44 +1404,54 @@ public class SubmissionManager
     modRes = false;
    }
 
-   ByteArrayOutputStream bais = new ByteArrayOutputStream();
+//   ByteArrayOutputStream bais = new ByteArrayOutputStream();
+//
+//   try
+//   {
+//    FileInputStream fis = new FileInputStream(modFile);
+//    StreamPump.doPump(fis, bais, false);
+//    fis.close();
+//
+//    bais.close();
+//
+//   }
+//   catch(IOException e)
+//   {
+//    modNode.log(Level.ERROR, "File read error. " + e.getMessage());
+//    res = false;
+//   }
+//
+//   byte[] barr = bais.toByteArray();
+//   String enc = "UTF-8";
+//
+//   if(barr.length >= 2 && (barr[0] == -1 && barr[1] == -2) || (barr[0] == -2 && barr[1] == -1))
+//    enc = "UTF-16";
 
-   try
-   {
-    FileInputStream fis = new FileInputStream(modFile);
-    StreamPump.doPump(fis, bais, false);
-    fis.close();
+   mm.meta.setInputStream( new DelayedFileInputStream(modFile) );
 
-    bais.close();
-
-   }
-   catch(IOException e)
-   {
-    modNode.log(Level.ERROR, "File read error. " + e.getMessage());
-    res = false;
-   }
-
-   byte[] barr = bais.toByteArray();
-   String enc = "UTF-8";
-
-   if(barr.length >= 2 && (barr[0] == -1 && barr[1] == -2) || (barr[0] == -2 && barr[1] == -1))
-    enc = "UTF-16";
-
-   try
-   {
-    mm.meta.setText(new String(bais.toByteArray(), enc));
-   }
-   catch(UnsupportedEncodingException e1)
-   {
-   }
 
    AgeTabModule atMod = null;
 
    LogNode atLog = modNode.branch("Parsing AgeTab");
    try
    {
-    atMod = ageTabParser.parse(mm.meta.getText());
-    atLog.success();
+    
+    try
+    {
+     InputStream is = (InputStream)  mm.meta.getInputStream();
+
+     atMod = ageTabParser.parse( SpreadsheetReaderFactory.getReader(is, mm.meta.getFileName() ) );
+     atLog.success();
+    }
+    catch(IOException e)
+    {
+     e.printStackTrace();
+     
+     atLog.log(Level.ERROR, "Internal I/O error");
+     res = false;
+     continue;
+    }
+    
    }
    catch(ParserException e)
    {

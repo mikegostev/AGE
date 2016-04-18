@@ -8,20 +8,27 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.TextField;
 
 import uk.ac.ebi.age.model.AgeObject;
 import uk.ac.ebi.mg.executor.DefaultExecutorService;
 
 public class DocCollection implements Iterable<Document>
 {
+ public static final String OBJ_NO_FIELD = "_obj_no";
+ 
  private List<AgeObject> objectList;
  private Collection<TextFieldExtractor> extractors;
+ private int docInd;
  
- public DocCollection( List<AgeObject> objLst, Collection<TextFieldExtractor> exts)
+ public DocCollection( List<AgeObject> objLst, Collection<TextFieldExtractor> exts, int docInd )
  {
   objectList = objLst;
   extractors = exts;
+  this.docInd = docInd;
+
  }
  
  
@@ -29,9 +36,9 @@ public class DocCollection implements Iterable<Document>
  public Iterator<Document> iterator()
  {
   if( objectList.size() < 50 )
-   return new SimpleIterator();
+   return new SimpleIterator(docInd);
   
-  return new MTIterator();
+  return new MTIterator(docInd);
  }
  
  private class MTIterator implements Iterator<Document>
@@ -43,7 +50,7 @@ public class DocCollection implements Iterable<Document>
   private Document cDoc;
   
   @SuppressWarnings("unchecked")
-  MTIterator()
+  MTIterator( int di )
   {
    int nq = Runtime.getRuntime().availableProcessors()+1;
    
@@ -61,7 +68,7 @@ public class DocCollection implements Iterable<Document>
     int beg = i*ql;
     int end = i==nq-1?objectList.size():beg+ql;
     
-    DefaultExecutorService.getExecutorService().execute( new DocPreparator(queues[i], beg, end ) );
+    DefaultExecutorService.getExecutorService().execute( new DocPreparator(queues[i], beg, end, di ) );
    }
   }
   
@@ -124,11 +131,13 @@ public class DocCollection implements Iterable<Document>
  {
   int begin, end;
   BlockingQueue<Document> queue;
+  int docInd;
   
-  public DocPreparator(BlockingQueue<Document> blockingQueue, int beg, int end)
+  public DocPreparator(BlockingQueue<Document> blockingQueue, int beg, int end, int docInd)
   {
    this.begin = beg;
    this.end = end;
+   this.docInd = docInd;
    
    queue = blockingQueue;
   }
@@ -142,7 +151,7 @@ public class DocCollection implements Iterable<Document>
     {
      try
      {
-      queue.put( convert(objectList.get(i)) );
+      queue.put( convert(objectList.get(i), docInd+i) );
       break;
      }
      catch(InterruptedException e)
@@ -169,7 +178,13 @@ public class DocCollection implements Iterable<Document>
  private class SimpleIterator implements Iterator<Document>
  {
   private Iterator<AgeObject> objIter = objectList.iterator();
+  private int docInd;
 
+  public SimpleIterator( int docInd )
+  {
+   this.docInd = docInd;
+  }
+  
   @Override
   public boolean hasNext()
   {
@@ -179,7 +194,7 @@ public class DocCollection implements Iterable<Document>
   @Override
   public Document next()
   {
-   return convert( objIter.next() );
+   return convert( objIter.next(), docInd++ );
   }
 
   @Override
@@ -189,7 +204,7 @@ public class DocCollection implements Iterable<Document>
   
  }
  
- private Document convert( AgeObject obj )
+ private Document convert( AgeObject obj, int docInd )
  {
   Document doc = new Document();
   
@@ -198,8 +213,10 @@ public class DocCollection implements Iterable<Document>
    String name = tfe.getName();
    String val = tfe.getExtractor().getValue(obj);
  
-   doc.add(new Field(name, val, tfe.isStoreValue()?Field.Store.YES:Field.Store.NO, Field.Index.ANALYZED));
+   doc.add( new TextField(name, val, tfe.isStoreValue()?Store.YES:Store.NO) );
   }
+
+  doc.add( new IntField(OBJ_NO_FIELD, docInd, Store.YES) );
   
   return doc;
  }

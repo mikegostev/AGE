@@ -26,6 +26,7 @@ import uk.ac.ebi.age.storage.exeption.ModuleStoreException;
 import uk.ac.ebi.age.storage.exeption.StorageInstantiationException;
 import uk.ac.ebi.age.storage.impl.ser.SerializedStorage;
 import uk.ac.ebi.age.storage.impl.ser.SerializedStorageConfiguration;
+import uk.ac.ebi.mg.spreadsheet.readers.CSVTSVSpreadsheetReader;
 
 import com.pri.util.stream.StreamPump;
 
@@ -54,7 +55,7 @@ public class Test
  
    SyntaxProfile synProf = new SyntaxProfile();
    
-   AgeTabModule sbm =  new AgeTabSyntaxParserImpl( synProf ).parse(text);
+   AgeTabModule sbm =  new AgeTabSyntaxParserImpl( synProf ).parse( new CSVTSVSpreadsheetReader(text, '\0'));
    
    BufferLogger logBuf = new BufferLogger( 30 );
   

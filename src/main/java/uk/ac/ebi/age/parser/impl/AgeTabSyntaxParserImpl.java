@@ -17,8 +17,7 @@ import uk.ac.ebi.age.parser.ParserException;
 import uk.ac.ebi.age.parser.SyntaxProfile;
 import uk.ac.ebi.age.parser.SyntaxProfileDefinition;
 import uk.ac.ebi.age.service.id.IdGenerator;
-
-import com.pri.util.SpreadsheetReader;
+import uk.ac.ebi.mg.spreadsheet.SpreadsheetReader;
 
 public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
 {
@@ -200,7 +199,7 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
  
 
  @Override
- public AgeTabModule parse( String txt ) throws ParserException
+ public AgeTabModule parse( SpreadsheetReader reader ) throws ParserException
  {
   SyntaxProfile profile = getSyntaxProfile();
   
@@ -209,8 +208,6 @@ public class AgeTabSyntaxParserImpl extends AgeTabSyntaxParser
   List<String> parts = new ArrayList<String>(100);
   List<CellValue> cells = new ArrayList<CellValue>(100);
 
-  SpreadsheetReader reader = new SpreadsheetReader(txt);
- 
   BlockSupplier block;
   
   while( reader.readRow(parts) != null )

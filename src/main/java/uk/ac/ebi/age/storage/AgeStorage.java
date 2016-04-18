@@ -38,6 +38,7 @@ public interface AgeStorage
  boolean hasDataModule(ModuleKey mk);
 
  void addDataChangeListener(DataChangeListener dataChangeListener);
+ void addModelChangeListener(ModelChangeListener lsn);
  void addMaintenanceModeListener(MaintenanceModeListener mmListener);
  
 

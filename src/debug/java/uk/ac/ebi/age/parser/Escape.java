@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import uk.ac.ebi.age.parser.impl.AgeTabSyntaxParserImpl;
+import uk.ac.ebi.mg.spreadsheet.readers.CSVTSVSpreadsheetReader;
 
 import com.pri.util.stream.StreamPump;
 
@@ -31,7 +32,7 @@ public class Escape
   
   StreamPump.doPump(ist, baos, true);
   
-  doc = parser.parse( new String( baos.toByteArray(), "Unicode") );
+  doc = parser.parse( new CSVTSVSpreadsheetReader( new String( baos.toByteArray(), "Unicode"), '\0') );
  }
 
  @Test

@@ -3,6 +3,8 @@ package uk.ac.ebi.age.parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import uk.ac.ebi.mg.spreadsheet.SpreadsheetReader;
+
 public abstract class AgeTabSyntaxParser
 {
  public static final String rangeFlag="RANGE";
@@ -165,7 +167,7 @@ public abstract class AgeTabSyntaxParser
 //  return parse( txt, syntaxProfile );
 // }
  
- public abstract AgeTabModule parse( String txt ) throws ParserException;
+ public abstract AgeTabModule parse( SpreadsheetReader rdr ) throws ParserException;
 
  public ClassReference string2ClassReference( CellValue cell ) throws ParserException
  {
