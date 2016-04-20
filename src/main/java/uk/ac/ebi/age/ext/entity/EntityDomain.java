@@ -1,6 +1,8 @@
 package uk.ac.ebi.age.ext.entity;
 
-public enum EntityDomain
+import java.io.Serializable;
+
+public enum EntityDomain implements Serializable
 {
  CLUSTER,
  DATAMODULE,

@@ -11,6 +11,11 @@ public class SubmissionQuery implements Serializable
   REMOVED("Removed"),
   BOTH("All");
   
+  Selector()
+  {
+   title="";
+  }
+  
   Selector(String s)
   {
    title=s;
